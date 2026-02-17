@@ -19,7 +19,7 @@ class AppColors {
   static const Color neutral900 = Color(0xFF424242);
 
   // --- Primary G (Teal/Greenish) ---
-  static const Color primaryG50  = Color(0xFFEBF8F4);
+  static const Color primaryG50  = Color(0xFFa1d6d1);
   static const Color primaryG500 = Color(0xFF32A58E);
   static const Color primaryG900 = Color(0xFF1B3B31);
 
