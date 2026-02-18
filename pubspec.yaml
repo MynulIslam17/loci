@@ -29,6 +29,8 @@ dependencies:
   shimmer: ^3.0.0
   cached_network_image: ^3.3.1
   sliding_up_panel: ^2.0.0+1
+  #slider banner
+  carousel_slider: ^5.0.0
 
 
 dev_dependencies:

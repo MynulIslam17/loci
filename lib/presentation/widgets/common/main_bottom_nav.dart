@@ -11,6 +11,7 @@ import '../../../gen/assets.gen.dart';
 import '../../pages/event/event_screen.dart';
 import '../../pages/home/home_screen.dart';
 import '../../pages/network/network_screen.dart';
+
 import '../../pages/profile/profile_screen.dart';
 import '../../pages/search/search_screen.dart';
 
@@ -265,13 +266,13 @@ class _MainBottomNavState extends State<MainBottomNav> {
                 // Text Styling
                 selectedLabelStyle: TextStyle(
                   fontSize: 12,
-                  fontWeight: FontWeight.w600,
+                  fontWeight: FontWeight.w500,
                   color: context.colorScheme.primary,
                   height: 1.2,
                 ),
                 unselectedLabelStyle: TextStyle(
                   fontSize: 10,
-                  fontWeight: FontWeight.w500,
+                  fontWeight: FontWeight.w400,
                   color: context.colorScheme.onSurfaceVariant,
                   height: 1.2,
                 ),
