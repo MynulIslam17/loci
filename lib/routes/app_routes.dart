@@ -9,6 +9,7 @@ abstract class AppRoutes {
   static const String forgetPass = '/forgetPass';
   static const String otp = '/otp';
   static const String passReset = '/passReset';
+  static const String bottomNav = '/bottomNav';
 
 
 

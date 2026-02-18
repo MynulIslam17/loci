@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:get/get.dart';
 import 'package:get/get_core/src/get_main.dart';
+import 'package:loci/core/constants/app_text_style.dart';
 import 'package:loci/core/theme/theme_extention.dart';
 import 'package:loci/core/utils/show_snackbar.dart';
 import 'package:loci/routes/app_routes.dart';
@@ -227,7 +228,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   maintainState: true,
                   child: TextButton(
                     onPressed: _navigateToHome,
-                    child: const Text("Skip", style: TextStyle(color: Colors.white54)),
+                    child:  Text("Skip", style:AppTextStyle.textMd(color: context.colorScheme.onSurface)),
                   ),
                 ),
 

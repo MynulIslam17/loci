@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:loci/core/theme/app_theme.dart';
+import 'package:loci/presentation/bindings/app_bindings.dart';
 import 'package:loci/routes/app_pages.dart';
 import 'package:loci/routes/app_routes.dart';
 
@@ -26,7 +27,7 @@ class Loci extends StatelessWidget {
           theme: AppThemes.lightTheme,
           darkTheme: AppThemes.darkTheme,
           themeMode: ThemeMode.system,
-
+          initialBinding: AppBindings(),
 
           getPages: AppPages.pages,
           initialRoute: AppPages.initialRoutes,

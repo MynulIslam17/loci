@@ -18,7 +18,16 @@ class AppThemes {
       secondary: AppColors.primaryG500,     // Accents / Badges
       outline: AppColors.dark50,           // Borders / Dividers
       error: AppColors.danger,             // Error states
+      surfaceContainerHigh: AppColors.base500,// card
     ),
+
+    appBarTheme: AppBarTheme(
+      backgroundColor: AppColors.base500,
+      foregroundColor: AppColors.dark500,
+      centerTitle: false,
+      surfaceTintColor: Colors.transparent,
+
+    )
   );
 
   // --- DARK THEME ---
@@ -37,5 +46,12 @@ class AppThemes {
       surfaceContainerHigh: AppColors.dark500, // Card Backgrounds
       error: AppColors.danger,
     ),
+    appBarTheme: AppBarTheme(
+      backgroundColor: AppColors.dark500,
+      foregroundColor: AppColors.base500,
+      centerTitle: false,
+      surfaceTintColor: Colors.transparent,
+
+    )
   );
 }

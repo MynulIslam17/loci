@@ -29,6 +29,8 @@ class _LoginScreenState extends State<LoginScreen> {
 
     double panelHeight = MediaQuery.of(context).size.height * 0.70;
 
+
+
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FA),
       body: SlidingUpPanel(
@@ -139,7 +141,7 @@ class _LoginScreenState extends State<LoginScreen> {
         // 2. INPUT FIELDS
         const SizedBox(height: 32),
         CustomTextField(
-          borderColor: context.colorScheme.outline, // Added border color
+          borderColor: context.colorScheme.outline,
           hintTextColor: context.colorScheme.onSurfaceVariant,
           hintText: "Loisbecket@gmail.com",
           title: "Email",
@@ -151,7 +153,7 @@ class _LoginScreenState extends State<LoginScreen> {
         ),
         const SizedBox(height: 20),
         CustomTextField(
-          borderColor: context.colorScheme.outline, // Added border color
+          borderColor: context.colorScheme.outline,
           hintTextColor: context.colorScheme.onSurfaceVariant,
           hintText: "********",
           title: "Password",
@@ -159,7 +161,7 @@ class _LoginScreenState extends State<LoginScreen> {
           isPassword: true,
           isObscureText: true,
           titleStyle: AppTextStyle.textXs(
-            color: context.colorScheme.onSurface, // Updated to match Email title
+            color: context.colorScheme.onSurface,
             weight: FontWeight.w600,
           ),
         ),
@@ -213,7 +215,7 @@ class _LoginScreenState extends State<LoginScreen> {
           backgroundColor: context.colorScheme.primary,
           textColor: context.colorScheme.onPrimary,
           text: "Log In",
-          onPressed: () {},
+          onPressed: _loginHandler,
         ),
 
         // 5. DIVIDER
@@ -299,4 +301,29 @@ class _LoginScreenState extends State<LoginScreen> {
       ),
     );
   }
+
+
+
+
+
+  /// login handler==============
+
+
+void _loginHandler()async{
+    Get.toNamed(AppRoutes.bottomNav);
+
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
 }
