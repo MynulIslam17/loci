@@ -14,49 +14,20 @@ import 'package:flutter/widgets.dart';
 class $AssetsIconsGen {
   const $AssetsIconsGen();
 
-  /// File path: assets/icons/about.svg
-  String get about => 'assets/icons/about.svg';
+  /// File path: assets/icons/comunity.svg
+  String get comunity => 'assets/icons/comunity.svg';
 
-  /// File path: assets/icons/building.svg
-  String get building => 'assets/icons/building.svg';
+  /// File path: assets/icons/event1.svg
+  String get event1 => 'assets/icons/event1.svg';
 
-  /// File path: assets/icons/calander.svg
-  String get calander => 'assets/icons/calander.svg';
+  /// File path: assets/icons/send.svg
+  String get send => 'assets/icons/send.svg';
 
-  /// File path: assets/icons/logout.svg
-  String get logout => 'assets/icons/logout.svg';
-
-  /// File path: assets/icons/map.svg
-  String get map => 'assets/icons/map.svg';
-
-  /// File path: assets/icons/paper.svg
-  String get paper => 'assets/icons/paper.svg';
-
-  /// File path: assets/icons/qr_code.svg
-  String get qrCode => 'assets/icons/qr_code.svg';
-
-  /// File path: assets/icons/qrown.svg
-  String get qrown => 'assets/icons/qrown.svg';
-
-  /// File path: assets/icons/rafel.svg
-  String get rafel => 'assets/icons/rafel.svg';
-
-  /// File path: assets/icons/setting.svg
-  String get setting => 'assets/icons/setting.svg';
+  /// File path: assets/icons/ticket.svg
+  String get ticket => 'assets/icons/ticket.svg';
 
   /// List of all assets
-  List<String> get values => [
-    about,
-    building,
-    calander,
-    logout,
-    map,
-    paper,
-    qrCode,
-    qrown,
-    rafel,
-    setting,
-  ];
+  List<String> get values => [comunity, event1, send, ticket];
 }
 
 class $AssetsImagesGen {
@@ -102,6 +73,12 @@ class $AssetsImagesGen {
   /// File path: assets/images/user2.png
   AssetGenImage get user2 => const AssetGenImage('assets/images/user2.png');
 
+  /// File path: assets/images/user3.jpg
+  AssetGenImage get user3 => const AssetGenImage('assets/images/user3.jpg');
+
+  /// File path: assets/images/user4.jpg
+  AssetGenImage get user4 => const AssetGenImage('assets/images/user4.jpg');
+
   /// List of all assets
   List<dynamic> get values => [
     finedine,
@@ -117,6 +94,8 @@ class $AssetsImagesGen {
     restu,
     user1,
     user2,
+    user3,
+    user4,
   ];
 }
 

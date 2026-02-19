@@ -31,6 +31,8 @@ dependencies:
   sliding_up_panel: ^2.0.0+1
   #slider banner
   carousel_slider: ^5.0.0
+   #percentage bar
+  percent_indicator: ^4.2.3
 
 
 dev_dependencies:
