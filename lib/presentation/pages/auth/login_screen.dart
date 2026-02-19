@@ -34,9 +34,9 @@ class _LoginScreenState extends State<LoginScreen> {
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FA),
       body: SlidingUpPanel(
-        maxHeight: panelHeight,
+        maxHeight: MediaQuery.of(context).size.height * 0.8,
         minHeight: panelHeight,
-        parallaxEnabled: true,
+       // parallaxEnabled: true,
         color: context.colorScheme.surface,
         parallaxOffset: .5,
 
@@ -54,55 +54,63 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Widget _buildBackgroundImageSection(BuildContext context) {
-    return Stack(
-      alignment: Alignment.topCenter,
-      children: [
+    return Container(
+      width: double.infinity,
+      height: 400,
+      decoration: BoxDecoration(
+        color: context.colorScheme.surface
+      ),
+      child: Stack(
 
-        Positioned(
-          top: MediaQuery.of(context).padding.top + 20,
-          left: 0,
-          right: 0,
-          child: SizedBox(
-            height: 300,
-            child: Stack(
-              alignment: Alignment.center,
-              children: [
-                // 1. Background decorative shape
-                Transform(
-                  alignment: Alignment.center,
-                  transform: Matrix4.identity()
-                    ..translate(-10.0, -10.0)
-                    ..rotateZ(-0.20),
-                  child: Container(
-                    width: 300,
-                    height: 260,
-                    decoration: BoxDecoration(
-                      color:context.colorScheme.primaryContainer,
-                      borderRadius: BorderRadius.circular(40),
+        alignment: Alignment.topCenter,
+        children: [
+
+          Positioned(
+            top: MediaQuery.of(context).padding.top + 20,
+            left: 0,
+            right: 0,
+            child: SizedBox(
+              height: 300,
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  // 1. Background decorative shape
+                  Transform(
+                    alignment: Alignment.center,
+                    transform: Matrix4.identity()
+                      ..translate(-10.0, -10.0)
+                      ..rotateZ(-0.20),
+                    child: Container(
+                      width: 300,
+                      height: 260,
+                      decoration: BoxDecoration(
+                        color: context.colorScheme.primaryContainer.withOpacity(0.6),
+                        borderRadius: BorderRadius.circular(40),
+                      ),
                     ),
                   ),
-                ),
-                // 2. Left Image
-                Transform(
-                  alignment: Alignment.center,
-                  transform: Matrix4.identity()
-                    ..translate(-45.0, 15.0)
-                    ..rotateZ(-0.55),
-                  child: _buildImageCard(Assets.images.onimg5),
-                ),
-                // 3. Right (Top) Image
-                Transform(
-                  alignment: Alignment.center,
-                  transform: Matrix4.identity()
-                    ..translate(50.0, -10.0)
-                    ..rotateZ(0.62),
-                  child: _buildImageCard(Assets.images.onimg6),
-                ),
-              ],
+                  // 2. Left Image
+                  Transform(
+                    alignment: Alignment.center,
+                    transform: Matrix4.identity()
+                      ..translate(-45.0, 15.0)
+                      ..rotateZ(-0.55),
+                    child: _buildImageCard(Assets.images.onimg5),
+                  ),
+                  // 3. Right (Top) Image
+                  Transform(
+                    alignment: Alignment.center,
+                    transform: Matrix4.identity()
+                      ..translate(50.0, -10.0)
+                      ..rotateZ(0.62),
+                    child: _buildImageCard(Assets.images.onimg6),
+                  ),
+                ],
+              ),
             ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 

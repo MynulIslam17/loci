@@ -45,13 +45,13 @@ class _SignupScreenState extends State<SignupScreen> {
 
   @override
   Widget build(BuildContext context) {
-    double panelHeight = MediaQuery.of(context).size.height * 0.75;
+    double panelHeight = MediaQuery.of(context).size.height * 0.70;
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FA),
       body: SlidingUpPanel(
-        maxHeight: panelHeight,
+        maxHeight: MediaQuery.of(context).size.height *0.8,
         minHeight: panelHeight,
-        parallaxEnabled: true,
+       parallaxEnabled: true,
         color: context.colorScheme.surface,
         borderRadius: const BorderRadius.only(
           topLeft: Radius.circular(40.0),
@@ -65,42 +65,49 @@ class _SignupScreenState extends State<SignupScreen> {
   }
 
   Widget _buildBackgroundImageSection(BuildContext context) {
-    return Stack(
-      alignment: Alignment.topCenter,
-      children: [
-        Positioned(
-          top: MediaQuery.of(context).padding.top + 20,
-          child: SizedBox(
-            height: 300,
-            child: Stack(
-              alignment: Alignment.center,
-              children: [
-                Transform(
-                  alignment: Alignment.center,
-                  transform: Matrix4.identity()..translate(-10.0, -10.0)..rotateZ(-0.20),
-                  child: Container(
-                    width: 300, height: 260,
-                    decoration: BoxDecoration(
-                      color: context.colorScheme.primaryContainer,
-                      borderRadius: BorderRadius.circular(40),
+    return Container(
+      width: double.infinity,
+      height: 400,
+      decoration: BoxDecoration(
+          color: context.colorScheme.surface
+      ),
+      child: Stack(
+        alignment: Alignment.topCenter,
+        children: [
+          Positioned(
+            top: MediaQuery.of(context).padding.top + 20,
+            child: SizedBox(
+              height: 300,
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  Transform(
+                    alignment: Alignment.center,
+                    transform: Matrix4.identity()..translate(-10.0, -10.0)..rotateZ(-0.20),
+                    child: Container(
+                      width: 300, height: 260,
+                      decoration: BoxDecoration(
+                        color: context.colorScheme.primaryContainer.withOpacity(0.6),
+                        borderRadius: BorderRadius.circular(40),
+                      ),
                     ),
                   ),
-                ),
-                Transform(
-                  alignment: Alignment.center,
-                  transform: Matrix4.identity()..translate(-45.0, 15.0)..rotateZ(-0.15),
-                  child: _buildImageCard(Assets.images.onimg5),
-                ),
-                Transform(
-                  alignment: Alignment.center,
-                  transform: Matrix4.identity()..translate(50.0, -10.0)..rotateZ(0.12),
-                  child: _buildImageCard(Assets.images.onimg6),
-                ),
-              ],
+                  Transform(
+                    alignment: Alignment.center,
+                    transform: Matrix4.identity()..translate(-45.0, 15.0)..rotateZ(-0.15),
+                    child: _buildImageCard(Assets.images.onimg5),
+                  ),
+                  Transform(
+                    alignment: Alignment.center,
+                    transform: Matrix4.identity()..translate(50.0, -10.0)..rotateZ(0.12),
+                    child: _buildImageCard(Assets.images.onimg6),
+                  ),
+                ],
+              ),
             ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 

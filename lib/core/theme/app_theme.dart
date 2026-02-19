@@ -9,25 +9,30 @@ class AppThemes {
     useMaterial3: true,
     brightness: Brightness.light,
     colorScheme: ColorScheme.light(
-      primaryContainer:AppColors.primaryG50,// for splash (and some other background)
-      surface: AppColors.base50,           // Page Background
-      onSurface: AppColors.dark900,        // Main Text
+      surface: AppColors.background,        // Pure white from image
+      onSurface: AppColors.dark900,         // Main Text (Darkest Gray)
       onSurfaceVariant: AppColors.neutral900, // Subtitles / Hint Text
-      primary: AppColors.primary500,       // Buttons / Active States
-      onPrimary: Colors.white,             // Text ON Buttons
-      secondary: AppColors.primaryG500,     // Accents / Badges
-      outline: AppColors.dark50,           // Borders / Dividers
-      error: AppColors.danger,             // Error states
-      surfaceContainerHigh: AppColors.base500,// card
+
+      primary: AppColors.primaryG400,        // Main Teal
+      onPrimary: AppColors.base100,              // Text ON Buttons
+      primaryContainer: AppColors.primary100, // Soft Teal for splash/containers
+
+      secondary: AppColors.primaryG500,     // Primary-G Green/Teal
+      onSecondary: Colors.white,
+
+      outline: AppColors.base600,           // Light borders
+      error: AppColors.danger,              // Status Red
+      surfaceContainerHigh: AppColors.base100, // Card background
     ),
 
-    appBarTheme: AppBarTheme(
+    appBarTheme: const AppBarTheme(
       backgroundColor: AppColors.base500,
-      foregroundColor: AppColors.dark500,
+      foregroundColor: AppColors.dark900,
       centerTitle: false,
-      surfaceTintColor: Colors.transparent,
-
-    )
+      elevation: 0,
+      scrolledUnderElevation: 3,            // Shadow appears when content scrolls under
+      surfaceTintColor: Colors.transparent, // Required for real shadow in M3
+    ),
   );
 
   // --- DARK THEME ---
@@ -35,23 +40,27 @@ class AppThemes {
     useMaterial3: true,
     brightness: Brightness.dark,
     colorScheme: ColorScheme.dark(
-      primaryContainer: Color(0xff272727), // for splash
-      surface: AppColors.dark900,      // Dark Background
-      onSurface: AppColors.darkText,       // Bright Main Text
-      onSurfaceVariant: AppColors.darkTextSecondary, // Muted Text
-      primary: AppColors.primaryDark,      // Vibrant Teal Buttons
-      onPrimary: AppColors.dark900,        // Dark Text ON Teal Buttons
-      secondary: AppColors.primaryDarkMuted, // Muted Accents
-      outline: AppColors.darkBorder,       // Dark Borders
+      surface: AppColors.dark900,           // Dark Background (#141414)
+      onSurface: AppColors.base50,          // Bright Text (#F9FAFB)
+      onSurfaceVariant: AppColors.neutral500, // Muted Text
+
+      primary: AppColors.primaryG400,       // Vibrant Teal for Dark Mode
+      onPrimary: AppColors.dark900,
+      primaryContainer: AppColors.dark500,  // Background for containers
+
+      secondary: AppColors.primaryG500,
+      outline: AppColors.dark400,           // Darker borders
       surfaceContainerHigh: AppColors.dark500, // Card Backgrounds
       error: AppColors.danger,
     ),
-    appBarTheme: AppBarTheme(
-      backgroundColor: AppColors.dark500,
-      foregroundColor: AppColors.base500,
-      centerTitle: false,
-      surfaceTintColor: Colors.transparent,
 
-    )
+    appBarTheme: const AppBarTheme(
+      backgroundColor:AppColors.dark500,
+      foregroundColor: AppColors.base50,
+      centerTitle: false,
+      elevation: 0,
+      scrolledUnderElevation: 3,
+      surfaceTintColor: Colors.transparent,
+    ),
   );
 }

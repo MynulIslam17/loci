@@ -158,25 +158,25 @@ class _MainBottomNavState extends State<MainBottomNav> {
 
 
       appBar: AppBar(
-        elevation: 0,
-        shadowColor: Colors.black.withOpacity(0.05),
+
+        elevation: 3,
+
+        shadowColor: Colors.black.withOpacity(0.5),
+
+        surfaceTintColor: Colors.transparent,
+
+        scrolledUnderElevation: 3,
+
 
         toolbarHeight: 64,
-
-
-        leading:  Builder(builder: (context){
+        leading: Builder(builder: (context) {
           return IconButton(
-            onPressed: () {
-
-              Scaffold.of(context).openDrawer();
-
-            },
+            onPressed: () => Scaffold.of(context).openDrawer(),
             icon: const Icon(Icons.menu_rounded),
             padding: const EdgeInsets.all(8),
             splashRadius: 20,
           );
         }),
-
         title: Text(
           "Hello Mynul !",
           style: AppTextStyle.textLg(
@@ -184,7 +184,6 @@ class _MainBottomNavState extends State<MainBottomNav> {
             weight: FontWeight.w600,
           ),
         ),
-
         actions: [
           IconButton(
             onPressed: () {},
@@ -204,12 +203,8 @@ class _MainBottomNavState extends State<MainBottomNav> {
             padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
             splashRadius: 20,
           ),
-
           const SizedBox(width: 4),
         ],
-
-
-
       ),
 
 
@@ -225,10 +220,7 @@ class _MainBottomNavState extends State<MainBottomNav> {
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
           color: context.colorScheme.surface,
-          borderRadius: const BorderRadius.only(
-            topLeft: Radius.circular(20),
-            topRight: Radius.circular(20),
-          ),
+
           boxShadow: [
             BoxShadow(
               color: Colors.black.withOpacity(0.05),
@@ -237,79 +229,73 @@ class _MainBottomNavState extends State<MainBottomNav> {
             ),
           ],
         ),
-        child: ClipRRect(
-          borderRadius: const BorderRadius.only(
-            topLeft: Radius.circular(20),
-            topRight: Radius.circular(20),
-          ),
-          child: GetBuilder<NavController>(
-            builder: (controller) {
-              return BottomNavigationBar(
-                currentIndex: controller.currentIndex,
-                onTap: (index) {
-                  controller.changeIndex(index);
-                },
-                type: BottomNavigationBarType.fixed,
-                backgroundColor: Colors.transparent,
-                elevation: 0,
-                // Icon Styling
-                iconSize: 20,
-                selectedIconTheme: IconThemeData(
-                  color: context.colorScheme.primary,
-                  size: 27,
-                ),
-                unselectedIconTheme: IconThemeData(
-                  color: context.colorScheme.onSurfaceVariant,
-                  size: 22,
-                ),
+        child: GetBuilder<NavController>(
+          builder: (controller) {
+            return BottomNavigationBar(
+              currentIndex: controller.currentIndex,
+              onTap: (index) {
+                controller.changeIndex(index);
+              },
+              type: BottomNavigationBarType.fixed,
+              backgroundColor: Colors.transparent,
+              elevation: 0,
+              // Icon Styling
+              iconSize: 20,
+              selectedIconTheme: IconThemeData(
+                color: context.colorScheme.primary,
+                size: 27,
+              ),
+              unselectedIconTheme: IconThemeData(
+                color: context.colorScheme.onSurfaceVariant,
+                size: 22,
+              ),
 
-                // Text Styling
-                selectedLabelStyle: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w500,
-                  color: context.colorScheme.primary,
-                  height: 1.2,
-                ),
-                unselectedLabelStyle: TextStyle(
-                  fontSize: 10,
-                  fontWeight: FontWeight.w400,
-                  color: context.colorScheme.onSurfaceVariant,
-                  height: 1.2,
-                ),
+              // Text Styling
+              selectedLabelStyle: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
+                color: context.colorScheme.primary,
+                height: 1.2,
+              ),
+              unselectedLabelStyle: TextStyle(
+                fontSize: 10,
+                fontWeight: FontWeight.w400,
+                color: context.colorScheme.onSurfaceVariant,
+                height: 1.2,
+              ),
 
-                showSelectedLabels: true,
-                showUnselectedLabels: true,
+              showSelectedLabels: true,
+              showUnselectedLabels: true,
 
-                items: [
-                  BottomNavigationBarItem(
-                    icon: const Icon(Icons.home_outlined),
-                    activeIcon: const Icon(Icons.home_rounded),
-                    label: 'Home',
-                  ),
-                  BottomNavigationBarItem(
-                    icon: const Icon(Icons.search_outlined),
-                    activeIcon: const Icon(Icons.search_rounded),
-                    label: 'Browse',
-                  ),
-                  BottomNavigationBarItem(
-                    icon: const Icon(Icons.calendar_month_outlined),
-                    activeIcon: const Icon(Icons.calendar_month_rounded),
-                    label: 'Event',
-                  ),
-                  BottomNavigationBarItem(
-                    icon: const Icon(Icons.groups_outlined),
-                    activeIcon: const Icon(Icons.groups_rounded),
-                    label: 'Network',
-                  ),
-                  BottomNavigationBarItem(
-                    icon: const Icon(Icons.person_outline),
-                    activeIcon: const Icon(Icons.person_rounded),
-                    label: 'Profile',
-                  ),
-                ],
-              );
-            },
-          ),
+              items: [
+                BottomNavigationBarItem(
+                  icon: const Icon(Icons.home_outlined),
+                  activeIcon: const Icon(Icons.home_rounded),
+                  label: 'Home',
+                ),
+                BottomNavigationBarItem(
+                  icon: const Icon(Icons.search_outlined),
+                  activeIcon: const Icon(Icons.search_rounded),
+                  label: 'Browse',
+                ),
+                BottomNavigationBarItem(
+                  icon: const Icon(Icons.calendar_month_outlined),
+                  activeIcon: const Icon(Icons.calendar_month_rounded),
+                  label: 'Event',
+                ),
+                BottomNavigationBarItem(
+                  icon: const Icon(Icons.groups_outlined),
+                  activeIcon: const Icon(Icons.groups_rounded),
+                  label: 'Network',
+                ),
+                BottomNavigationBarItem(
+                  icon: const Icon(Icons.person_outline),
+                  activeIcon: const Icon(Icons.person_rounded),
+                  label: 'Profile',
+                ),
+              ],
+            );
+          },
         ),
       ),
     );
