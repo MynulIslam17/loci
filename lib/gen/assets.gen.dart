@@ -14,20 +14,97 @@ import 'package:flutter/widgets.dart';
 class $AssetsIconsGen {
   const $AssetsIconsGen();
 
+  /// File path: assets/icons/about.svg
+  String get about => 'assets/icons/about.svg';
+
+  /// File path: assets/icons/advanture.svg
+  String get advanture => 'assets/icons/advanture.svg';
+
+  /// File path: assets/icons/building.svg
+  String get building => 'assets/icons/building.svg';
+
+  /// File path: assets/icons/calander.svg
+  String get calander => 'assets/icons/calander.svg';
+
+  /// File path: assets/icons/care.svg
+  String get care => 'assets/icons/care.svg';
+
   /// File path: assets/icons/comunity.svg
   String get comunity => 'assets/icons/comunity.svg';
 
   /// File path: assets/icons/event1.svg
   String get event1 => 'assets/icons/event1.svg';
 
+  /// File path: assets/icons/foodie.svg
+  String get foodie => 'assets/icons/foodie.svg';
+
+  /// File path: assets/icons/helth.svg
+  String get helth => 'assets/icons/helth.svg';
+
+  /// File path: assets/icons/local.svg
+  String get local => 'assets/icons/local.svg';
+
+  /// File path: assets/icons/logout.svg
+  String get logout => 'assets/icons/logout.svg';
+
+  /// File path: assets/icons/map.svg
+  String get map => 'assets/icons/map.svg';
+
+  /// File path: assets/icons/non_profit.svg
+  String get nonProfit => 'assets/icons/non_profit.svg';
+
+  /// File path: assets/icons/paper.svg
+  String get paper => 'assets/icons/paper.svg';
+
+  /// File path: assets/icons/party.svg
+  String get party => 'assets/icons/party.svg';
+
+  /// File path: assets/icons/qr_code.svg
+  String get qrCode => 'assets/icons/qr_code.svg';
+
+  /// File path: assets/icons/qrown.svg
+  String get qrown => 'assets/icons/qrown.svg';
+
+  /// File path: assets/icons/rafel.svg
+  String get rafel => 'assets/icons/rafel.svg';
+
+  /// File path: assets/icons/repair.svg
+  String get repair => 'assets/icons/repair.svg';
+
   /// File path: assets/icons/send.svg
   String get send => 'assets/icons/send.svg';
+
+  /// File path: assets/icons/setting.svg
+  String get setting => 'assets/icons/setting.svg';
 
   /// File path: assets/icons/ticket.svg
   String get ticket => 'assets/icons/ticket.svg';
 
   /// List of all assets
-  List<String> get values => [comunity, event1, send, ticket];
+  List<String> get values => [
+    about,
+    advanture,
+    building,
+    calander,
+    care,
+    comunity,
+    event1,
+    foodie,
+    helth,
+    local,
+    logout,
+    map,
+    nonProfit,
+    paper,
+    party,
+    qrCode,
+    qrown,
+    rafel,
+    repair,
+    send,
+    setting,
+    ticket,
+  ];
 }
 
 class $AssetsImagesGen {
