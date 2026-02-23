@@ -4,6 +4,7 @@ import 'package:loci/presentation/pages/auth/login_screen.dart';
 import 'package:loci/presentation/pages/auth/otp_screen.dart';
 import 'package:loci/presentation/pages/auth/reset_pass_sceen.dart';
 import 'package:loci/presentation/pages/auth/signup_screen.dart';
+import 'package:loci/presentation/pages/event/event_details.dart';
 import 'package:loci/presentation/pages/onboarding/onboarding_screen.dart';
 import 'package:loci/presentation/pages/splash/splash_screen.dart';
 import 'package:loci/presentation/widgets/common/main_bottom_nav.dart';
@@ -26,7 +27,13 @@ abstract class AppPages {
 
 
     /// ==========================Bottom Nav=============================
-    GetPage(name: AppRoutes.bottomNav, page: ()=>MainBottomNav())
+    GetPage(name: AppRoutes.bottomNav, page: ()=>MainBottomNav()),
+
+
+    // ----- event details
+
+    GetPage(name: AppRoutes.eventDetails, page: () => EventDetails())
+
 
 
 

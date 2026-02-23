@@ -12,7 +12,7 @@ class CustomButton extends StatelessWidget {
   final double? width;
   final double? height;
   final double? borderRadius;
-  final TextStyle? textStyle;   // Allow passing a full style
+  final TextStyle? textStyle;
   final bool isLoading;
   final BorderSide? side;
 

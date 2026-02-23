@@ -11,6 +11,16 @@
 
 import 'package:flutter/widgets.dart';
 
+class $AssetsFontsGen {
+  const $AssetsFontsGen();
+
+  /// File path: assets/fonts/Inter.ttf
+  String get inter => 'assets/fonts/Inter.ttf';
+
+  /// List of all assets
+  List<String> get values => [inter];
+}
+
 class $AssetsIconsGen {
   const $AssetsIconsGen();
 
@@ -110,9 +120,17 @@ class $AssetsIconsGen {
 class $AssetsImagesGen {
   const $AssetsImagesGen();
 
+  /// File path: assets/images/company_logo.png
+  AssetGenImage get companyLogo =>
+      const AssetGenImage('assets/images/company_logo.png');
+
   /// File path: assets/images/finedine.png
   AssetGenImage get finedine =>
       const AssetGenImage('assets/images/finedine.png');
+
+  /// File path: assets/images/location.png
+  AssetGenImage get location =>
+      const AssetGenImage('assets/images/location.png');
 
   /// File path: assets/images/logo.png
   AssetGenImage get logoPng => const AssetGenImage('assets/images/logo.png');
@@ -158,7 +176,9 @@ class $AssetsImagesGen {
 
   /// List of all assets
   List<dynamic> get values => [
+    companyLogo,
     finedine,
+    location,
     logoPng,
     logoSvg,
     onback,
@@ -179,6 +199,7 @@ class $AssetsImagesGen {
 class Assets {
   const Assets._();
 
+  static const $AssetsFontsGen fonts = $AssetsFontsGen();
   static const $AssetsIconsGen icons = $AssetsIconsGen();
   static const $AssetsImagesGen images = $AssetsImagesGen();
 }

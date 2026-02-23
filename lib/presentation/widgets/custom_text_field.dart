@@ -29,7 +29,7 @@ class CustomTextField extends StatefulWidget {
   final TextStyle? titleStyle;
   final FocusNode? focusNode;
   final String? errorText;
-  final Color? textColor; // Added to allow manual override
+  final Color? textColor;
 
   const CustomTextField({
     super.key,

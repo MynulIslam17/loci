@@ -12,6 +12,11 @@ abstract class AppRoutes {
   static const String bottomNav = '/bottomNav';
 
 
+  // --- event ---
+
+  static const String eventDetails = '/eventDetails';
+
+
 
 
 
