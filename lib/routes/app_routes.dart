@@ -16,6 +16,10 @@ abstract class AppRoutes {
 
   static const String eventDetails = '/eventDetails';
 
+  //--browse business
+  static const String browseBusiness = '/browseBusiness';
+  static const String businessProfile = '/businessProfile';
+
 
 
 

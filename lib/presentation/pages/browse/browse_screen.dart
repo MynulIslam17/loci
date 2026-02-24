@@ -1,17 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:get/get_core/src/get_main.dart';
+import 'package:get/get_navigation/src/extension_navigation.dart';
 import 'package:loci/core/constants/app_text_style.dart';
 import 'package:loci/core/theme/theme_extention.dart';
 import '../../../gen/assets.gen.dart';
+import '../../../routes/app_routes.dart';
 
-class SearchScreen extends StatefulWidget {
-  const SearchScreen({super.key});
+class BrowseScreen extends StatefulWidget {
+  const BrowseScreen({super.key});
 
   @override
-  State<SearchScreen> createState() => _SearchScreenState();
+  State<BrowseScreen> createState() => _BrowseScreenState();
 }
 
-class _SearchScreenState extends State<SearchScreen> {
+class _BrowseScreenState extends State<BrowseScreen> {
   final List<Map<String, dynamic>> placeCategory = [
     {"Icon": Assets.icons.care, "title": "Boutiques & Beauty"},
     {"Icon": Assets.icons.foodie, "title": "Foodie"},
@@ -99,5 +102,9 @@ class _SearchScreenState extends State<SearchScreen> {
     );
   }
 
-  void _placeHandler() {}
+  void _placeHandler() {
+
+    Get.toNamed(AppRoutes.browseBusiness);
+
+  }
 }

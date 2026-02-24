@@ -12,6 +12,7 @@ class CustomDropdown<T> extends StatelessWidget {
   final Color? fillColor;
   final double? borderRadius;
   final Color? borderColor;
+  final Color? dropdownColor;
   final double? fontSize;
 
   const CustomDropdown({
@@ -26,7 +27,7 @@ class CustomDropdown<T> extends StatelessWidget {
     this.fillColor,
     this.borderRadius,
     this.borderColor,
-    this.fontSize,
+    this.fontSize, this.dropdownColor,
   });
 
   @override
@@ -45,6 +46,7 @@ class CustomDropdown<T> extends StatelessWidget {
         ],
 
         DropdownButtonFormField<T>(
+
           value: value,
           items: items,
           onChanged: onChanged,
@@ -87,7 +89,7 @@ class CustomDropdown<T> extends StatelessWidget {
             focusedErrorBorder: _buildBorder(Colors.red),
             errorStyle: const TextStyle(fontSize: 12, color: Colors.red),
           ),
-          dropdownColor: Colors.white,
+          dropdownColor:dropdownColor ?? Colors.white,
           borderRadius: BorderRadius.circular(borderRadius ?? 12),
         ),
       ],

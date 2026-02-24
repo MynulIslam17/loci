@@ -8,12 +8,13 @@ import 'package:loci/presentation/controllers/nav_controller.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../gen/assets.gen.dart';
+import '../../pages/browse/browse_screen.dart';
 import '../../pages/event/event_screen.dart';
 import '../../pages/home/home_screen.dart';
 import '../../pages/network/network_screen.dart';
 
 import '../../pages/profile/profile_screen.dart';
-import '../../pages/search/search_screen.dart';
+
 
 class MainBottomNav extends StatefulWidget {
   const MainBottomNav({super.key});
@@ -47,7 +48,7 @@ class _MainBottomNavState extends State<MainBottomNav> {
 
   final List<Widget> _screens = [
     HomeScreen(),
-    SearchScreen(),
+    BrowseScreen(),
     EventScreen(),
     NetworkScreen(),
     ProfileScreen(),

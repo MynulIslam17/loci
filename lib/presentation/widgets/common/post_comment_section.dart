@@ -21,7 +21,7 @@ class PostCommentSection extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        // Reply Input
+        // Reply Input filed with send icon
         Row(
           children: [
             CircleAvatar(radius: 20, backgroundImage: AssetImage(currentUserImage)),

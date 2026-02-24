@@ -1,3 +1,5 @@
+ //--- this filed include mode class for poll and comment
+
 class PollOption {
   final String title;
   final double percent;

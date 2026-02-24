@@ -138,6 +138,9 @@ class $AssetsImagesGen {
   /// File path: assets/images/logo.svg
   String get logoSvg => 'assets/images/logo.svg';
 
+  /// File path: assets/images/machine.png
+  AssetGenImage get machine => const AssetGenImage('assets/images/machine.png');
+
   /// File path: assets/images/onback.svg
   String get onback => 'assets/images/onback.svg';
 
@@ -181,6 +184,7 @@ class $AssetsImagesGen {
     location,
     logoPng,
     logoSvg,
+    machine,
     onback,
     onimg1,
     onimg2,

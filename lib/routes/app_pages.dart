@@ -4,11 +4,14 @@ import 'package:loci/presentation/pages/auth/login_screen.dart';
 import 'package:loci/presentation/pages/auth/otp_screen.dart';
 import 'package:loci/presentation/pages/auth/reset_pass_sceen.dart';
 import 'package:loci/presentation/pages/auth/signup_screen.dart';
+import 'package:loci/presentation/pages/browse/business_profile_screen.dart';
 import 'package:loci/presentation/pages/event/event_details.dart';
 import 'package:loci/presentation/pages/onboarding/onboarding_screen.dart';
 import 'package:loci/presentation/pages/splash/splash_screen.dart';
 import 'package:loci/presentation/widgets/common/main_bottom_nav.dart';
 import 'package:loci/routes/app_routes.dart';
+
+import '../presentation/pages/browse/browse_businesses.dart';
 
 abstract class AppPages {
   static const String initialRoutes = AppRoutes.splash;
@@ -32,7 +35,12 @@ abstract class AppPages {
 
     // ----- event details
 
-    GetPage(name: AppRoutes.eventDetails, page: () => EventDetails())
+    GetPage(name: AppRoutes.eventDetails, page: () => EventDetails()),
+
+    // ----- browse business
+    GetPage(name: AppRoutes.browseBusiness, page: () => BrowseBusinesses()),
+    GetPage(name: AppRoutes.browseBusiness, page: () => BrowseBusinesses()),
+    GetPage(name: AppRoutes.businessProfile, page: () => BusinessProfileScreen()),
 
 
 

@@ -22,6 +22,14 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+  // --- Search bar controls ---
+  bool _showDropdown = false;
+  bool _isPopupOpen = false;
+  String _selectedCategory = "Foodie";
+  final TextEditingController _postController = TextEditingController();
+  final FocusNode _postFocusNode = FocusNode();
+
+  //--banner data---
   final List<CarouselData> bannerData = [
     CarouselData(
       placeName: "Barclay Prime",
@@ -37,12 +45,14 @@ class _HomeScreenState extends State<HomeScreen> {
     ),
   ];
 
+  //--activity data--
   final List<Map<String, dynamic>> activity = [
     {"name": "Communities", "icon": Assets.icons.comunity},
     {"name": "Events", "icon": Assets.icons.event1},
     {"name": "Raffles", "icon": Assets.icons.ticket},
   ];
 
+  // --pols data--
   final List<PollOption> myPolls = [
     PollOption(
       title: "Pizzaburg",
@@ -58,15 +68,41 @@ class _HomeScreenState extends State<HomeScreen> {
     ),
   ];
 
+  //-- dummy  comments --
   final List<CommentData> myComments = [
     CommentData(
       userName: "Alexandra Broke",
-      commentText: "This was one of the most epic experiences, that I've got myself involved in!",
+      commentText:
+          "This was one of the most epic experiences, that I've got myself involved in!",
       userImage: Assets.images.user2.path,
       likes: "200",
       replies: "2",
     ),
+    CommentData(
+      userName: "rakib",
+      commentText:
+          "This was one of the most epic experiences, that I've got myself involved in!",
+      userImage: Assets.images.user1.path,
+      likes: "200",
+      replies: "2",
+    ),
+    CommentData(
+      userName: "abir",
+      commentText:
+          "This was one of the most epic experiences, that I've got myself involved in!",
+      userImage: Assets.images.user3.path,
+      likes: "200",
+      replies: "2",
+    ),
   ];
+
+  @override
+  void dispose() {
+    // TODO: implement dispose
+    _postFocusNode.dispose();
+    _postController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -90,7 +126,9 @@ class _HomeScreenState extends State<HomeScreen> {
                 children: activity.map((act) {
                   return InkWell(
                     borderRadius: BorderRadius.circular(10),
-                    onTap: () {},
+                    onTap: () {
+                      //-- on tap to do--
+                    },
                     child: SizedBox(
                       width: 100,
                       height: 70,
@@ -115,14 +153,162 @@ class _HomeScreenState extends State<HomeScreen> {
 
             const SizedBox(height: 20),
 
-            // --- 3. POST CARD ---
+            // --- 3. SEARCH BAR WITH CATEGORY DROPDOWN ---
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                decoration: BoxDecoration(
+                  color: context.colorScheme.surface,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: _showDropdown
+                        ? context.colorScheme.primary
+                        : context.colorScheme.outline,
+                  ),
+                ),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    // --- TextField ---
+                    Expanded(
+                      child: TextField(
+                        minLines: 1,
+                        maxLines: 3,
+                        controller: _postController,
+                        focusNode: _postFocusNode,
+                        onTap: () {
+                          setState(() {
+                            _showDropdown = true;
+                          });
+                        },
+                        onTapOutside: (_) {
+                          FocusScope.of(context).unfocus();
+                          Future.delayed(const Duration(milliseconds: 200), () {
+                            if (_postController.text.isEmpty &&
+                                !_postFocusNode.hasFocus &&
+                                !_isPopupOpen) {
+                              setState(() {
+                                _showDropdown = false;
+                              });
+                            }
+                          });
+                        },
+                        style: AppTextStyle.textSm(
+                          color: context.colorScheme.onSurface,
+                        ),
+                        decoration: InputDecoration(
+                          hintText: 'Ask anything',
+                          border: InputBorder.none,
+                          isCollapsed: true,
+                          contentPadding: const EdgeInsets.symmetric(vertical: 10),
+                          hintStyle: AppTextStyle.textSm(
+                            color: context.colorScheme.onSurfaceVariant.withOpacity(0.6),
+                          ),
+                        ),
+                      ),
+                    ),
+
+                    // --- Category Chip ---
+                    if (_showDropdown) ...[
+                      PopupMenuButton<String>(
+                        padding: EdgeInsets.zero,
+                        offset: const Offset(0, 40),
+                        onOpened: () {
+                          setState(() {
+                            _isPopupOpen = true;
+                          });
+                        },
+                        onCanceled: () {
+                          setState(() {
+                            _isPopupOpen = false;
+                          });
+                        },
+                        onSelected: (String value) {
+                          setState(() {
+                            _selectedCategory = value;
+                            _isPopupOpen = false;
+                          });
+                        },
+                        itemBuilder: (context) => [
+                          const PopupMenuItem(value: 'Foodie', child: Text('Foodie')),
+                          const PopupMenuItem(value: 'Drinks', child: Text('Drinks')),
+                          const PopupMenuItem(value: 'Restu', child: Text('Restu')),
+                        ],
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                          margin: const EdgeInsets.only(left: 8, bottom: 6),
+                          decoration: BoxDecoration(
+                            color: context.colorScheme.primary.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                _selectedCategory,
+                                style: AppTextStyle.textSm(
+                                  color: context.colorScheme.primary,
+                                ),
+                              ),
+                              const SizedBox(width: 4),
+                              Icon(
+                                Icons.arrow_drop_down,
+                                size: 16,
+                                color: context.colorScheme.primary,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+
+                    // --- Send Button ---
+                    if (_showDropdown) ...[
+                      const SizedBox(width: 4),
+                      IconButton(
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(),
+                        onPressed: () {
+                          if (_postController.text.isNotEmpty) {
+                            print(
+                              "Posting: ${_postController.text} in $_selectedCategory",
+                            );
+                            _postController.clear();
+                            _postFocusNode.unfocus();
+                            setState(() {
+                              _showDropdown = false;
+                              _isPopupOpen = false;
+                            });
+                          }
+                        },
+                        icon: SvgPicture.asset(
+                          Assets.icons.send,
+                          height: 20,
+                          colorFilter: ColorFilter.mode(
+                            _postController.text.isNotEmpty
+                                ? context.colorScheme.primary
+                                : context.colorScheme.onSurfaceVariant.withOpacity(0.4),
+                            BlendMode.srcIn,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            ),
+
+            // --- . POST CARD ---
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
               child: Card(
-                elevation: 0, // Using 0 for modern flat design
+                elevation: 0,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(16),
-                  side: BorderSide(color: context.colorScheme.outline.withOpacity(0.1)),
+                  side: BorderSide(
+                    color: context.colorScheme.outline.withOpacity(0.1),
+                  ),
                 ),
                 color: context.colorScheme.surfaceContainerHigh,
                 child: Padding(
@@ -130,7 +316,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Header
+                      // -- Header--
                       UserPostHeader(
                         fullName: "Azaan Mahmud",
                         date: "12-01-26",
@@ -140,7 +326,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
                       const SizedBox(height: 20),
 
-                      // Post Content
+                      //-- Post Content(with se more functionality)--
                       ExpandableText(
                         text: "Any food that you liked recently? " * 5,
                         trimLines: 2,
@@ -148,21 +334,80 @@ class _HomeScreenState extends State<HomeScreen> {
 
                       const SizedBox(height: 20),
 
-                      // DYNAMIC POLL SECTION
+                      //--- DYNAMIC POLL SECTION---
                       PostPollSection(options: myPolls),
 
                       const SizedBox(height: 20),
 
-                      // INTERACTION BAR (Like/Comment)
-                      PostInteractionBar(likes: "200", comments: "45"),
+                      //-- TextField for mention business(works in pols)
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          CircleAvatar(
+                            radius: 20,
+                            backgroundImage: AssetImage(
+                              Assets.images.user3.path,
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: TextField(
+                              style: AppTextStyle.textSm(
+                                color: context.colorScheme.onSurface,
+                              ),
+                              decoration: InputDecoration(
+                                hintText: 'Vote your choose...',
+                                hintStyle: AppTextStyle.textXs(
+                                  color: context.colorScheme.onSurfaceVariant
+                                      .withOpacity(0.6),
+                                ),
 
-                      const SizedBox(height: 8),
-                      Divider(color: context.colorScheme.outline.withOpacity(0.2)),
+                                contentPadding: const EdgeInsets.symmetric(
+                                  vertical: 8,
+                                ),
+                                enabledBorder: UnderlineInputBorder(
+                                  borderSide: BorderSide(
+                                    color: context.colorScheme.outlineVariant,
+                                  ),
+                                ),
+                                errorBorder: UnderlineInputBorder(
+                                  borderSide: BorderSide(
+                                    color: context.colorScheme.error,
+                                  ),
+                                ),
+                                focusedErrorBorder: UnderlineInputBorder(
+                                  borderSide: BorderSide(
+                                    color: context.colorScheme.error,
+                                    width: 2,
+                                  ),
+                                ),
+                                focusedBorder: UnderlineInputBorder(
+                                  borderSide: BorderSide(
+                                    color: context.colorScheme.primary,
+                                    width: 1.5,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
 
                       const SizedBox(height: 20),
 
-                      // DYNAMIC COMMENT SECTION
+                      //-- INTERACTION BAR (Like/Comment)
+                      PostInteractionBar(likes: "200", comments: "45"),
+
+                      const SizedBox(height: 8),
+                      Divider(
+                        color: context.colorScheme.onSurface.withOpacity(0.3),
+                      ),
+
+                      const SizedBox(height: 20),
+
+                      //-- DYNAMIC COMMENT SECTION
                       PostCommentSection(
+                        //--this is image of the use wo currently log in
                         currentUserImage: Assets.images.user3.path,
                         comments: myComments,
                       ),
