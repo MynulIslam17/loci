@@ -1,14 +1,14 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
-class NetworkScreen extends StatefulWidget {
-  const NetworkScreen({super.key});
+class ProfileScreen extends StatefulWidget {
+  const ProfileScreen({super.key});
 
   @override
-  State<NetworkScreen> createState() => _NetworkScreenState();
+  State<ProfileScreen> createState() => _ProfileScreenState();
 }
 
-class _NetworkScreenState extends State<NetworkScreen> {
+class _ProfileScreenState extends State<ProfileScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
