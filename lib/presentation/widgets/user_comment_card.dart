@@ -42,7 +42,7 @@ class UserCommentCard extends StatelessWidget {
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
                 // Adaptive color for light/dark mode
-                color: context.colorScheme.onPrimaryContainer.withOpacity(0.1),
+                color: context.colorScheme.onPrimaryContainer,
                 borderRadius: const BorderRadius.only(
                   topRight: Radius.circular(12),
                   bottomLeft: Radius.circular(12),

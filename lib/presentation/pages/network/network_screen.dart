@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:get/get_core/src/get_main.dart';
+import 'package:get/get_navigation/src/extension_navigation.dart';
 import 'package:loci/core/constants/app_text_style.dart';
+
+import '../../../routes/app_routes.dart';
 
 class NetworkScreen extends StatefulWidget {
   const NetworkScreen({super.key});
@@ -22,6 +26,7 @@ class _NetworkScreenState extends State<NetworkScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const SizedBox(height: 12),
+
             Text(
               "Networking Dashboard",
               style: TextStyle(
@@ -33,7 +38,10 @@ class _NetworkScreenState extends State<NetworkScreen> {
             const SizedBox(height: 8),
             Text(
               "Overview of your network",
-              style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 16),
+              style: TextStyle(
+                color: colorScheme.onSurfaceVariant,
+                fontSize: 16,
+              ),
             ),
             const SizedBox(height: 16),
 
@@ -46,17 +54,35 @@ class _NetworkScreenState extends State<NetworkScreen> {
               mainAxisSpacing: 12,
               childAspectRatio: 1.5,
               children: [
-                _buildStatCard(context, "Total Contacts", "0", Icons.people_outline),
+                _buildStatCard(
+                  context,
+                  "Total Contacts",
+                  "0",
+                  Icons.people_outline,
+                ),
                 _buildStatCard(context, "Check-Ins", "0", Icons.person_outline),
-                _buildStatCard(context, "Referrals Sent", "0", Icons.send_outlined),
-                _buildStatCard(context, "Upcoming Meeting", "0", Icons.handshake_outlined),
+                _buildStatCard(
+                  context,
+                  "Referrals Sent",
+                  "0",
+                  Icons.send_outlined,
+                ),
+                _buildStatCard(
+                  context,
+                  "Upcoming Meeting",
+                  "0",
+                  Icons.handshake_outlined,
+                ),
               ],
             ),
 
             const SizedBox(height: 24),
             Text(
               "Quick Actions",
-              style: AppTextStyle.textSm(color: colorScheme.onSurface,weight: FontWeight.w500),
+              style: AppTextStyle.textMd(
+                color: colorScheme.onSurface,
+                weight: FontWeight.w600,
+              ),
             ),
             const SizedBox(height: 16),
 
@@ -64,25 +90,29 @@ class _NetworkScreenState extends State<NetworkScreen> {
             ElevatedButton.icon(
               onPressed: () {},
               icon: Icon(Icons.grid_view_rounded, color: colorScheme.onPrimary),
-              label: Text("Check In",
-                  style: AppTextStyle.textMd(weight: FontWeight.w600)),
+              label: Text(
+                "Check In",
+                style: AppTextStyle.textMd(weight: FontWeight.w600),
+              ),
               style: ElevatedButton.styleFrom(
                 backgroundColor: colorScheme.primary,
-                foregroundColor:colorScheme.onPrimary ,
+                foregroundColor: colorScheme.onPrimary,
                 minimumSize: const Size(double.infinity, 54),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
                 elevation: 0,
               ),
             ),
 
-            const SizedBox(height: 12),
+            const SizedBox(height: 18),
 
             // --- Secondary Action Buttons ---
             Row(
               children: [
                 _buildActionButton(context, "Referral"),
                 const SizedBox(width: 10),
-                _buildActionButton(context, "Network"),
+                _buildActionButton(context, "Connection"),
                 const SizedBox(width: 10),
                 _buildActionButton(context, "Meeting"),
               ],
@@ -91,7 +121,10 @@ class _NetworkScreenState extends State<NetworkScreen> {
             const SizedBox(height: 24),
             Text(
               "Recent Check-Ins",
-              style: AppTextStyle.textMd(color: colorScheme.onSurface,weight: FontWeight.w600),
+              style: AppTextStyle.textMd(
+                color: colorScheme.onSurface,
+                weight: FontWeight.w600,
+              ),
             ),
             const SizedBox(height: 12),
 
@@ -105,7 +138,12 @@ class _NetworkScreenState extends State<NetworkScreen> {
   }
 
   // Individual Stat Cards
-  Widget _buildStatCard(BuildContext context, String label, String value, IconData icon) {
+  Widget _buildStatCard(
+    BuildContext context,
+    String label,
+    String value,
+    IconData icon,
+  ) {
     final colorScheme = Theme.of(context).colorScheme;
     return Card(
       color: colorScheme.surfaceContainerHigh,
@@ -117,11 +155,23 @@ class _NetworkScreenState extends State<NetworkScreen> {
             children: [
               Icon(icon, color: colorScheme.onSurface, size: 24),
               const SizedBox(width: 12),
-              Text(value, style: AppTextStyle.textXl(color: colorScheme.onSurface,weight: FontWeight.w500)),
+              Text(
+                value,
+                style: AppTextStyle.textXl(
+                  color: colorScheme.onSurface,
+                  weight: FontWeight.w500,
+                ),
+              ),
             ],
           ),
           const SizedBox(height: 8),
-          Text(label, style: AppTextStyle.textXs(color: colorScheme.onSurface,weight: FontWeight.w500)),
+          Text(
+            label,
+            style: AppTextStyle.textXs(
+              color: colorScheme.onSurface,
+              weight: FontWeight.w500,
+            ),
+          ),
         ],
       ),
     );
@@ -132,13 +182,23 @@ class _NetworkScreenState extends State<NetworkScreen> {
     final colorScheme = Theme.of(context).colorScheme;
     return Expanded(
       child: OutlinedButton(
-        onPressed: () {},
+        onPressed: () {
+          _actionButtonHandler(label);
+        },
         style: OutlinedButton.styleFrom(
           padding: const EdgeInsets.symmetric(vertical: 14),
           side: BorderSide(color: colorScheme.outline),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
         ),
-        child: Text(label,style: AppTextStyle.textMd(color: colorScheme.onSurface,weight: FontWeight.w600)),
+        child: Text(
+          label,
+          style: AppTextStyle.textSm(
+            color: colorScheme.onSurface,
+            weight: FontWeight.w600,
+          ),
+        ),
       ),
     );
   }
@@ -150,29 +210,46 @@ class _NetworkScreenState extends State<NetworkScreen> {
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
       itemCount: 2,
-      separatorBuilder: (context, index) => Divider(height: 1, color: colorScheme.outline.withOpacity(0.2)),
+      separatorBuilder: (context, index) =>
+          Divider(height: 1, color: colorScheme.outline.withOpacity(0.2)),
       itemBuilder: (context, index) {
         return Card(
           color: colorScheme.surfaceContainerHigh,
           child: ListTile(
-            contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 12,
+              vertical: 4,
+            ),
             leading: const CircleAvatar(
               radius: 17,
               backgroundImage: NetworkImage('https://i.pravatar.cc/150?img=12'),
             ),
-            title: Text("Alexandra Broke",
-                overflow: TextOverflow.ellipsis,
-                maxLines: 1,
-                style: AppTextStyle.textXs(color: colorScheme.onSurface,weight: FontWeight.w700)),
-            subtitle: Text("43 min ago",
-               style: AppTextStyle.textXs(color: colorScheme.onSurface,weight: FontWeight.w500)),
+            title: Text(
+              "Alexandra Broke",
+              overflow: TextOverflow.ellipsis,
+              maxLines: 1,
+              style: AppTextStyle.textXs(
+                color: colorScheme.onSurface,
+                weight: FontWeight.w700,
+              ),
+            ),
+            subtitle: Text(
+              "43 min ago",
+              style: AppTextStyle.textXs(
+                color: colorScheme.onSurfaceVariant,
+                weight: FontWeight.w500,
+              ).copyWith(fontSize: 10),
+            ),
             trailing: Card(
               color: colorScheme.surfaceContainerHigh,
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 6,vertical: 4),
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
                 child: Text(
                   "Atlanta Tech Meetup",
-                    style: AppTextStyle.textXs(color: colorScheme.onSurface,weight: FontWeight.w500)
+                  style: AppTextStyle.textXs(
+                    color: colorScheme.onSurface,
+                    weight: FontWeight.w500,
+                  ).copyWith(fontSize: 10),
                 ),
               ),
             ),
@@ -181,4 +258,25 @@ class _NetworkScreenState extends State<NetworkScreen> {
       },
     );
   }
+
+  //--action handler for go to next route
+  void _actionButtonHandler(String label) async {
+    switch (label) {
+      case "Referral":
+        Get.toNamed(AppRoutes.referral);
+        break;
+
+      case "Connection":
+        Get.toNamed(AppRoutes.connection);
+        break;
+
+      case "Meeting":
+        Get.toNamed(AppRoutes.meeting);
+        break;
+    }
+  }
+
+
+
+
 }

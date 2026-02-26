@@ -6,6 +6,9 @@ import 'package:loci/presentation/pages/auth/reset_pass_sceen.dart';
 import 'package:loci/presentation/pages/auth/signup_screen.dart';
 import 'package:loci/presentation/pages/browse/business_profile_screen.dart';
 import 'package:loci/presentation/pages/event/event_details.dart';
+import 'package:loci/presentation/pages/network/connection_screen.dart';
+import 'package:loci/presentation/pages/network/metting_screen.dart';
+import 'package:loci/presentation/pages/network/referrals_screen.dart';
 import 'package:loci/presentation/pages/onboarding/onboarding_screen.dart';
 import 'package:loci/presentation/pages/splash/splash_screen.dart';
 import 'package:loci/presentation/widgets/common/main_bottom_nav.dart';
@@ -39,12 +42,12 @@ abstract class AppPages {
 
     // ----- browse business
     GetPage(name: AppRoutes.browseBusiness, page: () => BrowseBusinesses()),
-    GetPage(name: AppRoutes.browseBusiness, page: () => BrowseBusinesses()),
     GetPage(name: AppRoutes.businessProfile, page: () => BusinessProfileScreen()),
 
-
-
-
+    // ----- Network
+    GetPage(name: AppRoutes.referral, page: () => ReferralsScreen()),
+    GetPage(name: AppRoutes.meeting, page: () => MeetingScreen()),
+    GetPage(name: AppRoutes.connection, page: () => ConnectionScreen()),
 
 
 

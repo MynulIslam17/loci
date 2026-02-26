@@ -1,21 +1,16 @@
-enum jobStatus {
+enum ReferralStatus { //-- for referralStatus
+  sent,
   pending,
   rejected,
-  inProgress,
-  completed,
-  incompleted,
 }
 
 
-String getJobStatus(jobStatus status){
+String getReferralStatus(ReferralStatus status){
 
   switch(status){
-
-    case  jobStatus.pending : return "pending";
-    case jobStatus.inProgress : return "in_progress";
-    case jobStatus.completed : return "completed";
-    case jobStatus.incompleted : return "in_completed";
-    case jobStatus.rejected : return "rejected";
+    case ReferralStatus.sent : return "sent";
+    case  ReferralStatus.pending : return "pending";
+    case ReferralStatus.rejected : return "rejected";
 
 
   }

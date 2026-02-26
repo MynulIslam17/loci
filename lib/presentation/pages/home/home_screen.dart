@@ -303,14 +303,15 @@ class _HomeScreenState extends State<HomeScreen> {
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
               child: Card(
-                elevation: 0,
+
+                elevation: 2,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(16),
                   side: BorderSide(
                     color: context.colorScheme.outline.withOpacity(0.1),
                   ),
                 ),
-                color: context.colorScheme.surfaceContainerHigh,
+                color: context.colorScheme.surfaceContainer,
                 child: Padding(
                   padding: const EdgeInsets.all(14),
                   child: Column(

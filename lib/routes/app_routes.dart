@@ -2,6 +2,7 @@
 abstract class AppRoutes {
 
 
+  //--- auth---
   static const String splash = '/splash';
   static const String onBoarding = '/onBoarding';
   static const String login = '/login';
@@ -9,6 +10,8 @@ abstract class AppRoutes {
   static const String forgetPass = '/forgetPass';
   static const String otp = '/otp';
   static const String passReset = '/passReset';
+
+
   static const String bottomNav = '/bottomNav';
 
 
@@ -20,6 +23,10 @@ abstract class AppRoutes {
   static const String browseBusiness = '/browseBusiness';
   static const String businessProfile = '/businessProfile';
 
+  //---network----
+static const String connection="/connection";
+static const String meeting="/meeting";
+static const String referral="/referral";
 
 
 

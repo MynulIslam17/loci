@@ -23,6 +23,10 @@ class AppThemes {
       outline: AppColors.base600,           // Light borders
       error: AppColors.danger,              // Status Red
       surfaceContainerHigh: AppColors.base100, // Card background
+
+      surfaceContainer: AppColors.base600, //works on card (on light mode show light dark)
+
+
     ),
 
     appBarTheme: const AppBarTheme(
@@ -52,6 +56,10 @@ class AppThemes {
       outline: AppColors.dark400,           // Darker borders
       surfaceContainerHigh: AppColors.dark500, // Card Backgrounds
       error: AppColors.danger,
+
+      surfaceContainer: AppColors.dark800,//works on card (on dark mode show deep dark)
+
+
     ),
 
     appBarTheme: const AppBarTheme(
