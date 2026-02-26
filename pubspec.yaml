@@ -35,6 +35,8 @@ dependencies:
   percent_indicator: ^4.2.3
   #review*rating
   flutter_rating_bar: ^4.0.1
+  #barcode scanner
+  mobile_scanner: ^7.1.2
 
 
 dev_dependencies:

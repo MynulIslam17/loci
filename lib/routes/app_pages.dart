@@ -5,6 +5,8 @@ import 'package:loci/presentation/pages/auth/otp_screen.dart';
 import 'package:loci/presentation/pages/auth/reset_pass_sceen.dart';
 import 'package:loci/presentation/pages/auth/signup_screen.dart';
 import 'package:loci/presentation/pages/browse/business_profile_screen.dart';
+import 'package:loci/presentation/pages/checkin/MyBarCode.dart';
+import 'package:loci/presentation/pages/checkin/check_in_screen.dart';
 import 'package:loci/presentation/pages/event/event_details.dart';
 import 'package:loci/presentation/pages/network/connection_screen.dart';
 import 'package:loci/presentation/pages/network/metting_screen.dart';
@@ -53,6 +55,9 @@ abstract class AppPages {
     GetPage(name: AppRoutes.sendReferral, page: () => SendNewReferralsScreen()),
     GetPage(name: AppRoutes.scheduleMeeting, page: () => ScheduleMeetingScreen()),
 
+    // ----- CheckIc
+    GetPage(name: AppRoutes.checkIn, page: () => CheckInScreen()),
+    GetPage(name: AppRoutes.myBarCode, page: () => MyBarCode()),
 
 
   ];

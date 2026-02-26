@@ -31,6 +31,10 @@ static const String sendReferral="/sendReferral";
 static const String scheduleMeeting="/scheduleMeeting";
 
 
+//---checkIn
+  static const String checkIn="/checkIn";
+  static const String myBarCode="/myBarCode";
+
 
 
 

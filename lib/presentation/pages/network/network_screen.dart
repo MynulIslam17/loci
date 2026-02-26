@@ -88,7 +88,12 @@ class _NetworkScreenState extends State<NetworkScreen> {
 
             // --- Primary Quick Action Button ---
             ElevatedButton.icon(
-              onPressed: () {},
+              onPressed: () {
+                //---- got to barcode scner screen
+                Get.toNamed(AppRoutes.checkIn);
+
+
+              },
               icon: Icon(Icons.grid_view_rounded, color: colorScheme.onPrimary),
               label: Text(
                 "Check In",
