@@ -27,6 +27,8 @@ abstract class AppRoutes {
 static const String connection="/connection";
 static const String meeting="/meeting";
 static const String referral="/referral";
+static const String sendReferral="/sendReferral";
+static const String scheduleMeeting="/scheduleMeeting";
 
 
 
