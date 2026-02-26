@@ -22,7 +22,7 @@ class PostPollSection extends StatelessWidget {
           title: opt.title,
           percent: opt.percent,
           imagePath: opt.imagePath,
-          trailingText: opt.trailingText,
+        //  trailingText: opt.trailingText,
         );
       },
     );

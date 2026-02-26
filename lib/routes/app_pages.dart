@@ -9,6 +9,8 @@ import 'package:loci/presentation/pages/event/event_details.dart';
 import 'package:loci/presentation/pages/network/connection_screen.dart';
 import 'package:loci/presentation/pages/network/metting_screen.dart';
 import 'package:loci/presentation/pages/network/referrals_screen.dart';
+import 'package:loci/presentation/pages/network/schedule_meeting_screen.dart';
+import 'package:loci/presentation/pages/network/send_new_referrals_screen.dart';
 import 'package:loci/presentation/pages/onboarding/onboarding_screen.dart';
 import 'package:loci/presentation/pages/splash/splash_screen.dart';
 import 'package:loci/presentation/widgets/common/main_bottom_nav.dart';
@@ -48,6 +50,8 @@ abstract class AppPages {
     GetPage(name: AppRoutes.referral, page: () => ReferralsScreen()),
     GetPage(name: AppRoutes.meeting, page: () => MeetingScreen()),
     GetPage(name: AppRoutes.connection, page: () => ConnectionScreen()),
+    GetPage(name: AppRoutes.sendReferral, page: () => SendNewReferralsScreen()),
+    GetPage(name: AppRoutes.scheduleMeeting, page: () => ScheduleMeetingScreen()),
 
 
 

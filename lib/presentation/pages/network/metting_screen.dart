@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:get/get_core/src/get_main.dart';
+import 'package:get/get_navigation/src/extension_navigation.dart';
 import 'package:loci/core/constants/app_text_style.dart';
 import 'package:loci/core/theme/theme_extention.dart';
 import 'package:loci/presentation/widgets/custom_button.dart';
+import 'package:loci/routes/app_routes.dart';
 import '../../../core/utils/status.dart';
 import '../../widgets/referral_card.dart';
 
@@ -115,7 +118,10 @@ class _MeetingScreenState extends State<MeetingScreen> {
           ),
         ],
       ),
-      onPressed: () {},
+      onPressed: () {
+        //----- go to schedule screen
+        Get.toNamed(AppRoutes.scheduleMeeting);
+      },
     );
   }
 
