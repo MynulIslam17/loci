@@ -37,6 +37,7 @@ dependencies:
   flutter_rating_bar: ^4.0.1
   #barcode scanner
   mobile_scanner: ^7.1.2
+  vibration: ^2.0.0
 
 
 dev_dependencies:
