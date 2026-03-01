@@ -31,10 +31,14 @@ static const String sendReferral="/sendReferral";
 static const String scheduleMeeting="/scheduleMeeting";
 
 
-//---checkIn
+//---checkIn(barcode)
   static const String checkIn="/checkIn";
-  static const String myBarCode="/myBarCode";
 
+  //---screens on drawer
+  static const String exploreRoutes="/exploreRoutes";
+  static const String activeRaffles="/activeRaffles";
+
+  //static const String recentActivity="/exploreRoutes";
 
 
 

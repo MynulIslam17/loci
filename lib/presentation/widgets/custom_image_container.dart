@@ -1,38 +1,41 @@
 import 'dart:io';
-
-
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:shimmer/shimmer.dart';
 
-
 class CustomCachedImage extends StatelessWidget {
-  final String? imageUrl;   // ← For network or assets
-  final File? imageFile;    // ← For picked/local files
+  final String? imageUrl;
+  final File? imageFile;
   final double? height;
   final double? width;
   final double borderRadius;
   final bool isCircle;
   final BoxFit fit;
+  // --- ADDED PARAMETER ---
+  final BorderRadius? customBorderRadius;
 
   const CustomCachedImage({
     super.key,
-    this.imageUrl,      // works for image url
-    this.imageFile,     // also works for file
+    this.imageUrl,
+    this.imageFile,
     this.height,
     this.width,
     this.borderRadius = 12.0,
     this.isCircle = false,
     this.fit = BoxFit.cover,
+    this.customBorderRadius, // Initialize it here
   });
 
   @override
   Widget build(BuildContext context) {
+    // Logic to determine which radius to use
+    final effectiveRadius = customBorderRadius ??
+        BorderRadius.circular(isCircle ? 1000 : borderRadius);
 
     /// check if upload file
     if (imageFile != null) {
       return ClipRRect(
-        borderRadius: BorderRadius.circular(isCircle ? 1000 : borderRadius),
+        borderRadius: effectiveRadius, // Updated
         child: Image.file(
           imageFile!,
           height: height,
@@ -47,7 +50,7 @@ class CustomCachedImage extends StatelessWidget {
     final bool isAsset = imageUrl?.startsWith('assets/') == true;
 
     return ClipRRect(
-      borderRadius: BorderRadius.circular(isCircle ? 1000 : borderRadius),
+      borderRadius: effectiveRadius, // Updated
       child: isAsset
           ? Image.asset(
         imageUrl!,
@@ -66,6 +69,7 @@ class CustomCachedImage extends StatelessWidget {
       ),
     );
   }
+
   // Helper for Shimmer placeholder
   Widget _buildPlaceholder() {
     return Shimmer.fromColors(

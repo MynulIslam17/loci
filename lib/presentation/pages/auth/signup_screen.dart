@@ -49,7 +49,7 @@ class _SignupScreenState extends State<SignupScreen> {
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FA),
       body: SlidingUpPanel(
-        maxHeight: MediaQuery.of(context).size.height *0.8,
+        maxHeight: MediaQuery.of(context).size.height ,
         minHeight: panelHeight,
        parallaxEnabled: true,
         color: context.colorScheme.surface,

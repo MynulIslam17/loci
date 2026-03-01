@@ -34,12 +34,12 @@ class _LoginScreenState extends State<LoginScreen> {
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FA),
       body: SlidingUpPanel(
-        maxHeight: MediaQuery.of(context).size.height * 0.8,
+        maxHeight: MediaQuery.of(context).size.height ,
         minHeight: panelHeight,
        // parallaxEnabled: true,
         color: context.colorScheme.surface,
         parallaxOffset: .5,
-
+        parallaxEnabled: true,
         body: _buildBackgroundImageSection(context),
         panelBuilder: (sc) => _buildLoginForm(sc),
         borderRadius: const BorderRadius.only(
@@ -120,7 +120,6 @@ class _LoginScreenState extends State<LoginScreen> {
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
       children: [
         // 1. HEADER SECTION
-        const SizedBox(height: 24),
         Center(
           child: CustomRichText(parts: [
             TextPart(
@@ -318,7 +317,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
 
 void _loginHandler()async{
-    Get.toNamed(AppRoutes.bottomNav);
+    Get.offAllNamed(AppRoutes.bottomNav);
 
 }
 

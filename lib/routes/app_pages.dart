@@ -5,15 +5,16 @@ import 'package:loci/presentation/pages/auth/otp_screen.dart';
 import 'package:loci/presentation/pages/auth/reset_pass_sceen.dart';
 import 'package:loci/presentation/pages/auth/signup_screen.dart';
 import 'package:loci/presentation/pages/browse/business_profile_screen.dart';
-import 'package:loci/presentation/pages/checkin/MyBarCode.dart';
 import 'package:loci/presentation/pages/checkin/check_in_screen.dart';
 import 'package:loci/presentation/pages/event/event_details.dart';
+import 'package:loci/presentation/pages/explore_routes/explore_routes_screen.dart';
 import 'package:loci/presentation/pages/network/connection_screen.dart';
 import 'package:loci/presentation/pages/network/metting_screen.dart';
 import 'package:loci/presentation/pages/network/referrals_screen.dart';
 import 'package:loci/presentation/pages/network/schedule_meeting_screen.dart';
 import 'package:loci/presentation/pages/network/send_new_referrals_screen.dart';
 import 'package:loci/presentation/pages/onboarding/onboarding_screen.dart';
+import 'package:loci/presentation/pages/raffles/active_raffles_screen.dart';
 import 'package:loci/presentation/pages/splash/splash_screen.dart';
 import 'package:loci/presentation/widgets/common/main_bottom_nav.dart';
 import 'package:loci/routes/app_routes.dart';
@@ -55,9 +56,17 @@ abstract class AppPages {
     GetPage(name: AppRoutes.sendReferral, page: () => SendNewReferralsScreen()),
     GetPage(name: AppRoutes.scheduleMeeting, page: () => ScheduleMeetingScreen()),
 
-    // ----- CheckIc
+    // ----- CheckIn
     GetPage(name: AppRoutes.checkIn, page: () => CheckInScreen()),
-    GetPage(name: AppRoutes.myBarCode, page: () => MyBarCode()),
+
+
+
+    GetPage(name: AppRoutes.exploreRoutes, page: () => ExploreRoutesScreen()),
+    GetPage(name: AppRoutes.activeRaffles, page: () => ActiveRafflesScreen()),
+
+
+
+
 
 
   ];
