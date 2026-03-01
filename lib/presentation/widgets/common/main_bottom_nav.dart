@@ -63,41 +63,7 @@ class _MainBottomNavState extends State<MainBottomNav> {
       backgroundColor: context.colorScheme.surface,
       drawer: _buildDrawer(context),
       appBar: _buildAppBar(context),
-      body: PopScope(
-        canPop: false,
-        onPopInvoked: (didPop) {
-          // if drawer page is open → go back to tab
-          if (navController.drawerPage != null) {
-            navController.drawerPage = null;
-            navController.update();
-            return; // Do nothing else
-          }
-          // when other tab selected comes home first to exit app
-          if (navController.currentIndex != 0) {
-            return navController.changeIndex(0); // go to Home tab
-          }
-
-          // exit app
-          SystemNavigator.pop();
-
-
-        },
-
-        child: SafeArea(
-          child: GetBuilder<NavController>(
-            builder: (controller) {
-              // show drawer page if exists
-              if (controller.drawerPage != null) {
-                return controller.drawerPage!;
-              }
-              // otherwise show bottom tab
-              else {
-                return _screens[controller.currentIndex];
-              }
-            },
-          ),
-        ),
-      ),
+      body: _buildBody(),
       bottomNavigationBar: _buildCustomBottomNav(context),
     );
   }
@@ -212,7 +178,36 @@ class _MainBottomNavState extends State<MainBottomNav> {
     );
   }
 
-
+  Widget _buildBody() {
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) {
+        if (navController.drawerPage != null) {
+          final nestedNav = navController.drawerNavigatorKey?.currentState;
+          if (nestedNav != null && nestedNav.canPop()) {
+            nestedNav.pop();
+          } else {
+            navController.drawerPage = null;
+            navController.drawerNavigatorKey = null;
+            navController.update();
+          }
+          return;
+        }
+        if (navController.currentIndex != 0) {
+          navController.changeIndex(0);
+          return;
+        }
+        SystemNavigator.pop();
+      },
+      child: SafeArea(
+        child: GetBuilder<NavController>(
+          builder: (controller) {
+            return controller.drawerPage ?? _screens[controller.currentIndex];
+          },
+        ),
+      ),
+    );
+  }
 
   Widget _buildCustomBottomNav(BuildContext context) {
     return GetBuilder<NavController>(
@@ -270,17 +265,25 @@ class _MainBottomNavState extends State<MainBottomNav> {
   }
 
   void _handleDrawerItem(String title) {
-    Get.back(); // close drawer
+    Get.back();
     switch (title) {
-      case "QR Code":
-        Get.toNamed(AppRoutes.checkIn);
-        break;
       case "Explore Routes":
-        navController.openDrawerPage(ExploreRoutesScreen());
+        navController.openDrawerPage(
+          ExploreRoutesScreen(),
+        );
         break;
       case "Active Raffles":
-        navController.openDrawerPage(ActiveRafflesScreen());
+        navController.openDrawerPage(
+          ActiveRafflesScreen(),
+          navigatorKey: ActiveRafflesScreen.navigatorKey,
+        );
+        break;
+
+      case "QR Code" :
+        Get.toNamed(AppRoutes.checkIn);
         break;
     }
+
+
   }
 }

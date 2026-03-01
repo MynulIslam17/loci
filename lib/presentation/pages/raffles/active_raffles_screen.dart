@@ -1,18 +1,37 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:loci/core/constants/app_text_style.dart';
 import 'package:loci/core/theme/theme_extention.dart';
+import 'package:loci/presentation/pages/raffles/raffles_details_screen.dart';
 import 'package:loci/presentation/widgets/custom_button.dart';
 import 'package:loci/presentation/widgets/custom_image_container.dart';
 import 'package:loci/presentation/widgets/custom_text_field.dart';
 
-class ActiveRafflesScreen extends StatefulWidget {
+
+class ActiveRafflesScreen extends StatelessWidget {
   const ActiveRafflesScreen({super.key});
+  static final navigatorKey = GlobalKey<NavigatorState>();
 
   @override
-  State<ActiveRafflesScreen> createState() => _ActiveRafflesScreenState();
+  Widget build(BuildContext context) {
+    return Navigator(
+      key: navigatorKey,
+      onGenerateRoute: (_) => MaterialPageRoute(
+        builder: (_) => const ActiveRafflesPage(),
+      ),
+    );
+  }
 }
 
-class _ActiveRafflesScreenState extends State<ActiveRafflesScreen> {
+
+class ActiveRafflesPage extends StatefulWidget {
+  const ActiveRafflesPage({super.key});
+
+  @override
+  State<ActiveRafflesPage> createState() => _ActiveRafflesPageState();
+}
+
+class _ActiveRafflesPageState extends State<ActiveRafflesPage> {
   final List<Map<String, dynamic>> raffleData = [
     {
       "title": "Coffee Lovers Bundle",
@@ -45,6 +64,7 @@ class _ActiveRafflesScreenState extends State<ActiveRafflesScreen> {
       "organizer": "Innovation District",
     },
   ];
+
   @override
   Widget build(BuildContext context) {
     final colorScheme = context.colorScheme;
@@ -87,7 +107,7 @@ class _ActiveRafflesScreenState extends State<ActiveRafflesScreen> {
           ),
           SliverList(
             delegate: SliverChildBuilderDelegate(
-              (context, index) => _buildRaffleCard(raffleData[index]),
+                  (context, index) => _buildRaffleCard(raffleData[index]),
               childCount: raffleData.length,
             ),
           ),
@@ -103,25 +123,21 @@ class _ActiveRafflesScreenState extends State<ActiveRafflesScreen> {
     return Card(
       margin: const EdgeInsets.only(bottom: 20),
       color: colorScheme.surfaceContainerHigh,
-
       clipBehavior: Clip.antiAlias,
       elevation: 2,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-
           CustomCachedImage(
             imageUrl: data['imageUrl'],
             height: 180,
             width: double.infinity,
             fit: BoxFit.cover,
-            customBorderRadius:BorderRadius.only(
+            customBorderRadius: const BorderRadius.only(
               topLeft: Radius.circular(12),
               topRight: Radius.circular(12),
-            )
+            ),
           ),
-
-
           Padding(
             padding: const EdgeInsets.all(16.0),
             child: Column(
@@ -150,7 +166,7 @@ class _ActiveRafflesScreenState extends State<ActiveRafflesScreen> {
                     horizontal: 16,
                   ),
                   decoration: BoxDecoration(
-                    color:colorScheme.primary.withOpacity(0.2),
+                    color: colorScheme.primary.withOpacity(0.2),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Text(
@@ -180,17 +196,24 @@ class _ActiveRafflesScreenState extends State<ActiveRafflesScreen> {
                 ),
                 const SizedBox(height: 16),
 
-                // Action Button
+
                 SizedBox(
                   width: double.infinity,
                   height: 48,
                   child: CustomButton(
                     backgroundColor: colorScheme.primary,
                     textColor: colorScheme.onPrimary,
-                    text:"Enter Raffle (3 check-ins required)",
-                    textStyle: AppTextStyle.textSm(weight:FontWeight.w600),
-                    onPressed: (){},
-                  )
+                    text: "Enter Raffle (${data['requiredCheckIns']} check-ins required)",
+                    textStyle: AppTextStyle.textSm(weight: FontWeight.w600),
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => RafflesDetailsScreen(),
+                        ),
+                      );
+                    },
+                  ),
                 ),
                 const SizedBox(height: 12),
                 Center(
@@ -209,3 +232,4 @@ class _ActiveRafflesScreenState extends State<ActiveRafflesScreen> {
     );
   }
 }
+

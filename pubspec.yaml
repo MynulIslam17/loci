@@ -39,6 +39,9 @@ dependencies:
   mobile_scanner: ^7.1.2
   vibration: ^2.0.0
 
+  #nested navigation
+  go_router: ^17.1.0
+
 
 dev_dependencies:
   flutter_test:
