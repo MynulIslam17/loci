@@ -189,7 +189,9 @@ class _SearchMyBusinessState extends State<SearchMyBusiness> {
                 description:
                 "Marland Clutch, founded in 1931, is a prominent global manufacturer...",
                 onViewPage: () {
-                  print("Navigate to Marland Clutch $index details");
+                  //--- go to my business page
+                  Get.toNamed(AppRoutes.myBusinessProfile);
+
                 },
               ),
               childCount: 5,

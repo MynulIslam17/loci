@@ -6,6 +6,7 @@ import 'package:loci/presentation/widgets/custom_image_container.dart';
 import 'package:loci/presentation/widgets/custom_text_field.dart';
 
 import '../../../gen/assets.gen.dart';
+import '../../widgets/review_card.dart';
 
 class BusinessProfileScreen extends StatefulWidget {
   const BusinessProfileScreen({super.key});
@@ -292,62 +293,15 @@ class _BusinessProfileScreenState extends State<BusinessProfileScreen> {
               physics: const NeverScrollableScrollPhysics(),
               itemCount: 2,
               itemBuilder: (context, index) {
-                return Container(
-                  margin: const EdgeInsets.only(bottom: 16),
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: context.colorScheme.surfaceContainerHigh,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: context.colorScheme.outlineVariant),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          CircleAvatar(
-                            radius: 20,
-                            backgroundImage: NetworkImage("https://i.pravatar.cc/150?u=$index"),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  "Alexandra ssssBroke",
-                                  style: AppTextStyle.textSm(weight: FontWeight.w600,color: context.colorScheme.onSurface),maxLines: 1,overflow: TextOverflow.ellipsis,
-                                ),
-                                Text(
-                                  "Barclay Pizza",
-                                  style: AppTextStyle.textXs(color: context.colorScheme.onSurfaceVariant),
-                                ),
-                              ],
-                            ),
-                          ),
+                return ReviewCard(
+                  name: "Alexandra ssssBroke",
+                  businessName: "Barclay Pizza",
+                  rating: 5,
+                  reviewText: "This was one of the most epic experience...",
+                  imageUrl: "https://i.pravatar.cc/150?u=1",
+                  onMenuTap: () {
 
-                          const SizedBox(width: 13,),
-                          //--review & menu
-                          Row(
-                            children: [
-                              ...List.generate(5, (i) => const Icon(
-                                  Icons.star,
-                                  color: Colors.orangeAccent,
-                                  size: 14
-                              )),
-                              const SizedBox(width: 4),
-                            IconButton(onPressed: (){},icon:Icon(Icons.more_horiz, color: context.colorScheme.onSurfaceVariant),),
-                            ],
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 12),
-                      Text(
-                        "This was one of the most epic experience, that I've got myself involved in!",
-                        style: AppTextStyle.textXs(color: context.colorScheme.onSurface),
-                      ),
-                    ],
-                  ),
+                  },
                 );
               },
             ),
