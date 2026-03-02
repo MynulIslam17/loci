@@ -6,6 +6,10 @@ import 'package:loci/presentation/pages/auth/reset_pass_sceen.dart';
 import 'package:loci/presentation/pages/auth/signup_screen.dart';
 import 'package:loci/presentation/pages/browse/business_profile_screen.dart';
 import 'package:loci/presentation/pages/checkin/check_in_screen.dart';
+import 'package:loci/presentation/pages/clam_business/clam_my_business.dart';
+import 'package:loci/presentation/pages/clam_business/manual_claim_business.dart';
+import 'package:loci/presentation/pages/clam_business/my_buisness_profile.dart';
+import 'package:loci/presentation/pages/clam_business/search_my_business.dart';
 import 'package:loci/presentation/pages/event/event_details.dart';
 import 'package:loci/presentation/pages/explore_routes/explore_routes_screen.dart';
 import 'package:loci/presentation/pages/explore_routes/route_details_screen.dart';
@@ -62,10 +66,19 @@ abstract class AppPages {
     GetPage(name: AppRoutes.checkIn, page: () => CheckInScreen()),
 
 
+    //--explore routes
     GetPage(name: AppRoutes.exploreRoutes, page: () => ExploreRoutesScreen()),
     GetPage(name: AppRoutes.routeDetails, page: () => RouteDetailsScreen()),
+    //--raffles
     GetPage(name: AppRoutes.activeRaffles, page: () => ActiveRafflesPage()),
     GetPage(name: AppRoutes.rafflesDetails, page: () => RafflesDetailsScreen()),
+
+
+    //---clam my business
+    GetPage(name: AppRoutes.searchBusiness, page: () => SearchMyBusiness()),
+    GetPage(name: AppRoutes.clamBusinessProfile, page: () => ClamMyBusiness()),
+    GetPage(name: AppRoutes.myBusinessProfile, page: () => MyBusinessProfile()),
+    GetPage(name: AppRoutes.manualClaimBusiness, page: () => ManualClaimBusiness()),
 
 
 

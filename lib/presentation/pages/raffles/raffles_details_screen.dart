@@ -27,6 +27,7 @@ class _RafflesDetailsScreenState extends State<RafflesDetailsScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // 1. Header Image with Custom Radius
+            const SizedBox(height: 15,) ,
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16.0),
               child: CustomCachedImage(

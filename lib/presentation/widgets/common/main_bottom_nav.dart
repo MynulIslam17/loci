@@ -282,7 +282,24 @@ class _MainBottomNavState extends State<MainBottomNav> {
       case "QR Code" :
         Get.toNamed(AppRoutes.checkIn);
         break;
+
+
+      case "Business Profiles" :
+        Get.toNamed(AppRoutes.searchBusiness);
+        break;
+
+      case "Upcoming Events" :
+        navController.changeIndex(2);
+        break;
+
+
+
+
+
+
     }
+
+
 
 
   }

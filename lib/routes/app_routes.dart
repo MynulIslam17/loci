@@ -40,7 +40,13 @@ static const String scheduleMeeting="/scheduleMeeting";
   static const String activeRaffles="/activeRaffles";
   static const String  rafflesDetails="/rafflesDetails";
 
-  //static const String recentActivity="/exploreRoutes";
+  //--- clam my business
+
+  static const String  searchBusiness="/searchBusiness";
+  static const String  clamBusinessProfile="/clamBusinessProfile";
+  static const String  myBusinessProfile="/myBusinessProfile";
+  static const String  manualClaimBusiness="/manualClaimBusiness";
+
 
 
 

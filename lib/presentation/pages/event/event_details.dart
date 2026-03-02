@@ -23,7 +23,7 @@ class _EventDetailsState extends State<EventDetails> {
       appBar: AppBar(
         title: Text(
           "Spring Pub Crawl Festival",
-          style: AppTextStyle.textLg(weight: FontWeight.w500),
+          style: AppTextStyle.textLg(weight: FontWeight.w600),
         ),
       ),
 
@@ -33,6 +33,8 @@ class _EventDetailsState extends State<EventDetails> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+
+
               //--- top image--
               ClipRRect(
                 borderRadius: BorderRadius.circular(12),

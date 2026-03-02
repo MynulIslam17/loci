@@ -71,4 +71,5 @@ class AppColors {
   static const Color logoGreen  = Color(0xFF79B9B0); // #79B9B0
   static const Color success    = Color(0xFF4CAF50); // #4CAF50
   static const Color danger     = Color(0xFFF22C2D); // #F22C2D
+  static const Color starColor = Color(0xFFFFC107); // Amber 500
 }

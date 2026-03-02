@@ -13,7 +13,12 @@ class CustomDropdown<T> extends StatelessWidget {
   final double? borderRadius;
   final Color? borderColor;
   final Color? dropdownColor;
-  final double? fontSize;
+
+
+  final Color? hintColor;
+  final Color? textColor;
+  final double? hintFontSize;
+  final double? textFontSize;
 
   const CustomDropdown({
     super.key,
@@ -27,7 +32,13 @@ class CustomDropdown<T> extends StatelessWidget {
     this.fillColor,
     this.borderRadius,
     this.borderColor,
-    this.fontSize, this.dropdownColor,
+    this.dropdownColor,
+
+
+    this.hintColor,
+    this.textColor,
+    this.hintFontSize,
+    this.textFontSize,
   });
 
   @override
@@ -36,37 +47,40 @@ class CustomDropdown<T> extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
-        // --- Title logic matching CustomTextField ---
         if (title != null) ...[
           Text(
             title!,
-           style: TextStyle(fontSize: 16),
+            style: const TextStyle(fontSize: 16),
           ),
           const SizedBox(height: 14),
         ],
 
         DropdownButtonFormField<T>(
-
           value: value,
           items: items,
           onChanged: onChanged,
           validator: validator,
           isExpanded: true,
           autovalidateMode: AutovalidateMode.onUserInteraction,
-          icon: const Icon(Icons.keyboard_arrow_down_rounded, color: Colors.grey, size: 20),
-          style: TextStyle(
-            color: Colors.black,
-            fontSize: fontSize ?? 14,
-            overflow: TextOverflow.ellipsis,
-
+          icon: const Icon(
+            Icons.keyboard_arrow_down_rounded,
+            color: Colors.grey,
+            size: 20,
           ),
+
+
+          style: TextStyle(
+            color: textColor ?? Colors.black,
+            fontSize: textFontSize ?? 14,
+            overflow: TextOverflow.ellipsis,
+          ),
+
           decoration: InputDecoration(
             contentPadding: const EdgeInsets.symmetric(
               horizontal: 16,
               vertical: 16,
             ),
             filled: true,
-            // Match CustomTextField's default fill
             fillColor: fillColor ?? Colors.grey.withOpacity(0.05),
             prefixIcon: prefixIcon != null
                 ? Padding(
@@ -74,23 +88,28 @@ class CustomDropdown<T> extends StatelessWidget {
               child: prefixIcon,
             )
                 : null,
-            prefixIconConstraints: const BoxConstraints(minWidth: 45),
+            prefixIconConstraints:
+            const BoxConstraints(minWidth: 45),
             hintText: hintText,
-            hintStyle: TextStyle(
-              color: const Color(0xFF999999),
-              fontSize: fontSize ?? 14,
 
+
+            hintStyle: TextStyle(
+              color: hintColor ?? const Color(0xFF999999),
+              fontSize: hintFontSize ?? 14,
             ),
 
-            // --- Border logic matching CustomTextField exactly ---
-            focusedBorder: _buildBorder(borderColor ?? Colors.blue),
-            enabledBorder: _buildBorder(borderColor ?? Colors.grey.withOpacity(0.3)),
+            focusedBorder:
+            _buildBorder(borderColor ?? Colors.blue),
+            enabledBorder:
+            _buildBorder(borderColor ?? Colors.grey.withOpacity(0.3)),
             errorBorder: _buildBorder(Colors.red),
             focusedErrorBorder: _buildBorder(Colors.red),
-            errorStyle: const TextStyle(fontSize: 12, color: Colors.red),
+            errorStyle:
+            const TextStyle(fontSize: 12, color: Colors.red),
           ),
-          dropdownColor:dropdownColor ?? Colors.white,
-          borderRadius: BorderRadius.circular(borderRadius ?? 12),
+          dropdownColor: dropdownColor ?? Colors.white,
+          borderRadius:
+          BorderRadius.circular(borderRadius ?? 12),
         ),
       ],
     );
@@ -98,7 +117,8 @@ class CustomDropdown<T> extends StatelessWidget {
 
   OutlineInputBorder _buildBorder(Color color) {
     return OutlineInputBorder(
-      borderRadius: BorderRadius.circular(borderRadius ?? 12),
+      borderRadius:
+      BorderRadius.circular(borderRadius ?? 12),
       borderSide: BorderSide(color: color, width: 1.2),
     );
   }
