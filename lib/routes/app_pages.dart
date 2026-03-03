@@ -7,6 +7,7 @@ import 'package:loci/presentation/pages/auth/signup_screen.dart';
 import 'package:loci/presentation/pages/browse/business_profile_screen.dart';
 import 'package:loci/presentation/pages/checkin/check_in_screen.dart';
 import 'package:loci/presentation/pages/clam_business/clam_my_business.dart';
+import 'package:loci/presentation/pages/clam_business/create_ad.dart';
 import 'package:loci/presentation/pages/clam_business/manual_claim_business.dart';
 import 'package:loci/presentation/pages/clam_business/my_buisness_profile.dart';
 import 'package:loci/presentation/pages/clam_business/search_my_business.dart';
@@ -79,6 +80,7 @@ abstract class AppPages {
     GetPage(name: AppRoutes.clamBusinessProfile, page: () => ClamMyBusiness()),
     GetPage(name: AppRoutes.myBusinessProfile, page: () => MyBusinessProfile()),
     GetPage(name: AppRoutes.manualClaimBusiness, page: () => ManualClaimBusiness()),
+    GetPage(name: AppRoutes.createAdd, page: () => CreateAd()),
 
 
 

@@ -10,6 +10,7 @@ import 'package:loci/presentation/widgets/expandable_text.dart';
 import '../../../data/poll.dart';
 import '../../../gen/assets.gen.dart';
 import '../../widgets/common/post_comment_section.dart';
+import '../../widgets/post_input_filed.dart';
 import '../../widgets/post_interaction_bar.dart';
 import '../../widgets/post_poll_section.dart';
 import '../../widgets/user_post_header.dart';
@@ -23,9 +24,7 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   // --- Search bar controls ---
-  bool _showDropdown = false;
-  bool _isPopupOpen = false;
-  String _selectedCategory = "Foodie";
+
   final TextEditingController _postController = TextEditingController();
   final FocusNode _postFocusNode = FocusNode();
 
@@ -156,146 +155,14 @@ class _HomeScreenState extends State<HomeScreen> {
             // --- 3. SEARCH BAR WITH CATEGORY DROPDOWN ---
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 12),
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                decoration: BoxDecoration(
-                  color: context.colorScheme.surface,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(
-                    color: _showDropdown
-                        ? context.colorScheme.primary
-                        : context.colorScheme.outline,
-                  ),
-                ),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    // --- TextField ---
-                    Expanded(
-                      child: TextField(
-                        minLines: 1,
-                        maxLines: 3,
-                        controller: _postController,
-                        focusNode: _postFocusNode,
-                        onTap: () {
-                          setState(() {
-                            _showDropdown = true;
-                          });
-                        },
-                        onTapOutside: (_) {
-                          FocusScope.of(context).unfocus();
-                          Future.delayed(const Duration(milliseconds: 200), () {
-                            if (_postController.text.isEmpty &&
-                                !_postFocusNode.hasFocus &&
-                                !_isPopupOpen) {
-                              setState(() {
-                                _showDropdown = false;
-                              });
-                            }
-                          });
-                        },
-                        style: AppTextStyle.textSm(
-                          color: context.colorScheme.onSurface,
-                        ),
-                        decoration: InputDecoration(
-                          hintText: 'Ask anything',
-                          border: InputBorder.none,
-                          isCollapsed: true,
-                          contentPadding: const EdgeInsets.symmetric(vertical: 10),
-                          hintStyle: AppTextStyle.textSm(
-                            color: context.colorScheme.onSurfaceVariant.withOpacity(0.6),
-                          ),
-                        ),
-                      ),
-                    ),
-
-                    // --- Category Chip ---
-                    if (_showDropdown) ...[
-                      PopupMenuButton<String>(
-                        padding: EdgeInsets.zero,
-                        offset: const Offset(0, 40),
-                        onOpened: () {
-                          setState(() {
-                            _isPopupOpen = true;
-                          });
-                        },
-                        onCanceled: () {
-                          setState(() {
-                            _isPopupOpen = false;
-                          });
-                        },
-                        onSelected: (String value) {
-                          setState(() {
-                            _selectedCategory = value;
-                            _isPopupOpen = false;
-                          });
-                        },
-                        itemBuilder: (context) => [
-                          const PopupMenuItem(value: 'Foodie', child: Text('Foodie')),
-                          const PopupMenuItem(value: 'Drinks', child: Text('Drinks')),
-                          const PopupMenuItem(value: 'Restu', child: Text('Restu')),
-                        ],
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                          margin: const EdgeInsets.only(left: 8, bottom: 6),
-                          decoration: BoxDecoration(
-                            color: context.colorScheme.primary.withOpacity(0.1),
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Text(
-                                _selectedCategory,
-                                style: AppTextStyle.textSm(
-                                  color: context.colorScheme.primary,
-                                ),
-                              ),
-                              const SizedBox(width: 4),
-                              Icon(
-                                Icons.arrow_drop_down,
-                                size: 16,
-                                color: context.colorScheme.primary,
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ],
-
-                    // --- Send Button ---
-                    if (_showDropdown) ...[
-                      const SizedBox(width: 4),
-                      IconButton(
-                        padding: EdgeInsets.zero,
-                        constraints: const BoxConstraints(),
-                        onPressed: () {
-                          if (_postController.text.isNotEmpty) {
-                            print(
-                              "Posting: ${_postController.text} in $_selectedCategory",
-                            );
-                            _postController.clear();
-                            _postFocusNode.unfocus();
-                            setState(() {
-                              _showDropdown = false;
-                              _isPopupOpen = false;
-                            });
-                          }
-                        },
-                        icon: SvgPicture.asset(
-                          Assets.icons.send,
-                          height: 20,
-                          colorFilter: ColorFilter.mode(
-                            _postController.text.isNotEmpty
-                                ? context.colorScheme.primary
-                                : context.colorScheme.onSurfaceVariant.withOpacity(0.4),
-                            BlendMode.srcIn,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ],
-                ),
+              child: PostInputField(
+                categories: ['Foodie', 'Drinks', 'Restu'],
+                initialCategory: 'Foodie',
+                hintText: 'Ask anything',
+                onSubmit: (text, category) {
+                  print("Posting: $text in $category");
+                  // Handle post submission
+                },
               ),
             ),
 

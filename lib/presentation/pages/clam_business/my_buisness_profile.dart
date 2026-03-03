@@ -1,12 +1,18 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:get/get_core/src/get_main.dart';
+import 'package:get/get_navigation/src/extension_navigation.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:loci/core/theme/theme_extention.dart';
+import 'package:loci/presentation/widgets/custom_button.dart';
+import 'package:loci/presentation/widgets/review_card.dart';
+import 'package:loci/routes/app_routes.dart';
 
+import '../../../core/constants/app_text_style.dart';
+import '../../../core/theme/app_colors.dart';
 import '../../widgets/custom_image_container.dart';
 import '../../widgets/custom_imagepicker.dart';
-// Ensure these paths match your project structure
-// import '../../widgets/custom_imagepicker.dart';
-// import '../../widgets/custom_cached_image.dart';
+import '../../widgets/post_input_filed.dart';
 
 class MyBusinessProfile extends StatefulWidget {
   const MyBusinessProfile({super.key});
@@ -16,15 +22,10 @@ class MyBusinessProfile extends StatefulWidget {
 }
 
 class _MyBusinessProfileState extends State<MyBusinessProfile> {
-  // State variables for images
   File? _profileImage;
-  File? _heroAdImage;
   final List<File> _photos = [];
-
-  final ImagePicker _picker = ImagePicker();
   final Color primaryTeal = const Color(0xFF64BDB1);
 
-  // API images (replace later with real API response)
   final List<String> _apiPhotos = [
     "https://picsum.photos/seed/1/400/300",
     "https://picsum.photos/seed/2/400/300",
@@ -32,19 +33,15 @@ class _MyBusinessProfileState extends State<MyBusinessProfile> {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = context.colorScheme;
+
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: colorScheme.surface,
       appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black87),
-          onPressed: () => Navigator.pop(context),
-        ),
-        title: const Text(
+        title: Text(
           "Business profile",
-          style: TextStyle(color: Colors.black87, fontSize: 18, fontWeight: FontWeight.w500),
+          style: AppTextStyle.textXl(weight: FontWeight.w600),
         ),
-        backgroundColor: Colors.white,
-        elevation: 0,
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -52,7 +49,7 @@ class _MyBusinessProfileState extends State<MyBusinessProfile> {
           children: [
             _buildProfileHeader(),
             const SizedBox(height: 20),
-            _buildDescriptionCard(),
+            _buildDescriptionCard(context),
             const SizedBox(height: 25),
             _buildSectionHeader("Photos"),
             _buildPhotoGrid(),
@@ -60,14 +57,43 @@ class _MyBusinessProfileState extends State<MyBusinessProfile> {
             _buildSectionHeader("Advertisements"),
             _buildPollCreator(),
             const SizedBox(height: 12),
-            _buildWideButton("Explore Activities"),
+            CustomButton(
+              text: "Explore Activities",
+              backgroundColor: colorScheme.primary,
+              onPressed: () {},
+              textStyle: AppTextStyle.textSm(
+                weight: FontWeight.w600,
+                color: colorScheme.onPrimary,
+              ),
+            ),
             const SizedBox(height: 25),
             _buildSectionHeader("Hero Ads"),
-            _buildHeroAdPicker(),
+            _buildHeroAd(),
             const SizedBox(height: 12),
-            _buildWideButton("+ Create New Ads"),
+            CustomButton(
+              backgroundColor: colorScheme.primary,
+              onPressed: () {
+
+                Get.toNamed(AppRoutes.createAdd);
+              },
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.add, color: colorScheme.onPrimary, size: 20),
+                  const SizedBox(width: 4),
+                  Text(
+                    "Create New Ads",
+                    style: AppTextStyle.textSm(
+                      weight: FontWeight.w600,
+                      color: colorScheme.onPrimary,
+                    ),
+                  ),
+                ],
+              ),
+            ),
             const SizedBox(height: 25),
-            _buildSectionHeader("Reviews", showViewAll: true),
+            _buildSectionHeader("Reviews", showViewAll: true, onTap: () {}),
             _buildReviewsList(),
             const SizedBox(height: 50),
           ],
@@ -77,18 +103,20 @@ class _MyBusinessProfileState extends State<MyBusinessProfile> {
   }
 
   // ================= PROFILE HEADER =================
-
   Widget _buildProfileHeader() {
+    final colorScheme = context.colorScheme;
+
     return Column(
       children: [
         const SizedBox(height: 10),
         Stack(
           children: [
+            // Profile Image
             Container(
-              padding: const EdgeInsets.all(3),
+              padding: EdgeInsets.all(3),
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                border: Border.all(color: primaryTeal.withOpacity(0.5), width: 1),
+                border: Border.all(color: colorScheme.primary),
               ),
               child: CustomCachedImage(
                 imageFile: _profileImage,
@@ -98,81 +126,154 @@ class _MyBusinessProfileState extends State<MyBusinessProfile> {
                 isCircle: true,
               ),
             ),
+            // Edit Profile Button
             Positioned(
               right: 0,
               top: 0,
               child: _editCircleButton(() {
-                _showImageSourceDialog((file) => setState(() => _profileImage = file));
+                CustomImagePicker.pickImageSimple(
+                  context: context,
+                  onImageSelected: (file) => setState(() {
+                    _profileImage = file;
+                  }),
+                );
               }),
             ),
           ],
         ),
         const SizedBox(height: 15),
-        Text("Marland Clutch", style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: primaryTeal)),
-        const SizedBox(height: 4),
-        const Text("23601 Hoover Rd, Warren, MI 48089", style: TextStyle(color: Colors.grey, fontSize: 13)),
-        const SizedBox(height: 4),
-        Text("+1 800-216-3515", style: TextStyle(color: primaryTeal, fontWeight: FontWeight.w600)),
-        const SizedBox(height: 8),
-        const Text("Maintenance & Repair | Services & More", style: TextStyle(color: Colors.grey, fontSize: 12)),
+
+        // Business Info Card
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(borderRadius: BorderRadius.circular(12)),
+          child: Stack(
+            children: [
+              Column(
+                children: [
+                  Text(
+                    "Marland Clutch",
+                    style: AppTextStyle.textXl(
+                      color: colorScheme.primary,
+                      weight: FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    "23601 Hoover Rd, Warren, MI 48089",
+                    style: AppTextStyle.textXs(
+                      color: colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    "+1 800-216-3515",
+                    style: AppTextStyle.textXs(color: colorScheme.primary),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    "Maintenance & Repair | Services & More",
+                    style: AppTextStyle.textXs(
+                      color: colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                ],
+              ),
+              // Edit Button for Business Info
+              Positioned(top: 0, right: 0, child: _editCircleButton(() {})),
+            ],
+          ),
+        ),
         const SizedBox(height: 6),
+
+        // Review Stars
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Text("3 Review  ", style: TextStyle(color: Colors.grey, fontSize: 12)),
-            ...List.generate(5, (index) => const Icon(Icons.star, color: Colors.amber, size: 16)),
+            Text(
+              "3 Review  ",
+              style: AppTextStyle.textXs(color: colorScheme.onSurfaceVariant),
+            ),
+            ...List.generate(
+              5,
+                  (index) =>
+              const Icon(Icons.star, color: AppColors.starColor, size: 16),
+            ),
           ],
         ),
         const SizedBox(height: 15),
+
+        // Chips Row
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            _buildActionChip("Community", null),
+            customChip(
+              label: "Community",
+              onTap: () {},
+              backgroundColor: colorScheme.primary,
+            ),
             const SizedBox(width: 12),
-            _buildActionChip("QR", Icons.qr_code_scanner),
+            customChip(
+              label: "QR",
+              onTap: () {},
+              backgroundColor: colorScheme.primary,
+              icon: Icons.qr_code,
+            ),
           ],
         ),
         const SizedBox(height: 12),
+
+        // Change Subscription Button
         OutlinedButton(
           onPressed: () {},
           style: OutlinedButton.styleFrom(
-            side: BorderSide(color: Colors.grey.shade300),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(25)),
+            side: BorderSide(color: colorScheme.outline),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(25),
+            ),
             padding: const EdgeInsets.symmetric(horizontal: 40),
           ),
-          child: Text("Change Subscription", style: TextStyle(color: primaryTeal)),
+          child: Text(
+            "Change Subscription",
+            style: AppTextStyle.textSm(
+              color: colorScheme.primary,
+              weight: FontWeight.w600,
+            ),
+          ),
         ),
       ],
     );
   }
 
-  // ================= DESCRIPTION =================
+  // ================= DESCRIPTION CARD =================
+  Widget _buildDescriptionCard(BuildContext context) {
+    final colorScheme = context.colorScheme;
 
-  Widget _buildDescriptionCard() {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(15),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10)],
-      ),
-      child: Stack(
-        children: [
-          const Padding(
-            padding: EdgeInsets.only(right: 25),
-            child: Text(
-              "Marland Clutch, founded in 1931, is a prominent global manufacturer specializing in heavy duty industrial backstopping and overrunning clutches...",
-              style: TextStyle(color: Colors.black54, height: 1.5, fontSize: 13),
+    return Card(
+      color: colorScheme.surfaceContainerHigh,
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Stack(
+          children: [
+            Padding(
+              padding: const EdgeInsets.only(right: 25),
+              child: Text(
+                "Marland Clutch, founded in 1931, is a prominent global manufacturer specializing in heavy duty industrial backstopping and overrunning clutches...",
+                style: AppTextStyle.textXs(color: colorScheme.onSurfaceVariant),
+              ),
             ),
-          ),
-          Positioned(right: 0, top: 0, child: Icon(Icons.edit_outlined, color: primaryTeal, size: 20)),
-        ],
+            Positioned(
+              right: 0,
+              top: 0,
+              child: _editCircleButton(() {}, size: 20),
+            ),
+          ],
+        ),
       ),
     );
   }
 
   // ================= PHOTO GRID =================
-
   Widget _buildPhotoGrid() {
     final int totalImages = _apiPhotos.length + _photos.length;
 
@@ -185,15 +286,10 @@ class _MyBusinessProfileState extends State<MyBusinessProfile> {
         mainAxisSpacing: 12,
         childAspectRatio: 1.3,
       ),
-      itemCount: totalImages + 1, // +1 for Add button
+      itemCount: totalImages + 1,
       itemBuilder: (context, index) {
+        if (index == totalImages) return _buildAddPhotoButton();
 
-        /// ADD BUTTON (always last)
-        if (index == totalImages) {
-          return _buildAddPhotoButton();
-        }
-
-        /// API IMAGES
         if (index < _apiPhotos.length) {
           return Stack(
             children: [
@@ -201,40 +297,40 @@ class _MyBusinessProfileState extends State<MyBusinessProfile> {
                 imageUrl: _apiPhotos[index],
                 width: double.infinity,
                 height: double.infinity,
-                borderRadius: 12,
+
               ),
               Positioned(
                 right: 5,
                 top: 5,
-                child: _editCircleButton(() {
-                  setState(() {
-                    _apiPhotos.removeAt(index);
-                  });
-                }, size: 20),
+                child: _editCircleButton(
+                      () => setState(() => _apiPhotos.removeAt(index)),
+                  size: 20,
+                  icon: Icons.cancel,
+                  iconColor: AppColors.danger,
+                ),
               ),
             ],
           );
         }
 
-        /// LOCAL IMAGES
         final localIndex = index - _apiPhotos.length;
-
         return Stack(
           children: [
             CustomCachedImage(
               imageFile: _photos[localIndex],
               width: double.infinity,
               height: double.infinity,
-              borderRadius: 12,
+
             ),
             Positioned(
               right: 5,
               top: 5,
-              child: _editCircleButton(() {
-                setState(() {
-                  _photos.removeAt(localIndex);
-                });
-              }, size: 20),
+              child: _editCircleButton(
+                    () => setState(() => _photos.removeAt(localIndex)),
+                size: 20,
+                icon: Icons.cancel,
+                iconColor: AppColors.danger,
+              ),
             ),
           ],
         );
@@ -243,52 +339,79 @@ class _MyBusinessProfileState extends State<MyBusinessProfile> {
   }
 
   // ================= HERO AD =================
+  Widget _buildHeroAd() {
+    final colorScheme = context.colorScheme;
 
-  Widget _buildHeroAdPicker() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        CustomImagePicker(
-          selectedImage: _heroAdImage,
-          imageUrl: "https://via.placeholder.com/400x200", // Default ad image
-          height: 180,
-          borderRadius: 15,
-          onImageSelected: (file) => setState(() => _heroAdImage = file),
-        ),
-        const SizedBox(height: 8),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: const [
-            Text("Ads will run February 2, 2026", style: TextStyle(color: Colors.grey, fontSize: 11)),
-            Text("Credit remain: 10", style: TextStyle(color: Colors.grey, fontSize: 11)),
-          ],
-        )
-      ],
-    );
-  }
-
-  // ================= POLL & REVIEWS =================
-
-  Widget _buildPollCreator() {
     return Container(
-      padding: const EdgeInsets.all(16),
+      width: double.infinity,
       decoration: BoxDecoration(
-        border: Border.all(color: Colors.grey.shade200),
-        borderRadius: BorderRadius.circular(15),
+        borderRadius: BorderRadius.circular(20),
       ),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text("Create a poll", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-          const SizedBox(height: 10),
-          TextField(
-            decoration: InputDecoration(
-              hintText: "Create a poll...",
-              hintStyle: const TextStyle(fontSize: 13, color: Colors.grey),
-              suffixIcon: Icon(Icons.send_outlined, color: primaryTeal.withOpacity(0.5)),
-              contentPadding: const EdgeInsets.symmetric(horizontal: 12),
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: Colors.grey.shade200)),
-              enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: Colors.grey.shade200)),
+          Stack(
+            children: [
+              // Background Image
+              CustomCachedImage(
+                width: double.infinity,
+                height: 200,
+                imageUrl: "https://picsum.photos/seed/1/400/300",
+
+              ),
+
+              // Text Content
+              Positioned(
+                left: 16,
+                bottom: 16,
+                right: 16,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      "Barclay Prime",
+                      style: AppTextStyle.textMd(
+                        color: AppColors.base50,
+                        weight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Row(
+                      children: [
+                        Icon(Icons.location_on_outlined, color: colorScheme.primary, size: 18),
+                        const SizedBox(width: 4),
+                        Expanded(
+                          child: Text(
+                            "237 S 18th St, Philadelphia, PA 19103",
+                            style: AppTextStyle.textXs(
+                              color:  AppColors.base50,
+                              weight: FontWeight.w500,
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          // Ads Info
+          Padding(
+            padding: const EdgeInsets.only(top: 8.0, left: 4.0, right: 4.0),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  "Ads will run February 2, 2026",
+                  style: AppTextStyle.textXs(color: colorScheme.onSurfaceVariant, weight: FontWeight.w400),
+                ),
+                Text(
+                  "Credit remain: 10",
+                  style: AppTextStyle.textXs(color: colorScheme.onSurfaceVariant, weight: FontWeight.w400),
+                ),
+              ],
             ),
           ),
         ],
@@ -296,108 +419,149 @@ class _MyBusinessProfileState extends State<MyBusinessProfile> {
     );
   }
 
-  Widget _buildReviewsList() {
-    return Column(
-      children: List.generate(2, (index) => Container(
-        margin: const EdgeInsets.only(bottom: 12),
+  // ================= POLL CREATOR =================
+  Widget _buildPollCreator() {
+    final colorScheme = context.colorScheme;
+
+    return Card(
+      color: colorScheme.surfaceContainerHigh,
+      child: Padding(
         padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          border: Border.all(color: Colors.grey.shade100),
-          borderRadius: BorderRadius.circular(15),
-        ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
-              children: [
-                const CircleAvatar(radius: 18, backgroundImage: NetworkImage("https://i.pravatar.cc/150")),
-                const SizedBox(width: 10),
-                const Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text("Alexandra Broke", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
-                      Text("Barclay Pizza", style: TextStyle(color: Colors.grey, fontSize: 11)),
-                    ],
-                  ),
-                ),
-                Row(children: List.generate(5, (i) => const Icon(Icons.star, color: Colors.amber, size: 14))),
-              ],
+            Text(
+              "Create a poll",
+              style: AppTextStyle.textMd(
+                color: colorScheme.onSurface,
+                weight: FontWeight.w600,
+              ),
             ),
             const SizedBox(height: 10),
-            const Text(
-              "This was one of the most epic experience, that I've got myself involved in!",
-              style: TextStyle(fontSize: 12, color: Colors.black87),
+            PostInputField(
+              categories: ['Foodie', 'Drinks', 'Restu'],
+              initialCategory: 'Foodie',
+              hintText: 'Ask anything',
+              onSubmit: (text, category) {
+                print("Posting: $text in $category");
+              },
             ),
           ],
         ),
-      )),
+      ),
     );
   }
 
-  // ================= UTILITY HELPERS =================
+  // ================= REVIEWS LIST =================
+  Widget _buildReviewsList() {
+    return Column(
+      children: List.generate(
+        2,
+            (index) => ReviewCard(
+          name: "Alexandra ssssBroke",
+          businessName: "Barclay Pizza",
+          rating: 5,
+          reviewText: "This was one of the most epic experience...",
+          imageUrl: "https://i.pravatar.cc/150?u=1",
+          onMenuTap: () {},
+        ),
+      ),
+    );
+  }
 
+  // ================= PHOTO PICKER =================
   Widget _buildAddPhotoButton() {
     return GestureDetector(
-      onTap: () => _showImageSourceDialog((file) => setState(() => _photos.add(file))),
+      onTap: () => _showSimplePicker((file) => setState(() => _photos.add(file))),
       child: Container(
-        decoration: BoxDecoration(color: Colors.grey.shade400, borderRadius: BorderRadius.circular(12)),
+        decoration: BoxDecoration(
+          color: Colors.grey.shade400,
+          borderRadius: BorderRadius.circular(12),
+        ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: const [
             Icon(Icons.image_outlined, color: Colors.white, size: 28),
             SizedBox(height: 4),
-            Text("Add image", style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold)),
+            Text(
+              "Add image",
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildActionChip(String label, IconData? icon) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-      decoration: BoxDecoration(color: primaryTeal, borderRadius: BorderRadius.circular(25)),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          if (icon != null) ...[Icon(icon, color: Colors.white, size: 18), const SizedBox(width: 6)],
-          Text(label, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w500)),
-        ],
+  // ================= CUSTOM CHIP =================
+  Widget customChip({
+    required String label,
+    IconData? icon,
+    VoidCallback? onTap,
+    Color? backgroundColor,
+  }) {
+    return ActionChip(
+      onPressed: onTap,
+      backgroundColor: backgroundColor,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(15),
+        side: const BorderSide(color: Colors.transparent),
       ),
-    );
-  }
-
-  Widget _buildWideButton(String label) {
-    return SizedBox(
-      width: double.infinity,
-      height: 45,
-      child: ElevatedButton(
-        onPressed: () {},
-        style: ElevatedButton.styleFrom(
-          backgroundColor: primaryTeal,
-          elevation: 0,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+      avatar: icon != null ? Icon(icon, size: 18, color: Colors.white) : null,
+      label: Text(
+        label,
+        style: const TextStyle(
+          color: Colors.white,
+          fontWeight: FontWeight.w500,
         ),
-        child: Text(label, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
       ),
     );
   }
 
-  Widget _buildSectionHeader(String title, {bool showViewAll = false}) {
+
+
+  // ================= SECTION HEADER =================
+  Widget _buildSectionHeader(String title, {bool showViewAll = false, VoidCallback? onTap}) {
+    final colorScheme = context.colorScheme;
+
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(title, style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: primaryTeal)),
-          if (showViewAll) const Text("view all", style: TextStyle(color: Color(0xFF64BDB1), fontSize: 12)),
+          Text(
+            title,
+            style: AppTextStyle.textXl(
+              color: colorScheme.primary,
+              weight: FontWeight.w600,
+            ),
+          ),
+          if (showViewAll)
+            TextButton(
+              onPressed: onTap,
+              child: Text(
+                "View all",
+                style: AppTextStyle.textXs(
+                  color: colorScheme.primary,
+                ),
+              ),
+            ),
         ],
       ),
     );
   }
 
-  Widget _editCircleButton(VoidCallback onTap, {double size = 26}) {
+  // ================= EDIT CIRCLE BUTTON =================
+  Widget _editCircleButton(
+      VoidCallback onTap, {
+        double size = 26,
+        IconData icon = Icons.edit_outlined,
+        Color iconColor = AppColors.primaryG700,
+      }) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -407,15 +571,18 @@ class _MyBusinessProfileState extends State<MyBusinessProfile> {
           shape: BoxShape.circle,
           boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 4)],
         ),
-        child: Icon(Icons.edit_outlined, size: size * 0.7, color: primaryTeal),
+        child: Icon(icon, size: size * 0.7, color: iconColor),
       ),
     );
   }
 
-  void _showImageSourceDialog(Function(File) onSelected) {
+  // ================= IMAGE PICKER =================
+  void _showSimplePicker(Function(File) onSelected) {
     showModalBottomSheet(
       context: context,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(15))),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(15)),
+      ),
       builder: (context) => SafeArea(
         child: Wrap(
           children: [
@@ -423,8 +590,8 @@ class _MyBusinessProfileState extends State<MyBusinessProfile> {
               leading: const Icon(Icons.photo_library),
               title: const Text('Gallery'),
               onTap: () async {
-                final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
-                if (image != null) onSelected(File(image.path));
+                final picked = await ImagePicker().pickImage(source: ImageSource.gallery);
+                if (picked != null) onSelected(File(picked.path));
                 if (context.mounted) Navigator.pop(context);
               },
             ),
@@ -432,8 +599,8 @@ class _MyBusinessProfileState extends State<MyBusinessProfile> {
               leading: const Icon(Icons.camera_alt),
               title: const Text('Camera'),
               onTap: () async {
-                final XFile? image = await _picker.pickImage(source: ImageSource.camera);
-                if (image != null) onSelected(File(image.path));
+                final picked = await ImagePicker().pickImage(source: ImageSource.camera);
+                if (picked != null) onSelected(File(picked.path));
                 if (context.mounted) Navigator.pop(context);
               },
             ),

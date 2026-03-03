@@ -53,7 +53,7 @@ class _RouteDetailsScreenState extends State<RouteDetailsScreen> {
                 height: 200,
                 width: double.infinity,
                 fit: BoxFit.cover,
-                customBorderRadius: BorderRadius.circular(16), // Using your custom radius
+                customBorderRadius: BorderRadius.circular(16),
               ),
             ),
 
