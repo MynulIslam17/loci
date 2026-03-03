@@ -10,6 +10,7 @@ import 'package:loci/routes/app_routes.dart';
 
 import '../../../core/constants/app_text_style.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../widgets/custom_appbar.dart';
 import '../../widgets/custom_image_container.dart';
 import '../../widgets/custom_imagepicker.dart';
 import '../../widgets/post_input_filed.dart';
@@ -37,12 +38,7 @@ class _MyBusinessProfileState extends State<MyBusinessProfile> {
 
     return Scaffold(
       backgroundColor: colorScheme.surface,
-      appBar: AppBar(
-        title: Text(
-          "Business profile",
-          style: AppTextStyle.textXl(weight: FontWeight.w600),
-        ),
-      ),
+      appBar: CustomAppbar(title:  "Business profile",),
       body: SingleChildScrollView(
         padding: const EdgeInsets.symmetric(horizontal: 20),
         child: Column(
@@ -60,7 +56,11 @@ class _MyBusinessProfileState extends State<MyBusinessProfile> {
             CustomButton(
               text: "Explore Activities",
               backgroundColor: colorScheme.primary,
-              onPressed: () {},
+              onPressed: () {
+                //--go to explore activity
+                Get.toNamed(AppRoutes.exploreActivity);
+
+              },
               textStyle: AppTextStyle.textSm(
                 weight: FontWeight.w600,
                 color: colorScheme.onPrimary,
@@ -610,3 +610,4 @@ class _MyBusinessProfileState extends State<MyBusinessProfile> {
     );
   }
 }
+

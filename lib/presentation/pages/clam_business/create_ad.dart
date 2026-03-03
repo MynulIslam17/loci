@@ -71,7 +71,7 @@ class _CreateAdState extends State<CreateAd> {
       appBar: AppBar(
         title: Text(
           "Create Ads",
-          style: AppTextStyle.textXl(weight: FontWeight.w600),
+          style: AppTextStyle.textLg(weight: FontWeight.w600),
         ),
         backgroundColor: colorScheme.surface,
         elevation: 0,

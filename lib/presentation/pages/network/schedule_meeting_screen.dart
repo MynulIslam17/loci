@@ -67,7 +67,7 @@ class _ScheduleMeetingScreenState extends State<ScheduleMeetingScreen> {
         leading: const BackButton(),
         title: Text(
           "Schedule a meeting",
-          style: AppTextStyle.textMd(weight: FontWeight.w600),
+          style: AppTextStyle.textLg(weight: FontWeight.w600),
         ),
       ),
       body: SingleChildScrollView(

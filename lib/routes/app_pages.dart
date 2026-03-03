@@ -12,6 +12,7 @@ import 'package:loci/presentation/pages/clam_business/manual_claim_business.dart
 import 'package:loci/presentation/pages/clam_business/my_buisness_profile.dart';
 import 'package:loci/presentation/pages/clam_business/search_my_business.dart';
 import 'package:loci/presentation/pages/event/event_details.dart';
+import 'package:loci/presentation/pages/explore_activity/explore_activity_screen.dart';
 import 'package:loci/presentation/pages/explore_routes/explore_routes_screen.dart';
 import 'package:loci/presentation/pages/explore_routes/route_details_screen.dart';
 import 'package:loci/presentation/pages/network/connection_screen.dart';
@@ -81,6 +82,11 @@ abstract class AppPages {
     GetPage(name: AppRoutes.myBusinessProfile, page: () => MyBusinessProfile()),
     GetPage(name: AppRoutes.manualClaimBusiness, page: () => ManualClaimBusiness()),
     GetPage(name: AppRoutes.createAdd, page: () => CreateAd()),
+
+    //---clam my business
+    GetPage(name: AppRoutes.exploreActivity, page: () => ExploreActivityScreen()),
+
+
 
 
 

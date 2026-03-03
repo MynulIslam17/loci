@@ -3,6 +3,8 @@ import 'package:loci/core/constants/app_text_style.dart';
 import 'package:loci/core/theme/theme_extention.dart';
 import 'package:loci/presentation/widgets/custom_text_field.dart';
 
+import '../../widgets/route_card.dart';
+
 class ExploreRoutesScreen extends StatefulWidget {
   const ExploreRoutesScreen({super.key});
 
@@ -11,6 +13,9 @@ class ExploreRoutesScreen extends StatefulWidget {
 }
 
 class _ExploreRoutesScreenState extends State<ExploreRoutesScreen> {
+
+
+
   final List<Map<String, dynamic>> routeData = [
     {
       "title": "Downtown Pub Crawl",
@@ -87,15 +92,17 @@ class _ExploreRoutesScreenState extends State<ExploreRoutesScreen> {
             delegate: SliverChildBuilderDelegate((context, index) {
               final route = routeData[index];
               return Padding(
-                padding: const EdgeInsets.only(bottom: 12.0),
-                child: _buildRouteCard(
-                  context,
+                padding: const EdgeInsets.only(bottom: 16.0),
+                child: RouteCard(
                   title: route["title"],
                   description: route["description"],
                   location: route["location"],
                   duration: route["duration"],
                   difficulty: route["difficulty"],
                   imageUrl: route["imageUrl"],
+                  onTap: () {
+
+                  },
                 ),
               );
             }, childCount: routeData.length),
@@ -108,83 +115,6 @@ class _ExploreRoutesScreenState extends State<ExploreRoutesScreen> {
     );
   }
 
-  Widget _buildRouteCard(
-    BuildContext context, {
-    required String title,
-    required String description,
-    required String location,
-    required String duration,
-    required String difficulty,
-    required String imageUrl,
-  }) {
-    final colorScheme = context.colorScheme;
-
-    return Card(
-      color: colorScheme.surfaceContainerHigh,
-      clipBehavior: Clip.antiAlias,
-      elevation: 2,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Image Section
-          ClipRRect(
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
-            child: Image.network(
-              imageUrl,
-              height: 180,
-              width: double.infinity,
-              fit: BoxFit.cover,
-            ),
-          ),
-
-          // Content Section
-          Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: AppTextStyle.textMd(
-                    color: colorScheme.onSurface,
-                    weight: FontWeight.w600,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  description,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: AppTextStyle.textXs(
-                    color: colorScheme.onSurfaceVariant,
-                  ),
-                ),
-                const SizedBox(height: 16),
-
-                // Info Row (Location, Duration, Difficulty)
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    _buildInfoItem(
-                      Icons.location_on_outlined,
-                      location,
-                      colorScheme,
-                    ),
-                    _buildInfoItem(Icons.access_time, duration, colorScheme),
-                    _buildInfoItem(
-                      Icons.explore_outlined,
-                      difficulty,
-                      colorScheme,
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 
   //--helper widgets
   Widget _buildInfoItem(IconData icon, String label, ColorScheme colorScheme) {
