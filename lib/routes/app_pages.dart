@@ -13,6 +13,8 @@ import 'package:loci/presentation/pages/clam_business/my_buisness_profile.dart';
 import 'package:loci/presentation/pages/clam_business/search_my_business.dart';
 import 'package:loci/presentation/pages/event/event_details.dart';
 import 'package:loci/presentation/pages/explore_activity/explore_activity_screen.dart';
+import 'package:loci/presentation/pages/explore_activity/total_checkin_screen.dart';
+import 'package:loci/presentation/pages/explore_activity/total_rsvp_screen.dart';
 import 'package:loci/presentation/pages/explore_activity/view_event_screen.dart';
 import 'package:loci/presentation/pages/explore_activity/view_route_screen.dart';
 import 'package:loci/presentation/pages/explore_routes/explore_routes_screen.dart';
@@ -91,6 +93,10 @@ abstract class AppPages {
     GetPage(name: AppRoutes.viewEvent, page: () => ViewEventScreen()),
     GetPage(name: AppRoutes.viewRoutes, page: () => ViewRouteScreen()),
     GetPage(name: AppRoutes.viewRaffles, page: () => ViewRouteScreen()),
+
+
+    GetPage(name: AppRoutes.viewTotalCheckIn, page: () => TotalCheckInScreen()),
+    GetPage(name: AppRoutes.viewTotalRSVP, page: () => TotalRsvpScreen()),
 
 
 

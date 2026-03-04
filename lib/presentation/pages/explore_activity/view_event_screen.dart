@@ -6,6 +6,7 @@ import 'package:loci/core/theme/theme_extention.dart';
 import 'package:loci/presentation/widgets/custom_appbar.dart';
 import 'package:loci/presentation/widgets/custom_button.dart';
 import 'package:loci/presentation/widgets/custom_image_container.dart';
+import 'package:loci/routes/app_routes.dart';
 
 import '../../../gen/assets.gen.dart';
 import '../../widgets/event_card.dart'; // Assuming IconTextRow is here
@@ -96,7 +97,11 @@ class _ViewEventScreenState extends State<ViewEventScreen> {
                     icon: Icons.groups_outlined,
                     count: "0",
                     label: "Total RSVP",
-                    onTap: () { 
+                    onTap: () {
+
+                      Get.toNamed(AppRoutes.viewTotalRSVP,arguments: {
+                        "title":"Total RSVP"
+                      });
                       
                     },
                   ),
@@ -107,8 +112,10 @@ class _ViewEventScreenState extends State<ViewEventScreen> {
                     icon: Icons.person_search_outlined,
                     count: "0",
                     label: "Check-Ins",
-                    onTap: () { 
-                      
+                    onTap: () {
+                      Get.toNamed(AppRoutes.viewTotalCheckIn,arguments: {
+                        "title":"Total Checkin"
+                      });
                     },
                   ),
                 ),
@@ -209,11 +216,11 @@ class _ViewEventScreenState extends State<ViewEventScreen> {
   }
 
   Widget _buildStatCard({required IconData icon, required String count, required String label,required VoidCallback onTap}) {
-    return InkWell(
-      onTap: onTap,
-      child: Card(
-        elevation: 2,
-        color: context.colorScheme.surfaceContainerHigh,
+    return Card(
+      elevation: 2,
+      color: context.colorScheme.surfaceContainerHigh,
+      child: InkWell(
+        onTap: onTap,
         child: Padding(
           padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 10),
           child: Column(
