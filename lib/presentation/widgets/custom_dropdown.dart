@@ -13,6 +13,8 @@ class CustomDropdown<T> extends StatelessWidget {
   final double? borderRadius;
   final Color? borderColor;
   final Color? dropdownColor;
+  final TextStyle ?titleStyle;
+
 
 
   final Color? hintColor;
@@ -39,6 +41,7 @@ class CustomDropdown<T> extends StatelessWidget {
     this.textColor,
     this.hintFontSize,
     this.textFontSize,
+    this.titleStyle,
   });
 
   @override
@@ -50,7 +53,10 @@ class CustomDropdown<T> extends StatelessWidget {
         if (title != null) ...[
           Text(
             title!,
-            style: const TextStyle(fontSize: 16),
+            style: titleStyle ??  TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w500
+            ),
           ),
           const SizedBox(height: 14),
         ],

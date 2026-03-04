@@ -8,6 +8,7 @@ import 'package:loci/presentation/widgets/custom_button.dart';
 import 'package:loci/presentation/widgets/custom_image_container.dart';
 
 import '../../../gen/assets.gen.dart';
+import '../../widgets/common/company_info_card.dart';
 import '../../widgets/event_card.dart';
 
 class EventDetails extends StatefulWidget {
@@ -126,50 +127,12 @@ class _EventDetailsState extends State<EventDetails> {
 
               const SizedBox(height: 10,),
 
-              SizedBox(
-                width: double.infinity,
+              CompanyInfoCard(
+                title: "Marland Clutch",
+                description:
+                "Lorem Ipsum is simply dummy text of the printing and typesetting industry...",
+                imagePath: Assets.images.companyLogo.path,
 
-                child: Card(
-                  color: context.colorScheme.surfaceContainerHigh,
-                  child: Padding(
-                    padding: const EdgeInsets.all(12),
-                    child: Row(
-                      children: [
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(10),
-                          child: Image.asset(Assets.images.companyLogo.path),
-                        ),
-
-                        const SizedBox(width: 20),
-
-                        Expanded(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                "Marland Clutch",
-                                style: AppTextStyle.textSm(
-                                  weight: FontWeight.w700,
-                                  color: context.colorScheme.primary,
-                                ),
-                              ),
-                              Text(
-                                "Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text.",
-                                style: AppTextStyle.textXs(
-                                  color: context.colorScheme.onSurfaceVariant,
-                                ),
-                                overflow: TextOverflow.ellipsis,
-                                maxLines: 4,
-                              ),
-                            ],
-                          ),
-                        ),
-
-                      ],
-                    ),
-                  ),
-                ),
               ),
 
               const SizedBox(height: 10,),

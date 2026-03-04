@@ -61,7 +61,7 @@ class CustomTextField extends StatefulWidget {
     this.focusNode,
     this.errorText,
     this.autoValidateMode,
-    this.textColor, // Added parameter
+    this.textColor,
   });
 
   @override
@@ -85,7 +85,6 @@ class _CustomTextFieldState extends State<CustomTextField> {
 
   @override
   Widget build(BuildContext context) {
-    // Get theme-aware colors
     final themeColors = Theme.of(context).colorScheme;
 
     return Column(
@@ -95,14 +94,14 @@ class _CustomTextFieldState extends State<CustomTextField> {
         if (widget.title != null) ...[
           Text(
             widget.title!,
-            style: widget.titleStyle ?? TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w500,
-              // Adapts to light/dark mode automatically
-              color: themeColors.onSurface,
-            ),
+            style: widget.titleStyle ??
+                TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                  color: themeColors.onSurface,
+                ),
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: 10),
         ],
 
         TextFormField(
@@ -113,46 +112,59 @@ class _CustomTextFieldState extends State<CustomTextField> {
           controller: widget.controller,
           keyboardType: widget.keyboardType,
           obscuringCharacter: widget.obscuringCharacter,
-          autovalidateMode: widget.autoValidateMode ?? AutovalidateMode.disabled,
+          autovalidateMode:
+          widget.autoValidateMode ?? AutovalidateMode.disabled,
           maxLines: widget.maxLine ?? 1,
           textInputAction: widget.textInputAction,
           validator: widget.validator,
-          // Cursor color follows the theme primary color
           cursorColor: themeColors.primary,
           obscureText: _obscureText,
           style: TextStyle(
-            // Use widget.textColor if provided, otherwise follow the theme
             color: widget.textColor ?? themeColors.onSurface,
             fontSize: widget.fontSize ?? 14,
           ),
           decoration: InputDecoration(
+            isDense: true, // ✅ Makes it compact
             contentPadding: EdgeInsets.symmetric(
-              horizontal: widget.contentPaddingHorizontal ?? 16,
-              vertical: widget.contentPaddingVertical ?? 16,
+              horizontal: widget.contentPaddingHorizontal ?? 14,
+              vertical: widget.contentPaddingVertical ?? 14,
             ),
-            // Background color also adapts if not provided
-            fillColor: widget.fillColor ?? themeColors.surfaceVariant.withOpacity(0.3),
             filled: true,
-            prefixIcon: widget.prefixIcon != null
-                ? Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 12),
-              child: widget.prefixIcon,
-            )
-                : null,
+            fillColor: widget.fillColor ??
+                themeColors.surfaceVariant.withOpacity(0.3),
+
+            // ✅ Cleaner prefix icon spacing
+            prefixIcon: widget.prefixIcon,
+            prefixIconConstraints: const BoxConstraints(
+              minWidth: 36,
+              minHeight: 36,
+            ),
+
+            // ✅ Cleaner suffix icon spacing
             suffixIcon: _buildSuffixIcon(),
-            prefixIconConstraints: const BoxConstraints(minWidth: 45),
+            suffixIconConstraints: const BoxConstraints(
+              minWidth: 36,
+              minHeight: 36,
+            ),
+
             labelText: widget.labelText,
             hintText: widget.hintText,
             hintStyle: TextStyle(
-              color: widget.hintTextColor ?? themeColors.onSurfaceVariant,
+              color: widget.hintTextColor ??
+                  themeColors.onSurfaceVariant,
               fontSize: widget.fontSize ?? 14,
             ),
-            focusedBorder: _buildBorder(widget.focusBorderColor ?? themeColors.primary),
-            enabledBorder: _buildBorder(widget.borderColor ?? themeColors.outlineVariant),
+
+            focusedBorder:
+            _buildBorder(widget.focusBorderColor ?? themeColors.primary),
+            enabledBorder:
+            _buildBorder(widget.borderColor ?? themeColors.outlineVariant),
             errorBorder: _buildBorder(themeColors.error),
             focusedErrorBorder: _buildBorder(themeColors.error),
+
             errorText: widget.errorText,
-            errorStyle: TextStyle(fontSize: 12, color: themeColors.error),
+            errorStyle:
+            TextStyle(fontSize: 12, color: themeColors.error),
           ),
         ),
       ],
@@ -164,8 +176,9 @@ class _CustomTextFieldState extends State<CustomTextField> {
       return IconButton(
         onPressed: _toggleObscureText,
         icon: Icon(
-          _obscureText ? Icons.visibility_off_outlined : Icons.visibility_outlined,
-          color: Colors.grey,
+          _obscureText
+              ? Icons.visibility_off_outlined
+              : Icons.visibility_outlined,
           size: 20,
         ),
       );

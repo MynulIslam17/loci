@@ -32,6 +32,7 @@ import 'package:loci/presentation/widgets/common/main_bottom_nav.dart';
 import 'package:loci/routes/app_routes.dart';
 
 import '../presentation/pages/browse/browse_businesses.dart';
+import '../presentation/pages/explore_activity/creat_activity_screen.dart';
 
 abstract class AppPages {
   static const String initialRoutes = AppRoutes.splash;
@@ -89,6 +90,7 @@ abstract class AppPages {
 
     //---clam my business
     GetPage(name: AppRoutes.exploreActivity, page: () => ExploreActivityScreen()),
+    GetPage(name: AppRoutes.createActivity, page: () => CreateActivityScreen()),
 
     GetPage(name: AppRoutes.viewEvent, page: () => ViewEventScreen()),
     GetPage(name: AppRoutes.viewRoutes, page: () => ViewRouteScreen()),

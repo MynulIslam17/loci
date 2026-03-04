@@ -155,7 +155,7 @@ class CustomImagePicker extends StatelessWidget {
           color: Colors.black.withOpacity(0.4),
           shape: BoxShape.circle,
         ),
-        child: const Icon(Icons.camera_alt, color: Colors.white, size: 24),
+        child: const Icon(Icons.add_a_photo_outlined, color: Colors.white, size: 24),
       ),
     );
   }
@@ -175,7 +175,7 @@ class CustomImagePicker extends StatelessWidget {
   Widget _buildPlaceholderContent() {
     return Center(
       child: placeholder ??
-          Icon(Icons.camera_alt_outlined, size: 40, color: Colors.grey.withOpacity(0.5)),
+          Icon(Icons.add_a_photo_outlined, size: 40, color: Colors.grey.withOpacity(0.5)),
     );
   }
 }

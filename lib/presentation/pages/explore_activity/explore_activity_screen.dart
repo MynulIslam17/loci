@@ -66,7 +66,10 @@ class _ExploreActivityScreenState extends State<ExploreActivityScreen>
             //--- create new activity
             CustomButton(
               backgroundColor: colorScheme.primary,
-              onPressed: () {},
+              onPressed: () {
+
+                Get.toNamed(AppRoutes.createActivity);
+              },
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
