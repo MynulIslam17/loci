@@ -33,7 +33,7 @@ class EventEditCard extends StatelessWidget {
 
     return Card(
       color: colorScheme.surfaceContainerHigh,
-      elevation: 0,
+      elevation: 2,
       clipBehavior: Clip.antiAlias,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

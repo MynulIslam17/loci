@@ -5,6 +5,7 @@ import 'package:loci/core/constants/app_text_style.dart';
 import 'package:loci/core/theme/app_colors.dart';
 import 'package:loci/core/theme/theme_extention.dart';
 import 'package:loci/presentation/widgets/custom_button.dart';
+import 'package:loci/presentation/widgets/custom_image_container.dart';
 
 import '../../../gen/assets.gen.dart';
 import '../../widgets/event_card.dart';
@@ -38,12 +39,12 @@ class _EventDetailsState extends State<EventDetails> {
               //--- top image--
               ClipRRect(
                 borderRadius: BorderRadius.circular(12),
-                child: Image.asset(
-                  Assets.images.restu.path,
+                child: CustomCachedImage(
+                  imageUrl: "assets/images/finedine.png",
                   height: 200,
                   width: double.infinity,
-                  fit: BoxFit.cover,
-                ),
+                  borderRadius: 10,
+                )
               ),
 
               const SizedBox(height: 16),

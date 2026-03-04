@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:loci/core/constants/app_text_style.dart';
 import 'package:loci/core/theme/theme_extention.dart';
 import 'package:loci/presentation/widgets/custom_button.dart';
+import 'package:loci/presentation/widgets/custom_image_container.dart';
 
 class EventCard extends StatelessWidget {
   final String imageUrl;
@@ -42,15 +43,13 @@ class EventCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // 1. Image Header
-            ClipRRect(
-              borderRadius: BorderRadius.circular(12),
-              child: Image.asset(
-                imageUrl,
-                height: 200,
-                width: double.infinity,
-                fit: BoxFit.cover,
-              ),
-            ),
+
+             CustomCachedImage(
+               width: double.infinity,
+               height: 200,
+               imageUrl: "assets/images/finedine.png",
+               borderRadius: 10,
+             ),
             const SizedBox(height: 16),
 
             // 2. Title & Description
@@ -114,12 +113,13 @@ class IconTextRow extends StatelessWidget {
   final IconData icon;
   final String text;
   final Color? iconColor;
+  final Color? textColor;
 
   const IconTextRow({
     super.key,
     required this.icon,
     required this.text,
-    this.iconColor,
+    this.iconColor, this.textColor,
   });
 
   @override
@@ -136,7 +136,7 @@ class IconTextRow extends StatelessWidget {
           child: Text(
             text,
             style: AppTextStyle.textXs(
-              color: context.colorScheme.onSurface,
+              color: textColor ?? context.colorScheme.onSurface,
               weight: FontWeight.w500,
             ),
           ),

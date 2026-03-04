@@ -47,7 +47,15 @@ static const String scheduleMeeting="/scheduleMeeting";
   static const String  myBusinessProfile="/myBusinessProfile";
   static const String  manualClaimBusiness="/manualClaimBusiness";
   static const String  createAdd="/createAdd";
+
+  //----explore activity(claim business)
   static const String  exploreActivity="/exploreActivity";
+  static const String  viewEvent="/viewEvent";
+  static const String  viewRoutes="/viewRoutes";
+  static const String  viewRaffles="/viewRaffles";
+
+
+
 
 
 
