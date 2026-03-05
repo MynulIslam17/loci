@@ -8,15 +8,16 @@ import 'package:loci/presentation/widgets/custom_dropdown.dart';
 import 'package:loci/presentation/widgets/custom_image_container.dart';
 import 'package:loci/presentation/widgets/custom_imagepicker.dart';
 import 'package:loci/presentation/widgets/custom_rich_text.dart';
+import 'package:loci/presentation/widgets/task_card.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/utils/activity_type.dart';
 import '../../../core/utils/date_parser.dart';
 import '../../../data/task_model.dart';
 import '../../../gen/assets.gen.dart';
 import '../../widgets/common/company_info_card.dart';
+import '../../widgets/coupon_card.dart';
 import '../../widgets/custom_button.dart';
 import '../../widgets/custom_text_field.dart';
-
-enum ActivityType { Event, Routes, Raffles }
 
 class CreateActivityScreen extends StatefulWidget {
   const CreateActivityScreen({super.key});
@@ -106,11 +107,13 @@ class _CreateActivityScreenState extends State<CreateActivityScreen> {
 
   void _addTask() {
     setState(() {
-      tasks.add(TaskModel(
-        title: "Task1",
-        description: "afafafaf",
-        logoUrl: 'assets/images/finedine.png',
-      ));
+      tasks.add(
+        TaskModel(
+          title: "Task1",
+          description: "afafafaf",
+          logoUrl: 'assets/images/finedine.png',
+        ),
+      );
     });
   }
 
@@ -159,24 +162,30 @@ class _CreateActivityScreenState extends State<CreateActivityScreen> {
   }
 
   Widget _bannerImagePicker() {
+    final colorScheme = context.colorScheme;
     return CustomImagePicker(
       backgroundColor: context.colorScheme.surfaceContainerHigh,
       selectedImage: bannerImage,
       height: 200,
       onImageSelected: (file) => setState(() => bannerImage = file),
-      placeholder: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(Icons.add_a_photo, color: context.colorScheme.onSurfaceVariant, size: 50),
-          const SizedBox(height: 12),
-          Text(
-            "Browse image",
-            style: AppTextStyle.textMd(
-              color: context.colorScheme.onSurface,
-              weight: FontWeight.w600,
+      placeholder: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.cloud_upload_outlined,
+              color: colorScheme.onSurface,
+              size: 30,
             ),
-          ),
-        ],
+            Text(
+              "Browse image",
+              style: AppTextStyle.textMd(
+                color: colorScheme.onSurface,
+                weight: FontWeight.w600,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -199,7 +208,9 @@ class _CreateActivityScreenState extends State<CreateActivityScreen> {
             }
             setState(() => selectedCategory = value);
           },
-          items: createCategory.map((c) => DropdownMenuItem(value: c, child: Text(c))).toList(),
+          items: createCategory
+              .map((c) => DropdownMenuItem(value: c, child: Text(c)))
+              .toList(),
         ),
         const SizedBox(height: 16),
         CustomTextField(
@@ -240,7 +251,10 @@ class _CreateActivityScreenState extends State<CreateActivityScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text("Event Schedule and Seats", style: AppTextStyle.textSm(weight: FontWeight.w700)),
+        Text(
+          "Event Schedule and Seats",
+          style: AppTextStyle.textSm(weight: FontWeight.w700),
+        ),
         const SizedBox(height: 12),
         Row(
           children: [
@@ -250,7 +264,11 @@ class _CreateActivityScreenState extends State<CreateActivityScreen> {
                 readOnly: true,
                 onTap: showCalendar,
                 hintText: "Select date",
-                suffixIcon: Icon(Icons.calendar_today_outlined, size: 18, color: context.colorScheme.onSurfaceVariant),
+                suffixIcon: Icon(
+                  Icons.calendar_today_outlined,
+                  size: 18,
+                  color: context.colorScheme.onSurfaceVariant,
+                ),
                 borderColor: context.colorScheme.outline,
                 textColor: context.colorScheme.onSurface,
               ),
@@ -262,7 +280,11 @@ class _CreateActivityScreenState extends State<CreateActivityScreen> {
                 readOnly: true,
                 onTap: showTime,
                 hintText: "Select time",
-                suffixIcon: Icon(Icons.access_time, size: 18, color: context.colorScheme.onSurfaceVariant),
+                suffixIcon: Icon(
+                  Icons.access_time,
+                  size: 18,
+                  color: context.colorScheme.onSurfaceVariant,
+                ),
                 borderColor: context.colorScheme.outline,
                 textColor: context.colorScheme.onSurface,
               ),
@@ -273,7 +295,11 @@ class _CreateActivityScreenState extends State<CreateActivityScreen> {
                 controller: personController,
                 hintText: "Person",
                 keyboardType: TextInputType.number,
-                suffixIcon: Icon(Icons.person_outline, size: 18, color: context.colorScheme.onSurfaceVariant),
+                suffixIcon: Icon(
+                  Icons.person_outline,
+                  size: 18,
+                  color: context.colorScheme.onSurfaceVariant,
+                ),
                 borderColor: context.colorScheme.outline,
                 textColor: context.colorScheme.onSurface,
               ),
@@ -318,7 +344,10 @@ class _CreateActivityScreenState extends State<CreateActivityScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text("Route Details", style: AppTextStyle.textSm(weight: FontWeight.w700)),
+        Text(
+          "Route Details",
+          style: AppTextStyle.textSm(weight: FontWeight.w700),
+        ),
         const SizedBox(height: 12),
         Row(
           children: [
@@ -328,7 +357,11 @@ class _CreateActivityScreenState extends State<CreateActivityScreen> {
                 readOnly: true,
                 onTap: showTime,
                 hintText: "Select time",
-                suffixIcon: Icon(Icons.access_time, size: 18, color: context.colorScheme.onSurfaceVariant),
+                suffixIcon: Icon(
+                  Icons.access_time,
+                  size: 18,
+                  color: context.colorScheme.onSurfaceVariant,
+                ),
                 borderColor: context.colorScheme.outline,
                 textColor: context.colorScheme.onSurface,
               ),
@@ -342,8 +375,14 @@ class _CreateActivityScreenState extends State<CreateActivityScreen> {
                 textColor: context.colorScheme.onSurface,
                 hintText: "Route type",
                 value: selectedRouteCondition,
-                items: routeCondition.map((item) => DropdownMenuItem(value: item, child: Text(item))).toList(),
-                onChanged: (value) => setState(() => selectedRouteCondition = value),
+                items: routeCondition
+                    .map(
+                      (item) =>
+                          DropdownMenuItem(value: item, child: Text(item)),
+                    )
+                    .toList(),
+                onChanged: (value) =>
+                    setState(() => selectedRouteCondition = value),
               ),
             ),
           ],
@@ -366,7 +405,11 @@ class _CreateActivityScreenState extends State<CreateActivityScreen> {
                 readOnly: true,
                 onTap: showCalendar,
                 hintText: "Select date",
-                suffixIcon: Icon(Icons.calendar_today_outlined, size: 18, color: context.colorScheme.onSurfaceVariant),
+                suffixIcon: Icon(
+                  Icons.calendar_today_outlined,
+                  size: 18,
+                  color: context.colorScheme.onSurfaceVariant,
+                ),
                 borderColor: context.colorScheme.outline,
                 textColor: context.colorScheme.onSurface,
               ),
@@ -379,7 +422,11 @@ class _CreateActivityScreenState extends State<CreateActivityScreen> {
                 title: "Max Supply",
                 hintText: "Enter supply",
                 keyboardType: TextInputType.number,
-                suffixIcon: Icon(Icons.person_outline, size: 18, color: context.colorScheme.onSurfaceVariant),
+                suffixIcon: Icon(
+                  Icons.person_outline,
+                  size: 18,
+                  color: context.colorScheme.onSurfaceVariant,
+                ),
                 borderColor: context.colorScheme.outline,
                 textColor: context.colorScheme.onSurface,
               ),
@@ -387,15 +434,31 @@ class _CreateActivityScreenState extends State<CreateActivityScreen> {
           ],
         ),
         const SizedBox(height: 16),
-        Text("Price (Coupon)", style: AppTextStyle.textSm(weight: FontWeight.w700, color: colorScheme.onSurface)),
+        Text(
+          "Voucher",
+          style: AppTextStyle.textSm(
+            weight: FontWeight.w700,
+            color: colorScheme.onSurface,
+          ),
+        ),
         const SizedBox(height: 12),
-        _buildCoupon(file: coupon, onTap: _pickCoupon),
+        CouponUploadCard(
+          file: coupon,
+          onTap: _pickCoupon,
+          onDelete: () {
+            setState(() {
+              coupon = null;
+            });
+          },
+        ),
         const SizedBox(height: 16),
         Card(
           elevation: 2,
           margin: EdgeInsets.zero,
           color: colorScheme.surfaceContainer,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
           child: Padding(
             padding: const EdgeInsets.all(12.0),
             child: Column(
@@ -406,11 +469,17 @@ class _CreateActivityScreenState extends State<CreateActivityScreen> {
                     children: [
                       TextSpan(
                         text: 'Tasks required ',
-                        style: AppTextStyle.textSm(weight: FontWeight.w700, color: colorScheme.onSurface),
+                        style: AppTextStyle.textSm(
+                          weight: FontWeight.w700,
+                          color: colorScheme.onSurface,
+                        ),
                       ),
                       TextSpan(
                         text: '(Check-in):',
-                        style: AppTextStyle.textXs(weight: FontWeight.w400, color: colorScheme.onSurfaceVariant),
+                        style: AppTextStyle.textXs(
+                          weight: FontWeight.w400,
+                          color: colorScheme.onSurfaceVariant,
+                        ),
                       ),
                     ],
                   ),
@@ -422,7 +491,14 @@ class _CreateActivityScreenState extends State<CreateActivityScreen> {
                     padding: EdgeInsets.zero,
                     physics: const NeverScrollableScrollPhysics(),
                     itemCount: tasks.length,
-                    itemBuilder: (context, index) => _buildTaskCard(tasks[index], index),
+                    itemBuilder: (context, index) => TaskCard(
+                      title: tasks[index].title,
+                      description: tasks[index].description,
+                      imageUrl: tasks[index].logoUrl,
+                      onRemove: () {
+                        _removeTask(index);
+                      },
+                    ),
                   ),
                 const SizedBox(height: 12),
                 CustomButton(
@@ -434,7 +510,13 @@ class _CreateActivityScreenState extends State<CreateActivityScreen> {
                     children: [
                       Icon(Icons.add, color: colorScheme.primary, size: 22),
                       const SizedBox(width: 8),
-                      Text("Add requirement", style: AppTextStyle.textMd(color: colorScheme.primary, weight: FontWeight.w500)),
+                      Text(
+                        "Add requirement",
+                        style: AppTextStyle.textMd(
+                          color: colorScheme.primary,
+                          weight: FontWeight.w500,
+                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -454,7 +536,8 @@ class _CreateActivityScreenState extends State<CreateActivityScreen> {
         const SizedBox(height: 10),
         CompanyInfoCard(
           title: "Marland Clutch",
-          description: "Lorem Ipsum is simply dummy text of the printing and typesetting industry...",
+          description:
+              "Lorem Ipsum is simply dummy text of the printing and typesetting industry...",
           imagePath: Assets.images.companyLogo.path,
         ),
         const SizedBox(height: 10),
@@ -473,9 +556,21 @@ class _CreateActivityScreenState extends State<CreateActivityScreen> {
       padding: const EdgeInsets.symmetric(vertical: 8),
       child: Row(
         children: [
-          Text("Organizer", style: AppTextStyle.textMd(weight: FontWeight.w700, color: context.colorScheme.onSurface)),
+          Text(
+            "Organizer",
+            style: AppTextStyle.textMd(
+              weight: FontWeight.w700,
+              color: context.colorScheme.onSurface,
+            ),
+          ),
           const Spacer(),
-          Text(isPublic ? "Public" : "Private", style: AppTextStyle.textSm(weight: FontWeight.w700, color: context.colorScheme.onSurfaceVariant)),
+          Text(
+            isPublic ? "Public" : "Private",
+            style: AppTextStyle.textSm(
+              weight: FontWeight.w700,
+              color: context.colorScheme.onSurfaceVariant,
+            ),
+          ),
           const SizedBox(width: 8),
           Switch(
             value: isPublic,
@@ -487,166 +582,6 @@ class _CreateActivityScreenState extends State<CreateActivityScreen> {
     );
   }
 
-  Widget _buildTaskCard(TaskModel task, int index) {
-    final colorScheme = context.colorScheme;
-    return Container(
-      margin: const EdgeInsets.symmetric(vertical: 6),
-      decoration: BoxDecoration(
-        color: colorScheme.surface,
-        borderRadius: BorderRadius.circular(40),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
-        child: Row(
-          children: [
-            InkWell(
-              onTap: () => _removeTask(index),
-              child: Container(
-                padding: const EdgeInsets.all(6),
-                decoration: BoxDecoration(color: AppColors.danger, shape: BoxShape.circle),
-                child: const Icon(Icons.close, size: 20, color: AppColors.base50),
-              ),
-            ),
-            const SizedBox(width: 12),
-            Container(
-              padding: const EdgeInsets.all(2),
-              decoration: BoxDecoration(color: colorScheme.primary, shape: BoxShape.circle),
-              child: CustomCachedImage(width: 50, height: 50, isCircle: true, imageUrl: task.logoUrl),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(task.title, style: AppTextStyle.textSm(color: colorScheme.onSurface, weight: FontWeight.w600)),
-                  Text(task.description, overflow: TextOverflow.ellipsis, maxLines: 2, style: AppTextStyle.textXs(color: colorScheme.onSurfaceVariant)),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildCoupon({required File? file, VoidCallback? onTap}) {
-    final colorScheme = context.colorScheme;
-
-    if (file == null) {
-      return GestureDetector(
-        onTap: onTap,
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: colorScheme.primary.withOpacity(0.3), width: 1.5),
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [colorScheme.primary.withOpacity(0.05), colorScheme.primary.withOpacity(0.12)],
-            ),
-          ),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
-            child: Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(color: colorScheme.primary.withOpacity(0.12), borderRadius: BorderRadius.circular(12)),
-                  child: Icon(Icons.discount_outlined, color: colorScheme.primary, size: 22),
-                ),
-                const SizedBox(width: 14),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text("Upload Coupon", style: AppTextStyle.textSm(weight: FontWeight.w600)),
-                      const SizedBox(height: 2),
-                      Text("PDF or image accepted", style: AppTextStyle.textXs(color: colorScheme.onSurfaceVariant)),
-                    ],
-                  ),
-                ),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                  decoration: BoxDecoration(color: colorScheme.primary, borderRadius: BorderRadius.circular(20)),
-                  child: Text("Browse", style: AppTextStyle.textXs(weight: FontWeight.w600, color: colorScheme.onPrimary)),
-                ),
-              ],
-            ),
-          ),
-        ),
-      );
-    }
-
-    final isPdf = file.path.toLowerCase().endsWith(".pdf");
-    final fileName = file.path.split("/").last;
-    final fileColor = isPdf ? AppColors.danger : colorScheme.primary;
-
-    return Container(
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(16),
-        color: colorScheme.surfaceContainerHigh,
-        boxShadow: [BoxShadow(color: colorScheme.shadow.withOpacity(0.06), blurRadius: 12, offset: const Offset(0, 4))],
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(16),
-        child: IntrinsicHeight(
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Container(width: 4, color: fileColor),
-              Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                  child: Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(10),
-                        decoration: BoxDecoration(color: fileColor.withOpacity(0.1), borderRadius: BorderRadius.circular(12)),
-                        child: Icon(isPdf ? Icons.picture_as_pdf_rounded : Icons.image_rounded, color: fileColor, size: 20),
-                      ),
-                      const SizedBox(width: 14),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Text(fileName, style: AppTextStyle.textSm(weight: FontWeight.w600, color: colorScheme.onSurface), maxLines: 1, overflow: TextOverflow.ellipsis),
-                            const SizedBox(height: 3),
-                            Row(
-                              children: [
-                                Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                  decoration: BoxDecoration(color: fileColor.withOpacity(0.1), borderRadius: BorderRadius.circular(4)),
-                                  child: Text(isPdf ? "PDF" : "Image", style: AppTextStyle.textXs(weight: FontWeight.w600, color: fileColor)),
-                                ),
-                                const SizedBox(width: 6),
-                                Text("Coupon uploaded", style: AppTextStyle.textXs(color: colorScheme.onSurfaceVariant)),
-                              ],
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Material(
-                        color: AppColors.danger.withOpacity(0.08),
-                        borderRadius: BorderRadius.circular(10),
-                        child: InkWell(
-                          borderRadius: BorderRadius.circular(10),
-                          onTap: () => setState(() => coupon = null),
-                          child: Padding(padding: const EdgeInsets.all(8), child: Icon(Icons.delete_outline_rounded, color: AppColors.danger, size: 18)),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
 
   void _showBottomSheet() {
     final colorScheme = context.colorScheme;
@@ -654,10 +589,17 @@ class _CreateActivityScreenState extends State<CreateActivityScreen> {
       backgroundColor: colorScheme.surface,
       context: context,
       isScrollControlled: true,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
       builder: (context) {
         return Padding(
-          padding: EdgeInsets.only(left: 20, right: 20, top: 20, bottom: MediaQuery.of(context).viewInsets.bottom + 20),
+          padding: EdgeInsets.only(
+            left: 20,
+            right: 20,
+            top: 20,
+            bottom: MediaQuery.of(context).viewInsets.bottom + 20,
+          ),
           child: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -666,8 +608,17 @@ class _CreateActivityScreenState extends State<CreateActivityScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text("Add Requirement", style: AppTextStyle.textLg(weight: FontWeight.w600, color: colorScheme.onSurface)),
-                    IconButton(onPressed: () => Navigator.pop(context), icon: Icon(Icons.cancel, color: colorScheme.onSurface)),
+                    Text(
+                      "Add Requirement",
+                      style: AppTextStyle.textLg(
+                        weight: FontWeight.w600,
+                        color: colorScheme.onSurface,
+                      ),
+                    ),
+                    IconButton(
+                      onPressed: () => Navigator.pop(context),
+                      icon: Icon(Icons.cancel, color: colorScheme.onSurface),
+                    ),
                   ],
                 ),
                 const SizedBox(height: 20),
@@ -677,16 +628,24 @@ class _CreateActivityScreenState extends State<CreateActivityScreen> {
                   fontSize: 14,
                   textColor: colorScheme.onSurface,
                   hintTextColor: colorScheme.onSurfaceVariant,
-                  suffixIcon: Icon(Icons.search, color: colorScheme.onSurfaceVariant),
+                  suffixIcon: Icon(
+                    Icons.search,
+                    color: colorScheme.onSurfaceVariant,
+                  ),
                 ),
                 const SizedBox(height: 20),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
-                    CustomButton(width: 120, height: 50, text: "Add", onPressed: () {
-                      _addTask();
-                      Navigator.pop(context);
-                    }),
+                    CustomButton(
+                      width: 120,
+                      height: 50,
+                      text: "Add",
+                      onPressed: () {
+                        _addTask();
+                        Navigator.pop(context);
+                      },
+                    ),
                   ],
                 ),
               ],

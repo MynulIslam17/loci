@@ -10,6 +10,7 @@ import 'package:loci/presentation/widgets/route_edit_card.dart';
 import 'package:loci/routes/app_routes.dart';
 
 import '../../../core/constants/app_text_style.dart';
+import '../../../core/utils/activity_type.dart';
 import '../../widgets/custom_button.dart';
 import '../../widgets/custom_text_field.dart';
 import '../../widgets/raffles_edit_card.dart';
@@ -67,7 +68,6 @@ class _ExploreActivityScreenState extends State<ExploreActivityScreen>
             CustomButton(
               backgroundColor: colorScheme.primary,
               onPressed: () {
-
                 Get.toNamed(AppRoutes.createActivity);
               },
               child: Row(
@@ -144,13 +144,18 @@ class _ExploreActivityScreenState extends State<ExploreActivityScreen>
           location: "Downtown District",
           attendance: "0 going / 200 max",
           organizerName: "Crawl Events Co.",
-          onEditInfo: () {},
+          onEditInfo: () {
+            Get.toNamed(
+              AppRoutes.editEvent,
+              arguments: {"title": "Spring Pub Crawl Edit"},
+            );
+          },
           onViewDetails: () {
             //---view details pass the title of appbar
-            Get.toNamed(AppRoutes.viewEvent,arguments: {
-              "title": "Spring Pub Crawl",
-
-            });
+            Get.toNamed(
+              AppRoutes.viewEvent,
+              arguments: {"title": "Spring Pub Crawl"},
+            );
           },
         );
       },
@@ -162,8 +167,6 @@ class _ExploreActivityScreenState extends State<ExploreActivityScreen>
 
   // ---- routes page
   Widget _routesTab() {
-
-
     return ListView.separated(
       physics: const BouncingScrollPhysics(),
       itemCount: 5,
@@ -178,7 +181,12 @@ class _ExploreActivityScreenState extends State<ExploreActivityScreen>
           duration: "2h 30m",
           difficulty: "Moderate",
           imageUrl: "https://picsum.photos/seed/${index + 10}/400/300",
-          onEdit: () {},
+          onEdit: () {
+            Get.toNamed(
+              AppRoutes.editRoutes,
+              arguments: {"title": "Routes Edit"},
+            );
+          },
           onView: () {},
         );
       },
@@ -191,8 +199,6 @@ class _ExploreActivityScreenState extends State<ExploreActivityScreen>
   // ---- raffles page
 
   Widget _rafflesTab() {
-
-
     return ListView.separated(
       physics: const BouncingScrollPhysics(),
       padding: const EdgeInsets.all(6.0),
@@ -208,6 +214,10 @@ class _ExploreActivityScreenState extends State<ExploreActivityScreen>
           imageUrl: "https://picsum.photos/seed/raffle${index}/400/300",
           onEdit: () {
             // Handle edit logic
+            Get.toNamed(
+              AppRoutes.editRaffles,
+              arguments: {"title": "Edit Raffles"},
+            );
           },
           onView: () {
             // Handle view details logic

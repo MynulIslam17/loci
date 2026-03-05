@@ -51,10 +51,14 @@ static const String scheduleMeeting="/scheduleMeeting";
   //----explore activity(claim business)
   static const String  exploreActivity="/exploreActivity";
   static const String  createActivity="/createActivity";
+  static const String  editEvent="/editEvent";
+  static const String  editRoutes="/editRoutes";
+  static const String  editRaffles="/editRaffles";
 
   static const String  viewEvent="/viewEvent";
   static const String  viewTotalRSVP="/viewTotalRSVP";
   static const String  viewTotalCheckIn="/viewTotalCheckIn";
+
 
   static const String  viewRoutes="/viewRoutes";
   static const String  viewRaffles="/viewRaffles";
