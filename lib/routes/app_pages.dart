@@ -16,6 +16,7 @@ import 'package:loci/presentation/pages/explore_activity/edit_event_screen.dart'
 import 'package:loci/presentation/pages/explore_activity/edit_raffles_screen.dart';
 import 'package:loci/presentation/pages/explore_activity/edit_routes_screen.dart';
 import 'package:loci/presentation/pages/explore_activity/explore_activity_screen.dart';
+import 'package:loci/presentation/pages/explore_activity/recent_activity.dart';
 import 'package:loci/presentation/pages/explore_activity/total_checkin_screen.dart';
 import 'package:loci/presentation/pages/explore_activity/total_rsvp_screen.dart';
 import 'package:loci/presentation/pages/explore_activity/view_event_screen.dart';
@@ -92,7 +93,7 @@ abstract class AppPages {
     GetPage(name: AppRoutes.manualClaimBusiness, page: () => ManualClaimBusiness()),
     GetPage(name: AppRoutes.createAdd, page: () => CreateAd()),
 
-    //---clam my business
+    //---explore activity
     GetPage(name: AppRoutes.exploreActivity, page: () => ExploreActivityScreen()),
     GetPage(name: AppRoutes.createActivity, page: () => CreateActivityScreen()),
     GetPage(name: AppRoutes.editEvent, page: () => EditEventScreen()),
@@ -103,9 +104,12 @@ abstract class AppPages {
     GetPage(name: AppRoutes.viewRoutes, page: () => ViewRouteScreen()),
     GetPage(name: AppRoutes.viewRaffles, page: () => ViewRafflesScreen()),
 
-
     GetPage(name: AppRoutes.viewTotalCheckIn, page: () => TotalCheckInScreen()),
     GetPage(name: AppRoutes.viewTotalRSVP, page: () => TotalRsvpScreen()),
+
+    //---create activity
+
+    GetPage(name: AppRoutes.recentActivity, page: () => RecentActivity()),
 
 
 

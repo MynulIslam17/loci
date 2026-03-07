@@ -24,7 +24,7 @@ class AppThemes {
       error: AppColors.danger,              // Status Red
       surfaceContainerHigh: AppColors.base100, // Card background
 
-      surfaceContainer: AppColors.base600, //works on card (on light mode show light dark)
+      surfaceContainer: AppColors.base500, //works on card (on light mode show light dark)
 
 
     ),

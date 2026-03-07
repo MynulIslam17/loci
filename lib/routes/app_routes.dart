@@ -59,9 +59,11 @@ static const String scheduleMeeting="/scheduleMeeting";
   static const String  viewTotalRSVP="/viewTotalRSVP";
   static const String  viewTotalCheckIn="/viewTotalCheckIn";
 
-
   static const String  viewRoutes="/viewRoutes";
   static const String  viewRaffles="/viewRaffles";
+
+  //-----recent Activity
+  static const String  recentActivity="/recentActivity";
 
 
 

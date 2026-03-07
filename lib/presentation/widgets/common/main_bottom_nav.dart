@@ -264,6 +264,7 @@ class _MainBottomNavState extends State<MainBottomNav> {
     );
   }
 
+  //---drawer item click handle
   void _handleDrawerItem(String title) {
     Get.back();
     switch (title) {
@@ -290,6 +291,10 @@ class _MainBottomNavState extends State<MainBottomNav> {
 
       case "Upcoming Events" :
         navController.changeIndex(2);
+        break;
+
+      case "Recent Activity" :
+        Get.toNamed(AppRoutes.recentActivity);
         break;
 
 

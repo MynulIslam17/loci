@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:loci/core/constants/app_text_style.dart';
 import 'package:loci/core/theme/theme_extention.dart';
 
+import 'custom_image_container.dart';
+
 class ReviewCard extends StatelessWidget {
   final String name;
   final String businessName;
@@ -35,9 +37,12 @@ class ReviewCard extends StatelessWidget {
             /// --- Header Row ---
             Row(
               children: [
-                CircleAvatar(
-                  radius: 20,
-                  backgroundImage: NetworkImage(imageUrl),
+
+                CustomCachedImage(
+                  height: 50,
+                  width: 50,
+                  imageUrl: imageUrl,
+                  isCircle: true,
                 ),
                 const SizedBox(width: 12),
 
