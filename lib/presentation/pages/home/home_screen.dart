@@ -1,19 +1,72 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:get/get_core/src/get_main.dart';
+import 'package:get/get_instance/src/extension_instance.dart';
 import 'package:loci/core/constants/app_text_style.dart';
 import 'package:loci/core/theme/app_colors.dart';
 import 'package:loci/core/theme/theme_extention.dart';
 import 'package:loci/data/carousel_data.dart';
+import 'package:loci/presentation/pages/raffles/active_raffles_screen.dart';
 import 'package:loci/presentation/widgets/custom_carousel.dart';
 import 'package:loci/presentation/widgets/expandable_text.dart';
 
 import '../../../data/poll.dart';
 import '../../../gen/assets.gen.dart';
+import '../../controllers/nav_controller.dart';
 import '../../widgets/common/post_comment_section.dart';
 import '../../widgets/post_input_filed.dart';
 import '../../widgets/post_interaction_bar.dart';
 import '../../widgets/post_poll_section.dart';
 import '../../widgets/user_post_header.dart';
+import '../communites/community_screen.dart';
+
+class HomeRoutes {
+  static const community = '/community';
+  static const communityDetail = '/community-detail';
+}
+
+class HomeNavigator extends StatelessWidget {
+  static final GlobalKey<NavigatorState> navigatorKey =
+  GlobalKey<NavigatorState>();
+
+  const HomeNavigator({super.key});
+
+
+  static void push(String route, {Object? arguments}) {
+    navigatorKey.currentState?.pushNamed(route, arguments: arguments);
+  }
+
+  static void pop() {
+    navigatorKey.currentState?.pop();
+  }
+
+  static bool canPop() {
+    return navigatorKey.currentState?.canPop() ?? false;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Navigator(
+      key: navigatorKey,
+      onGenerateRoute: (settings) {
+        switch (settings.name) {
+          case HomeRoutes.community:
+            return MaterialPageRoute(
+              builder: (_) => const CommunityScreen(),
+            );
+          // case HomeRoutes.communityDetail:
+          //   return MaterialPageRoute(
+          //     builder: (_) => const CommunityDetailPage(),
+          //   );
+          default:
+            return MaterialPageRoute(
+              builder: (_) => const HomeScreen(),
+            );
+        }
+      },
+    );
+  }
+}
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -23,6 +76,9 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+
+  final navController = Get.find<NavController>();
+
   // --- Search bar controls ---
 
   final TextEditingController _postController = TextEditingController();
@@ -127,6 +183,28 @@ class _HomeScreenState extends State<HomeScreen> {
                     borderRadius: BorderRadius.circular(10),
                     onTap: () {
                       //-- on tap to do--
+                      switch(act["name"]){
+                        case "Raffles" :
+                          navController.openDrawerPage(
+                              ActiveRafflesScreen(),
+                            navigatorKey: ActiveRafflesScreen.navigatorKey
+                          );
+
+                          break;
+
+                          case "Communities" :
+
+                            HomeNavigator.push(HomeRoutes.community);
+
+                          break;
+
+                          case "Events" :
+                          navController.changeIndex(2);
+                          break;
+
+
+                      }
+
                     },
                     child: SizedBox(
                       width: 100,

@@ -28,7 +28,7 @@ class _MainBottomNavState extends State<MainBottomNav> {
   final navController = Get.find<NavController>();
 
   final List<Widget> _screens = [
-    HomeScreen(),
+    const HomeNavigator(),
     BrowseScreen(),
     EventScreen(),
     NetworkScreen(),
@@ -193,6 +193,10 @@ class _MainBottomNavState extends State<MainBottomNav> {
           }
           return;
         }
+        if (HomeNavigator.navigatorKey.currentState?.canPop() == true) {
+          HomeNavigator.navigatorKey.currentState?.pop();
+          return;
+        }
         if (navController.currentIndex != 0) {
           navController.changeIndex(0);
           return;
@@ -264,7 +268,6 @@ class _MainBottomNavState extends State<MainBottomNav> {
     );
   }
 
-  //---drawer item click handle
   void _handleDrawerItem(String title) {
     Get.back();
     switch (title) {
@@ -291,10 +294,6 @@ class _MainBottomNavState extends State<MainBottomNav> {
 
       case "Upcoming Events" :
         navController.changeIndex(2);
-        break;
-
-      case "Recent Activity" :
-        Get.toNamed(AppRoutes.recentActivity);
         break;
 
 
