@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 
-import '../../core/constants/app_text_style.dart';
-import '../../core/theme/theme_extention.dart';
+import '../../../../core/constants/app_text_style.dart';
+import '../../../../core/theme/theme_extention.dart';
+
+
 
 class PostInteractionBar extends StatelessWidget {
   final String likes;

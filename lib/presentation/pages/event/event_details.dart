@@ -9,7 +9,7 @@ import 'package:loci/presentation/widgets/custom_image_container.dart';
 
 import '../../../gen/assets.gen.dart';
 import '../../widgets/common/company_info_card.dart';
-import '../../widgets/event_card.dart';
+import 'widgets/event_card.dart';
 
 class EventDetails extends StatefulWidget {
   const EventDetails({super.key});

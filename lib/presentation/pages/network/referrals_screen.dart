@@ -8,7 +8,7 @@ import 'package:loci/presentation/widgets/custom_button.dart';
 import 'package:loci/presentation/widgets/custom_text_field.dart';
 import 'package:loci/routes/app_routes.dart';
 
-import '../../widgets/referral_card.dart';
+import '../raffles/widgets/referral_card.dart';
 
 class ReferralsScreen extends StatefulWidget {
   const ReferralsScreen({super.key});

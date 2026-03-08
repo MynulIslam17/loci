@@ -1,7 +1,8 @@
 import 'package:flutter/cupertino.dart';
-import 'package:loci/presentation/widgets/poll_bar.dart';
+import 'package:loci/presentation/pages/home/widgets/poll_bar.dart';
 
-import '../../data/poll.dart';
+import '../../../../data/poll.dart';
+
 
 class PostPollSection extends StatelessWidget {
   final List<PollOption> options;

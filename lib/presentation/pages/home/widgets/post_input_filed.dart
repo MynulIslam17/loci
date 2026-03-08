@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:loci/core/constants/app_text_style.dart';
 import 'package:loci/core/theme/theme_extention.dart';
-import '../../../gen/assets.gen.dart';
+
 
 class PostInputField extends StatefulWidget {
   final void Function(String text, String category)? onSubmit;
@@ -101,12 +101,13 @@ class _PostInputFieldState extends State<PostInputField> {
               ),
               decoration: InputDecoration(
                 hintText: widget.hintText,
+
                 border: InputBorder.none,
                 isCollapsed: true,
                 contentPadding: const EdgeInsets.symmetric(vertical: 10),
                 hintStyle: AppTextStyle.textSm(
                   color:
-                  context.colorScheme.onSurfaceVariant.withOpacity(0.6),
+                  context.colorScheme.onSurfaceVariant,
                 ),
               ),
             ),

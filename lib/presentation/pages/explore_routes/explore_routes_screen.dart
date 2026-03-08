@@ -3,7 +3,7 @@ import 'package:loci/core/constants/app_text_style.dart';
 import 'package:loci/core/theme/theme_extention.dart';
 import 'package:loci/presentation/widgets/custom_text_field.dart';
 
-import '../../widgets/route_card.dart';
+import 'widgets/route_card.dart';
 
 class ExploreRoutesScreen extends StatefulWidget {
   const ExploreRoutesScreen({super.key});

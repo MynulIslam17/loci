@@ -1,8 +1,8 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
-import '../../core/constants/app_text_style.dart';
-import '../../core/theme/app_colors.dart';
+import '../../../../core/constants/app_text_style.dart';
+import '../../../../core/theme/app_colors.dart';
 
 class UserPostHeader extends StatelessWidget {
   final String fullName;

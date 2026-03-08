@@ -6,18 +6,17 @@ import 'package:loci/core/constants/app_text_style.dart';
 import 'package:loci/core/theme/app_colors.dart';
 import 'package:loci/core/theme/theme_extention.dart';
 import 'package:loci/data/carousel_data.dart';
+import 'package:loci/presentation/pages/home/widgets/custom_carousel.dart';
+import 'package:loci/presentation/pages/home/widgets/post_input_filed.dart';
+import 'package:loci/presentation/pages/home/widgets/post_interaction_bar.dart';
+import 'package:loci/presentation/pages/home/widgets/post_poll_section.dart';
 import 'package:loci/presentation/pages/raffles/active_raffles_screen.dart';
-import 'package:loci/presentation/widgets/custom_carousel.dart';
-import 'package:loci/presentation/widgets/expandable_text.dart';
-
+import 'package:loci/presentation/pages/home/widgets/expandable_text.dart';
 import '../../../data/poll.dart';
 import '../../../gen/assets.gen.dart';
 import '../../controllers/nav_controller.dart';
 import '../../widgets/common/post_comment_section.dart';
-import '../../widgets/post_input_filed.dart';
-import '../../widgets/post_interaction_bar.dart';
-import '../../widgets/post_poll_section.dart';
-import '../../widgets/user_post_header.dart';
+import 'widgets/user_post_header.dart';
 import '../communites/community_screen.dart';
 
 class HomeRoutes {
@@ -26,11 +25,9 @@ class HomeRoutes {
 }
 
 class HomeNavigator extends StatelessWidget {
-  static final GlobalKey<NavigatorState> navigatorKey =
-  GlobalKey<NavigatorState>();
+  static final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
   const HomeNavigator({super.key});
-
 
   static void push(String route, {Object? arguments}) {
     navigatorKey.currentState?.pushNamed(route, arguments: arguments);
@@ -51,17 +48,9 @@ class HomeNavigator extends StatelessWidget {
       onGenerateRoute: (settings) {
         switch (settings.name) {
           case HomeRoutes.community:
-            return MaterialPageRoute(
-              builder: (_) => const CommunityScreen(),
-            );
-          // case HomeRoutes.communityDetail:
-          //   return MaterialPageRoute(
-          //     builder: (_) => const CommunityDetailPage(),
-          //   );
+            return MaterialPageRoute(builder: (_) => const CommunityScreen());
           default:
-            return MaterialPageRoute(
-              builder: (_) => const HomeScreen(),
-            );
+            return MaterialPageRoute(builder: (_) => const HomeScreen());
         }
       },
     );
@@ -76,15 +65,16 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-
   final navController = Get.find<NavController>();
 
   // --- Search bar controls ---
-
   final TextEditingController _postController = TextEditingController();
   final FocusNode _postFocusNode = FocusNode();
 
-  //--banner data---
+  // Comment section expansion flag
+  bool _isCommentSectionExpanded = false;
+
+  //-- Banner data ---
   final List<CarouselData> bannerData = [
     CarouselData(
       placeName: "Barclay Prime",
@@ -100,14 +90,14 @@ class _HomeScreenState extends State<HomeScreen> {
     ),
   ];
 
-  //--activity data--
+  //-- Activity row data ---
   final List<Map<String, dynamic>> activity = [
     {"name": "Communities", "icon": Assets.icons.comunity},
     {"name": "Events", "icon": Assets.icons.event1},
     {"name": "Raffles", "icon": Assets.icons.ticket},
   ];
 
-  // --pols data--
+  //-- Polls data ---
   final List<PollOption> myPolls = [
     PollOption(
       title: "Pizzaburg",
@@ -123,37 +113,21 @@ class _HomeScreenState extends State<HomeScreen> {
     ),
   ];
 
-  //-- dummy  comments --
-  final List<CommentData> myComments = [
-    CommentData(
+  //-- Dummy comments ---
+  final List<CommentData> myComments = List.generate(
+    12,
+        (index) => CommentData(
       userName: "Alexandra Broke",
       commentText:
-          "This was one of the most epic experiences, that I've got myself involved in!",
+      "This was one of the most epic experiences, that I've got myself involved in!",
       userImage: Assets.images.user2.path,
       likes: "200",
       replies: "2",
     ),
-    CommentData(
-      userName: "rakib",
-      commentText:
-          "This was one of the most epic experiences, that I've got myself involved in!",
-      userImage: Assets.images.user1.path,
-      likes: "200",
-      replies: "2",
-    ),
-    CommentData(
-      userName: "abir",
-      commentText:
-          "This was one of the most epic experiences, that I've got myself involved in!",
-      userImage: Assets.images.user3.path,
-      likes: "200",
-      replies: "2",
-    ),
-  ];
+  );
 
   @override
   void dispose() {
-    // TODO: implement dispose
     _postFocusNode.dispose();
     _postController.dispose();
     super.dispose();
@@ -168,12 +142,11 @@ class _HomeScreenState extends State<HomeScreen> {
           children: [
             const SizedBox(height: 16),
 
-            // --- 1. CAROUSEL SLIDER ---
+            // --- 1️⃣ Carousel Slider ---
             CustomCarousel(carouselData: bannerData),
-
             const SizedBox(height: 20),
 
-            // --- 2. ACTIVITY ROW ---
+            // --- 2️⃣ Activity Row ---
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 12),
               child: Row(
@@ -182,29 +155,23 @@ class _HomeScreenState extends State<HomeScreen> {
                   return InkWell(
                     borderRadius: BorderRadius.circular(10),
                     onTap: () {
-                      //-- on tap to do--
-                      switch(act["name"]){
-                        case "Raffles" :
+                      // Handle tap for each activity
+                      switch (act["name"]) {
+                        case "Raffles":
                           navController.openDrawerPage(
-                              ActiveRafflesScreen(),
-                            navigatorKey: ActiveRafflesScreen.navigatorKey
+                            ActiveRafflesScreen(),
+                            navigatorKey: ActiveRafflesScreen.navigatorKey,
                           );
-
                           break;
 
-                          case "Communities" :
-
-                            HomeNavigator.push(HomeRoutes.community);
-
+                        case "Communities":
+                          HomeNavigator.push(HomeRoutes.community);
                           break;
 
-                          case "Events" :
+                        case "Events":
                           navController.changeIndex(2);
                           break;
-
-
                       }
-
                     },
                     child: SizedBox(
                       width: 100,
@@ -227,14 +194,13 @@ class _HomeScreenState extends State<HomeScreen> {
                 }).toList(),
               ),
             ),
-
             const SizedBox(height: 20),
 
-            // --- 3. SEARCH BAR WITH CATEGORY DROPDOWN ---
+            // --- 3️⃣ Post Input Field with Category Dropdown ---
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 12),
               child: PostInputField(
-                categories: ['Foodie', 'Drinks', 'Restu'],
+                categories: ['Foodie', 'Drinks', 'Restaurant'],
                 initialCategory: 'Foodie',
                 hintText: 'Ask anything',
                 onSubmit: (text, category) {
@@ -244,17 +210,13 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ),
 
-            // --- . POST CARD ---
+            // --- 4️⃣ Post Card ---
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
               child: Card(
-
-                elevation: 2,
+                elevation: 1,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(16),
-                  side: BorderSide(
-                    color: context.colorScheme.outline.withOpacity(0.1),
-                  ),
                 ),
                 color: context.colorScheme.surfaceContainer,
                 child: Padding(
@@ -262,30 +224,27 @@ class _HomeScreenState extends State<HomeScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // -- Header--
+                      // Post header (user info)
                       UserPostHeader(
                         fullName: "Azaan Mahmud",
                         date: "12-01-26",
                         category: "Food",
                         imagePath: Assets.images.user1.path,
                       ),
-
                       const SizedBox(height: 20),
 
-                      //-- Post Content(with se more functionality)--
+                      // Post content with expandable text
                       ExpandableText(
                         text: "Any food that you liked recently? " * 5,
                         trimLines: 2,
                       ),
-
                       const SizedBox(height: 20),
 
-                      //--- DYNAMIC POLL SECTION---
+                      // Poll section
                       PostPollSection(options: myPolls),
-
                       const SizedBox(height: 20),
 
-                      //-- TextField for mention business(works in pols)
+                      // Vote input field
                       Row(
                         crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
@@ -304,27 +263,12 @@ class _HomeScreenState extends State<HomeScreen> {
                               decoration: InputDecoration(
                                 hintText: 'Vote your choose...',
                                 hintStyle: AppTextStyle.textXs(
-                                  color: context.colorScheme.onSurfaceVariant
-                                      .withOpacity(0.6),
+                                  color: context.colorScheme.onSurfaceVariant.withOpacity(0.6),
                                 ),
-
-                                contentPadding: const EdgeInsets.symmetric(
-                                  vertical: 8,
-                                ),
+                                contentPadding: const EdgeInsets.symmetric(vertical: 8),
                                 enabledBorder: UnderlineInputBorder(
                                   borderSide: BorderSide(
-                                    color: context.colorScheme.outlineVariant,
-                                  ),
-                                ),
-                                errorBorder: UnderlineInputBorder(
-                                  borderSide: BorderSide(
-                                    color: context.colorScheme.error,
-                                  ),
-                                ),
-                                focusedErrorBorder: UnderlineInputBorder(
-                                  borderSide: BorderSide(
-                                    color: context.colorScheme.error,
-                                    width: 2,
+                                    color: context.colorScheme.outlineVariant.withOpacity(0.4),
                                   ),
                                 ),
                                 focusedBorder: UnderlineInputBorder(
@@ -338,24 +282,39 @@ class _HomeScreenState extends State<HomeScreen> {
                           ),
                         ],
                       ),
-
                       const SizedBox(height: 20),
 
-                      //-- INTERACTION BAR (Like/Comment)
-                      PostInteractionBar(likes: "200", comments: "45"),
-
-                      const SizedBox(height: 8),
-                      Divider(
-                        color: context.colorScheme.onSurface.withOpacity(0.3),
+                      // Interaction bar (Like / Comment)
+                      PostInteractionBar(
+                        likes: "200",
+                        comments: "45",
+                        onLikeTap: () {},
+                        onCommentTap: () {
+                          setState(() {
+                            _isCommentSectionExpanded = !_isCommentSectionExpanded;
+                          });
+                        },
                       ),
 
-                      const SizedBox(height: 20),
-
-                      //-- DYNAMIC COMMENT SECTION
-                      PostCommentSection(
-                        //--this is image of the use wo currently log in
-                        currentUserImage: Assets.images.user3.path,
-                        comments: myComments,
+                      // expended Comment Section
+                      AnimatedSize(
+                        duration: const Duration(milliseconds: 300),
+                        curve: Curves.easeInOut,
+                        child: _isCommentSectionExpanded
+                            ? Column(
+                          children: [
+                            const SizedBox(height: 8),
+                            Divider(
+                              color: context.colorScheme.onSurface.withOpacity(0.3),
+                            ),
+                            const SizedBox(height: 20),
+                            PostCommentSection(
+                              currentUserImage: Assets.images.user3.path,
+                              comments: myComments,
+                            ),
+                          ],
+                        )
+                            : const SizedBox.shrink(),
                       ),
                     ],
                   ),

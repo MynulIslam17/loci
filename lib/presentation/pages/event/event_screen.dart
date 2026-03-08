@@ -7,7 +7,7 @@ import 'package:loci/core/theme/theme_extention.dart';
 import 'package:loci/presentation/widgets/custom_text_field.dart';
 import 'package:loci/routes/app_routes.dart';
 
-import '../../widgets/event_card.dart';
+import 'widgets/event_card.dart';
 
 class EventScreen extends StatefulWidget {
   const EventScreen({super.key});

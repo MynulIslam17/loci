@@ -9,7 +9,7 @@ import 'package:loci/presentation/widgets/custom_image_container.dart';
 import 'package:loci/routes/app_routes.dart';
 
 import '../../../gen/assets.gen.dart';
-import '../../widgets/event_card.dart'; // Assuming IconTextRow is here
+import '../event/widgets/event_card.dart'; // Assuming IconTextRow is here
 
 class ViewEventScreen extends StatefulWidget {
   const ViewEventScreen({super.key});

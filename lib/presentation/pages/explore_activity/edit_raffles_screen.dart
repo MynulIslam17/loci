@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:loci/core/constants/app_text_style.dart';
 import 'package:loci/core/theme/theme_extention.dart';
-import 'package:loci/presentation/widgets/coupon_card.dart';
+import 'package:loci/presentation/pages/explore_activity/widgets/coupon_card.dart';
 import 'package:loci/presentation/widgets/custom_appbar.dart';
 import 'package:loci/presentation/widgets/custom_imagepicker.dart';
 

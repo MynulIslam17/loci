@@ -6,7 +6,7 @@ import 'package:loci/presentation/widgets/custom_image_container.dart';
 import 'package:loci/presentation/widgets/custom_text_field.dart';
 
 import '../../../gen/assets.gen.dart';
-import '../../widgets/review_card.dart';
+import '../clam_business/widgets/review_card.dart';
 
 class BusinessProfileScreen extends StatefulWidget {
   const BusinessProfileScreen({super.key});

@@ -271,6 +271,9 @@ class _MainBottomNavState extends State<MainBottomNav> {
   void _handleDrawerItem(String title) {
     Get.back();
     switch (title) {
+      case "Recent Activity" :
+        Get.toNamed(AppRoutes.recentActivity);
+        break;
       case "Explore Routes":
         navController.openDrawerPage(
           ExploreRoutesScreen(),

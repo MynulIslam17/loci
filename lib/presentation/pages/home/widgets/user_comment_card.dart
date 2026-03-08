@@ -1,16 +1,22 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import '../../../../core/constants/app_text_style.dart';
+import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/theme_extention.dart';
 
-import '../../core/constants/app_text_style.dart';
-import '../../core/theme/app_colors.dart';
-import '../../core/theme/theme_extention.dart';
-
+/// Comment Card used for both current user and other users
 class UserCommentCard extends StatelessWidget {
   final String userName;
   final String commentText;
   final String userImage;
   final String likeCount;
   final String replyCount;
+  final bool isCurrentUser;
+
+  /// Callbacks for dropdown actions
+  final VoidCallback? onEdit;
+  final VoidCallback? onDelete;
+  final VoidCallback? onReport;
+  final VoidCallback? onReply;
 
   const UserCommentCard({
     super.key,
@@ -19,6 +25,11 @@ class UserCommentCard extends StatelessWidget {
     required this.userImage,
     required this.likeCount,
     required this.replyCount,
+    this.isCurrentUser = false,
+    this.onEdit,
+    this.onDelete,
+    this.onReport,
+    this.onReply,
   });
 
   @override
@@ -28,7 +39,7 @@ class UserCommentCard extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // 1. User Avatar (Positioned outside the bubble)
+          // 1️⃣ User Avatar
           CircleAvatar(
             radius: 18,
             backgroundImage: AssetImage(userImage),
@@ -36,12 +47,11 @@ class UserCommentCard extends StatelessWidget {
           ),
           const SizedBox(width: 12),
 
-          // 2. The Comment Bubble
+          // 2️⃣ Comment Bubble
           Expanded(
             child: Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                // Adaptive color for light/dark mode
                 color: context.colorScheme.onPrimaryContainer,
                 borderRadius: const BorderRadius.only(
                   topRight: Radius.circular(12),
@@ -52,7 +62,7 @@ class UserCommentCard extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Name and More Options
+                  // Name + 3-dots menu
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -63,16 +73,20 @@ class UserCommentCard extends StatelessWidget {
                           color: context.colorScheme.onSurface,
                         ),
                       ),
-                      Icon(
-                        Icons.more_horiz,
-                        size: 18,
-                        color: context.colorScheme.onSurfaceVariant,
+
+                      // Dropdown menu for comment actions
+                      _CommentMenu(
+                        isCurrentUser: isCurrentUser,
+                        onEdit: onEdit,
+                        onDelete: onDelete,
+                        onReport: onReport,
+                        onReply: onReply,
                       ),
                     ],
                   ),
                   const SizedBox(height: 4),
 
-                  // Comment Body Text
+                  // Comment Text
                   Text(
                     commentText,
                     style: AppTextStyle.textSm(
@@ -81,18 +95,12 @@ class UserCommentCard extends StatelessWidget {
                   ),
                   const SizedBox(height: 12),
 
-                  // Interaction Row (Like and Reply counts)
+                  // Interaction Row (Like / Reply)
                   Row(
                     children: [
-                      _CommentAction(
-                        icon: Icons.favorite_border,
-                        count: likeCount,
-                      ),
+                      _CommentAction(icon: Icons.favorite_border, count: likeCount),
                       const SizedBox(width: 20),
-                      _CommentAction(
-                        icon: Icons.chat_bubble_outline,
-                        count: replyCount,
-                      ),
+                      _CommentAction(icon: Icons.chat_bubble_outline, count: replyCount),
                     ],
                   ),
                 ],
@@ -105,7 +113,7 @@ class UserCommentCard extends StatelessWidget {
   }
 }
 
-// Internal Helper for the small Like/Reply icons
+/// Small icon + count widget
 class _CommentAction extends StatelessWidget {
   final IconData icon;
   final String count;
@@ -120,7 +128,7 @@ class _CommentAction extends StatelessWidget {
         Icon(
           icon,
           size: 14,
-          color: AppColors.neutral400, // Soft grey color
+          color: AppColors.neutral400,
         ),
         const SizedBox(width: 4),
         Text(
@@ -131,6 +139,60 @@ class _CommentAction extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+/// Dropdown menu for comment actions
+class _CommentMenu extends StatelessWidget {
+  final bool isCurrentUser;
+  final VoidCallback? onEdit;
+  final VoidCallback? onDelete;
+  final VoidCallback? onReport;
+  final VoidCallback? onReply;
+
+  const _CommentMenu({
+    required this.isCurrentUser,
+    this.onEdit,
+    this.onDelete,
+    this.onReport,
+    this.onReply,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return PopupMenuButton<String>(
+      icon: const Icon(Icons.more_horiz, size: 18),
+      onSelected: (value) {
+        switch (value) {
+          case 'edit':
+            onEdit?.call();// executes the parent callback
+            break;
+          case 'delete':
+            onDelete?.call();
+            break;
+          case 'report':
+            onReport?.call();
+            break;
+          case 'reply':
+            onReply?.call();
+            break;
+        }
+      },
+      itemBuilder: (context) {
+        if (isCurrentUser) {
+          return [
+            const PopupMenuItem(value: 'edit', child: Text('Edit')),
+            const PopupMenuItem(value: 'delete', child: Text('Delete')),
+            const PopupMenuItem(value: 'report', child: Text('Report')),
+          ];
+        } else {
+          return [
+            const PopupMenuItem(value: 'reply', child: Text('Reply')),
+            const PopupMenuItem(value: 'report', child: Text('Report')),
+          ];
+        }
+      },
     );
   }
 }

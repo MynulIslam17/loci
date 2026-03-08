@@ -1,15 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:loci/core/theme/theme_extention.dart';
+import 'package:loci/presentation/pages/explore_activity/widgets/event_edit_card.dart';
+import 'package:loci/presentation/pages/explore_activity/widgets/raffles_edit_card.dart';
+import 'package:loci/presentation/pages/explore_activity/widgets/route_edit_card.dart';
 import 'package:loci/presentation/widgets/custom_appbar.dart';
-import 'package:loci/presentation/widgets/event_edit_card.dart';
-import 'package:loci/presentation/widgets/route_edit_card.dart';
 import 'package:loci/routes/app_routes.dart';
 
 import '../../../core/constants/app_text_style.dart';
 import '../../widgets/custom_button.dart';
 import '../../widgets/custom_text_field.dart';
-import '../../widgets/raffles_edit_card.dart';
 
 class ExploreActivityScreen extends StatefulWidget {
   const ExploreActivityScreen({super.key});

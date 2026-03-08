@@ -5,7 +5,7 @@ import 'package:get/get_navigation/src/extension_navigation.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:loci/core/theme/theme_extention.dart';
 import 'package:loci/presentation/widgets/custom_button.dart';
-import 'package:loci/presentation/widgets/review_card.dart';
+import 'package:loci/presentation/pages/clam_business/widgets/review_card.dart';
 import 'package:loci/routes/app_routes.dart';
 
 import '../../../core/constants/app_text_style.dart';
@@ -13,7 +13,8 @@ import '../../../core/theme/app_colors.dart';
 import '../../widgets/custom_appbar.dart';
 import '../../widgets/custom_image_container.dart';
 import '../../widgets/custom_imagepicker.dart';
-import '../../widgets/post_input_filed.dart';
+import '../home/widgets/post_input_filed.dart';
+
 
 class MyBusinessProfile extends StatefulWidget {
   const MyBusinessProfile({super.key});

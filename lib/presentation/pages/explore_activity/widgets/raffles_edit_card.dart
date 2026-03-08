@@ -1,30 +1,30 @@
 import 'package:flutter/material.dart';
 import 'package:loci/core/theme/theme_extention.dart';
 import 'package:loci/presentation/widgets/custom_image_container.dart';
-import '../../../core/constants/app_text_style.dart';
 
-class EventEditCard extends StatelessWidget {
+import '../../../../core/constants/app_text_style.dart';
+
+
+class RaffleEditCard extends StatelessWidget {
   final String title;
   final String description;
-  final String dateTime;
-  final String location;
-  final String attendance;
+  final String endDate;
+  final String ticketPrice;
+  final String totalTickets;
   final String imageUrl;
-  final String? organizerName;
-  final VoidCallback? onEditInfo;
-  final VoidCallback? onViewDetails;
+  final VoidCallback onEdit;
+  final VoidCallback onView;
 
-  const EventEditCard({
+  const RaffleEditCard({
     super.key,
     required this.title,
     required this.description,
-    required this.dateTime,
-    required this.location,
-    required this.attendance,
+    required this.endDate,
+    required this.ticketPrice,
+    required this.totalTickets,
     required this.imageUrl,
-    this.organizerName = "Crawl Events Co.",
-    this.onEditInfo,
-    this.onViewDetails,
+    required this.onEdit,
+    required this.onView,
   });
 
   @override
@@ -33,8 +33,6 @@ class EventEditCard extends StatelessWidget {
 
     return Card(
       color: colorScheme.surfaceContainerHigh,
-      elevation: 2,
-      clipBehavior: Clip.antiAlias,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -67,34 +65,32 @@ class EventEditCard extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 12),
-
-                // Meta Info
-                _buildMetaItem(context, Icons.calendar_today_outlined, dateTime),
-                const SizedBox(height: 8),
-                _buildMetaItem(context, Icons.location_on_outlined, location),
-                const SizedBox(height: 8),
-                _buildMetaItem(context, Icons.people_outline, attendance),
-
-                // Organizer Name moved inside
-                if (organizerName != null) ...[
-                  const SizedBox(height: 12),
-                  Text(
-                    "by $organizerName",
-                    style: AppTextStyle.textXs(
-                      weight: FontWeight.w500,
-                      color: colorScheme.onSurfaceVariant.withOpacity(0.7),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    _buildMetaItem(
+                      context,
+                      Icons.calendar_today_outlined,
+                      endDate,
                     ),
-                  ),
-                ],
-
+                    _buildMetaItem(
+                        context,
+                        Icons.confirmation_number_outlined,
+                        ticketPrice
+                    ),
+                    _buildMetaItem(
+                        context,
+                        Icons.group_outlined,
+                        totalTickets
+                    ),
+                  ],
+                ),
                 const SizedBox(height: 16),
-
-                // Management Buttons
                 Row(
                   children: [
                     Expanded(
                       child: OutlinedButton.icon(
-                        onPressed: onEditInfo,
+                        onPressed: onEdit,
                         style: OutlinedButton.styleFrom(
                           side: BorderSide(color: colorScheme.outlineVariant),
                           shape: RoundedRectangleBorder(
@@ -119,7 +115,7 @@ class EventEditCard extends StatelessWidget {
                     const SizedBox(width: 12),
                     Expanded(
                       child: ElevatedButton(
-                        onPressed: onViewDetails,
+                        onPressed: onView,
                         style: ElevatedButton.styleFrom(
                           backgroundColor: colorScheme.primary,
                           elevation: 0,

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:loci/core/theme/theme_extention.dart';
-import '../../../core/constants/app_text_style.dart';
-import 'custom_image_container.dart';
+import '../../../../../core/constants/app_text_style.dart';
+import '../../../widgets/custom_image_container.dart';
 
 
 class RouteCard extends StatelessWidget {

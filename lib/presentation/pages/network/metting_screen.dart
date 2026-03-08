@@ -6,7 +6,7 @@ import 'package:loci/core/theme/theme_extention.dart';
 import 'package:loci/presentation/widgets/custom_button.dart';
 import 'package:loci/routes/app_routes.dart';
 import '../../../core/utils/status.dart';
-import '../../widgets/referral_card.dart';
+import '../raffles/widgets/referral_card.dart';
 
 class MeetingScreen extends StatefulWidget {
   const MeetingScreen({super.key});

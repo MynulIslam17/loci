@@ -15,7 +15,7 @@ import '../../../core/utils/date_parser.dart';
 import '../../../data/task_model.dart';
 import '../../../gen/assets.gen.dart';
 import '../../widgets/common/company_info_card.dart';
-import '../../widgets/coupon_card.dart';
+import 'widgets/coupon_card.dart';
 import '../../widgets/custom_button.dart';
 import '../../widgets/custom_text_field.dart';
 

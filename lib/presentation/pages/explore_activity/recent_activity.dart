@@ -2,12 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:loci/core/constants/app_text_style.dart';
 import 'package:loci/presentation/widgets/custom_appbar.dart';
 import 'package:loci/presentation/widgets/custom_image_container.dart';
-import 'package:loci/presentation/widgets/review_card.dart';
+import 'package:loci/presentation/pages/clam_business/widgets/review_card.dart';
 
 import '../../../core/theme/theme_extention.dart';
 import '../../widgets/custom_text_field.dart';
-import '../../widgets/expandable_text.dart';
-import '../../widgets/post_interaction_bar.dart';
+import '../home/widgets/expandable_text.dart';
+import '../home/widgets/post_interaction_bar.dart';
+
 
 /// RecentActivity Screen
 /// Shows four tabs: Question, Answered, Reviews, List
