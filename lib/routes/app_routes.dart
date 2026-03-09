@@ -66,7 +66,10 @@ static const String scheduleMeeting="/scheduleMeeting";
   static const String  recentActivity="/recentActivity";
 
 
-
+//---community
+  static const communityScreen = '/communityScreen';
+  static const communityMemberScreen = '/communityMemberScreen';
+  static const createAnnouncement = '/createAnnouncement';
 
 
 

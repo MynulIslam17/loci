@@ -1,13 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:get/get_core/src/get_main.dart';
 import 'package:loci/core/constants/app_text_style.dart';
+import 'package:loci/core/theme/app_colors.dart';
 import 'package:loci/presentation/pages/communites/widgets/activity_card.dart';
 import 'package:loci/presentation/pages/communites/widgets/notice_card.dart';
 import 'package:loci/presentation/pages/communites/widgets/offer_card.dart';
 import 'package:loci/presentation/pages/communites/widgets/post_card.dart';
 import 'package:loci/presentation/pages/explore_routes/widgets/route_card.dart';
 import 'package:loci/presentation/pages/home/widgets/post_input_filed.dart';
+import 'package:loci/presentation/widgets/custom_button.dart';
 import 'package:loci/presentation/widgets/custom_image_container.dart';
 import 'package:loci/presentation/pages/clam_business/widgets/review_card.dart';
+import 'package:loci/routes/app_routes.dart';
 import '../../../core/theme/theme_extention.dart';
 import '../../../data/mock_data.dart';
 import '../../../data/poll.dart';
@@ -92,55 +97,10 @@ class _CommunityScreenState extends State<CommunityScreen>
 
                     const SizedBox(height: 20),
 
-                    // Map Placeholder
-                    Container(
-                      width: double.infinity,
-                      height: 100,
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      clipBehavior: Clip.antiAlias,
-                      child: Stack(
-                        children: [
-                          CustomCachedImage(
-                            width: double.infinity,
-                            imageUrl: "assets/images/location.png",
-                          ),
-                          Positioned(
-                            top: 10,
-                            left: 10,
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 10,
-                                vertical: 4,
-                              ),
-                              decoration: BoxDecoration(
-                                // 1. Semi-transparent dark overlay for background contrast
-                                color: Colors.black.withOpacity(0.3),
-                                borderRadius: BorderRadius.circular(6),
-                              ),
-                              child: Text(
-                                "Marland Clutch Centre",
-                                style:
-                                    AppTextStyle.textSm(
-                                      weight: FontWeight.bold,
-                                      color: Colors.white,
-                                    ).copyWith(
-                                      // 2. Direct Text Shadow for high-definition legibility
-                                      shadows: [
-                                        Shadow(
-                                          color: Colors.black.withOpacity(0.8),
-                                          offset: const Offset(1, 1),
-                                          blurRadius: 4,
-                                        ),
-                                      ],
-                                    ),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
+                    // Display a widget whose design depends on the type of community.
+                    // Pass `true` if the  user owns the Business Community,
+                    // or `false` for a General/Others Community.
+                    userTypeCommunityWidget(false),
                   ],
                 ),
               ),
@@ -421,23 +381,26 @@ class _CommunityScreenState extends State<CommunityScreen>
               likes: '120',
               comments: '15',
               // this activity content can be change according to the type of activity
-              activityContent: index==0 ? RouteCard(
-                title: "Spring Pub Crawl Festival",
-                description: "Join us for the biggest pub crawl of the season! Visit 8 amazing bars in downtown and enjoy the night of your life, also there are special guest will participate too",
-                location: "",
-                duration: "222",
-                difficulty: "easy",
-                imageUrl: "assets/images/finedine.png",
-              ) : CommunityNoticeCard(
-                profileImage: Assets.images.user1.path,
-                businessName: "Marland Clutch",
-                date: "04/09/25",
-                time: "05:36:12",
-                noticeText:
-                "We are going to create a event for our business gathering...",
-                likes: "200",
-                comments: "0",
-              ),
+              activityContent: index == 0
+                  ? RouteCard(
+                      title: "Spring Pub Crawl Festival",
+                      description:
+                          "Join us for the biggest pub crawl of the season! Visit 8 amazing bars in downtown and enjoy the night of your life, also there are special guest will participate too",
+                      location: "",
+                      duration: "222",
+                      difficulty: "easy",
+                      imageUrl: "assets/images/finedine.png",
+                    )
+                  : CommunityNoticeCard(
+                      profileImage: Assets.images.user1.path,
+                      businessName: "Marland Clutch",
+                      date: "04/09/25",
+                      time: "05:36:12",
+                      noticeText:
+                          "We are going to create a event for our business gathering...",
+                      likes: "200",
+                      comments: "0",
+                    ),
               onLikeTap: () {
                 print('Liked activity!');
               },
@@ -451,7 +414,9 @@ class _CommunityScreenState extends State<CommunityScreen>
     );
   }
 
-  //--search bar-----------
+  // -------------------------------------------------
+  // search bar
+  // -------------------------------------------------
 
   Widget _buildSearchBar({
     required String hintText,
@@ -496,5 +461,211 @@ class _CommunityScreenState extends State<CommunityScreen>
         ),
       ],
     );
+  }
+
+  // -------------------------------------------------
+  // User Type Community helper
+  // -------------------------------------------------
+
+  Widget userTypeCommunityWidget(bool isMe) {
+    final colorScheme = context.colorScheme;
+    switch (isMe) {
+      case true:
+        return Container(
+          width: double.infinity,
+          height: 100,
+          decoration: BoxDecoration(borderRadius: BorderRadius.circular(12)),
+          clipBehavior: Clip.antiAlias,
+          child: Stack(
+            children: [
+              CustomCachedImage(
+                width: double.infinity,
+                imageUrl: "assets/images/location.png",
+              ),
+              Positioned(
+                top: 10,
+                left: 10,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 4,
+                  ),
+                  decoration: BoxDecoration(
+                    // 1. Semi-transparent dark overlay for background contrast
+                    color: Colors.black.withOpacity(0.3),
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: Text(
+                    "Marland Clutch Centre",
+                    style:
+                        AppTextStyle.textSm(
+                          weight: FontWeight.bold,
+                          color: Colors.white,
+                        ).copyWith(
+                          // 2. Direct Text Shadow for high-definition legibility
+                          shadows: [
+                            Shadow(
+                              color: Colors.black.withOpacity(0.8),
+                              offset: const Offset(1, 1),
+                              blurRadius: 4,
+                            ),
+                          ],
+                        ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+
+      case false:
+        return Column(
+          children: [
+            //----card part
+            Row(
+              children: [
+                //----card 1
+                Expanded(
+                  child: Card(
+                    clipBehavior: Clip.antiAlias,
+                    elevation: 1,
+                    color: colorScheme.surfaceContainerHigh,
+                    child: InkWell(
+                      borderRadius: BorderRadius.circular(12),
+                      onTap: (){
+                        //TODO : got to member screen
+                        Get.toNamed(AppRoutes.communityMemberScreen);
+
+                      },
+                      child: Padding(
+                        padding: const EdgeInsets.all(12),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Container(
+                                  width: 40,
+                                  height: 40,
+                                  decoration: BoxDecoration(
+                                    color: colorScheme.surfaceContainer,
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: Icon(
+                                    Icons.group,
+                                    color: colorScheme.onSurface,
+                                  ),
+                                ),
+                                const SizedBox(width: 10),
+                                Text(
+                                  "480K",
+                                  style: AppTextStyle.textSm(
+                                    weight: FontWeight.w600,
+                                    color: colorScheme.onSurface,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 10),
+                            Text(
+                              "Member",
+                              style: AppTextStyle.textMd(
+                                weight: FontWeight.w600,
+                                color: colorScheme.onSurface,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+
+                const SizedBox(width: 20),
+                //----card 2
+                Expanded(
+                  child: Card(
+                    clipBehavior: Clip.antiAlias,
+
+                    elevation: 1,
+                    color: colorScheme.surfaceContainerHigh,
+                    child: InkWell(
+                      onTap: (){
+
+                      },
+                      child: Padding(
+                        padding: const EdgeInsets.all(12),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Container(
+                              width: 40,
+                              height: 40,
+                              decoration: BoxDecoration(
+                                color: colorScheme.surfaceContainer,
+                                shape: BoxShape.circle,
+                              ),
+                              child: Icon(
+                                Icons.qr_code,
+                                color: colorScheme.onSurface,
+                              ),
+                            ),
+
+                            const SizedBox(height: 10),
+                            Text(
+                              "Join QR code",
+                              style: AppTextStyle.textSm(
+                                weight: FontWeight.w600,
+                                color: colorScheme.onSurface,
+                              ),
+                            ),
+
+
+
+
+
+
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+
+            const SizedBox(height: 16,),
+
+
+            CustomButton(
+              onPressed: (){
+                //TODO : got to announcement screen
+                Get.toNamed(AppRoutes.createAnnouncement);
+              },
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.add,
+                    color: colorScheme.onPrimary,
+                    size: 20,
+                  ),
+                  const SizedBox(width: 10
+                  ),
+
+                  Text("Announcement ",style: AppTextStyle.textMd(weight: FontWeight.w600,color:colorScheme.onPrimary),)
+
+
+
+
+                ],
+              ),
+            )
+          ],
+        );
+    }
   }
 }
