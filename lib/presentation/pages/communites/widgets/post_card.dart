@@ -96,6 +96,7 @@ class _PostCardWidgetState extends State<PostCardWidget> {
             if (widget.polls != null && widget.polls!.isNotEmpty) ...[
               const SizedBox(height: 20),
               InkWell(
+
                 onTap: () {
                   widget.onClickPoll?.call(widget.post.id);
                 },

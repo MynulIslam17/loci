@@ -12,18 +12,22 @@ final List<PollOption> mockPolls = [
     percent: 0.8,
     imagePath: Assets.images.user2.path,
     trailingText: "80%",
+      voteCount: 400
+
   ),
   PollOption(
     title: "Chillox",
     percent: 0.4,
     imagePath: Assets.images.user1.path,
     trailingText: "40%",
+      voteCount: 200
   ),
   PollOption(
     title: "aaaa",
     percent: 0.4,
     imagePath: Assets.images.user1.path,
     trailingText: "40%",
+      voteCount: 44
   ),
 ];
 

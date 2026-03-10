@@ -12,6 +12,7 @@ class PostPollSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListView.separated(
+       clipBehavior: Clip.antiAlias,
       physics: const NeverScrollableScrollPhysics(),
       shrinkWrap: true,
       padding: EdgeInsets.zero,

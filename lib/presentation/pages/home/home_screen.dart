@@ -12,17 +12,17 @@ import 'package:loci/presentation/pages/home/widgets/post_interaction_bar.dart';
 import 'package:loci/presentation/pages/home/widgets/post_poll_section.dart';
 import 'package:loci/presentation/pages/raffles/active_raffles_screen.dart';
 import 'package:loci/presentation/pages/home/widgets/expandable_text.dart';
+import 'package:percent_indicator/linear_percent_indicator.dart';
 import '../../../data/mock_data.dart';
 import '../../../data/poll.dart';
 import '../../../gen/assets.gen.dart';
 import '../../../routes/app_routes.dart';
 import '../../controllers/nav_controller.dart';
 import '../../widgets/common/post_comment_section.dart';
+import '../../widgets/custom_image_container.dart';
 import '../communites/widgets/post_card.dart';
 import 'widgets/user_post_header.dart';
 import '../communites/community_screen.dart';
-
-
 
 class HomeNavigator extends StatelessWidget {
   static final GlobalKey<NavigatorState> navigatorKey =
@@ -75,7 +75,6 @@ class _HomeScreenState extends State<HomeScreen> {
   final TextEditingController _postController = TextEditingController();
 
   final FocusNode _postFocusNode = FocusNode();
-
 
   //-- Banner data ---
   final List<CarouselData> bannerData = [
@@ -213,7 +212,8 @@ class _HomeScreenState extends State<HomeScreen> {
                     // Your comment logic here
                   },
                   onClickPoll: (postId) {
-                    print("Poll tapped on $postId");
+                    //TODO : click on the poll section
+                    _showAllPolls();
                   },
 
                   onSubmit: (postId, text) {
@@ -230,6 +230,185 @@ class _HomeScreenState extends State<HomeScreen> {
           ],
         ),
       ),
+    );
+  }
+
+//---- Show all polls in a bottom sheet ----
+  void _showAllPolls() {
+    final colorScheme = context.colorScheme;
+    int? selectedIndex; // Tracks which poll option is selected
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true, // Allows sheet to take up more screen height
+      backgroundColor: colorScheme.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return DraggableScrollableSheet(
+              expand: false,
+              initialChildSize: 0.6,
+              minChildSize: 0.4,
+              maxChildSize: 0.9,
+              builder: (context, scrollController) {
+                return Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: Column(
+                    children: [
+                      // --- Drag handle at the top ---
+                      Container(
+                        margin: const EdgeInsets.symmetric(vertical: 12),
+                        width: 40,
+                        height: 4,
+                        decoration: BoxDecoration(
+                          color: colorScheme.outlineVariant,
+                          borderRadius: BorderRadius.circular(2),
+                        ),
+                      ),
+
+                      // --- Poll question ---
+                      Align(
+                        alignment: Alignment.centerLeft,
+                        child: Text(
+                          "Any food that you liked recently?" * 4,
+                          style: AppTextStyle.textXs(
+                            color: colorScheme.primary,
+                            weight: FontWeight.w600,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                          maxLines: 4,
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+
+                      // --- Poll options list ---
+                      Expanded(
+                        child: ListView.separated(
+                          controller: scrollController,
+                          itemCount: mockPolls.length,
+                          separatorBuilder: (_, __) => const SizedBox(height: 20),
+                          itemBuilder: (context, index) {
+                            final poll = mockPolls[index];
+                            final isSelected = selectedIndex == index;
+
+                            return _buildPollResultRow(
+                              colorScheme: colorScheme,
+                              isSelected: isSelected,
+                              percent: poll.percent,
+                              optionName: poll.title,
+                              voteCount: poll.voteCount,
+                              avatarUrl: poll.imagePath,
+                              // Pass the callback to update selectedIndex when circle is tapped
+                              onSelect: () {
+                                setState(() {
+                                  selectedIndex = index;
+                                });
+                              },
+                            );
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              },
+            );
+          },
+        );
+      },
+    );
+  }
+
+//---- Poll result row widget ----
+  Widget _buildPollResultRow({
+    required ColorScheme colorScheme,
+    required bool isSelected,
+    required double percent, // 0-1
+    required String optionName,
+    required int voteCount,
+    required String avatarUrl,
+    required VoidCallback onSelect, // Called when selection circle is tapped
+  }) {
+    return Row(
+      children: [
+        // --- 1. Vote count text ---
+        SizedBox(
+          width: 35,
+          child: Text(
+            voteCount.toString(),
+            style: AppTextStyle.textSm(
+              color: colorScheme.onSurface,
+              weight: FontWeight.w500,
+            ),
+          ),
+        ),
+
+        // --- 2. User avatar ---
+        CustomCachedImage(
+          width: 40,
+          height: 40,
+          imageUrl: avatarUrl,
+          isCircle: true,
+        ),
+
+        const SizedBox(width: 12),
+
+        // --- 3. Option title & progress bar ---
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                optionName,
+                style: AppTextStyle.textSm(
+                  color: colorScheme.onSurfaceVariant,
+                ),
+              ),
+              const SizedBox(height: 6),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(10),
+                child: LinearPercentIndicator(
+                  lineHeight: 10.0,
+                  percent: percent, // value between 0-1
+                  backgroundColor: AppColors.base200,
+                  progressColor: isSelected
+                      ? AppColors.primaryG500
+                      : AppColors.primaryG500.withOpacity(0.6),
+                  barRadius: const Radius.circular(10),
+                  animation: true,
+                  animationDuration: 1000,
+                  padding: EdgeInsets.zero,
+                ),
+              ),
+            ],
+          ),
+        ),
+
+        const SizedBox(width: 12),
+
+        // --- 4. Selection circle ---
+        GestureDetector(
+          onTap: onSelect, // Only this circle is tappable
+          child: Container(
+            width: 24,
+            height: 24,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              border: Border.all(
+                color: const Color(0xFF62B4AC),
+                width: 1.5,
+              ),
+              color: isSelected ? const Color(0xFF62B4AC) : Colors.transparent,
+            ),
+            child: isSelected
+                ? const Icon(Icons.check, size: 16, color: Colors.white)
+                : null,
+          ),
+        ),
+      ],
     );
   }
 }
