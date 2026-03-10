@@ -367,6 +367,7 @@ class _ClamMyBusinessState extends State<ClamMyBusiness> {
     final isImage = !file.path.endsWith(".pdf");
 
     return Card(
+      color: scheme.surfaceContainerHigh,
       child: Padding(
         padding: const EdgeInsets.all(12),
         child: Row(

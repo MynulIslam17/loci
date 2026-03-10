@@ -3,6 +3,7 @@ import 'package:loci/core/constants/app_text_style.dart';
 import 'package:loci/core/theme/theme_extention.dart';
 import 'package:loci/core/utils/dialog_helper.dart';
 import 'package:loci/presentation/widgets/custom_appbar.dart';
+import 'package:loci/presentation/widgets/custom_button.dart';
 import 'package:loci/presentation/widgets/custom_dropdown.dart';
 import 'package:loci/presentation/widgets/custom_image_container.dart';
 
@@ -23,7 +24,7 @@ class _CommunityMemberScreenState extends State<CommunityMemberScreen> {
     final colorScheme = context.colorScheme;
     return Scaffold(
       backgroundColor: colorScheme.surface,
-      // We use a CustomScrollView to make the entire page scrollable together
+
       appBar: CustomAppbar(title: "Community member"),
       body: CustomScrollView(
         slivers: [
@@ -47,33 +48,25 @@ class _CommunityMemberScreenState extends State<CommunityMemberScreen> {
                   ),
                   const SizedBox(height: 16),
                   // Add Member Button
-                  SizedBox(
+                  CustomButton(
                     width: double.infinity,
                     height: 50,
-                    child: ElevatedButton.icon(
-                      onPressed: () {},
-                      icon: const Icon(Icons.add, color: Colors.white),
-                      label: const Text(
-                        "Add Member",
-                        style: TextStyle(color: Colors.white, fontSize: 16),
-                      ),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(
-                          0xFF5CB8AC,
-                        ), // Teal color from image
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        elevation: 0,
-                      ),
+                    onPressed: (){},
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.person_add,size: 25,color: colorScheme.onPrimary),
+                        const SizedBox(width: 5,),
+                        Text("Add Member",style: AppTextStyle.textMd(weight: FontWeight.w600,color: colorScheme.onPrimary),)
+                      ],
                     ),
-                  ),
+                  )
                 ],
               ),
             ),
           ),
 
-          //  The "Total member list" Header
+          //  The "Total member list" Header/(save button)
           SliverToBoxAdapter(
             child: Padding(
               padding: const EdgeInsets.symmetric(

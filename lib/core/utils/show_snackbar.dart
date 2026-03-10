@@ -72,7 +72,7 @@ class SnackbarService {
     _show(
       title: title,
       message: message,
-      backgroundColor: AppColors.base500,
+      backgroundColor: AppColors.danger,
       icon: Icons.error,
       duration: const Duration(seconds: 5),
       mainButton: onRetry != null

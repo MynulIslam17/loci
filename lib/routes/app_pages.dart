@@ -26,12 +26,18 @@ import 'package:loci/presentation/pages/explore_activity/view_raffles_screen.dar
 import 'package:loci/presentation/pages/explore_activity/view_route_screen.dart';
 import 'package:loci/presentation/pages/explore_routes/explore_routes_screen.dart';
 import 'package:loci/presentation/pages/explore_routes/route_details_screen.dart';
+import 'package:loci/presentation/pages/message/chat_list_screen.dart';
+import 'package:loci/presentation/pages/message/message_screen.dart';
 import 'package:loci/presentation/pages/network/connection_screen.dart';
 import 'package:loci/presentation/pages/network/metting_screen.dart';
 import 'package:loci/presentation/pages/network/referrals_screen.dart';
 import 'package:loci/presentation/pages/network/schedule_meeting_screen.dart';
 import 'package:loci/presentation/pages/network/send_new_referrals_screen.dart';
 import 'package:loci/presentation/pages/onboarding/onboarding_screen.dart';
+import 'package:loci/presentation/pages/profile/about_screen.dart';
+import 'package:loci/presentation/pages/profile/change_password_screen.dart';
+import 'package:loci/presentation/pages/profile/delete_account_screen.dart';
+import 'package:loci/presentation/pages/profile/terms_screen.dart';
 import 'package:loci/presentation/pages/raffles/active_raffles_screen.dart';
 import 'package:loci/presentation/pages/raffles/raffles_details_screen.dart';
 import 'package:loci/presentation/pages/splash/splash_screen.dart';
@@ -40,6 +46,8 @@ import 'package:loci/routes/app_routes.dart';
 
 import '../presentation/pages/browse/browse_businesses.dart';
 import '../presentation/pages/explore_activity/creat_activity_screen.dart';
+import '../presentation/pages/notification/notification_screen.dart';
+import '../presentation/pages/profile/settings_screen.dart';
 
 abstract class AppPages {
   static const String initialRoutes = AppRoutes.splash;
@@ -116,6 +124,20 @@ abstract class AppPages {
     //---community
     GetPage(name: AppRoutes.communityMemberScreen, page: () => CommunityMemberScreen()),
     GetPage(name: AppRoutes.createAnnouncement, page: () => CreateAnnouncementScreen()),
+
+
+    //----profile
+    GetPage(name: AppRoutes.changePassword, page: () => ChangePasswordScreen()),
+    GetPage(name: AppRoutes.about, page: () => AboutScreen()),
+    GetPage(name: AppRoutes.settings, page: () => SettingsScreen()),
+    GetPage(name: AppRoutes.terms, page: () => TermsScreen()),
+    GetPage(name: AppRoutes.deleteAccount, page: () => DeleteAccountScreen()),
+
+    //appbar screen
+    GetPage(name: AppRoutes.chatList, page: () => ChatListScreen()),
+    GetPage(name: AppRoutes.message, page: () => MessageScreen()),
+    GetPage(name: AppRoutes.notification, page: () => NotificationScreen()),
+
 
 
 

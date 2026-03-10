@@ -299,6 +299,18 @@ class _MainBottomNavState extends State<MainBottomNav> {
         navController.changeIndex(2);
         break;
 
+      case 'Terms & Conditions' :
+        Get.toNamed(AppRoutes.terms);
+        break;
+
+      case 'Settings' :
+        Get.toNamed(AppRoutes.settings);
+        break;
+
+      case 'About App' :
+        Get.toNamed(AppRoutes.about);
+        break;
+
 
 
 

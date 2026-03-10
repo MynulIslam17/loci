@@ -73,6 +73,21 @@ static const String scheduleMeeting="/scheduleMeeting";
 
 
 
+  //-----profile
+
+  static const changePassword = '/changePassword';
+  static const about = '/about';
+  static const settings = '/settings';
+  static const terms = '/terms';
+  static const deleteAccount = '/deleteAccount';
+
+
+  // appbar pages
+
+  static const chatList = '/chatList';
+  static const message = '/message';
+  static const notification = '/notification';
+
 
 
 
