@@ -3,10 +3,11 @@ import 'package:get/get_core/src/get_main.dart';
 import 'package:get/get_navigation/src/extension_navigation.dart';
 import 'package:loci/core/constants/app_text_style.dart';
 import 'package:loci/core/theme/theme_extention.dart';
+import 'package:loci/presentation/pages/network/widget/meeting_card.dart';
 import 'package:loci/presentation/widgets/custom_button.dart';
 import 'package:loci/routes/app_routes.dart';
 import '../../../core/utils/status.dart';
-import '../raffles/widgets/referral_card.dart';
+import 'widget/referral_card.dart';
 
 class MeetingScreen extends StatefulWidget {
   const MeetingScreen({super.key});
@@ -131,14 +132,16 @@ class _MeetingScreenState extends State<MeetingScreen> {
       physics: const NeverScrollableScrollPhysics(),
       itemCount: 6,
       itemBuilder: (context, index) {
-        return const ReferralCard(
-          status: ReferralStatus.pending,
-          fromName: "Sarah Johnson",
-          fromCompany: "TechCorp",
-          toName: "Michael Chen",
-          toCompany: "Innovate Labs",
-          message: "Michael would be a great fit for your enterprise sales team!",
-          date: "Jan 12, 2026",
+        return MeetingCard(
+          status: ReferralStatus.rejected,
+          fromName: "John Doe",
+          fromCompany: "Google",
+          toName: "Sarah Smith",
+          toCompany: "Meta",
+          location: "Dhaka",
+          time: "10:30 AM",
+          message: "Looking forward to meeting.",
+          date: "12 Feb 2026",
         );
       },
       separatorBuilder: (context, index) => const SizedBox(height: 15),

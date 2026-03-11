@@ -29,6 +29,8 @@ static const String meeting="/meeting";
 static const String referral="/referral";
 static const String sendReferral="/sendReferral";
 static const String scheduleMeeting="/scheduleMeeting";
+static const String referralsInvitation="/referralsInvitation";
+static const String meetingInvitation="/meetingInvitation";
 
 
 //---checkIn(barcode)
@@ -87,6 +89,11 @@ static const String scheduleMeeting="/scheduleMeeting";
   static const chatList = '/chatList';
   static const message = '/message';
   static const notification = '/notification';
+
+  //----subscription
+
+static const subscription="/subscription";
+
 
 
 

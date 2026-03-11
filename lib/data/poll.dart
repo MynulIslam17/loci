@@ -5,7 +5,7 @@ class PollOption {
   final double percent;
   final String imagePath;
   final String trailingText;
-  final int  voteCount;
+   int  voteCount;
 
   PollOption({required this.title, required this.percent, required this.imagePath, required this.trailingText,required this.voteCount});
 }

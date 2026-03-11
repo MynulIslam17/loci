@@ -29,7 +29,9 @@ import 'package:loci/presentation/pages/explore_routes/route_details_screen.dart
 import 'package:loci/presentation/pages/message/chat_list_screen.dart';
 import 'package:loci/presentation/pages/message/message_screen.dart';
 import 'package:loci/presentation/pages/network/connection_screen.dart';
+import 'package:loci/presentation/pages/network/meeting_invitation_screen.dart';
 import 'package:loci/presentation/pages/network/metting_screen.dart';
+import 'package:loci/presentation/pages/network/referrals_invitation_screen.dart';
 import 'package:loci/presentation/pages/network/referrals_screen.dart';
 import 'package:loci/presentation/pages/network/schedule_meeting_screen.dart';
 import 'package:loci/presentation/pages/network/send_new_referrals_screen.dart';
@@ -41,6 +43,7 @@ import 'package:loci/presentation/pages/profile/terms_screen.dart';
 import 'package:loci/presentation/pages/raffles/active_raffles_screen.dart';
 import 'package:loci/presentation/pages/raffles/raffles_details_screen.dart';
 import 'package:loci/presentation/pages/splash/splash_screen.dart';
+import 'package:loci/presentation/pages/subscription/subscription_screen.dart';
 import 'package:loci/presentation/widgets/common/main_bottom_nav.dart';
 import 'package:loci/routes/app_routes.dart';
 
@@ -83,6 +86,9 @@ abstract class AppPages {
     GetPage(name: AppRoutes.connection, page: () => ConnectionScreen()),
     GetPage(name: AppRoutes.sendReferral, page: () => SendNewReferralsScreen()),
     GetPage(name: AppRoutes.scheduleMeeting, page: () => ScheduleMeetingScreen()),
+    GetPage(name: AppRoutes.referralsInvitation, page: () => ReferralsInvitationScreen()),
+    GetPage(name: AppRoutes.meetingInvitation, page: () => MeetingInvitationScreen()),
+
 
     // ----- CheckIn
     GetPage(name: AppRoutes.checkIn, page: () => CheckInScreen()),
@@ -137,6 +143,9 @@ abstract class AppPages {
     GetPage(name: AppRoutes.chatList, page: () => ChatListScreen()),
     GetPage(name: AppRoutes.message, page: () => MessageScreen()),
     GetPage(name: AppRoutes.notification, page: () => NotificationScreen()),
+
+
+    GetPage(name: AppRoutes.subscription, page: () => SubscriptionScreen()),
 
 
 

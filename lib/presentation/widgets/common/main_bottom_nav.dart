@@ -399,6 +399,10 @@ class _MainBottomNavState extends State<MainBottomNav> {
       case 'About App':
         Get.toNamed(AppRoutes.about);
         break;
+
+      case "Subscription" :
+        Get.toNamed(AppRoutes.subscription);
+        break;
     }
   }
 

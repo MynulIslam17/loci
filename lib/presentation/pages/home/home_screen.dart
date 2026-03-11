@@ -233,7 +233,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-//---- Show all polls in a bottom sheet ----
+  //---- Show all polls in a bottom sheet ----
   void _showAllPolls() {
     final colorScheme = context.colorScheme;
     int? selectedIndex; // Tracks which poll option is selected
@@ -289,7 +289,8 @@ class _HomeScreenState extends State<HomeScreen> {
                         child: ListView.separated(
                           controller: scrollController,
                           itemCount: mockPolls.length,
-                          separatorBuilder: (_, __) => const SizedBox(height: 20),
+                          separatorBuilder: (_, __) =>
+                              const SizedBox(height: 20),
                           itemBuilder: (context, index) {
                             final poll = mockPolls[index];
                             final isSelected = selectedIndex == index;
@@ -304,7 +305,15 @@ class _HomeScreenState extends State<HomeScreen> {
                               // Pass the callback to update selectedIndex when circle is tapped
                               onSelect: () {
                                 setState(() {
+                                  // remove vote from previous selection
+                                  if (selectedIndex != null) {
+                                    mockPolls[selectedIndex!].voteCount--;
+                                  }
+                                  // set new selection
                                   selectedIndex = index;
+
+                                  // increment vote for selected option
+                                  mockPolls[index].voteCount++;
                                 });
                               },
                             );
@@ -322,7 +331,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-//---- Poll result row widget ----
+  //---- Poll result row widget ----
   Widget _buildPollResultRow({
     required ColorScheme colorScheme,
     required bool isSelected,
@@ -363,9 +372,7 @@ class _HomeScreenState extends State<HomeScreen> {
             children: [
               Text(
                 optionName,
-                style: AppTextStyle.textSm(
-                  color: colorScheme.onSurfaceVariant,
-                ),
+                style: AppTextStyle.textSm(color: colorScheme.onSurfaceVariant),
               ),
               const SizedBox(height: 6),
               ClipRRect(
@@ -397,10 +404,7 @@ class _HomeScreenState extends State<HomeScreen> {
             height: 24,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              border: Border.all(
-                color: const Color(0xFF62B4AC),
-                width: 1.5,
-              ),
+              border: Border.all(color: const Color(0xFF62B4AC), width: 1.5),
               color: isSelected ? const Color(0xFF62B4AC) : Colors.transparent,
             ),
             child: isSelected
