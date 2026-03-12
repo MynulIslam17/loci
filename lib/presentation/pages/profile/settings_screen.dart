@@ -2,6 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get/get_core/src/get_main.dart';
+import 'package:get_storage/get_storage.dart';
 import 'package:loci/core/constants/app_text_style.dart';
 import 'package:loci/core/theme/theme_extention.dart';
 import 'package:loci/presentation/widgets/custom_appbar.dart';
@@ -17,6 +18,8 @@ class SettingsScreen extends StatefulWidget {
 }
 
 class _SettingsScreenState extends State<SettingsScreen> {
+
+
   // Settings data with toggle info
   final List<Map<String, dynamic>> settingsItems = [
     {
@@ -42,6 +45,23 @@ class _SettingsScreenState extends State<SettingsScreen> {
       "hasToggle": false,
     },
   ];
+
+
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+
+    final box = GetStorage();
+
+    // Read from storage, if null, fallback to the current GetX state
+    bool currentThemeMode = box.read('isDarkMode') ?? Get.isDarkMode;
+
+    final themeItem = settingsItems.firstWhere((item) => item["title"] == "Theme");
+    themeItem["isEnabled"] = currentThemeMode;
+
+
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -119,6 +139,20 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           onChanged: (bool newValue) {
                             setState(() {
                               item["isEnabled"] = newValue;
+
+
+                              // Switch theme if theme switch is selected
+                              if(item["title"] == "Theme"){
+                                // 1. Update the UI
+                                Get.changeThemeMode(newValue ? ThemeMode.dark : ThemeMode.light);
+
+                                // 2. Persist the choice
+                                GetStorage().write('isDarkMode', newValue);
+                              }
+
+
+
+
                             });
                           },
                         )

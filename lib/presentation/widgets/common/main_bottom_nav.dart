@@ -16,6 +16,7 @@ import '../../pages/event/event_screen.dart';
 import '../../pages/home/home_screen.dart';
 import '../../pages/network/network_screen.dart';
 import '../../pages/profile/profile_screen.dart';
+import '../MySearchDelegate.dart';
 
 class MainBottomNav extends StatefulWidget {
   const MainBottomNav({super.key});
@@ -25,7 +26,6 @@ class MainBottomNav extends StatefulWidget {
 }
 
 class _MainBottomNavState extends State<MainBottomNav> {
-
   /// GetX controller that manages bottom navigation and drawer pages
   final navController = Get.find<NavController>();
 
@@ -57,11 +57,31 @@ class _MainBottomNavState extends State<MainBottomNav> {
   /// Bottom navigation tabs
   /// Each tab contains title + inactive icon + active icon
   final List<Map<String, dynamic>> _tabs = [
-    {'title': 'Home', 'icon': Icons.home_outlined, 'activeIcon': Icons.home_rounded},
-    {'title': 'Browse', 'icon': Icons.search_outlined, 'activeIcon': Icons.search_rounded},
-    {'title': 'Event', 'icon': Icons.calendar_month_outlined, 'activeIcon': Icons.calendar_month_rounded},
-    {'title': 'Network', 'icon': Icons.groups_outlined, 'activeIcon': Icons.groups_rounded},
-    {'title': 'Profile', 'icon': Icons.person_outline, 'activeIcon': Icons.person_rounded},
+    {
+      'title': 'Home',
+      'icon': Icons.home_outlined,
+      'activeIcon': Icons.home_rounded,
+    },
+    {
+      'title': 'Browse',
+      'icon': Icons.search_outlined,
+      'activeIcon': Icons.search_rounded,
+    },
+    {
+      'title': 'Event',
+      'icon': Icons.calendar_month_outlined,
+      'activeIcon': Icons.calendar_month_rounded,
+    },
+    {
+      'title': 'Network',
+      'icon': Icons.groups_outlined,
+      'activeIcon': Icons.groups_rounded,
+    },
+    {
+      'title': 'Profile',
+      'icon': Icons.person_outline,
+      'activeIcon': Icons.person_rounded,
+    },
   ];
 
   @override
@@ -100,14 +120,12 @@ class _MainBottomNavState extends State<MainBottomNav> {
               padding: EdgeInsets.zero,
               itemCount: _drawerMenuItems.length,
               itemBuilder: (context, index) {
-
                 final item = _drawerMenuItems[index];
 
                 /// Some items like "Sign Out" are marked dangerous (red color)
                 final isDanger = item['isDanger'] ?? false;
 
                 return ListTile(
-
                   /// When drawer item tapped
                   onTap: () => _handleDrawerItem(item['title']),
 
@@ -126,7 +144,9 @@ class _MainBottomNavState extends State<MainBottomNav> {
                   title: Text(
                     item['title'],
                     style: AppTextStyle.textSm(
-                      color: isDanger ? Colors.red : context.colorScheme.onSurface,
+                      color: isDanger
+                          ? Colors.red
+                          : context.colorScheme.onSurface,
                       weight: FontWeight.w500,
                     ),
                   ),
@@ -148,7 +168,6 @@ class _MainBottomNavState extends State<MainBottomNav> {
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 30),
       child: Row(
         children: [
-
           /// User profile image
           CircleAvatar(
             radius: 28,
@@ -234,17 +253,14 @@ class _MainBottomNavState extends State<MainBottomNav> {
 
       /// Custom back button handling
       onPopInvokedWithResult: (didPop, result) {
-
         /// If a drawer page is open
         if (navController.drawerPage != null) {
-
           final nestedNav = navController.drawerNavigatorKey?.currentState;
 
           /// Pop nested navigation first
           if (nestedNav != null && nestedNav.canPop()) {
             nestedNav.pop();
           } else {
-
             /// Otherwise close drawer page
             navController.drawerPage = null;
             navController.drawerNavigatorKey = null;
@@ -284,7 +300,6 @@ class _MainBottomNavState extends State<MainBottomNav> {
   Widget _buildCustomBottomNav(BuildContext context) {
     return GetBuilder<NavController>(
       builder: (controller) {
-
         /// If drawer page opened hide active state
         final isDrawerOpen = controller.drawerPage != null;
 
@@ -305,7 +320,6 @@ class _MainBottomNavState extends State<MainBottomNav> {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: List.generate(_tabs.length, (index) {
-
               final tab = _tabs[index];
 
               /// Check if tab is selected
@@ -313,7 +327,6 @@ class _MainBottomNavState extends State<MainBottomNav> {
                   !isDrawerOpen && controller.currentIndex == index;
 
               return GestureDetector(
-
                 /// Change tab when tapped
                 onTap: () => controller.changeIndex(index),
                 behavior: HitTestBehavior.translucent,
@@ -321,7 +334,6 @@ class _MainBottomNavState extends State<MainBottomNav> {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-
                     /// Tab icon
                     Icon(
                       isSelected ? tab['activeIcon'] : tab['icon'],
@@ -336,7 +348,9 @@ class _MainBottomNavState extends State<MainBottomNav> {
                       tab['title'],
                       style: TextStyle(
                         fontSize: isSelected ? 12 : 10,
-                        fontWeight: isSelected ? FontWeight.w500 : FontWeight.w400,
+                        fontWeight: isSelected
+                            ? FontWeight.w500
+                            : FontWeight.w400,
                         color: isSelected
                             ? context.colorScheme.primary
                             : context.colorScheme.onSurfaceVariant,
@@ -358,15 +372,12 @@ class _MainBottomNavState extends State<MainBottomNav> {
     Get.back();
 
     switch (title) {
-
       case "Recent Activity":
         Get.toNamed(AppRoutes.recentActivity);
         break;
 
       case "Explore Routes":
-        navController.openDrawerPage(
-          ExploreRoutesScreen(),
-        );
+        navController.openDrawerPage(ExploreRoutesScreen());
         break;
 
       case "Active Raffles":
@@ -400,7 +411,7 @@ class _MainBottomNavState extends State<MainBottomNav> {
         Get.toNamed(AppRoutes.about);
         break;
 
-      case "Subscription" :
+      case "Subscription":
         Get.toNamed(AppRoutes.subscription);
         break;
     }
@@ -409,19 +420,23 @@ class _MainBottomNavState extends State<MainBottomNav> {
   /// Handles app bar action buttons
   void _handleAppBarAction(String action) {
     switch (action) {
-
       case "search":
-      // TODO: open search screen
+        // TODO: open search screen
+
+        showSearch(
+            context: context,
+            delegate: MySearchDelegate()
+        );
 
         break;
 
       case "chat":
-      // TODO: open chat screen
+        // TODO: open chat screen
         Get.toNamed(AppRoutes.chatList);
         break;
 
       case "notification":
-      // TODO: open notification screen
+        // TODO: open notification screen
         Get.toNamed(AppRoutes.notification);
         break;
     }
