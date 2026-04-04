@@ -1,11 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:get/get_core/src/get_main.dart';
 import 'package:get/get_navigation/src/extension_navigation.dart';
+import 'package:loci/presentation/controllers/auth/resend_otp_controller.dart';
 import 'package:pinput/pinput.dart';
 import '../../../core/constants/app_text_style.dart';
 import '../../../core/theme/theme_extention.dart';
+import '../../../core/utils/show_snackbar.dart';
 import '../../../gen/assets.gen.dart';
 import '../../../routes/app_routes.dart';
+import '../../controllers/auth/verify_email_controller.dart';
 import '../../widgets/custom_button.dart';
 import '../../widgets/custom_rich_text.dart';
 
@@ -17,19 +21,69 @@ class OtpScreen extends StatefulWidget {
 }
 
 class _OtpScreenState extends State<OtpScreen> {
-  final controller = TextEditingController();
+  final verifyEmailController = Get.find<VerifyEmailController>();
+  final resendController = Get.find<ResendOtpController>();
+
+  late final String email;
+  late final String message;
+
+  final otpTEController = TextEditingController();
   final focusNode = FocusNode();
 
   @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+    final args = Get.arguments as Map<String, dynamic>?;
+
+    email = args?["email"] ?? "";
+    message = args?["message"] ?? "";
+  }
+
+  @override
   void dispose() {
-    controller.dispose();
+    otpTEController.dispose();
     focusNode.dispose();
     super.dispose();
   }
 
+  /// Verify the OTP entered by the user
+  void _verifyEmailHandler() async {
+    final otp = otpTEController.text.trim();
+    if (otp.length != 6) {
+      SnackbarService.warning("OTP must be 6 digits");
+      return;
+    }
+
+    final isVerified = await verifyEmailController.verifyOtp(
+      email: email,
+      otp: otp,
+    );
+
+    if (isVerified) {
+      // Navigate to home
+      Get.offNamed(AppRoutes.bottomNav);
+    } else {
+      SnackbarService.error(
+        verifyEmailController.errorMessage ?? "OTP verification failed",
+      );
+    }
+  }
+
+  /// resend otp
+  void _resendCodeHandler() async {
+    if (!resendController.canResend) return;
+
+    final isResent = await resendController.resendOtp(email: email);
+    if (!isResent) {
+      SnackbarService.error(
+        resendController.errorMessage ?? "Failed to resend OTP",
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-
     final defaultPinTheme = PinTheme(
       width: 56,
       height: 60,
@@ -67,15 +121,15 @@ class _OtpScreenState extends State<OtpScreen> {
               constraints: BoxConstraints(minHeight: constraints.maxHeight),
               child: IntrinsicHeight(
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 24,
+                    vertical: 20,
+                  ),
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       // 1. Logo
-                      Image.asset(
-                        Assets.images.logoPng.path,
-                        height: 100,
-                      ),
+                      Image.asset(Assets.images.logoPng.path, height: 100),
                       const SizedBox(height: 40),
 
                       // 2. Title
@@ -88,33 +142,19 @@ class _OtpScreenState extends State<OtpScreen> {
                       ),
                       const SizedBox(height: 12),
 
-                      // 3. Subtitle with dynamic email
-                      CustomRichText(
+                      Text(
+                        message,
+                        style: AppTextStyle.textXs(
+                          color: context.colorScheme.onSurfaceVariant,
+                        ),
                         textAlign: TextAlign.center,
-                        parts: [
-                          TextPart(
-                            text: "We’ve sent a verification code to ",
-                            style: AppTextStyle.textXs(color: context.colorScheme.onSurfaceVariant),
-                          ),
-                          TextPart(
-                            text: "example@gmail.com ",
-                            style: AppTextStyle.textXs(
-                              color: context.colorScheme.primary,
-                              weight: FontWeight.w600,
-                            ),
-                          ),
-                          TextPart(
-                            text: "that will expire in 10 minutes.",
-                            style: AppTextStyle.textXs(color: context.colorScheme.onSurfaceVariant),
-                          ),
-                        ],
                       ),
                       const SizedBox(height: 40),
 
                       // 4. Pinput Widget
                       Pinput(
                         length: 6,
-                        controller: controller,
+                        controller: otpTEController,
                         focusNode: focusNode,
                         defaultPinTheme: defaultPinTheme,
                         focusedPinTheme: focusedPinTheme,
@@ -132,18 +172,50 @@ class _OtpScreenState extends State<OtpScreen> {
                         children: [
                           Text(
                             "Didn’t receive the code?",
-                            style: AppTextStyle.textSm(color: context.colorScheme.onSurfaceVariant),
-                          ),
-                          TextButton(
-                            onPressed: () {},
-                            child: Text(
-                              "Resend Code",
-                              style: AppTextStyle.textSm(
-                                color: Colors.redAccent,
-                                weight: FontWeight.w600,
-                              ),
+                            style: AppTextStyle.textSm(
+                              color: context.colorScheme.onSurfaceVariant,
                             ),
                           ),
+
+                          GetBuilder<ResendOtpController>(builder: (controller){
+
+                            //--circular loader
+                            if (controller.isLoading) {
+                              return const SizedBox(
+                                width: 20,
+                                height: 20,
+                                child: CircularProgressIndicator(strokeWidth: 2),
+                              );
+                            }
+
+                            //---count down
+                            if (!controller.canResend) {
+                              return Text(
+                                "Resend in ${controller.secondsRemaining}s",
+                                style: AppTextStyle.textSm(
+                                  color: context.colorScheme.onSurfaceVariant,
+                                ),
+                              );
+                            }
+
+                            //---resend button
+                            return TextButton(
+                              onPressed: _resendCodeHandler,
+                              child: Text(
+                                "Resend Code",
+                                style: AppTextStyle.textSm(
+                                  color: Colors.redAccent,
+                                  weight: FontWeight.w600,
+                                ),
+                              ),
+                            );
+
+
+
+
+
+                          })
+
                         ],
                       ),
 
@@ -151,14 +223,15 @@ class _OtpScreenState extends State<OtpScreen> {
                       const SizedBox(height: 40),
 
                       // 6. Verify Button
-                      CustomButton(
-                        backgroundColor: context.colorScheme.primary,
-                        textColor: context.colorScheme.onPrimary,
-                        text: "Verify",
-                        onPressed: () {
-
-                          Get.toNamed(AppRoutes.passReset);
-
+                      GetBuilder<VerifyEmailController>(
+                        builder: (controller) {
+                          return CustomButton(
+                            isLoading: controller.isLoading,
+                            backgroundColor: context.colorScheme.primary,
+                            textColor: context.colorScheme.onPrimary,
+                            text: "Verify",
+                            onPressed: _verifyEmailHandler,
+                          );
                         },
                       ),
                       const SizedBox(height: 20),

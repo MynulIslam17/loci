@@ -1,4 +1,5 @@
 import 'package:get/get.dart';
+import 'package:loci/presentation/bindings/auth_bindings.dart';
 import 'package:loci/presentation/pages/auth/forget_pass_screen.dart';
 import 'package:loci/presentation/pages/auth/login_screen.dart';
 import 'package:loci/presentation/pages/auth/otp_screen.dart';
@@ -56,43 +57,53 @@ abstract class AppPages {
   static const String initialRoutes = AppRoutes.splash;
 
   static final pages = [
-
     /// ==========================Auth=============================
     GetPage(name: AppRoutes.splash, page: () => SplashScreen()),
     GetPage(name: AppRoutes.onBoarding, page: () => OnboardingScreen()),
     GetPage(name: AppRoutes.login, page: () => LoginScreen()),
-    GetPage(name: AppRoutes.signup, page: () => SignupScreen()),
+
+    GetPage(
+      name: AppRoutes.signup,
+      page: () => SignupScreen(),
+      binding: AuthBinding(),
+    ),
     GetPage(name: AppRoutes.forgetPass, page: () => ForgetPassScreen()),
     GetPage(name: AppRoutes.otp, page: () => OtpScreen()),
     GetPage(name: AppRoutes.passReset, page: () => ResetPassSceen()),
 
-
-
     /// ==========================Bottom Nav=============================
-    GetPage(name: AppRoutes.bottomNav, page: ()=>MainBottomNav()),
-
+    GetPage(name: AppRoutes.bottomNav, page: () => MainBottomNav()),
 
     // ----- event details
-
     GetPage(name: AppRoutes.eventDetails, page: () => EventDetails()),
 
     // ----- browse business
     GetPage(name: AppRoutes.browseBusiness, page: () => BrowseBusinesses()),
-    GetPage(name: AppRoutes.businessProfile, page: () => BusinessProfileScreen()),
+    GetPage(
+      name: AppRoutes.businessProfile,
+      page: () => BusinessProfileScreen(),
+    ),
 
     // ----- Network
     GetPage(name: AppRoutes.referral, page: () => ReferralsScreen()),
     GetPage(name: AppRoutes.meeting, page: () => MeetingScreen()),
     GetPage(name: AppRoutes.connection, page: () => ConnectionScreen()),
     GetPage(name: AppRoutes.sendReferral, page: () => SendNewReferralsScreen()),
-    GetPage(name: AppRoutes.scheduleMeeting, page: () => ScheduleMeetingScreen()),
-    GetPage(name: AppRoutes.referralsInvitation, page: () => ReferralsInvitationScreen()),
-    GetPage(name: AppRoutes.meetingInvitation, page: () => MeetingInvitationScreen()),
-
+    GetPage(
+      name: AppRoutes.scheduleMeeting,
+      page: () => ScheduleMeetingScreen(),
+    ),
+    GetPage(
+      name: AppRoutes.referralsInvitation,
+      page: () => ReferralsInvitationScreen(),
+    ),
+    GetPage(
+      name: AppRoutes.meetingInvitation,
+      page: () => MeetingInvitationScreen(),
+    ),
 
     // ----- CheckIn
     GetPage(name: AppRoutes.checkIn, page: () => CheckInScreen()),
-
 
     //--explore routes
     GetPage(name: AppRoutes.exploreRoutes, page: () => ExploreRoutesScreen()),
@@ -101,16 +112,21 @@ abstract class AppPages {
     GetPage(name: AppRoutes.activeRaffles, page: () => ActiveRafflesPage()),
     GetPage(name: AppRoutes.rafflesDetails, page: () => RafflesDetailsScreen()),
 
-
     //---clam my business
     GetPage(name: AppRoutes.searchBusiness, page: () => SearchMyBusiness()),
     GetPage(name: AppRoutes.clamBusinessProfile, page: () => ClamMyBusiness()),
     GetPage(name: AppRoutes.myBusinessProfile, page: () => MyBusinessProfile()),
-    GetPage(name: AppRoutes.manualClaimBusiness, page: () => ManualClaimBusiness()),
+    GetPage(
+      name: AppRoutes.manualClaimBusiness,
+      page: () => ManualClaimBusiness(),
+    ),
     GetPage(name: AppRoutes.createAdd, page: () => CreateAd()),
 
     //---explore activity
-    GetPage(name: AppRoutes.exploreActivity, page: () => ExploreActivityScreen()),
+    GetPage(
+      name: AppRoutes.exploreActivity,
+      page: () => ExploreActivityScreen(),
+    ),
     GetPage(name: AppRoutes.createActivity, page: () => CreateActivityScreen()),
     GetPage(name: AppRoutes.editEvent, page: () => EditEventScreen()),
     GetPage(name: AppRoutes.editRaffles, page: () => EditRafflesScreen()),
@@ -124,13 +140,17 @@ abstract class AppPages {
     GetPage(name: AppRoutes.viewTotalRSVP, page: () => TotalRsvpScreen()),
 
     //---create activity
-
     GetPage(name: AppRoutes.recentActivity, page: () => RecentActivity()),
 
     //---community
-    GetPage(name: AppRoutes.communityMemberScreen, page: () => CommunityMemberScreen()),
-    GetPage(name: AppRoutes.createAnnouncement, page: () => CreateAnnouncementScreen()),
-
+    GetPage(
+      name: AppRoutes.communityMemberScreen,
+      page: () => CommunityMemberScreen(),
+    ),
+    GetPage(
+      name: AppRoutes.createAnnouncement,
+      page: () => CreateAnnouncementScreen(),
+    ),
 
     //----profile
     GetPage(name: AppRoutes.changePassword, page: () => ChangePasswordScreen()),
@@ -144,18 +164,6 @@ abstract class AppPages {
     GetPage(name: AppRoutes.message, page: () => MessageScreen()),
     GetPage(name: AppRoutes.notification, page: () => NotificationScreen()),
 
-
     GetPage(name: AppRoutes.subscription, page: () => SubscriptionScreen()),
-
-
-
-
-
-
-
-
-
-
-
   ];
 }

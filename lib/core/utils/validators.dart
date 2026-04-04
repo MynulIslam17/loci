@@ -152,50 +152,49 @@ String? validatePhoneNumber(PhoneNumber? phoneNumber) {
 
 /// Validates date of birth (must be 18+ years old)
 
-String? validateDateOfBirth(String? value, {int minAge = 18}) {
-  if (value == null || value.toString().trim().isEmpty) {
+String? validateDateOfBirth(String? value, {int minAge = 13}) {
+  if (value == null || value.trim().isEmpty) {
     return "Date of birth is required";
   }
 
   try {
     DateTime date;
 
-    // Handle DD-MM-YYYY format
-    if (value.contains('-') && value.split('-').length == 3) {
-      final parts = value.split('-');
-      if (parts[0].length == 2 && parts[1].length == 2 && parts[2].length == 4) {
-        // DD-MM-YYYY
-        final day = int.parse(parts[0]);
-        final month = int.parse(parts[1]);
-        final year = int.parse(parts[2]);
-        date = DateTime(year, month, day);
-      } else {
-        throw FormatException('Invalid date format');
-      }
-    } else {
-      // Try ISO format as fallback
+    // ✅ FIRST: Handle ISO format strictly (YYYY-MM-DD)
+    if (RegExp(r'^\d{4}-\d{2}-\d{2}$').hasMatch(value)) {
       date = DateTime.parse(value);
     }
 
+    // ✅ THEN: Handle DD/MM/YYYY or DD-MM-YYYY
+    else if (RegExp(r'^\d{2}[/\-]\d{2}[/\-]\d{4}$').hasMatch(value)) {
+      final parts = value.split(RegExp(r'[/\-]'));
+      final day = int.parse(parts[0]);
+      final month = int.parse(parts[1]);
+      final year = int.parse(parts[2]);
+
+      date = DateTime(year, month, day);
+    }
+
+    // ❌ Anything else → invalid
+    else {
+      return "Invalid date format";
+    }
+
     final now = DateTime.now();
+
     final age = now.year - date.year -
-        ((now.month > date.month || (now.month == date.month && now.day >= date.day)) ? 0 : 1);
+        ((now.month > date.month ||
+            (now.month == date.month && now.day >= date.day))
+            ? 0
+            : 1);
 
-    if (date.isAfter(now)) {
-      return "Date of birth cannot be in the future";
-    }
+    if (date.isAfter(now)) return "Date of birth cannot be in the future";
+    if (age < minAge) return "You must be at least $minAge years old";
+    if (age > 120) return "Please enter a valid date of birth";
 
-    if (age < minAge) {
-      return "You must be at least $minAge years old";
-    }
-
-    if (age > 120) {
-      return "Please enter a valid date of birth";
-    }
-
-    return null;
+    return null; // ✅ valid
   } catch (e) {
-    return "Please enter a valid date (DD-MM-YYYY)";
+    return "Please enter a valid date";
   }
 }
 
@@ -404,4 +403,22 @@ String? validatePhoneOptional(PhoneNumber? phoneNumber) {
     return null; // Optional field
   }
   return validatePhoneNumber(phoneNumber);
+}
+
+String? validateZipCode(String? value, {int length = 5}) {
+  if (value == null || value.trim().isEmpty) {
+    return "Zip code is required";
+  }
+
+  final trimmedValue = value.trim();
+
+  if (trimmedValue.length < length) {
+    return "Zip code must be at least $length characters";
+  }
+
+  if (!RegExp(r'^[a-zA-Z0-9]+$').hasMatch(trimmedValue)) {
+    return "Zip code can only contain letters and numbers";
+  }
+
+  return null;
 }

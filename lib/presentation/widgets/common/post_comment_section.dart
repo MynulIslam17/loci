@@ -3,7 +3,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 
 import '../../../core/constants/app_text_style.dart';
 import '../../../core/theme/theme_extention.dart';
-import '../../../data/poll.dart';
+import '../../../data/models/poll.dart';
 import '../../../gen/assets.gen.dart';
 import '../custom_text_field.dart';
 import '../../pages/home/widgets/user_comment_card.dart';

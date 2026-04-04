@@ -143,4 +143,20 @@ class DateParserHelper {
     if (month == null || day == null || year == null) return null;
     return DateTime(year, month, day);
   }
+
+
+  /// ✅ Convert ISO string to display format "DD/MM/YYYY"
+  static String isoToDisplay(String? isoString) {
+    if (isoString == null || isoString.isEmpty) return 'N/A';
+
+    try {
+      final date = DateTime.parse(isoString);
+      return toDisplayDate(date); // reuse your existing method
+    } catch (_) {
+      return 'N/A';
+    }
+  }
+
+
+
 }

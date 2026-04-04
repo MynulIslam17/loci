@@ -12,7 +12,7 @@ import 'package:loci/presentation/widgets/task_card.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/activity_type.dart';
 import '../../../core/utils/date_parser.dart';
-import '../../../data/task_model.dart';
+import '../../../data/models/task_model.dart';
 import '../../../gen/assets.gen.dart';
 import '../../widgets/common/company_info_card.dart';
 import 'widgets/coupon_card.dart';

@@ -1,9 +1,9 @@
-import 'package:loci/data/poll.dart';
-import 'package:loci/data/post_model.dart';
+import 'package:loci/data/models/poll.dart';
+import 'package:loci/data/models/post_model.dart';
 
-import '../../gen/assets.gen.dart';
+import '../../../gen/assets.gen.dart';
 
-import '../../presentation/widgets/common/post_comment_section.dart';
+import '../../../presentation/widgets/common/post_comment_section.dart';
 
 /// Polls
 final List<PollOption> mockPolls = [
