@@ -60,16 +60,25 @@ abstract class AppPages {
     /// ==========================Auth=============================
     GetPage(name: AppRoutes.splash, page: () => SplashScreen()),
     GetPage(name: AppRoutes.onBoarding, page: () => OnboardingScreen()),
-    GetPage(name: AppRoutes.login, page: () => LoginScreen()),
+
+    GetPage(
+      name: AppRoutes.login,
+      page: () => LoginScreen(),
+      binding: AuthBinding(),
+    ),
 
     GetPage(
       name: AppRoutes.signup,
       page: () => SignupScreen(),
       binding: AuthBinding(),
     ),
-    GetPage(name: AppRoutes.forgetPass, page: () => ForgetPassScreen()),
-    GetPage(name: AppRoutes.otp, page: () => OtpScreen()),
-    GetPage(name: AppRoutes.passReset, page: () => ResetPassSceen()),
+    GetPage(
+      name: AppRoutes.forgetPass,
+      page: () => ForgetPassScreen(),
+      binding: AuthBinding(),
+    ),
+    GetPage(name: AppRoutes.otp, page: () => OtpScreen(),binding: AuthBinding()),
+    GetPage(name: AppRoutes.passReset, page: () => ResetPassScreen(),binding: AuthBinding()),
 
     /// ==========================Bottom Nav=============================
     GetPage(name: AppRoutes.bottomNav, page: () => MainBottomNav()),

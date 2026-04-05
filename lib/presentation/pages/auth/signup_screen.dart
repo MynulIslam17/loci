@@ -26,13 +26,14 @@ class _SignupScreenState extends State<SignupScreen> {
   // Form Key
   final _formKey = GlobalKey<FormState>();
 
-  // Controllers
+  // textField Controllers
   final TextEditingController nameTEController = TextEditingController();
   final TextEditingController emailTEController = TextEditingController();
   final TextEditingController zipTEController = TextEditingController();
   final TextEditingController dateTEController = TextEditingController();
   final TextEditingController passwordTEController = TextEditingController();
-  final TextEditingController confirmPasswordTEController = TextEditingController();
+  final TextEditingController confirmPasswordTEController =
+      TextEditingController();
 
   bool isAgreed = false;
 
@@ -51,14 +52,16 @@ class _SignupScreenState extends State<SignupScreen> {
     }
   }
 
-  void _signupHandler() async{
+  void _signupHandler() async {
+    // Hide keyboard
+    FocusScope.of(context).unfocus();
+
     if (!_formKey.currentState!.validate()) {
       // Validation failed
       return;
     }
 
     if (!isAgreed) {
-
       SnackbarService.error("Please agree to the terms and conditions");
       return;
     }
@@ -70,25 +73,29 @@ class _SignupScreenState extends State<SignupScreen> {
     String zipCode = zipTEController.text;
     String dateOfBirth = dateTEController.text;
 
+    bool success = await signupController.signup(
+      name: name,
+      email: email,
+      password: password,
+      zipCode: zipCode,
+      dateOfBirth: dateOfBirth,
+    );
 
-
-
-    bool success=await signupController.signup(name: name, email: email, password: password, zipCode: zipCode, dateOfBirth: dateOfBirth);
-
-    if(success){
-      Get.toNamed(AppRoutes.otp,arguments: {
-        "email": email,
-        "message": signupController.successMessage,
-      });
+    if (success) {
+      Get.toNamed(
+        AppRoutes.otp,
+        arguments: {
+          "email": email,
+          "message": signupController.successMessage,
+          "type": "signup",
+        },
+      );
     }
-
-
   }
 
   void _handleTermsAndConditions() {
     print("Terms and Conditions");
   }
-
 
   @override
   Widget build(BuildContext context) {
@@ -135,7 +142,9 @@ class _SignupScreenState extends State<SignupScreen> {
                       width: 300,
                       height: 260,
                       decoration: BoxDecoration(
-                        color: context.colorScheme.primaryContainer.withOpacity(0.6),
+                        color: context.colorScheme.primaryContainer.withOpacity(
+                          0.6,
+                        ),
                         borderRadius: BorderRadius.circular(40),
                       ),
                     ),
@@ -193,7 +202,9 @@ class _SignupScreenState extends State<SignupScreen> {
           const SizedBox(height: 12),
           Text(
             "Create your loci account by providing necessary info",
-            style: AppTextStyle.textXs(color: context.colorScheme.onSurfaceVariant),
+            style: AppTextStyle.textXs(
+              color: context.colorScheme.onSurfaceVariant,
+            ),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 12),
@@ -217,7 +228,11 @@ class _SignupScreenState extends State<SignupScreen> {
             borderColor: context.colorScheme.outline,
             title: "DOB",
             hintText: "Select Date of Birth",
-            suffixIcon: Icon(Icons.calendar_today_outlined, size: 20, color: context.colorScheme.onSurfaceVariant),
+            suffixIcon: Icon(
+              Icons.calendar_today_outlined,
+              size: 20,
+              color: context.colorScheme.onSurfaceVariant,
+            ),
             textColor: context.colorScheme.onSurface,
             titleStyle: AppTextStyle.textXs(
               color: context.colorScheme.onSurface,
@@ -243,7 +258,7 @@ class _SignupScreenState extends State<SignupScreen> {
             controller: emailTEController,
             borderColor: context.colorScheme.outline,
             title: "Email",
-            hintText: "Loisbecket@gmail.com",
+            hintText: "example@gmail.com",
             textColor: context.colorScheme.onSurface,
             titleStyle: AppTextStyle.textXs(
               color: context.colorScheme.onSurface,
@@ -279,7 +294,8 @@ class _SignupScreenState extends State<SignupScreen> {
               color: context.colorScheme.onSurface,
               weight: FontWeight.w600,
             ),
-            validator: (v) => validateConfirmPassword(v, passwordTEController.text),
+            validator: (v) =>
+                validateConfirmPassword(v, passwordTEController.text),
           ),
           const SizedBox(height: 20),
           Row(
@@ -290,7 +306,9 @@ class _SignupScreenState extends State<SignupScreen> {
                 child: Checkbox(
                   value: isAgreed,
                   onChanged: (v) => setState(() => isAgreed = v!),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(4),
+                  ),
                 ),
               ),
               const SizedBox(width: 8),
@@ -299,16 +317,23 @@ class _SignupScreenState extends State<SignupScreen> {
                   parts: [
                     TextPart(
                       text: "Are you agree To ",
-                      style: AppTextStyle.textXs(color: context.colorScheme.onSurface),
+                      style: AppTextStyle.textXs(
+                        color: context.colorScheme.onSurface,
+                      ),
                     ),
                     TextPart(
                       onTap: _handleTermsAndConditions,
                       text: "Our Terms ",
-                      style: AppTextStyle.textXs(color: context.colorScheme.primary, weight: FontWeight.w600),
+                      style: AppTextStyle.textXs(
+                        color: context.colorScheme.primary,
+                        weight: FontWeight.w600,
+                      ),
                     ),
                     TextPart(
                       text: "of service?",
-                      style: AppTextStyle.textXs(color: context.colorScheme.onSurface),
+                      style: AppTextStyle.textXs(
+                        color: context.colorScheme.onSurface,
+                      ),
                     ),
                   ],
                 ),
@@ -317,18 +342,17 @@ class _SignupScreenState extends State<SignupScreen> {
           ),
           const SizedBox(height: 20),
 
-           GetBuilder<SignupController>(builder: (controller){
-
-             return  CustomButton(
-               isLoading: controller.isLoading,
-               backgroundColor: context.colorScheme.primary,
-               textColor: context.colorScheme.onPrimary,
-               text: "Sign Up",
-               onPressed: _signupHandler,
-             );
-
-
-           }),
+          GetBuilder<SignupController>(
+            builder: (controller) {
+              return CustomButton(
+                isLoading: controller.isLoading,
+                backgroundColor: context.colorScheme.primary,
+                textColor: context.colorScheme.onPrimary,
+                text: "Sign Up",
+                onPressed: _signupHandler,
+              );
+            },
+          ),
 
           const SizedBox(height: 20),
           Center(
@@ -336,11 +360,16 @@ class _SignupScreenState extends State<SignupScreen> {
               parts: [
                 TextPart(
                   text: "Already have an account? ",
-                  style: AppTextStyle.textSm(color: context.colorScheme.onSurface),
+                  style: AppTextStyle.textSm(
+                    color: context.colorScheme.onSurface,
+                  ),
                 ),
                 TextPart(
                   text: "Sign In",
-                  style: AppTextStyle.textSm(color: context.colorScheme.primary, weight: FontWeight.w700),
+                  style: AppTextStyle.textSm(
+                    color: context.colorScheme.primary,
+                    weight: FontWeight.w700,
+                  ),
                   onTap: () => Navigator.pop(context),
                 ),
               ],
@@ -358,7 +387,13 @@ class _SignupScreenState extends State<SignupScreen> {
       height: 230,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(32),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.08), blurRadius: 10, offset: const Offset(0, 5))],
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.08),
+            blurRadius: 10,
+            offset: const Offset(0, 5),
+          ),
+        ],
       ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(28),

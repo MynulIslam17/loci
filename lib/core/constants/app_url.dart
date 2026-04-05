@@ -8,9 +8,11 @@ abstract class AppUrl {
 
   static const String signUp="$baseUrl/auth/register";
   static const String login="$baseUrl/auth/login";
-  static const String verifyEmail="$baseUrl/auth/verify-email";
+  static const String forgetPassword="$baseUrl/auth/forgot-password";
+  static const String verifySignupOtp="$baseUrl/auth/verify-email";
+  static const String verifyForgotOtp="$baseUrl/auth/verify-reset-otp";
   static const String resendOtp="$baseUrl/auth/resend-verification";
-  static const String resetPass="$baseUrl/auth/reset-password";
+  static const String resetPassword="$baseUrl/auth/reset-password";
 
 
 

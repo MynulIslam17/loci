@@ -21,69 +21,101 @@ class OtpScreen extends StatefulWidget {
 }
 
 class _OtpScreenState extends State<OtpScreen> {
+  // Controllers for verification and resending OTP
   final verifyEmailController = Get.find<VerifyEmailController>();
   final resendController = Get.find<ResendOtpController>();
 
+  // Data passed from previous screen
   late final String email;
   late final String message;
+  late final String type; // signup or forgot password
 
+  // Text controller and focus for OTP input
   final otpTEController = TextEditingController();
   final focusNode = FocusNode();
 
   @override
   void initState() {
-    // TODO: implement initState
     super.initState();
+
+    // Receive arguments from previous screen
     final args = Get.arguments as Map<String, dynamic>?;
 
     email = args?["email"] ?? "";
     message = args?["message"] ?? "";
+    type = args?["type"] ?? "";
   }
 
   @override
   void dispose() {
+    // Dispose controllers and focus node to avoid memory leaks
     otpTEController.dispose();
     focusNode.dispose();
     super.dispose();
   }
 
+  /// -------------------------
   /// Verify the OTP entered by the user
+  /// -------------------------
   void _verifyEmailHandler() async {
+    // Hide keyboard
+    FocusScope.of(context).unfocus();
+
     final otp = otpTEController.text.trim();
+
+    // Check if OTP length is valid
     if (otp.length != 6) {
       SnackbarService.warning("OTP must be 6 digits");
       return;
     }
 
-    final isVerified = await verifyEmailController.verifyOtp(
-      email: email,
-      otp: otp,
-    );
+    // Determine flow: signup or forgot password
+    final isVerified = type == "signup"
+        ? await verifyEmailController.verifySignupOtp(email: email, otp: otp)
+        : await verifyEmailController.verifyForgotOtp(email: email, otp: otp);
 
     if (isVerified) {
-      // Navigate to home
-      Get.offNamed(AppRoutes.bottomNav);
+      // Navigate to the correct screen based on type
+      if (type == "signup") {
+        Get.offNamed(AppRoutes.bottomNav); // Main app
+      } else {
+        Get.toNamed(
+          AppRoutes.passReset,
+          arguments: {"email": email}, // Pass email for password reset
+        );
+      }
     } else {
+      // Show error if verification failed
       SnackbarService.error(
-        verifyEmailController.errorMessage ?? "OTP verification failed",
+        verifyEmailController.errorMessage !
       );
     }
   }
 
-  /// resend otp
+  /// -------------------------
+  /// Resend OTP
+  /// -------------------------
   void _resendCodeHandler() async {
-    if (!resendController.canResend) return;
+    if (!resendController.canResend) return; // Check cooldown
 
     final isResent = await resendController.resendOtp(email: email);
+
     if (!isResent) {
+      // Show error if resend failed
       SnackbarService.error(
         resendController.errorMessage ?? "Failed to resend OTP",
+      );
+    } else {
+      otpTEController.clear(); // Clear old OTP input
+      SnackbarService.success(
+        resendController.successMessage ?? "OTP resent successfully",
       );
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    // Default OTP input style
     final defaultPinTheme = PinTheme(
       width: 56,
       height: 60,
@@ -98,6 +130,7 @@ class _OtpScreenState extends State<OtpScreen> {
       ),
     );
 
+    // OTP input style when focused
     final focusedPinTheme = defaultPinTheme.copyWith(
       decoration: defaultPinTheme.decoration!.copyWith(
         border: Border.all(color: context.colorScheme.primary, width: 2),
@@ -128,11 +161,15 @@ class _OtpScreenState extends State<OtpScreen> {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      // 1. Logo
+                      /// -------------------------
+                      /// 1. App Logo
+                      /// -------------------------
                       Image.asset(Assets.images.logoPng.path, height: 100),
                       const SizedBox(height: 40),
 
-                      // 2. Title
+                      /// -------------------------
+                      /// 2. Title
+                      /// -------------------------
                       Text(
                         "Enter verification code",
                         style: AppTextStyle.displayXs(
@@ -142,8 +179,14 @@ class _OtpScreenState extends State<OtpScreen> {
                       ),
                       const SizedBox(height: 12),
 
+                      /// -------------------------
+                      /// 3. Message
+                      /// Show different messages based on type
+                      /// -------------------------
                       Text(
-                        message,
+                        type == "signup"
+                            ? message
+                            : "We’ve sent a verification code to $email. Please enter the code to continue",
                         style: AppTextStyle.textXs(
                           color: context.colorScheme.onSurfaceVariant,
                         ),
@@ -151,7 +194,9 @@ class _OtpScreenState extends State<OtpScreen> {
                       ),
                       const SizedBox(height: 40),
 
-                      // 4. Pinput Widget
+                      /// -------------------------
+                      /// 4. OTP Input Field
+                      /// -------------------------
                       Pinput(
                         length: 6,
                         controller: otpTEController,
@@ -166,7 +211,9 @@ class _OtpScreenState extends State<OtpScreen> {
                       ),
                       const SizedBox(height: 32),
 
-                      // 5. Resend Section
+                      /// -------------------------
+                      /// 5. Resend OTP Section
+                      /// -------------------------
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
@@ -176,53 +223,51 @@ class _OtpScreenState extends State<OtpScreen> {
                               color: context.colorScheme.onSurfaceVariant,
                             ),
                           ),
+                          GetBuilder<ResendOtpController>(
+                            builder: (controller) {
+                              // Show loader if sending
+                              if (controller.isLoading) {
+                                return const SizedBox(
+                                  width: 20,
+                                  height: 20,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                  ),
+                                );
+                              }
 
-                          GetBuilder<ResendOtpController>(builder: (controller){
+                              // Show countdown if cannot resend yet
+                              if (!controller.canResend) {
+                                return Text(
+                                  "Resend in ${controller.secondsRemaining}s",
+                                  style: AppTextStyle.textSm(
+                                    color: context.colorScheme.onSurfaceVariant,
+                                  ),
+                                );
+                              }
 
-                            //--circular loader
-                            if (controller.isLoading) {
-                              return const SizedBox(
-                                width: 20,
-                                height: 20,
-                                child: CircularProgressIndicator(strokeWidth: 2),
-                              );
-                            }
-
-                            //---count down
-                            if (!controller.canResend) {
-                              return Text(
-                                "Resend in ${controller.secondsRemaining}s",
-                                style: AppTextStyle.textSm(
-                                  color: context.colorScheme.onSurfaceVariant,
+                              // Resend button
+                              return TextButton(
+                                onPressed: _resendCodeHandler,
+                                child: Text(
+                                  "Resend Code",
+                                  style: AppTextStyle.textSm(
+                                    color: Colors.redAccent,
+                                    weight: FontWeight.w600,
+                                  ),
                                 ),
                               );
-                            }
-
-                            //---resend button
-                            return TextButton(
-                              onPressed: _resendCodeHandler,
-                              child: Text(
-                                "Resend Code",
-                                style: AppTextStyle.textSm(
-                                  color: Colors.redAccent,
-                                  weight: FontWeight.w600,
-                                ),
-                              ),
-                            );
-
-
-
-
-
-                          })
-
+                            },
+                          ),
                         ],
                       ),
 
                       const Spacer(),
                       const SizedBox(height: 40),
 
-                      // 6. Verify Button
+                      /// -------------------------
+                      /// 6. Verify Button
+                      /// -------------------------
                       GetBuilder<VerifyEmailController>(
                         builder: (controller) {
                           return CustomButton(

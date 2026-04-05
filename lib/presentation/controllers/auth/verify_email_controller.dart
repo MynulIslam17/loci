@@ -14,7 +14,8 @@ class VerifyEmailController extends GetxController {
   String? get errorMessage => _errorMessage;
   String? get successMessage => _successMessage;
 
-  Future<bool> verifyOtp({
+  ///  signup verify — when comes from -> signup screen
+  Future<bool> verifySignupOtp({
     required String email,
     required String otp,
   }) async {
@@ -24,10 +25,11 @@ class VerifyEmailController extends GetxController {
     update();
 
     try {
-      final NetworkResponse response = await Get.find<NetworkCaller>().postRequest(
-        url: AppUrl.verifyEmail,
-        body: {'email': email, 'otp': otp},
-      );
+      final NetworkResponse response = await Get.find<NetworkCaller>()
+          .postRequest(
+            url: AppUrl.verifySignupOtp,
+            body: {'email': email, 'otp': otp},
+          );
 
       if (response.isSuccess && response.body != null) {
         final data = response.body!;
@@ -58,5 +60,47 @@ class VerifyEmailController extends GetxController {
       _isLoading = false;
       update();
     }
+  }
+
+  /// forgot verify —> when comes from -> forget password screen
+
+  Future<bool> verifyForgotOtp({
+    required String email,
+    required String otp,
+  }) async {
+
+    _isLoading = true;
+    _errorMessage = null;
+    _successMessage = null;
+    update();
+    
+    try{
+      
+      final NetworkResponse response=await Get.find<NetworkCaller>().postRequest(url: AppUrl.verifyForgotOtp,body: {'email': email, 'otp': otp});
+
+      if(response.isSuccess && response.body != null){
+        _successMessage=response.body!["message"] ?? "OTP verified successfully";
+        return true;
+
+      }else{
+        _errorMessage=response.errorMessage ?? "Verification failed";
+        return false;
+      }
+      
+      
+    }catch (e){
+
+      _errorMessage = "An error occurred: $e";
+      return false;
+      
+    }finally{
+      _isLoading = false;
+      update();
+    }
+
+
+
+
+
   }
 }
