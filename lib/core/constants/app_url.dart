@@ -19,9 +19,9 @@ abstract class AppUrl {
 
 
 
-  ///=============================================== profile ===============================================
+  ///=============================================== event ===============================================
 
-  static const String updateProfile="$baseUrl/user/update-my-profile";
+  static const String eventList="$baseUrl/events";
   static const String getProfile="$baseUrl/user/get-my-profile";
 
 

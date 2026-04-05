@@ -13,6 +13,7 @@ class EventCard extends StatelessWidget {
   final String attendance;
   final String organizer;
   final VoidCallback onRSVP;
+  final VoidCallback? onTapCard;
 
   const EventCard({
     super.key,
@@ -24,6 +25,7 @@ class EventCard extends StatelessWidget {
     required this.attendance,
     required this.organizer,
     required this.onRSVP,
+     this.onTapCard,
   });
 
   @override
@@ -31,76 +33,79 @@ class EventCard extends StatelessWidget {
 
        Color color= context.colorScheme.primary;
 
-    return Card(
-      elevation: 5,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-      ),
-      color: context.colorScheme.surfaceContainerHigh,
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // 1. Image Header
-
-             CustomCachedImage(
-               width: double.infinity,
-               height: 200,
-               imageUrl: "assets/images/finedine.png",
-               borderRadius: 10,
-             ),
-            const SizedBox(height: 16),
-
-            // 2. Title & Description
-            Text(
-              title,
-              style: AppTextStyle.textLg(
-                color: context.colorScheme.onSurface,
-                weight: FontWeight.w700,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              description,
-              style: AppTextStyle.textXs(
-                color: context.colorScheme.onSurfaceVariant,
-              ),
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-            ),
-            const SizedBox(height: 16),
-
-            // 3. Info Rows
-            IconTextRow(icon: Icons.calendar_today_outlined, text: date, iconColor: color),
-            const SizedBox(height: 8),
-            IconTextRow(icon: Icons.location_on_outlined, text: location, iconColor: color),
-            const SizedBox(height: 8),
-            IconTextRow(icon: Icons.people_outline, text: attendance, iconColor: color),
-            const SizedBox(height: 20),
-
-            // 4. Action Button
-            SizedBox(
-              width: double.infinity,
-              height: 48,
-              child: CustomButton(
-                text: "RSVP",
-                onPressed: onRSVP,
-
-              )
-            ),
-
-            // 5. Footer
-            Center(
-              child: Padding(
-                padding: const EdgeInsets.only(top: 8),
-                child: Text(
-                  "by $organizer",
-                  style: AppTextStyle.textXs(color: context.colorScheme.onSurfaceVariant),
+    return InkWell(
+      onTap: onTapCard,
+      child: Card(
+        elevation: 5,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+        color: context.colorScheme.surfaceContainerHigh,
+        child: Padding(
+          padding: const EdgeInsets.all(12),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // 1. Image Header
+      
+               CustomCachedImage(
+                 width: double.infinity,
+                 height: 200,
+                 imageUrl: "assets/images/finedine.png",
+                 borderRadius: 10,
+               ),
+              const SizedBox(height: 16),
+      
+              // 2. Title & Description
+              Text(
+                title,
+                style: AppTextStyle.textLg(
+                  color: context.colorScheme.onSurface,
+                  weight: FontWeight.w700,
                 ),
               ),
-            ),
-          ],
+              const SizedBox(height: 8),
+              Text(
+                description,
+                style: AppTextStyle.textXs(
+                  color: context.colorScheme.onSurfaceVariant,
+                ),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+              const SizedBox(height: 16),
+      
+              // 3. Info Rows
+              IconTextRow(icon: Icons.calendar_today_outlined, text: date, iconColor: color),
+              const SizedBox(height: 8),
+              IconTextRow(icon: Icons.location_on_outlined, text: location, iconColor: color),
+              const SizedBox(height: 8),
+              IconTextRow(icon: Icons.people_outline, text: attendance, iconColor: color),
+              const SizedBox(height: 20),
+      
+              // 4. Action Button
+              SizedBox(
+                width: double.infinity,
+                height: 48,
+                child: CustomButton(
+                  text: "RSVP",
+                  onPressed: onRSVP,
+      
+                )
+              ),
+      
+              // 5. Footer
+              Center(
+                child: Padding(
+                  padding: const EdgeInsets.only(top: 8),
+                  child: Text(
+                    "by $organizer",
+                    style: AppTextStyle.textXs(color: context.colorScheme.onSurfaceVariant),
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

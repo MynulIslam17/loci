@@ -6,6 +6,7 @@ import 'package:get/get.dart';
 import 'package:get/get_core/src/get_main.dart';
 import 'package:loci/core/constants/app_text_style.dart';
 import 'package:loci/core/theme/theme_extention.dart';
+import 'package:loci/presentation/controllers/auth/auth_controller.dart';
 
 import '../../../gen/assets.gen.dart';
 import '../../../routes/app_routes.dart';
@@ -28,9 +29,16 @@ class _SplashScreenState extends State<SplashScreen> {
   void _moveToNextScreen() async {
     await Future.delayed(Duration(seconds: 4));
 
-    if (mounted) {
-      Get.offAllNamed(AppRoutes.onBoarding);
-    }
+    if (!mounted) return;
+
+     //--- if login then go to bottom nav else go to onboarding
+
+     if(Get.find<AuthController>().isLoggedIn){
+       Get.offAllNamed(AppRoutes.bottomNav);
+     }else{
+       Get.offAllNamed(AppRoutes.onBoarding);
+     }
+
   }
 
   @override

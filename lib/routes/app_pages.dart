@@ -1,5 +1,6 @@
 import 'package:get/get.dart';
 import 'package:loci/presentation/bindings/auth_bindings.dart';
+import 'package:loci/presentation/bindings/bottom_nav_binding.dart';
 import 'package:loci/presentation/pages/auth/forget_pass_screen.dart';
 import 'package:loci/presentation/pages/auth/login_screen.dart';
 import 'package:loci/presentation/pages/auth/otp_screen.dart';
@@ -81,7 +82,7 @@ abstract class AppPages {
     GetPage(name: AppRoutes.passReset, page: () => ResetPassScreen(),binding: AuthBinding()),
 
     /// ==========================Bottom Nav=============================
-    GetPage(name: AppRoutes.bottomNav, page: () => MainBottomNav()),
+    GetPage(name: AppRoutes.bottomNav, page: () => MainBottomNav(),binding: BottomNavBinding()),
 
     // ----- event details
     GetPage(name: AppRoutes.eventDetails, page: () => EventDetails()),
