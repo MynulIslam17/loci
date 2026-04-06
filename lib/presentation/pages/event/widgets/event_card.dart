@@ -14,6 +14,7 @@ class EventCard extends StatelessWidget {
   final String organizer;
   final VoidCallback onRSVP;
   final VoidCallback? onTapCard;
+  final bool isLoading;
 
   const EventCard({
     super.key,
@@ -26,6 +27,7 @@ class EventCard extends StatelessWidget {
     required this.organizer,
     required this.onRSVP,
      this.onTapCard,
+    this.isLoading = false,
   });
 
   @override
@@ -88,6 +90,7 @@ class EventCard extends StatelessWidget {
                 width: double.infinity,
                 height: 48,
                 child: CustomButton(
+                   isLoading: isLoading,
                   text: "RSVP",
                   onPressed: onRSVP,
       

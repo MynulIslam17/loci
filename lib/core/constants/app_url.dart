@@ -22,7 +22,31 @@ abstract class AppUrl {
   ///=============================================== event ===============================================
 
   static const String eventList="$baseUrl/events";
+  static  String rsvpEvent(String eventId)=>"$baseUrl/events/$eventId/rsvp";
   static String eventDetails(String id)=>"$baseUrl/events/$id";
+
+
+
+  ///===========================  routes ===================================================
+  static const String routeList="$baseUrl/routes";
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   static const String getProfile="$baseUrl/user/get-my-profile";
 
 

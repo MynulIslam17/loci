@@ -2,6 +2,7 @@ import 'package:get/get.dart';
 import 'package:loci/presentation/bindings/auth_bindings.dart';
 import 'package:loci/presentation/bindings/bottom_nav_binding.dart';
 import 'package:loci/presentation/bindings/event_bindings.dart';
+import 'package:loci/presentation/bindings/routes_bindings.dart';
 import 'package:loci/presentation/pages/auth/forget_pass_screen.dart';
 import 'package:loci/presentation/pages/auth/login_screen.dart';
 import 'package:loci/presentation/pages/auth/otp_screen.dart';
@@ -117,7 +118,7 @@ abstract class AppPages {
     GetPage(name: AppRoutes.checkIn, page: () => CheckInScreen()),
 
     //--explore routes
-    GetPage(name: AppRoutes.exploreRoutes, page: () => ExploreRoutesScreen()),
+    GetPage(name: AppRoutes.exploreRoutes, page: () => ExploreRoutesScreen(),binding: BottomNavBinding()),
     GetPage(name: AppRoutes.routeDetails, page: () => RouteDetailsScreen()),
     //--raffles
     GetPage(name: AppRoutes.activeRaffles, page: () => ActiveRafflesPage()),

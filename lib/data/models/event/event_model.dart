@@ -1,40 +1,27 @@
 import 'package:loci/core/utils/date_parser.dart';
+import 'package:loci/data/models/common/paginatation_model.dart';
 
 
 class EventListResponseModel {
+  final String message;
   final List<EventModel> events;
-
-  final int total;
-  final int page;
-  final int limit;
-  final int totalPages;
-  final bool hasNextPage;
-  final bool hasPrevPage;
+  final PaginationMeta meta;
 
   EventListResponseModel({
+    required this.message,
     required this.events,
-    required this.total,
-    required this.page,
-    required this.limit,
-    required this.totalPages,
-    required this.hasNextPage,
-    required this.hasPrevPage,
+    required this.meta
+
   });
 
   factory EventListResponseModel.fromJson(Map<String, dynamic> json) {
     return EventListResponseModel(
       /// Parse events list
+       message: json['message'] ?? '',
       events: (json['data'] as List)
           .map((e) => EventModel.fromJson(e))
           .toList(),
-
-      /// Parse meta
-      total: json['meta']?['total'] ?? 0,
-      page: json['meta']?['page'] ?? 1,
-      limit: json['meta']?['limit'] ?? 10,
-      totalPages: json['meta']?['totalPages'] ?? 1,
-      hasNextPage: json['meta']?['hasNextPage'] ?? false,
-      hasPrevPage: json['meta']?['hasPrevPage'] ?? false,
+      meta: PaginationMeta.fromJson(json['meta'] ?? {}),
     );
   }
 }

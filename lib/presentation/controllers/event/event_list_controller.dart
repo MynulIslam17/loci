@@ -19,7 +19,10 @@ class EventListController extends GetxController {
   /// 🔹 Flag to check if there is a next page
   bool _hasNextPage = true;
 
-  /// ✅ Public getters
+  // use to change the limit of events per page
+  final int _limit = 2;
+
+  ///  Public getters
   bool get isLoading => _isLoading;
   bool get isPaginationLoading => _isPaginationLoading;
   String? get errorMessage => _errorMessage;
@@ -46,12 +49,12 @@ class EventListController extends GetxController {
 
     try {
       final NetworkResponse response = await Get.find<NetworkCaller>()
-          .getRequest(url: '${AppUrl.eventList}?page=$_currentPage');
+          .getRequest( url: '${AppUrl.eventList}?page=$_currentPage&limit=$_limit',);
 
       if (response.isSuccess && response.body != null) {
         final model = EventListResponseModel.fromJson(response.body!);
         _eventList = model.events; // set fetched events
-        _hasNextPage = model.hasNextPage; // update pagination flag
+        _hasNextPage = model.meta.hasNextPage; // update pagination flag
       } else {
         _errorMessage = response.errorMessage ?? 'Failed to load events';
       }
@@ -73,12 +76,12 @@ class EventListController extends GetxController {
 
     try {
       final NetworkResponse response = await Get.find<NetworkCaller>()
-          .getRequest(url: '${AppUrl.eventList}?page=$_currentPage');
+          .getRequest(url: '${AppUrl.eventList}?page=$_currentPage&limit=$_limit',);
 
       if (response.isSuccess && response.body != null) {
         final model = EventListResponseModel.fromJson(response.body!);
         _eventList.addAll(model.events); // append new events
-        _hasNextPage = model.hasNextPage; // update flag
+        _hasNextPage = model.meta.hasNextPage; // update flag
       } else {
         _currentPage--; // 🔄 rollback page if failed
       }

@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:loci/core/constants/app_text_style.dart';
 import 'package:loci/core/theme/theme_extention.dart';
+import 'package:loci/core/utils/show_snackbar.dart';
+import 'package:loci/presentation/controllers/event/rsvp_controller.dart';
 import 'package:loci/presentation/widgets/custom_text_field.dart';
 import 'package:loci/routes/app_routes.dart';
 import '../../controllers/event/event_list_controller.dart';
@@ -15,7 +17,11 @@ class EventScreen extends StatefulWidget {
 }
 
 class _EventScreenState extends State<EventScreen> {
+  //----get x controller
   final eventController = Get.find<EventListController>();
+  final rsvpController = Get.put(RSVPController());
+
+  //---scroll controller for pagination loader
   final ScrollController _scrollController = ScrollController();
 
   @override
@@ -35,8 +41,9 @@ class _EventScreenState extends State<EventScreen> {
     super.dispose();
   }
 
+  //------ event details screen
   void _eventOnTapHandler(String eventId,String eventTitle) {
-    print("$eventTitle=>>>>>>>>>>>>>>>>>>>>>>>>");
+  
     Get.toNamed(AppRoutes.eventDetails, arguments: {
       'eventId': eventId,
        "eventTitle": eventTitle
@@ -44,7 +51,18 @@ class _EventScreenState extends State<EventScreen> {
     });
   }
 
-  void _rsvpOnTapHandler(String eventId) {}
+  //------ Rsvp  handle
+  void _rsvpOnTapHandler(String eventId)async {
+    
+    bool success=await rsvpController.sendRSVP(eventId: eventId, status: "going");
+
+    if(success){
+      SnackbarService.success(rsvpController.successMessage!);
+    }else{
+      SnackbarService.error(rsvpController.errorMessage!);
+    }
+    
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -112,7 +130,7 @@ class _EventScreenState extends State<EventScreen> {
                 );
               }
 
-              // ✅ Search + Header + List will scroll together
+              //  Search + Header + List will scroll together
               return RefreshIndicator(
                 onRefresh: () => controller.fetchEvents(isRefresh: true),
                 child: CustomScrollView(
@@ -165,21 +183,29 @@ class _EventScreenState extends State<EventScreen> {
                             );
                           }
 
+                          //get single event from data
                           final event = controller.eventList[index];
+                           bool isThisButtonLoading=rsvpController.isLoading && event.id ==rsvpController.loadingEventId;
+
                           return Padding(
                             padding: const EdgeInsets.only(bottom: 6),
-                            child: EventCard(
-                              onTapCard: () => _eventOnTapHandler(event.id,event.title),
-                              imageUrl: event.coverImage,
-                              title: event.title,
-                              description: event.description,
-                              date: event.date,
-                              location: event.location,
-                              attendance:
-                                  "${event.goingCount} going / ${event.maxAttendees} max",
-                              organizer: event.organizerName,
-                              onRSVP: () => _rsvpOnTapHandler(event.id),
-                            ),
+                            child: GetBuilder<RSVPController>(builder: (rsvpController){
+
+                              return EventCard(
+                                onTapCard: () => _eventOnTapHandler(event.id,event.title),
+                                imageUrl: event.coverImage,
+                                title: event.title,
+                                description: event.description,
+                                date: event.date,
+                                location: event.location,
+                                attendance:
+                                "${event.goingCount} going / ${event.maxAttendees} max",
+                                organizer: event.organizerName,
+                                onRSVP: () => _rsvpOnTapHandler(event.id),
+                                isLoading: isThisButtonLoading,
+                              );
+
+                            })
                           );
                         },
                         childCount:

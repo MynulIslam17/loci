@@ -1,4 +1,5 @@
 import 'package:get/get.dart';
+import 'package:loci/presentation/controllers/common/post_contoller.dart';
 
 import '../../core/network/network_setup.dart';
 import '../../data/datasources/local_storage_service.dart';
@@ -17,6 +18,7 @@ class AppBindings extends Bindings {
     Get.put(AuthController(Get.find()), permanent: true);
     Get.put(NavController(), permanent: true);
     Get.put(setUpNetworkClient(), permanent: true);
+
 
 
 
