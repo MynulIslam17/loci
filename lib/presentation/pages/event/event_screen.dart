@@ -35,8 +35,13 @@ class _EventScreenState extends State<EventScreen> {
     super.dispose();
   }
 
-  void _eventOnTapHandler(String eventId) {
-    Get.toNamed(AppRoutes.eventDetails, arguments: {'id': eventId});
+  void _eventOnTapHandler(String eventId,String eventTitle) {
+    print("$eventTitle=>>>>>>>>>>>>>>>>>>>>>>>>");
+    Get.toNamed(AppRoutes.eventDetails, arguments: {
+      'eventId': eventId,
+       "eventTitle": eventTitle
+
+    });
   }
 
   void _rsvpOnTapHandler(String eventId) {}
@@ -49,26 +54,29 @@ class _EventScreenState extends State<EventScreen> {
           padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 12),
           child: GetBuilder<EventListController>(
             builder: (controller) {
-
-              // Loading
+              // Loading sate
               if (controller.isLoading) {
                 return const Center(child: CircularProgressIndicator());
               }
 
-              // Error
+              // Error state
               if (controller.errorMessage != null &&
                   controller.eventList.isEmpty) {
                 return Center(
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(Icons.error_outline,
-                          size: 48, color: context.colorScheme.error),
+                      Icon(
+                        Icons.error_outline,
+                        size: 48,
+                        color: context.colorScheme.error,
+                      ),
                       const SizedBox(height: 12),
                       Text(
                         controller.errorMessage!,
                         style: AppTextStyle.textSm(
-                            color: context.colorScheme.error),
+                          color: context.colorScheme.error,
+                        ),
                         textAlign: TextAlign.center,
                       ),
                       const SizedBox(height: 16),
@@ -87,27 +95,29 @@ class _EventScreenState extends State<EventScreen> {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(Icons.event_busy,
-                          size: 48,
-                          color: context.colorScheme.onSurfaceVariant),
+                      Icon(
+                        Icons.event_busy,
+                        size: 48,
+                        color: context.colorScheme.onSurfaceVariant,
+                      ),
                       const SizedBox(height: 12),
                       Text(
                         "No upcoming events",
                         style: AppTextStyle.textSm(
-                            color: context.colorScheme.onSurfaceVariant),
+                          color: context.colorScheme.onSurfaceVariant,
+                        ),
                       ),
                     ],
                   ),
                 );
               }
 
-              // ✅ Search + Header + List সব একসাথে scroll করবে
+              // ✅ Search + Header + List will scroll together
               return RefreshIndicator(
                 onRefresh: () => controller.fetchEvents(isRefresh: true),
                 child: CustomScrollView(
                   controller: _scrollController,
                   slivers: [
-
                     // Search + Header
                     SliverToBoxAdapter(
                       child: Column(
@@ -146,8 +156,7 @@ class _EventScreenState extends State<EventScreen> {
                     // Event List
                     SliverList(
                       delegate: SliverChildBuilderDelegate(
-                            (context, index) {
-
+                        (context, index) {
                           // Pagination loader
                           if (index == controller.eventList.length) {
                             return const Padding(
@@ -160,20 +169,21 @@ class _EventScreenState extends State<EventScreen> {
                           return Padding(
                             padding: const EdgeInsets.only(bottom: 6),
                             child: EventCard(
-                              onTapCard: () => _eventOnTapHandler(event.id),
+                              onTapCard: () => _eventOnTapHandler(event.id,event.title),
                               imageUrl: event.coverImage,
                               title: event.title,
                               description: event.description,
                               date: event.date,
                               location: event.location,
                               attendance:
-                              "${event.goingCount} going / ${event.maxAttendees} max",
+                                  "${event.goingCount} going / ${event.maxAttendees} max",
                               organizer: event.organizerName,
                               onRSVP: () => _rsvpOnTapHandler(event.id),
                             ),
                           );
                         },
-                        childCount: controller.eventList.length +
+                        childCount:
+                            controller.eventList.length +
                             (controller.isPaginationLoading ? 1 : 0),
                       ),
                     ),

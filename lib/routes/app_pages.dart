@@ -1,6 +1,7 @@
 import 'package:get/get.dart';
 import 'package:loci/presentation/bindings/auth_bindings.dart';
 import 'package:loci/presentation/bindings/bottom_nav_binding.dart';
+import 'package:loci/presentation/bindings/event_bindings.dart';
 import 'package:loci/presentation/pages/auth/forget_pass_screen.dart';
 import 'package:loci/presentation/pages/auth/login_screen.dart';
 import 'package:loci/presentation/pages/auth/otp_screen.dart';
@@ -85,7 +86,7 @@ abstract class AppPages {
     GetPage(name: AppRoutes.bottomNav, page: () => MainBottomNav(),binding: BottomNavBinding()),
 
     // ----- event details
-    GetPage(name: AppRoutes.eventDetails, page: () => EventDetails()),
+    GetPage(name: AppRoutes.eventDetails, page: () => EventDetails(),binding: EventBindings()),
 
     // ----- browse business
     GetPage(name: AppRoutes.browseBusiness, page: () => BrowseBusinesses()),

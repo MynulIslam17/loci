@@ -51,7 +51,7 @@ class EventCard extends StatelessWidget {
                CustomCachedImage(
                  width: double.infinity,
                  height: 200,
-                 imageUrl: "assets/images/finedine.png",
+                 imageUrl: imageUrl,
                  borderRadius: 10,
                ),
               const SizedBox(height: 16),
