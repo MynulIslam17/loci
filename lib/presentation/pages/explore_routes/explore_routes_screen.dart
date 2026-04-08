@@ -2,18 +2,35 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:loci/core/constants/app_text_style.dart';
 import 'package:loci/core/theme/theme_extention.dart';
+import 'package:loci/presentation/pages/explore_routes/route_details_screen.dart';
 import 'package:loci/presentation/widgets/custom_text_field.dart';
 import '../../controllers/routes/route_list_controller.dart';
 import 'widgets/route_card.dart';
 
-class ExploreRoutesScreen extends StatefulWidget {
+class ExploreRoutesScreen extends StatelessWidget {
   const ExploreRoutesScreen({super.key});
 
+  static final navigatorKey = GlobalKey<NavigatorState>();
+
   @override
-  State<ExploreRoutesScreen> createState() => _ExploreRoutesScreenState();
+  Widget build(BuildContext context) {
+    return Navigator(
+      key: navigatorKey,
+      onGenerateRoute: (_) => MaterialPageRoute(
+          builder: (_)=>const ExploreRoutesPage()
+      ),
+    );
+  }
 }
 
-class _ExploreRoutesScreenState extends State<ExploreRoutesScreen> {
+class ExploreRoutesPage extends StatefulWidget {
+  const ExploreRoutesPage({super.key});
+
+  @override
+  State<ExploreRoutesPage> createState() => _ExploreRoutesPageState();
+}
+
+class _ExploreRoutesPageState extends State<ExploreRoutesPage> {
   final routeController = Get.find<RouteListController>();
   final ScrollController _scrollController = ScrollController();
 
@@ -34,6 +51,22 @@ class _ExploreRoutesScreenState extends State<ExploreRoutesScreen> {
     super.dispose();
   }
 
+
+  //----- onTapRouteHandler----------------------------
+  void _onTapRouteHandler(BuildContext context,String routeId,String routeName) {
+
+    Navigator.push(
+        context, MaterialPageRoute(
+        builder: (_)=>RouteDetailsScreen(showAppbar: false,routeId:routeId ,routeName: routeName,)
+    )
+    );
+
+
+  }
+
+
+
+
   @override
   Widget build(BuildContext context) {
     final colorScheme = context.colorScheme;
@@ -42,7 +75,6 @@ class _ExploreRoutesScreenState extends State<ExploreRoutesScreen> {
       padding: const EdgeInsets.symmetric(horizontal: 16.0),
       child: GetBuilder<RouteListController>(
         builder: (controller) {
-
           // Loading
           if (controller.isLoading) {
             return const Center(child: CircularProgressIndicator());
@@ -54,8 +86,7 @@ class _ExploreRoutesScreenState extends State<ExploreRoutesScreen> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.error_outline,
-                      size: 48, color: colorScheme.error),
+                  Icon(Icons.error_outline, size: 48, color: colorScheme.error),
                   const SizedBox(height: 12),
                   Text(
                     controller.errorMessage!,
@@ -78,13 +109,17 @@ class _ExploreRoutesScreenState extends State<ExploreRoutesScreen> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.route,
-                      size: 48, color: colorScheme.onSurfaceVariant),
+                  Icon(
+                    Icons.route,
+                    size: 48,
+                    color: colorScheme.onSurfaceVariant,
+                  ),
                   const SizedBox(height: 12),
                   Text(
                     "No routes found",
                     style: AppTextStyle.textSm(
-                        color: colorScheme.onSurfaceVariant),
+                      color: colorScheme.onSurfaceVariant,
+                    ),
                   ),
                 ],
               ),
@@ -97,7 +132,6 @@ class _ExploreRoutesScreenState extends State<ExploreRoutesScreen> {
             child: CustomScrollView(
               controller: _scrollController,
               slivers: [
-
                 // Search + Header
                 SliverToBoxAdapter(
                   child: Column(
@@ -138,8 +172,7 @@ class _ExploreRoutesScreenState extends State<ExploreRoutesScreen> {
                 // Route List
                 SliverList(
                   delegate: SliverChildBuilderDelegate(
-                        (context, index) {
-
+                    (context, index) {
                       // Pagination loader
                       if (index == controller.routeList.length) {
                         return const Padding(
@@ -154,16 +187,20 @@ class _ExploreRoutesScreenState extends State<ExploreRoutesScreen> {
                         padding: const EdgeInsets.only(bottom: 16.0),
                         child: RouteCard(
                           title: route.title,
-                          description: route.description,
+                          description: route.details,
                           location: route.location,
-                          duration: route.duration,
-                          difficulty: route.difficulty,
-                          imageUrl: route.imageUrl,
-                          onTap: () {},
+                          openingTime: route.openingTime,
+                          availabilityType: route.availabilityType,
+                          imageUrl: route.banner,
+                          onTap:(){
+
+                            _onTapRouteHandler(context,route.routeId,route.title);
+                          }
                         ),
                       );
                     },
-                    childCount: controller.routeList.length +
+                    childCount:
+                        controller.routeList.length +
                         (controller.isPaginationLoading ? 1 : 0),
                   ),
                 ),

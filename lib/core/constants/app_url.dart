@@ -29,6 +29,7 @@ abstract class AppUrl {
 
   ///===========================  routes ===================================================
   static const String routeList="$baseUrl/routes";
+  static  String routeDetails(String routeId)=>"$baseUrl/routes/$routeId";
 
 
 

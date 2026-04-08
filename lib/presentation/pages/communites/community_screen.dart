@@ -387,8 +387,8 @@ class _CommunityScreenState extends State<CommunityScreen>
                       description:
                           "Join us for the biggest pub crawl of the season! Visit 8 amazing bars in downtown and enjoy the night of your life, also there are special guest will participate too",
                       location: "",
-                      duration: "222",
-                      difficulty: "easy",
+                      openingTime: "222",
+                      availabilityType: "easy",
                       imageUrl: "assets/images/finedine.png",
                     )
                   : CommunityNoticeCard(

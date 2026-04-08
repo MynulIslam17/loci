@@ -378,7 +378,10 @@ class _MainBottomNavState extends State<MainBottomNav> {
         break;
 
       case "Explore Routes":
-        navController.openDrawerPage(ExploreRoutesScreen());
+        navController.openDrawerPage(
+          ExploreRoutesScreen(),
+          navigatorKey: ExploreRoutesScreen.navigatorKey,
+        );
         break;
 
       case "Active Raffles":
@@ -416,10 +419,9 @@ class _MainBottomNavState extends State<MainBottomNav> {
         Get.toNamed(AppRoutes.subscription);
         break;
 
-      case "Sign Out" :
+      case "Sign Out":
         Get.find<AuthController>().logout();
         break;
-
     }
   }
 
@@ -429,10 +431,7 @@ class _MainBottomNavState extends State<MainBottomNav> {
       case "search":
         // TODO: open search screen
 
-        showSearch(
-            context: context,
-            delegate: MySearchDelegate()
-        );
+        showSearch(context: context, delegate: MySearchDelegate());
 
         break;
 

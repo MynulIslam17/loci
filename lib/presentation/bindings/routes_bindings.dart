@@ -1,14 +1,14 @@
 import 'package:get/get.dart';
+import 'package:loci/presentation/controllers/routes/route_details_controller.dart';
 
-import '../controllers/routes/route_list_controller.dart';
+
 
 class RoutesBindings extends Bindings{
   @override
   void dependencies() {
     // TODO: implement dependencies
 
-    Get.lazyPut(()=>RouteListController());
-
+   Get.lazyPut(()=>RouteDetailsController());
   }
 
 }

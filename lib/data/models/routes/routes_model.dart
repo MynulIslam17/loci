@@ -15,61 +15,55 @@ class RouteResponseModel {
   factory RouteResponseModel.fromJson(Map<String, dynamic> json) {
     return RouteResponseModel(
       message: json['message'] ?? '',
-      routes: (json['data'] as List<dynamic>?)
-          ?.map((e) => RouteModel.fromJson(e))
-          .toList() ?? [],
+      routes: (json['data'] as List? ?? [])
+          .map((e) => RouteModel.fromJson(e))
+          .toList(),
       meta: PaginationMeta.fromJson(json['meta'] ?? {}),
     );
   }
 }
 
-
+//-----RouteModel------------------------
 class RouteModel {
-  final String id;
+  final String routeId;
   final String title;
-  final String description;
+  final String banner;
+  final String details;
+  final String openingTime;
   final String location;
-  final String duration;
-  final String difficulty;
-  final String imageUrl;
+  final String activityType;
+  final String availabilityType;
+  final bool isRoutePublic;
+
 
   RouteModel({
-    required this.id,
     required this.title,
-    required this.description,
+    required this.banner,
+    required this.details,
+    required this.openingTime,
     required this.location,
-    required this.duration,
-    required this.difficulty,
-    required this.imageUrl,
+    required this.activityType,
+    required this.availabilityType,
+    required this.routeId,
+    required this.isRoutePublic,
   });
 
   factory RouteModel.fromJson(Map<String, dynamic> json) {
     return RouteModel(
-      id: json['_id'] ?? '',
+      routeId: json['_id'] ?? '',
       title: json['title'] ?? '',
-      description: json['description'] ?? '',
+      banner: json['banner'] ?? '',
+      details: json['details'] ?? '',
+      openingTime: json['openingTime'] ?? '',
+      location: json['location'] ?? '',
+      activityType: json['activityType'] ?? '',
+      availabilityType: json['availabilityType'] ?? '',
+      isRoutePublic: json['isPublic'] ?? false,
 
-      // API dont have ii → fallback
-      location: "Downtown District",
-
-      duration: _formatDuration(json['duration']),
-      difficulty: _capitalize(json['difficulty']),
-      imageUrl: json['coverImage'] ?? '',
     );
   }
-
-  // ---- Helpers ----
-  static String _formatDuration(dynamic minutes) {
-    if (minutes == null) return "0 h";
-    double hour = (minutes / 60);
-    return "${hour.toStringAsFixed(1)} h";
-  }
-
-  static String _capitalize(String? text) {
-    if (text == null || text.isEmpty) return "";
-    return text[0].toUpperCase() + text.substring(1);
-  }
 }
+
 
 
 

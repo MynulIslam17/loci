@@ -1,6 +1,4 @@
 import 'package:get/get.dart';
-
-import 'package:get/get.dart';
 import 'package:loci/core/constants/app_url.dart';
 import 'package:loci/core/network/network_caller.dart';
 import 'package:loci/core/network/network_response.dart';

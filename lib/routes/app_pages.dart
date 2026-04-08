@@ -118,8 +118,8 @@ abstract class AppPages {
     GetPage(name: AppRoutes.checkIn, page: () => CheckInScreen()),
 
     //--explore routes
-    GetPage(name: AppRoutes.exploreRoutes, page: () => ExploreRoutesScreen(),binding: BottomNavBinding()),
-    GetPage(name: AppRoutes.routeDetails, page: () => RouteDetailsScreen()),
+    GetPage(name: AppRoutes.exploreRoutes, page: () => ExploreRoutesPage(),binding: BottomNavBinding()),
+    GetPage(name: AppRoutes.routeDetails, page: () => RouteDetailsScreen(),binding: BottomNavBinding()),
     //--raffles
     GetPage(name: AppRoutes.activeRaffles, page: () => ActiveRafflesPage()),
     GetPage(name: AppRoutes.rafflesDetails, page: () => RafflesDetailsScreen()),
