@@ -199,10 +199,23 @@ class _RafflesDetailsScreenState extends State<RafflesDetailsScreen> {
             GestureDetector(
               onTap: () {
                 if (!isCompleted) {
-                  // Navigate to your QR Scanner or trigger check-in
-                  Get.toNamed(AppRoutes.routeDetails,arguments: {
-                    "routeName": name
-                  });
+                  //route
+                  // Navigate to your QR Scanner or trigger check-in(route/event)
+                  // Get.toNamed(AppRoutes.routeDetails,arguments: {
+                  //   "routeName": name,
+                  //    "routeId" : "69d5cec8053677bbae4dcd72",
+                  //
+                  // }
+
+                  //event
+                  Get.toNamed(AppRoutes.eventDetails,arguments: {
+                    "eventTitle": name,
+                     "eventId" : "69d5cec8053677bbae4dcd6a",
+
+                  }
+
+
+                  );
                 }
               },
               child: Icon(

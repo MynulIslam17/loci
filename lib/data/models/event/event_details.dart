@@ -1,61 +1,62 @@
+
 import 'package:loci/core/utils/date_parser.dart';
+import 'package:loci/data/models/event/event_model.dart';
 
 class EventDetailsModel {
-  final String id;
-  final String title;
-  final String description;
-  final String coverImage;
-  final String startDate;
-  final String endDate;
-  final String locationAddress;
-  final List<double> coordinates;
+  final EventModel eventModel;
+
+  final double lat;
+  final double lng;
   final int maxAttendees;
+  final int rsvpCount;
   final List<Rsvp> rsvpList;
-  final String qrCode;
-  final Organizer organizer;
-  final Business business;
+  final String checkInCode;
+  final bool isPublic;
+  final String myRsvpStatus;
+  final OrganizerBusiness organizerBusiness;
 
   EventDetailsModel({
-    required this.id,
-    required this.title,
-    required this.description,
-    required this.coverImage,
-    required this.startDate,
-    required this.endDate,
-    required this.locationAddress,
-    required this.coordinates,
+    required this.eventModel,
+    required this.lat,
+    required this.lng,
     required this.maxAttendees,
+    required this.rsvpCount,
     required this.rsvpList,
-    required this.qrCode,
-    required this.organizer,
-    required this.business,
+    required this.checkInCode,
+    required this.isPublic,
+    required this.myRsvpStatus,
+    required this.organizerBusiness,
   });
 
-
-
   factory EventDetailsModel.fromJson(Map<String, dynamic> json) {
-    final location = json['location'] ?? {};
-    final businessJson = json['business'] ?? {};
-    final organizerJson = json['organizer'] ?? {};
+    final data = json['data'] ?? json;
+    final coordinates = data['mapCoordinates'] ?? {};
 
     return EventDetailsModel(
-      id: json['_id'] ?? '',
-      title: json['title'] ?? '',
-      description: json['description'] ?? '',
-      coverImage: json['coverImage'] ?? '',
-      startDate: DateParserHelper.eventDateTime(
-        DateTime.parse(json['startDate']).toLocal()
-      ),
-      endDate: json['endDate'] ?? '',
-      locationAddress: location['address'] ?? '',
-      coordinates: List<double>.from(location['coordinates'] ?? [0.0, 0.0]),
-      maxAttendees: json['maxAttendees'] ?? 0,
-      rsvpList: (json['rsvpList'] as List<dynamic>? ?? [])
+      // pass data instead of json
+      eventModel: EventModel.fromJson(data),
+
+      lat: (coordinates['lat'] ?? 0).toDouble(),
+      lng: (coordinates['lng'] ?? 0).toDouble(),
+
+      maxAttendees: int.tryParse(data['maxParticipants'].toString()) ?? 0,
+
+      rsvpCount:
+          int.tryParse(data['rsvpCount'].toString()) ??
+          (data['rsvpList'] as List?)?.length ??
+          0,
+
+      rsvpList: (data['rsvpList'] as List? ?? [])
           .map((e) => Rsvp.fromJson(e))
           .toList(),
-      qrCode: json['qrCode'] ?? '',
-      organizer: Organizer.fromJson(organizerJson),
-      business: Business.fromJson(businessJson),
+
+      checkInCode: data['checkInCode'] ?? '',
+      isPublic: data['isPublic'] ?? false,
+      myRsvpStatus: data['myRsvpStatus'] ?? 'not_responded',
+
+      organizerBusiness: OrganizerBusiness.fromJson(
+        data['organizerBusiness'] ?? {},
+      ),
     );
   }
 }
@@ -69,58 +70,45 @@ class Rsvp {
 
   factory Rsvp.fromJson(Map<String, dynamic> json) {
     return Rsvp(
-      userId: json['user'] ?? '',
+      userId: json['user']?.toString() ?? '',
       status: json['status'] ?? '',
-      rsvpAt: json['rsvpAt'] ?? '',
+      rsvpAt: json['rsvpAt'] != null
+          ? DateParserHelper.eventDateTime(
+              DateTime.tryParse(json['rsvpAt']) ?? DateTime.now(),
+            )
+          : '',
     );
   }
 }
 
-class Organizer {
+class OrganizerBusiness {
   final String id;
   final String name;
-  final String avatar;
-
-
-  Organizer({required this.id, required this.name, required this.avatar});
-
-  factory Organizer.fromJson(Map<String, dynamic> json) {
-    return Organizer(
-      id: json['id'] ?? '',
-      name: json['name'] ?? '',
-      avatar: json['avatar'] ?? '',
-    );
-  }
-}
-
-class Business {
-  final String id;
-  final String name;
-  final String logo;
-  final String phone;
+  final String? logo;
   final String address;
-  final String description;
 
-  Business({
+  OrganizerBusiness({
     required this.id,
     required this.name,
-    required this.logo,
-    required this.phone,
+    this.logo,
     required this.address,
-    required this.description,
   });
 
-  factory Business.fromJson(Map<String, dynamic> json) {
+  factory OrganizerBusiness.fromJson(Map<String, dynamic> json) {
     final addressJson = json['address'] ?? {};
-    String formattedAddress =
-        "${addressJson['street'] ?? ''}, ${addressJson['city'] ?? ''}, ${addressJson['state'] ?? ''} ${addressJson['zip'] ?? ''}";
-    return Business(
+
+    final formattedAddress = [
+      addressJson['street'],
+      addressJson['city'],
+      addressJson['state'],
+      addressJson['zip'],
+    ].where((e) => e != null && e.toString().isNotEmpty).join(', ');
+
+    return OrganizerBusiness(
       id: json['_id'] ?? '',
       name: json['name'] ?? '',
-      logo: json['logo'] ?? '',
-      phone: json['phone'] ?? '',
+      logo: json['logo'],
       address: formattedAddress,
-      description:json["description"],
     );
   }
 }

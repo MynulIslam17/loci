@@ -1,17 +1,15 @@
-import 'dart:math';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
 import 'package:get/get_core/src/get_main.dart';
 import 'package:get/get_instance/src/extension_instance.dart';
 import 'package:get/get_navigation/src/extension_navigation.dart';
 import 'package:loci/core/constants/app_text_style.dart';
-import 'package:loci/core/theme/app_colors.dart';
 import 'package:loci/core/theme/theme_extention.dart';
 import 'package:loci/presentation/widgets/custom_button.dart';
 import 'package:loci/presentation/widgets/custom_image_container.dart';
+import 'package:loci/presentation/widgets/error_state.dart';
 
 import '../../../gen/assets.gen.dart';
 import '../../controllers/event/event_details_controller.dart';
@@ -27,7 +25,7 @@ class EventDetails extends StatefulWidget {
 
 class _EventDetailsState extends State<EventDetails> {
   //--get x controller
-  final eventDetails = Get.find<EventDetailsController>();
+  late final EventDetailsController eventDetails;
 
   late final String eventId;
   late final String eventTitle;
@@ -35,6 +33,13 @@ class _EventDetailsState extends State<EventDetails> {
   @override
   void initState() {
     super.initState();
+
+
+    if(Get.isRegistered<EventDetailsController>()){
+      eventDetails=Get.find<EventDetailsController>();
+    }else{
+      eventDetails=Get.put(EventDetailsController());
+    }
 
     //---get the event id
     final args = Get.arguments as Map<String, dynamic>?;
@@ -58,47 +63,24 @@ class _EventDetailsState extends State<EventDetails> {
         builder: (controller) {
           // --- Loading state
           if (controller.isLoading) {
-            return const Center(
-              child: CircularProgressIndicator(),
-            );
+            return const Center(child: CircularProgressIndicator());
           }
 
           // --- Error state
           if (controller.errorMessage != null) {
-            return Center(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      Icons.error_outline,
-                      size: 48,
-                      color: context.colorScheme.error,
-                    ),
-                    const SizedBox(height: 12),
-                    Text(
-                      controller.errorMessage!,
-                      style: AppTextStyle.textSm(
-                        color: context.colorScheme.error,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: 16),
-                    TextButton(
-                      onPressed: () => controller.fetchEventDetails(eventId),
-                      child: const Text("Try Again"),
-                    ),
-                  ],
-                ),
-              ),
+            return ErrorStateWidget(
+              errorMessage: controller.errorMessage,
+              onRetry: () {
+                controller.fetchEventDetails(eventId);
+              },
             );
           }
 
           // --- Content state
-          final event = controller.eventDetails;
-          final business = controller.eventDetails?.business;
-          final coordinate = controller.eventDetails?.coordinates;
+          final event = controller.eventDetails?.eventModel;
+          final business = controller.eventDetails?.organizerBusiness;
+          final lat = controller.eventDetails?.lat;
+          final lng = controller.eventDetails?.lng;
 
           return SingleChildScrollView(
             padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 12),
@@ -134,7 +116,7 @@ class _EventDetailsState extends State<EventDetails> {
                         children: [
                           IconTextRow(
                             icon: Icons.calendar_today_outlined,
-                            text: event?.startDate ?? "__",
+                            text: event?.date ?? "__",
                             iconColor: context.colorScheme.primary,
                           ),
                           const SizedBox(height: 8),
@@ -146,8 +128,7 @@ class _EventDetailsState extends State<EventDetails> {
                           const SizedBox(height: 8),
                           IconTextRow(
                             icon: Icons.people_outline,
-                            text:
-                            "${event?.rsvpList.length ?? 0} / ${event?.maxAttendees ?? 0}",
+                            text: event?.attendanceText ?? "__",
                             iconColor: context.colorScheme.primary,
                           ),
                           const SizedBox(height: 20),
@@ -196,16 +177,13 @@ class _EventDetailsState extends State<EventDetails> {
 
                 CompanyInfoCard(
                   title: business?.name ?? "___",
-                  description: business?.description ?? "___",
-                  imagePath: Assets.images.companyLogo.path,
+                  description: business?.name ?? "___",
+                  imagePath: business?.logo ?? "_",
                 ),
 
                 const SizedBox(height: 10),
 
-                CustomButton(
-                  text: "RSVP",
-                  onPressed: () {},
-                ),
+                CustomButton(text: "RSVP", onPressed: () {}),
               ],
             ),
           );

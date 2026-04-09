@@ -1,6 +1,7 @@
 import 'package:loci/core/utils/date_parser.dart';
 import 'package:loci/data/models/common/paginatation_model.dart';
 
+import '../../../core/enums/rsvp_status.dart';
 
 class EventListResponseModel {
   final String message;
@@ -10,15 +11,13 @@ class EventListResponseModel {
   EventListResponseModel({
     required this.message,
     required this.events,
-    required this.meta
-
+    required this.meta,
   });
 
   factory EventListResponseModel.fromJson(Map<String, dynamic> json) {
     return EventListResponseModel(
-      /// Parse events list
-       message: json['message'] ?? '',
-      events: (json['data'] as List)
+      message: json['message'] ?? '',
+      events: (json['data'] as List? ?? [])
           .map((e) => EventModel.fromJson(e))
           .toList(),
       meta: PaginationMeta.fromJson(json['meta'] ?? {}),
@@ -33,10 +32,12 @@ class EventModel {
   final String description;
   final String date;
   final String location;
+  final bool isPublic;
   final int goingCount;
   final int maxAttendees;
   final String organizerName;
   final String? organizerAvatar;
+  final RsvpStatus myRsvpStatus;
 
   EventModel({
     required this.id,
@@ -49,33 +50,75 @@ class EventModel {
     required this.maxAttendees,
     required this.organizerName,
     this.organizerAvatar,
+    required this.isPublic,
+    required this.myRsvpStatus
   });
 
-  factory EventModel.fromJson(Map<String, dynamic> json) {
-    int goingCount = 0;
-    if (json['rsvpList'] != null && json['rsvpList'] is List) {
-      goingCount = (json['rsvpList'] as List)
-          .where((e) => e['status'] == 'going')
-          .length;
-    }
+  String get attendanceText => '$goingCount going · $maxAttendees max';
 
+  factory EventModel.fromJson(Map<String, dynamic> json) {
     return EventModel(
       id: json['_id'] ?? '',
-      coverImage: json['coverImage'] ?? '',
+      coverImage: json['banner'] ?? '',
       title: json['title'] ?? '',
-      description: json['description'] ?? '',
-      date: json['startDate'] != null
+      description: json['details'] ?? '',
+      date: json['eventDate'] != null
           ? DateParserHelper.eventDateTime(
-        DateTime.parse(json['startDate']).toLocal(),
-      )
+              DateTime.parse(json['eventDate']).toLocal(),
+            )
           : '',
-      location: json['location']?['address'] ?? '',
-      goingCount: goingCount,
-      maxAttendees: json['maxAttendees'] ?? 0,
-      organizerName: json['organizer']?['name'] ?? '',
-      organizerAvatar: json['organizer']?['avatar'],
+      location: json['location'] ?? '',
+      goingCount: json['rsvpCount'] ?? 0,
+      maxAttendees: json['maxParticipants'] ?? 0,
+      organizerName: json['organizerBusiness']?['name'] ?? '',
+      organizerAvatar: json['organizerBusiness']?['logo'],
+      isPublic: json['isPublic'] ?? false,
+      myRsvpStatus: RsvpStatus.fromString(json['myRsvpStatus']),
     );
   }
 
 
+
+
+
+ // for update the model
+  EventModel copyWith({
+    String? id,
+    String? coverImage,
+    String? title,
+    String? description,
+    String? date,
+    String? location,
+    bool? isPublic,
+    int? goingCount,
+    int? maxAttendees,
+    String? organizerName,
+    String? organizerAvatar,
+    RsvpStatus? myRsvpStatus,
+  }) {
+    return EventModel(
+      id:              id             ?? this.id,
+      coverImage:      coverImage     ?? this.coverImage,
+      title:           title          ?? this.title,
+      description:     description    ?? this.description,
+      date:            date           ?? this.date,
+      location:        location       ?? this.location,
+      isPublic:        isPublic       ?? this.isPublic,
+      goingCount:      goingCount     ?? this.goingCount,
+      maxAttendees:    maxAttendees   ?? this.maxAttendees,
+      organizerName:   organizerName  ?? this.organizerName,
+      organizerAvatar: organizerAvatar ?? this.organizerAvatar,
+      myRsvpStatus:    myRsvpStatus   ?? this.myRsvpStatus,
+    );
+  }
+
+
+
+
+
+
+
 }
+
+
+

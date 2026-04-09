@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:loci/core/constants/app_text_style.dart';
+import 'package:loci/core/enums/rsvp_status.dart';
 import 'package:loci/core/theme/theme_extention.dart';
 import 'package:loci/presentation/widgets/custom_button.dart';
 import 'package:loci/presentation/widgets/custom_image_container.dart';
@@ -15,6 +16,8 @@ class EventCard extends StatelessWidget {
   final VoidCallback onRSVP;
   final VoidCallback? onTapCard;
   final bool isLoading;
+  final String rsvpButtonText;
+
 
   const EventCard({
     super.key,
@@ -28,6 +31,7 @@ class EventCard extends StatelessWidget {
     required this.onRSVP,
      this.onTapCard,
     this.isLoading = false,
+    required this.rsvpButtonText,
   });
 
   @override
@@ -90,9 +94,12 @@ class EventCard extends StatelessWidget {
                 width: double.infinity,
                 height: 48,
                 child: CustomButton(
+
                    isLoading: isLoading,
-                  text: "RSVP",
-                  onPressed: onRSVP,
+                  text: rsvpButtonText,
+                  onPressed: rsvpButtonText==RsvpStatus.going.label ? null : onRSVP,
+
+
       
                 )
               ),

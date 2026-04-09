@@ -2,6 +2,7 @@ import 'package:get/get.dart';
 import 'package:loci/core/constants/app_url.dart';
 import 'package:loci/core/network/network_caller.dart';
 import 'package:loci/core/network/network_response.dart';
+import '../../../core/enums/rsvp_status.dart';
 import '../../../data/models/event/event_model.dart';
 
 class EventListController extends GetxController {
@@ -93,4 +94,31 @@ class EventListController extends GetxController {
       update();
     }
   }
+
+
+
+
+
+
+  ///update the rsvp status
+  void updateRsvpStatus(String eventId, RsvpStatus status) {
+    final index = _eventList.indexWhere((e) => e.id == eventId);
+    if (index != -1) {
+      _eventList[index] = _eventList[index].copyWith(
+        myRsvpStatus: status,
+        goingCount: status == RsvpStatus.going
+            ? _eventList[index].goingCount + 1
+            : _eventList[index].goingCount,
+      );
+      update();
+    }
+  }
+
+
+
+
+
+
+
+
 }

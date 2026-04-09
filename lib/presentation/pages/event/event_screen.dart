@@ -6,6 +6,7 @@ import 'package:loci/core/utils/show_snackbar.dart';
 import 'package:loci/presentation/controllers/event/rsvp_controller.dart';
 import 'package:loci/presentation/widgets/custom_text_field.dart';
 import 'package:loci/routes/app_routes.dart';
+import '../../../core/enums/rsvp_status.dart';
 import '../../controllers/event/event_list_controller.dart';
 import 'widgets/event_card.dart';
 
@@ -53,14 +54,17 @@ class _EventScreenState extends State<EventScreen> {
 
   //------ Rsvp  handle
   void _rsvpOnTapHandler(String eventId)async {
-    
-    bool success=await rsvpController.sendRSVP(eventId: eventId, status: "going");
+
+    //call the api to change rsvp status
+    bool success=await rsvpController.sendRSVP(eventId: eventId,  status: RsvpStatus.going.toJson,);
 
     if(success){
+      eventController.updateRsvpStatus(eventId, RsvpStatus.going);
       SnackbarService.success(rsvpController.successMessage!);
     }else{
       SnackbarService.error(rsvpController.errorMessage!);
     }
+  
     
   }
 
@@ -185,13 +189,16 @@ class _EventScreenState extends State<EventScreen> {
 
                           //get single event from data
                           final event = controller.eventList[index];
-                           bool isThisButtonLoading=rsvpController.isLoading && event.id ==rsvpController.loadingEventId;
 
                           return Padding(
                             padding: const EdgeInsets.only(bottom: 6),
                             child: GetBuilder<RSVPController>(builder: (rsvpController){
 
+                              // check if button loading
+                              bool isThisButtonLoading=rsvpController.isLoading && event.id ==rsvpController.loadingEventId;
+
                               return EventCard(
+                                rsvpButtonText: event.myRsvpStatus.label,//send string rsvp status
                                 onTapCard: () => _eventOnTapHandler(event.id,event.title),
                                 imageUrl: event.coverImage,
                                 title: event.title,
