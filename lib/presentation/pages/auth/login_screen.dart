@@ -63,6 +63,21 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
 
+  @override
+  void initState() {
+    super.initState();
+    // IF THIS PRINTS AFTER A FAILED LOGIN, THE SCREEN RESTARTED
+    print("DEBUG: 📥 LoginScreen Init - Fields are resetting now!");
+  }
+
+  @override
+  void dispose() {
+    // IF THIS PRINTS AFTER CLICKING LOGIN, SOMETHING IS KILLING THE SCREEN
+    print("DEBUG: 📤 LoginScreen Disposed - Something navigated away!");
+    super.dispose();
+  }
+
+
 
   @override
   Widget build(BuildContext context) {

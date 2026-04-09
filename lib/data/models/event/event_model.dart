@@ -51,7 +51,7 @@ class EventModel {
     required this.organizerName,
     this.organizerAvatar,
     required this.isPublic,
-    required this.myRsvpStatus
+    required this.myRsvpStatus,
   });
 
   String get attendanceText => '$goingCount going · $maxAttendees max';
@@ -77,11 +77,7 @@ class EventModel {
     );
   }
 
-
-
-
-
- // for update the model
+  // for update the model
   EventModel copyWith({
     String? id,
     String? coverImage,
@@ -97,28 +93,18 @@ class EventModel {
     RsvpStatus? myRsvpStatus,
   }) {
     return EventModel(
-      id:              id             ?? this.id,
-      coverImage:      coverImage     ?? this.coverImage,
-      title:           title          ?? this.title,
-      description:     description    ?? this.description,
-      date:            date           ?? this.date,
-      location:        location       ?? this.location,
-      isPublic:        isPublic       ?? this.isPublic,
-      goingCount:      goingCount     ?? this.goingCount,
-      maxAttendees:    maxAttendees   ?? this.maxAttendees,
-      organizerName:   organizerName  ?? this.organizerName,
+      id: id ?? this.id,
+      coverImage: coverImage ?? this.coverImage,
+      title: title ?? this.title,
+      description: description ?? this.description,
+      date: date ?? this.date,
+      location: location ?? this.location,
+      isPublic: isPublic ?? this.isPublic,
+      goingCount: goingCount ?? this.goingCount,
+      maxAttendees: maxAttendees ?? this.maxAttendees,
+      organizerName: organizerName ?? this.organizerName,
       organizerAvatar: organizerAvatar ?? this.organizerAvatar,
-      myRsvpStatus:    myRsvpStatus   ?? this.myRsvpStatus,
+      myRsvpStatus: myRsvpStatus ?? this.myRsvpStatus,
     );
   }
-
-
-
-
-
-
-
 }
-
-
-

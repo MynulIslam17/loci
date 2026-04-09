@@ -3,7 +3,7 @@ import 'package:loci/core/constants/app_url.dart';
 import 'package:loci/core/network/network_caller.dart';
 import 'package:loci/core/network/network_response.dart';
 
-import '../../../data/models/event/event_details.dart';
+import '../../../data/models/event/event_details_model.dart';
 
 
 class EventDetailsController extends GetxController {
@@ -37,4 +37,9 @@ class EventDetailsController extends GetxController {
       update(); // update UI
     }
   }
+
+
+
+
+
 }

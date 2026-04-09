@@ -25,6 +25,7 @@ class LoginController extends GetxController {
     try {
       final NetworkResponse response = await Get.find<NetworkCaller>().postRequest(
         url: AppUrl.login,
+        isFromLogin : true,
         body: {
           'email': email,
           'password': password,

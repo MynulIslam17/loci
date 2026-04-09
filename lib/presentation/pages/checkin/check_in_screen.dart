@@ -1,11 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:get/get.dart';
-import 'package:loci/core/constants/app_text_style.dart';
-import 'package:loci/core/theme/theme_extention.dart';
+import 'package:loci/presentation/pages/checkin/scanner_animation.dart';
 import 'package:loci/presentation/widgets/custom_button.dart';
+import 'package:loci/presentation/widgets/custom_text_field.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
-import 'package:vibration/vibration.dart';
 
 class CheckInScreen extends StatefulWidget {
   const CheckInScreen({super.key});
@@ -15,270 +12,175 @@ class CheckInScreen extends StatefulWidget {
 }
 
 class _CheckInScreenState extends State<CheckInScreen> {
-  String? scannedCode;
-  late final MobileScannerController scannerController;
-  Color borderColor = const Color(0xFF66B9AD);
-  //-- state for switching flash(on/off)
-  bool isFlashOn = false;
-  //--state for switching tabs
-  bool isScanTab = true;
+  final MobileScannerController scannerController = MobileScannerController();
+  final PageController _pageController = PageController();
+  int _currentIndex = 0;
 
   @override
-  void initState() {
-    super.initState();
-    scannerController = MobileScannerController();
+  void dispose() {
+    scannerController.dispose();
+    _pageController.dispose();
+    super.dispose();
+  }
+
+  void _onPageChanged(int index) {
+    setState(() => _currentIndex = index);
+    // Stop camera if we move to manual screen to save battery/resources
+    if (index == 1) {
+      scannerController.stop();
+    } else {
+      scannerController.start();
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: context.colorScheme.surface,
-      appBar: AppBar(
-        leading: IconButton(
-          onPressed: () => Get.back(),
-          icon: const Icon(Icons.close),
-        ),
-        actions: [
-
-          if (isScanTab)
-            IconButton(
-              onPressed: () async {
-                isFlashOn = !isFlashOn;
-                await scannerController.toggleTorch();
-                setState(() {});
-              },
-              icon: Icon(isFlashOn ? Icons.flash_off : Icons.flash_on),
-            ),
-        ],
-      ),
+      appBar: AppBar(title: const Text("Check In"), centerTitle: true),
       body: Column(
         children: [
-          //--if scan tab selected show scanner view else show my qr code view
+          // -----scanner part-----
           Expanded(
-            child: isScanTab ? _buildScannerView() : _buildMyQrView(),
+            child: PageView(
+              controller: _pageController,
+              onPageChanged: _onPageChanged,
+              children: [_buildScannerTab(), _buildManualTab()],
+            ),
           ),
 
-          // The Tab Switcher at the bottom
-          _buildTabSwitcher(),
-          const SizedBox(height: 40),
+          // Bottom Section: Tab Switcher
+          _buildBottomNav(),
         ],
       ),
     );
   }
 
-  //----- scanner logic and design
-  Widget _buildScannerView() {
+  Widget _buildScannerTab() {
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
+        const Text(
+          "Align QR Code within the frame",
+          style: TextStyle(fontSize: 16, color: Colors.grey),
+        ),
+        const SizedBox(height: 20),
         Center(
-          child: Stack(
-            children: [
-              ClipRRect(
-                borderRadius: BorderRadius.circular(12),
-                child: SizedBox(
-                  width: 300,
-                  height: 300,
-                  child: MobileScanner(
+          child: SizedBox(
+            width: 280,
+            height: 280,
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(20),
+              child: Stack(
+                children: [
+                  MobileScanner(
                     controller: scannerController,
-                    onDetect: (capture) async {
-                      if (capture.barcodes.isNotEmpty && scannedCode == null) {
-                        final code = capture.barcodes.first.rawValue;
-                        scannerController.stop();
-                        setState(() {
-                          scannedCode = code;
-                          borderColor = Colors.green;
-                        });
-                        _handleCheckIn(code);
-                        HapticFeedback.heavyImpact();
-                        Vibration.vibrate(duration: 500);
+                    onDetect: (capture) {
+                      final List<Barcode> barcodes = capture.barcodes;
+                      if (barcodes.isNotEmpty) {
+                        final String code =
+                            barcodes.first.rawValue ?? "Unknown";
+                        _showSuccessDialog(code);
                       }
                     },
                   ),
-                ),
+
+                  /// Scanning Animation Overlay
+                   ScannerAnimation()
+                ],
               ),
-              SizedBox(
-                width: 300,
-                height: 300,
-                child: Stack(
-                  children: [
-                    Positioned(top: 0, left: 0, child: _corner(topLeft: true, color: borderColor)),
-                    Positioned(top: 0, right: 0, child: _corner(topRight: true, color: borderColor)),
-                    Positioned(bottom: 0, left: 0, child: _corner(bottomLeft: true, color: borderColor)),
-                    Positioned(bottom: 0, right: 0, child: _corner(bottomRight: true, color: borderColor)),
-                  ],
-                ),
-              ),
-            ],
+            ),
           ),
-        ),
-        const SizedBox(height: 30),
-        Text(
-          scannedCode ?? 'Scan a QR Code to check or connect with others',
-          style: AppTextStyle.textSm(),
         ),
       ],
     );
   }
 
-  //-----The "My QR Code" design
-  Widget _buildMyQrView() {
+
+  Widget _buildManualTab() {
+    final colorScheme = Theme.of(context).colorScheme;
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
+      padding: const EdgeInsets.all(30.0),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Card(
-            elevation: 2,
-            color: context.colorScheme.surfaceContainer,
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20,vertical: 12),
-              child: Column(
-                children: [
-                  const CircleAvatar(
-                    radius: 35,
-                    backgroundImage: NetworkImage('https://i.pravatar.cc/150?u=albert'),
-                  ),
-                  const SizedBox(height: 12),
-                  Text("Albert Flamingo", style: AppTextStyle.textMd(weight: FontWeight.w600,color: context.colorScheme.onSurface)),
-                  const SizedBox(height: 4),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                    decoration: BoxDecoration(
-                      border: Border.all(color: context.colorScheme.onSurface),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Text("ID: 1313434", style: AppTextStyle.textXs()),
-                  ),
-                  const SizedBox(height: 20),
-                  //----- qrcode
-                  Image.network('https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=1313434', height: 160),
-
-                  const SizedBox(height: 20),
-                  Align(
-                      alignment: Alignment.topLeft,
-                      child: Text("Use this code to", style: AppTextStyle.textXs(color: context.colorScheme.onSurfaceVariant))),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.start,
-                    children: [
-                      Icon(Icons.group_outlined, size: 18, color: Colors.grey[600]),
-                      const SizedBox(width: 8),
-                      Text("Connect with fellow business partner", style: AppTextStyle.textXs(color: context.colorScheme.onSurfaceVariant)),
-                    ],
-                  ),
-                ],
-              ),
-            ),
+          Icon(Icons.edit_note, size: 80, color: colorScheme.primary),
+          const SizedBox(height: 20),
+          CustomTextField(
+            borderColor: colorScheme.outline,
+            hintTextColor: colorScheme.onSurfaceVariant,
+            hintText: "Enter Check-In code",
+            title: "Check-In Code",
+            borderRadius: 12,
           ),
-          const SizedBox(height: 30),
-          CustomButton(
-            width: 210,
-            height: 48,
-            backgroundColor: context.colorScheme.primary,
-            textColor: context.colorScheme.onPrimary,
-            onPressed: (){},
-            child: Row(
-              children: [
-                Icon(Icons.qr_code_scanner_outlined, color: context.colorScheme.onPrimary),
-                const SizedBox(width: 8),
-                Text("Manual Connection", style: AppTextStyle.textSm(color: context.colorScheme.onPrimary)),
-              ],
-            ),
+          const SizedBox(height: 20),
 
-          )
+          CustomButton(
+            text: "Check-In Manually",
+            backgroundColor: colorScheme.primary,
+            onPressed: () {},
+          ),
         ],
       ),
     );
   }
 
-  // The custom toggle switch component
-  Widget _buildTabSwitcher() {
+  Widget _buildBottomNav() {
     return Container(
-      width: 300,
-      padding: const EdgeInsets.all(4),
+      padding: const EdgeInsets.symmetric(vertical: 20),
       decoration: BoxDecoration(
-        color: Colors.grey.shade100,
-        borderRadius: BorderRadius.circular(15),
+        color: Colors.white,
+        boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 10)],
       ),
       child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
-          Expanded(
-            child: _tabButton("Scan", isScanTab, () => setState(() => isScanTab = true),),
-          ),
-          Expanded(
-            child: _tabButton("My QR Code", !isScanTab, () => setState(() => isScanTab = false)),
-          ),
+          _navButton("Scan QR", Icons.qr_code_scanner, 0),
+          _navButton("Manual", Icons.keyboard, 1),
         ],
       ),
     );
   }
 
-  Widget _tabButton(String label, bool isActive, VoidCallback onTap) {
+  Widget _navButton(String label, IconData icon, int index) {
+    bool isSelected = _currentIndex == index;
+    final colorScheme = Theme.of(context).colorScheme;
     return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 12),
-        decoration: BoxDecoration(
-          color: isActive ? Colors.white : Colors.transparent,
-          borderRadius: BorderRadius.circular(12),
-          boxShadow: isActive
-              ? [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 4)]
-              : null,
-        ),
-        child: Center(
-          child: Text(
+      onTap: () => _pageController.animateToPage(
+        index,
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeInOut,
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, color: isSelected ? colorScheme.primary : Colors.grey),
+          Text(
             label,
             style: TextStyle(
-              fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
-              color: isActive ? Colors.black : Colors.grey,
+              color: isSelected ? colorScheme.primary : Colors.grey,
+              fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
             ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  // Your original corner widget
-  Widget _corner({bool topLeft = false, bool topRight = false, bool bottomLeft = false, bool bottomRight = false, required Color color}) {
-    const double size = 30;
-    const double thickness = 4;
-    return SizedBox(
-      width: size, height: size,
-      child: Stack(
-        children: [
-          Positioned(
-            top: topLeft || topRight ? 0 : null,
-            bottom: bottomLeft || bottomRight ? 0 : null,
-            left: topLeft || bottomLeft ? 0 : null,
-            right: topRight || bottomRight ? 0 : null,
-            child: Container(width: size, height: thickness, color: color),
-          ),
-          Positioned(
-            top: topLeft || topRight ? 0 : null,
-            bottom: bottomLeft || bottomRight ? 0 : null,
-            left: topLeft || bottomLeft ? 0 : null,
-            right: topRight || bottomRight ? 0 : null,
-            child: Container(width: thickness, height: size, color: color),
           ),
         ],
       ),
     );
   }
 
-  Future<void> _handleCheckIn(String? code) async {
-    if (code == null) return;
+  void _showSuccessDialog(String code) {
+    scannerController.stop();
     showDialog(
       context: context,
-      builder: (_) => AlertDialog(
-        title: const Text("Check-In Successful"),
-        content: Text("Code: $code"),
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        title: const Text("Code Detected"),
+        content: Text("Scanned: $code"),
         actions: [
           TextButton(
             onPressed: () {
               Navigator.pop(context);
-              Get.back();
+              scannerController.start(); // Restart scanner after closing
             },
-            child: const Text("OK"),
+            child: const Text("Scan Again"),
           ),
         ],
       ),

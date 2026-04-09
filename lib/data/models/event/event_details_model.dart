@@ -1,10 +1,9 @@
-
+import 'package:loci/core/enums/checkin_status.dart';
 import 'package:loci/core/utils/date_parser.dart';
 import 'package:loci/data/models/event/event_model.dart';
 
 class EventDetailsModel {
   final EventModel eventModel;
-
   final double lat;
   final double lng;
   final int maxAttendees;
@@ -12,7 +11,8 @@ class EventDetailsModel {
   final List<Rsvp> rsvpList;
   final String checkInCode;
   final bool isPublic;
-  final String myRsvpStatus;
+  final CheckInStatus myCheckInStatus;
+
   final OrganizerBusiness organizerBusiness;
 
   EventDetailsModel({
@@ -24,8 +24,8 @@ class EventDetailsModel {
     required this.rsvpList,
     required this.checkInCode,
     required this.isPublic,
-    required this.myRsvpStatus,
     required this.organizerBusiness,
+    required this.myCheckInStatus,
   });
 
   factory EventDetailsModel.fromJson(Map<String, dynamic> json) {
@@ -51,9 +51,8 @@ class EventDetailsModel {
           .toList(),
 
       checkInCode: data['checkInCode'] ?? '',
+      myCheckInStatus: CheckInStatus.fromString(data['myCheckInStatus']),
       isPublic: data['isPublic'] ?? false,
-      myRsvpStatus: data['myRsvpStatus'] ?? 'not_responded',
-
       organizerBusiness: OrganizerBusiness.fromJson(
         data['organizerBusiness'] ?? {},
       ),
@@ -86,12 +85,14 @@ class OrganizerBusiness {
   final String name;
   final String? logo;
   final String address;
+  final String description;
 
   OrganizerBusiness({
     required this.id,
     required this.name,
     this.logo,
     required this.address,
+    required this.description,
   });
 
   factory OrganizerBusiness.fromJson(Map<String, dynamic> json) {
@@ -108,6 +109,7 @@ class OrganizerBusiness {
       id: json['_id'] ?? '',
       name: json['name'] ?? '',
       logo: json['logo'],
+      description: json['description'],
       address: formattedAddress,
     );
   }

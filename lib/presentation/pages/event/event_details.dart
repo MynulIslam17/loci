@@ -177,7 +177,7 @@ class _EventDetailsState extends State<EventDetails> {
 
                 CompanyInfoCard(
                   title: business?.name ?? "___",
-                  description: business?.name ?? "___",
+                  description: business?.description ?? "___",
                   imagePath: business?.logo ?? "_",
                 ),
 
