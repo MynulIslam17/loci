@@ -20,7 +20,7 @@ class EventScreen extends StatefulWidget {
 class _EventScreenState extends State<EventScreen> {
   //----get x controller
   final eventController = Get.find<EventListController>();
-  final rsvpController = Get.put(RSVPController());
+  final rsvpController = Get.find<RSVPController>();
 
   //---scroll controller for pagination loader
   final ScrollController _scrollController = ScrollController();

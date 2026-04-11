@@ -1,7 +1,8 @@
 abstract class AppUrl {
 
   /// base url=================================
-  static const String baseUrl="https://jakuan5000.syedbipul.me/api/v1";
+  //static const String baseUrl="https://jakuan5000.syedbipul.me/api/v1";//local
+  static const String baseUrl="https://jakuan5000.syedbipul.me/api/v1"; //live
 
 
   /// ========================auth===================================
@@ -24,12 +25,21 @@ abstract class AppUrl {
   static const String eventList="$baseUrl/events";
   static  String rsvpEvent(String eventId)=>"$baseUrl/events/$eventId/rsvp";
   static String eventDetails(String id)=>"$baseUrl/events/$id";
+  static String eventManualCheckIn(String checkInCode)=>"$baseUrl/events/check-in";
 
 
 
   ///===========================  routes ===================================================
   static const String routeList="$baseUrl/routes";
   static  String routeDetails(String routeId)=>"$baseUrl/routes/$routeId";
+
+  ///-------------raffle--------------------------------
+
+
+
+  ///-----check_in----------------
+  static const String checkIn="$baseUrl/checkins/scan";
+
 
 
 

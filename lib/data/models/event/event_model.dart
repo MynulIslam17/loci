@@ -54,7 +54,7 @@ class EventModel {
     required this.myRsvpStatus,
   });
 
-  String get attendanceText => '$goingCount going · $maxAttendees max';
+
 
   factory EventModel.fromJson(Map<String, dynamic> json) {
     return EventModel(

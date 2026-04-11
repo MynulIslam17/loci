@@ -39,7 +39,7 @@ class _ViewEventScreenState extends State<ViewEventScreen> {
     CustomQrCode.show(
       context,
       data:
-          "eyJlbnRpdHlUeXBlIjoiZXZlbnQiLCJlbnRpdHlJZCI6IjY5ZDc0ZTkyY2M4YzFhNGM1NDNmMzgzMiIsImlzc3VlZEF0IjoxNzc1NzE4MDM0NTE1fQ.9401cc1fcb81007a2c329c9916d5dd2005d20f238d3ac95c8d47c1008d82278d",
+          "eyJlbnRpdHlUeXBlIjoiZXZlbnQiLCJlbnRpdHlJZCI6IjY5ZDlkZDY5Y2UwNDE2Mjk5YTkwYzRiZiIsImlzc3VlZEF0IjoxNzc1ODg1NjczNDg1fQ.e73ecb2f79afbf1a8e724d16240080077b003edff3892a537351e0e199909fa8",
       title: "Event Check-In Code",
       subtitle:  "Spring Pub Crawl Festival",
     );

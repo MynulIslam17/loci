@@ -1,4 +1,3 @@
-
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -6,11 +5,17 @@ import 'package:get/get_core/src/get_main.dart';
 import 'package:get/get_instance/src/extension_instance.dart';
 import 'package:get/get_navigation/src/extension_navigation.dart';
 import 'package:loci/core/constants/app_text_style.dart';
+import 'package:loci/core/enums/rsvp_status.dart';
 import 'package:loci/core/theme/theme_extention.dart';
+import 'package:loci/presentation/controllers/event/event_list_controller.dart';
+import 'package:loci/presentation/controllers/event/rsvp_controller.dart';
 import 'package:loci/presentation/widgets/custom_button.dart';
 import 'package:loci/presentation/widgets/custom_image_container.dart';
 import 'package:loci/presentation/widgets/error_state.dart';
+import 'package:loci/routes/app_routes.dart';
 
+import '../../../core/enums/checkin_status.dart';
+import '../../../core/utils/show_snackbar.dart';
 import '../../../gen/assets.gen.dart';
 import '../../controllers/event/event_details_controller.dart';
 import '../../widgets/common/company_info_card.dart';
@@ -25,7 +30,8 @@ class EventDetails extends StatefulWidget {
 
 class _EventDetailsState extends State<EventDetails> {
   //--get x controller
-  late final EventDetailsController eventDetails;
+  late final EventDetailsController eventDetailsController;
+  late final RSVPController rsvpController;
 
   late final String eventId;
   late final String eventTitle;
@@ -34,12 +40,20 @@ class _EventDetailsState extends State<EventDetails> {
   void initState() {
     super.initState();
 
-
-    if(Get.isRegistered<EventDetailsController>()){
-      eventDetails=Get.find<EventDetailsController>();
-    }else{
-      eventDetails=Get.put(EventDetailsController());
+    // EventDetailsController check
+    if (Get.isRegistered<EventDetailsController>()) {
+      eventDetailsController = Get.find<EventDetailsController>();
+    } else {
+      eventDetailsController = Get.put(EventDetailsController());
     }
+
+    // RSVPController check
+    if (Get.isRegistered<RSVPController>()) {
+      rsvpController = Get.find<RSVPController>();
+    } else {
+      rsvpController = Get.put(RSVPController());
+    }
+
 
     //---get the event id
     final args = Get.arguments as Map<String, dynamic>?;
@@ -47,8 +61,36 @@ class _EventDetailsState extends State<EventDetails> {
     eventTitle = args?["eventTitle"] ?? "";
 
     // fetch event details
-    eventDetails.fetchEventDetails(eventId);
+    eventDetailsController.fetchEventDetails(eventId);
   }
+
+
+
+
+
+  ///------ Rsvp  handle
+  void _rsvpOnTapHandler(String eventId)async {
+
+    //call the api to change rsvp status
+    bool success=await rsvpController.sendRSVP(eventId: eventId,  status: RsvpStatus.going.toJson,);
+
+    if(success){
+
+      ///---update the the rsvp status locally for event details screen
+      eventDetailsController.updateRsvpStatus(RsvpStatus.going);
+
+      ///---update the the rsvp status locally for event screen
+      Get.find<EventListController>().updateRsvpStatus(eventId, RsvpStatus.going);
+
+      SnackbarService.success(rsvpController.successMessage!);
+    }else{
+      SnackbarService.error(rsvpController.errorMessage!);
+    }
+
+
+  }
+
+
 
   @override
   Widget build(BuildContext context) {
@@ -128,7 +170,7 @@ class _EventDetailsState extends State<EventDetails> {
                           const SizedBox(height: 8),
                           IconTextRow(
                             icon: Icons.people_outline,
-                            text: event?.attendanceText ?? "__",
+                            text: "${event?.goingCount.toString()} going / ${event?.maxAttendees} max",
                             iconColor: context.colorScheme.primary,
                           ),
                           const SizedBox(height: 20),
@@ -136,21 +178,35 @@ class _EventDetailsState extends State<EventDetails> {
                       ),
                     ),
 
-                    ElevatedButton.icon(
-                      icon: Icon(
-                        Icons.qr_code,
-                        color: context.colorScheme.onSurface,
-                      ),
-                      onPressed: () {},
-                      style: ElevatedButton.styleFrom(
-                        foregroundColor: context.colorScheme.onSurface,
-                        backgroundColor: context.colorScheme.primary,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(6),
-                        ),
-                      ),
-                      label: const Text("Check In"),
+                    GetBuilder<EventDetailsController>(
+                      builder: (controller) {
+                        final checkInStatus = controller.eventDetails?.myCheckInStatus;
+                        final isCheckedIn = checkInStatus == CheckInStatus.checkedIn;
+
+                        return ElevatedButton.icon(
+                          icon: Icon(
+                            isCheckedIn ? Icons.check_circle : Icons.qr_code,
+                            color: context.colorScheme.onSurface,
+                          ),
+                          onPressed: isCheckedIn
+                              ? null
+                              : () => Get.toNamed(AppRoutes.checkIn),
+                          style: ElevatedButton.styleFrom(
+                            foregroundColor: context.colorScheme.onSurface,
+                            backgroundColor: isCheckedIn
+                                ? context.colorScheme.surfaceContainerHigh
+                                : context.colorScheme.primary,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                          ),
+                          label: Text(checkInStatus?.label ?? 'Check In'),
+                        );
+                      },
                     ),
+
+
+
                   ],
                 ),
 
@@ -183,7 +239,21 @@ class _EventDetailsState extends State<EventDetails> {
 
                 const SizedBox(height: 10),
 
-                CustomButton(text: "RSVP", onPressed: () {}),
+                GetBuilder<RSVPController>(
+                  builder: (controller) {
+                    final isThisLoading = controller.isLoading &&
+                        controller.loadingEventId == eventId;
+
+                    return CustomButton(
+                      isLoading: isThisLoading,
+                      text: event?.myRsvpStatus.label,
+                      onPressed: event?.myRsvpStatus == RsvpStatus.going
+                          ? null
+                          : () => _rsvpOnTapHandler(eventId),
+                    );
+                  },
+                )
+
               ],
             ),
           );

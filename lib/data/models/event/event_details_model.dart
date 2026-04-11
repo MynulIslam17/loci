@@ -6,7 +6,7 @@ class EventDetailsModel {
   final EventModel eventModel;
   final double lat;
   final double lng;
-  final int maxAttendees;
+
   final int rsvpCount;
   final List<Rsvp> rsvpList;
   final String checkInCode;
@@ -19,7 +19,6 @@ class EventDetailsModel {
     required this.eventModel,
     required this.lat,
     required this.lng,
-    required this.maxAttendees,
     required this.rsvpCount,
     required this.rsvpList,
     required this.checkInCode,
@@ -39,7 +38,6 @@ class EventDetailsModel {
       lat: (coordinates['lat'] ?? 0).toDouble(),
       lng: (coordinates['lng'] ?? 0).toDouble(),
 
-      maxAttendees: int.tryParse(data['maxParticipants'].toString()) ?? 0,
 
       rsvpCount:
           int.tryParse(data['rsvpCount'].toString()) ??
@@ -58,6 +56,34 @@ class EventDetailsModel {
       ),
     );
   }
+
+
+
+
+
+// for update the model
+  EventDetailsModel copyWith({
+    EventModel? eventModel,
+    int? rsvpCount,
+    CheckInStatus ? myCheckInStatus
+  }) {
+    return EventDetailsModel(
+      eventModel:        eventModel        ?? this.eventModel,
+      lat:               lat,
+      lng:               lng,
+      rsvpCount:         rsvpCount         ?? this.rsvpCount,
+      rsvpList:          rsvpList,
+      checkInCode:       checkInCode,
+      isPublic:          isPublic,
+      myCheckInStatus:   myCheckInStatus ?? this.myCheckInStatus,
+      organizerBusiness: organizerBusiness,
+    );
+  }
+
+
+
+
+
 }
 
 class Rsvp {

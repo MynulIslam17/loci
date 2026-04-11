@@ -100,7 +100,7 @@ class EventListController extends GetxController {
 
 
 
-  ///update the rsvp status
+  /// update rsvp status and count locally
   void updateRsvpStatus(String eventId, RsvpStatus status) {
     final index = _eventList.indexWhere((e) => e.id == eventId);
     if (index != -1) {

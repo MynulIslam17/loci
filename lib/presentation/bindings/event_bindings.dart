@@ -7,7 +7,6 @@ class EventBindings extends Bindings{
   void dependencies() {
     // TODO: implement dependencies
 
-
        Get.lazyPut(()=>EventDetailsController());
 
   }

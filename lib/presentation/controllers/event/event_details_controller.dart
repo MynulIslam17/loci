@@ -1,10 +1,11 @@
 import 'package:get/get.dart';
 import 'package:loci/core/constants/app_url.dart';
+import 'package:loci/core/enums/checkin_status.dart';
 import 'package:loci/core/network/network_caller.dart';
 import 'package:loci/core/network/network_response.dart';
 
+import '../../../core/enums/rsvp_status.dart';
 import '../../../data/models/event/event_details_model.dart';
-
 
 class EventDetailsController extends GetxController {
   bool _isLoading = false;
@@ -38,8 +39,31 @@ class EventDetailsController extends GetxController {
     }
   }
 
+  ///  update rsvp status and count locally
 
+  void updateRsvpStatus(RsvpStatus status) {
+    if (_eventDetails == null) return;
 
+    _eventDetails = _eventDetails!.copyWith(
+      eventModel: _eventDetails!.eventModel.copyWith(
+        myRsvpStatus: status,
+        goingCount: status == RsvpStatus.going
+            ? _eventDetails!.eventModel.goingCount + 1
+            : _eventDetails!.eventModel.goingCount,
+      ),
+    );
+    update();
+  }
+
+  ///  update check-in status  locally
+
+  void updateCheckInStatus(CheckInStatus status) {
+    if (_eventDetails == null) return;
+
+    _eventDetails = _eventDetails!.copyWith(myCheckInStatus: status);
+
+    update();
+  }
 
 
 }
