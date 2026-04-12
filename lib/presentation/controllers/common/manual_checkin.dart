@@ -24,24 +24,25 @@ class ManualCheckInController extends GetxController {
   // -------------------------
   Future<bool> doManualCheckIn({
     required String checkInCode,
+    required String type,
     String? name,
     String? email,
     String? avatar,
   }) async {
 
     try {
-      // 🔹 Start loading
+      //  Start loading
       _isLoading = true;
       _errorMessage = null;
       _successMessage = null;
       update();
 
-      // 🔹 Request body
+      //  Request body
       Map<String, dynamic> body = {
         "checkInCode": checkInCode,
       };
 
-      // 🔹 Add leadData ONLY if any value exists
+      //  Add leadData ONLY if any value exists
       if (name != null || email != null || avatar != null) {
         body["leadData"] = {
           if (name != null) "name": name,
@@ -50,32 +51,38 @@ class ManualCheckInController extends GetxController {
         };
       }
 
-      // 🔹 API Call
+      //--------decide which url used
+      final String url= type=="event"
+       ? AppUrl.eventManualCheckIn
+       : AppUrl.routeManualCheckIn;
+
+
+      //----------  API Call
       final NetworkResponse response =
       await Get.find<NetworkCaller>().postRequest(
-        url: AppUrl.eventManualCheckIn(checkInCode),
+        url: url,
         body: body,
       );
 
-      // 🔹 Success
+      // ------- Success
       if (response.isSuccess && response.body != null) {
         _successMessage =
             response.body?['message'] ?? "Check-in successful";
         return true;
       }
 
-      // 🔹 Failed response
+      //-----------  Failed response
       _errorMessage =
           response.body?['message'] ?? "Check-in failed";
       return false;
 
     } catch (e) {
-      // 🔹 Exception
+      //------------ Exception
       _errorMessage = e.toString();
       return false;
 
     } finally {
-      // 🔹 Stop loading
+      //--------- Stop loading
       _isLoading = false;
       update();
     }

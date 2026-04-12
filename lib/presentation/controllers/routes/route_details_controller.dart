@@ -2,6 +2,7 @@ import 'package:get/get.dart';
 import 'package:loci/core/network/network_response.dart';
 
 import '../../../core/constants/app_url.dart';
+import '../../../core/enums/checkin_status.dart';
 import '../../../core/network/network_caller.dart';
 import '../../../data/models/routes/route_details_model.dart';
 
@@ -47,4 +48,29 @@ class RouteDetailsController extends GetxController {
       update();
     }
   }
+
+
+
+
+
+
+  ///  update check-in status  locally
+
+  void   updateCheckInStatus(CheckInStatus status){
+
+    if(_routeDetails == null) return;
+
+    _routeDetails = _routeDetails!.copyWith( myCheckInStatus: status);
+    print("update=>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
+
+    update();
+
+  }
+
+
+
+
+
+
+
 }

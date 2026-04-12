@@ -190,7 +190,7 @@ class _EventDetailsState extends State<EventDetails> {
                           ),
                           onPressed: isCheckedIn
                               ? null
-                              : () => Get.toNamed(AppRoutes.checkIn),
+                              : () => Get.toNamed(AppRoutes.checkIn, arguments: {'type': 'event'}),
                           style: ElevatedButton.styleFrom(
                             foregroundColor: context.colorScheme.onSurface,
                             backgroundColor: isCheckedIn
@@ -202,6 +202,7 @@ class _EventDetailsState extends State<EventDetails> {
                           ),
                           label: Text(checkInStatus?.label ?? 'Check In'),
                         );
+
                       },
                     ),
 

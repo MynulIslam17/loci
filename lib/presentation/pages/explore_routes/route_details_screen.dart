@@ -5,6 +5,7 @@ import 'package:get/get.dart';
 import 'package:loci/presentation/widgets/custom_button.dart';
 import 'package:loci/presentation/widgets/error_state.dart';
 import 'package:loci/routes/app_routes.dart';
+import '../../../core/enums/checkin_status.dart';
 import '../../controllers/routes/route_details_controller.dart';
 import '../../widgets/common/company_info_card.dart';
 import '../../widgets/custom_image_container.dart';
@@ -99,8 +100,7 @@ class _RouteDetailsScreenState extends State<RouteDetailsScreen> {
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16.0),
                   child: CustomCachedImage(
-                    imageUrl:
-                        route?.banner,
+                    imageUrl: route?.banner,
                     height: 200,
                     width: double.infinity,
                     fit: BoxFit.cover,
@@ -114,7 +114,7 @@ class _RouteDetailsScreenState extends State<RouteDetailsScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        route?.location  ?? "",
+                        route?.title ?? "",
                         style: AppTextStyle.textLg(weight: FontWeight.w600),
                       ),
                       const SizedBox(height: 8),
@@ -131,34 +131,49 @@ class _RouteDetailsScreenState extends State<RouteDetailsScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           // Left side: Info Items
-                          Expanded(child: _buildInfoRow(colorScheme,route?.location ?? "",route?.openingTime ?? "",route?.availabilityType ?? "")),
-                          // Right side: Check In Button
-                          CustomButton(
-                            width: 130,
-                            height: 48,
-                            backgroundColor: colorScheme.primary,
-                            textColor: colorScheme.onPrimary,
-                            onPressed: () {
-                              Get.toNamed(AppRoutes.checkIn);
-                            },
+                          Expanded(
+                            child: _buildInfoRow(
+                              colorScheme,
+                              route?.location ?? "",
+                              route?.openingTime ?? "",
+                              route?.availabilityType ?? "",
+                            ),
+                          ),
 
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                const Icon(Icons.qr_code_scanner, size: 18),
-                                const SizedBox(width: 4),
-                                Flexible(
-                                  child: Text(
-                                    "Check In",
-                                    style: AppTextStyle.textSm(
-                                      weight: FontWeight.w600,
-                                    ),
-                                    overflow: TextOverflow.ellipsis,
+                          // Right side: Check In Button
+                          GetBuilder<RouteDetailsController>(
+                            builder: (controller) {
+                              final checkInStatus =
+                                  controller.routeDetails?.myCheckInStatus;
+                              final isCheckedIn =
+                                  checkInStatus == CheckInStatus.checkedIn;
+
+                              return ElevatedButton.icon(
+                                icon: Icon(
+                                  isCheckedIn
+                                      ? Icons.check_circle
+                                      : Icons.qr_code,
+                                  color: context.colorScheme.onSurface,
+                                ),
+                                onPressed: isCheckedIn
+                                    ? null
+                                    : () => Get.toNamed(
+                                        AppRoutes.checkIn,
+                                        arguments: {'type': 'route'},
+                                      ),
+                                style: ElevatedButton.styleFrom(
+                                  foregroundColor:
+                                      context.colorScheme.onSurface,
+                                  backgroundColor: isCheckedIn
+                                      ? context.colorScheme.surfaceContainerHigh
+                                      : context.colorScheme.primary,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(6),
                                   ),
                                 ),
-                              ],
-                            ),
+                                label: Text(checkInStatus?.label ?? 'Check In'),
+                              );
+                            },
                           ),
                         ],
                       ),
@@ -195,8 +210,8 @@ class _RouteDetailsScreenState extends State<RouteDetailsScreen> {
                       const SizedBox(height: 12),
                       CompanyInfoCard(
                         title: business?.name ?? "",
-                        description:business?.description ?? "",
-                        imagePath:business?.logo ?? "",
+                        description: business?.description ?? "",
+                        imagePath: business?.logo ?? "",
                       ),
                     ],
                   ),
@@ -209,15 +224,16 @@ class _RouteDetailsScreenState extends State<RouteDetailsScreen> {
     );
   }
 
-  Widget _buildInfoRow(ColorScheme colorScheme,String location,String openingTime,String availabilityType) {
+  Widget _buildInfoRow(
+    ColorScheme colorScheme,
+    String location,
+    String openingTime,
+    String availabilityType,
+  ) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildInfoItem(
-          Icons.location_on_outlined,
-          location,
-          colorScheme,
-        ),
+        _buildInfoItem(Icons.location_on_outlined, location, colorScheme),
         const SizedBox(height: 8),
         _buildInfoItem(Icons.access_time, openingTime, colorScheme),
         const SizedBox(height: 8),

@@ -25,13 +25,14 @@ abstract class AppUrl {
   static const String eventList="$baseUrl/events";
   static  String rsvpEvent(String eventId)=>"$baseUrl/events/$eventId/rsvp";
   static String eventDetails(String id)=>"$baseUrl/events/$id";
-  static String eventManualCheckIn(String checkInCode)=>"$baseUrl/events/check-in";
+  static const String eventManualCheckIn="$baseUrl/events/check-in";
 
 
 
   ///===========================  routes ===================================================
   static const String routeList="$baseUrl/routes";
   static  String routeDetails(String routeId)=>"$baseUrl/routes/$routeId";
+  static  String routeManualCheckIn="$baseUrl/routes/check-in";
 
   ///-------------raffle--------------------------------
 
@@ -43,22 +44,9 @@ abstract class AppUrl {
 
 
 
+  ///--------------- profile
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-  static const String getProfile="$baseUrl/user/get-my-profile";
+  static const String getMyProfile="$baseUrl/auth/me";
 
 
 

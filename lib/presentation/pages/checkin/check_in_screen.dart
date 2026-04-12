@@ -5,6 +5,7 @@ import 'package:loci/core/utils/show_snackbar.dart';
 import 'package:loci/presentation/controllers/auth/auth_controller.dart';
 import 'package:loci/presentation/controllers/common/check_in_controller.dart';
 import 'package:loci/presentation/controllers/event/event_details_controller.dart';
+import 'package:loci/presentation/controllers/routes/route_details_controller.dart';
 import 'package:loci/presentation/pages/checkin/scanner_animation.dart';
 import 'package:loci/presentation/widgets/custom_button.dart';
 import 'package:loci/presentation/widgets/custom_text_field.dart';
@@ -39,10 +40,23 @@ class _CheckInScreenState extends State<CheckInScreen> {
   // -------------------------
   int _currentIndex = 0;
   bool _isProcessing = false;
+  late final String _type;
 
   // -------------------------
   // Lifecycle
   // -------------------------
+
+   @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+
+    final args = Get.arguments as Map<String, dynamic>?;
+    _type = args?['type'] ?? 'event';
+
+  }
+
+
   @override
   void dispose() {
     scannerController.dispose();
@@ -80,10 +94,13 @@ class _CheckInScreenState extends State<CheckInScreen> {
       );
 
       if (success) {
-        // update locally
-        if (Get.isRegistered<EventDetailsController>()) {
+
+        // update locally the check in status (event/route)
+        if (_type=="event" && Get.isRegistered<EventDetailsController>()) {
           Get.find<EventDetailsController>()
               .updateCheckInStatus(CheckInStatus.checkedIn);
+        }else if(_type=="route" && Get.isRegistered<RouteDetailsController>()){
+         Get.find<RouteDetailsController>().updateCheckInStatus(CheckInStatus.checkedIn);
         }
 
 
@@ -117,15 +134,21 @@ class _CheckInScreenState extends State<CheckInScreen> {
 
     final success = await manualCheckInController.doManualCheckIn(
       checkInCode: code,
+       type: _type,
       name: user?.name ?? "",
       email: user?.email ?? "",
       avatar: user?.avatar ?? "",
     );
 
     if (success) {
-      if (Get.isRegistered<EventDetailsController>()) {
+
+      // update locally the check in status (event/route)
+
+      if (_type=="event" && Get.isRegistered<EventDetailsController>()) {
         Get.find<EventDetailsController>()
             .updateCheckInStatus(CheckInStatus.checkedIn);
+      }else if(_type=="route" && Get.isRegistered<RouteDetailsController>()){
+        Get.find<RouteDetailsController>().updateCheckInStatus(CheckInStatus.checkedIn);
       }
 
 
