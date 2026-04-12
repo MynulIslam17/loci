@@ -56,4 +56,37 @@ class UserModel {
       'createdAt': createdAt,
     };
   }
+
+
+  UserModel copyWith({
+    String? id,
+    String? name,
+    String? email,
+    String? role,
+    String? status,
+    String? avatar,
+    String? phone,
+    String? dateOfBirth,
+    String? zipCode,
+    String? lastLoginAt,
+    String? createdAt,
+  }) {
+    return UserModel(
+      id:          id          ?? this.id,
+      name:        name        ?? this.name,
+      email:       email       ?? this.email,
+      role:        role        ?? this.role,
+      status:      status      ?? this.status,
+      avatar:      avatar      ?? this.avatar,
+      phone:       phone       ?? this.phone,
+      dateOfBirth: dateOfBirth ?? this.dateOfBirth,
+      zipCode:     zipCode     ?? this.zipCode,
+      lastLoginAt: lastLoginAt ?? this.lastLoginAt,
+      createdAt:   createdAt   ?? this.createdAt,
+    );
+  }
+
+
+
+
 }

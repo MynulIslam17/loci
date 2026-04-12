@@ -47,6 +47,7 @@ abstract class AppUrl {
   ///--------------- profile
 
   static const String getMyProfile="$baseUrl/auth/me";
+  static const String updateMyProfile="$baseUrl/users/me";
 
 
 

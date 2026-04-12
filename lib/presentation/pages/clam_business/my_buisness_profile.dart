@@ -131,7 +131,7 @@ class _MyBusinessProfileState extends State<MyBusinessProfile> {
             Positioned(
               right: 0,
               top: 0,
-              child: _editCircleButton(() {
+              child: _editCircleButton(onTap: (){
                 CustomImagePicker.pickImageSimple(
                   context: context,
                   onImageSelected: (file) => setState(() {
@@ -181,7 +181,7 @@ class _MyBusinessProfileState extends State<MyBusinessProfile> {
                 ],
               ),
               // Edit Button for Business Info
-              Positioned(top: 0, right: 0, child: _editCircleButton(() {})),
+              Positioned(top: 0, right: 0, child: _editCircleButton(onTap: (){})),
             ],
           ),
         ),
@@ -266,7 +266,7 @@ class _MyBusinessProfileState extends State<MyBusinessProfile> {
             Positioned(
               right: 0,
               top: 0,
-              child: _editCircleButton(() {}, size: 20),
+              child: _editCircleButton(onTap: (){}, size: 20),
             ),
           ],
         ),
@@ -303,8 +303,9 @@ class _MyBusinessProfileState extends State<MyBusinessProfile> {
               Positioned(
                 right: 5,
                 top: 5,
-                child: _editCircleButton(
-                      () => setState(() => _apiPhotos.removeAt(index)),
+                child: _editCircleButton(onTap: (){
+                  setState(() => _apiPhotos.removeAt(index));
+                },
                   size: 20,
                   icon: Icons.cancel,
                   iconColor: AppColors.danger,
@@ -326,8 +327,9 @@ class _MyBusinessProfileState extends State<MyBusinessProfile> {
             Positioned(
               right: 5,
               top: 5,
-              child: _editCircleButton(
-                    () => setState(() => _photos.removeAt(localIndex)),
+              child: _editCircleButton(onTap: (){
+                setState(() => _photos.removeAt(localIndex));
+              },
                 size: 20,
                 icon: Icons.cancel,
                 iconColor: AppColors.danger,
@@ -557,26 +559,30 @@ class _MyBusinessProfileState extends State<MyBusinessProfile> {
   }
 
   // ================= EDIT CIRCLE BUTTON =================
-  Widget _editCircleButton(
-      VoidCallback onTap, {
-        double size = 26,
-        IconData icon = Icons.edit_outlined,
-        Color iconColor = AppColors.primaryG700,
-      }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.all(4),
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          shape: BoxShape.circle,
-          boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 4)],
+  Widget _editCircleButton({
+    required VoidCallback onTap,
+    double size = 26,
+    IconData icon = Icons.edit_outlined,
+    Color iconColor = AppColors.primaryG700,
+  }) {
+    return Material(
+      color: Colors.white,
+      shape: const CircleBorder(),
+      elevation: 2,
+      child: InkWell(
+        onTap: onTap,
+        customBorder: const CircleBorder(),
+        child: Padding(
+          padding: const EdgeInsets.all(4),
+          child: Icon(
+            icon,
+            size: size * 0.7,
+            color: iconColor,
+          ),
         ),
-        child: Icon(icon, size: size * 0.7, color: iconColor),
       ),
     );
   }
-
   // ================= IMAGE PICKER =================
   void _showSimplePicker(Function(File) onSelected) {
     showModalBottomSheet(
