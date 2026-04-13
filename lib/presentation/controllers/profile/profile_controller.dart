@@ -3,101 +3,129 @@ import 'package:get/get.dart';
 import 'package:loci/core/constants/app_url.dart';
 import 'package:loci/core/network/network_caller.dart';
 import 'package:loci/core/utils/show_snackbar.dart';
+
+import '../../../data/models/profile/profile_state.dart';
 import '../auth/auth_controller.dart';
 
 class ProfileController extends GetxController {
-  final _auth = Get.find<AuthController>();
-  final _network = Get.find<NetworkCaller>();
+  final AuthController _auth = Get.find<AuthController>();
+  final NetworkCaller _network = Get.find<NetworkCaller>();
 
   // -------------------------
-  // State
+  // UI State
   // -------------------------
-  String userName = '';
-  String about = '';
-  File? profileImage;
-  String? profileImageUrl;
   bool isLoading = false;
+  File? profileImage; // local preview only
+  ProfileStats? stats;
 
   // -------------------------
-  // Init — load from cache instantly
+  // Getters (Single Source of Truth)
   // -------------------------
-  @override
-  void onInit() {
-    super.onInit();
-    _loadFromAuth();
-  }
+  String get userName => _auth.userModel?.name ?? '';
+  String get about => _auth.userModel?.about ?? '';
+  String? get profileImageUrl => _auth.userModel?.avatar;
 
   // -------------------------
-  // Internal
+  // Internal Helpers
   // -------------------------
-
-  void _loadFromAuth() {
-    final user = _auth.userModel;
-    if (user == null) return;
-    userName = user.name;
-    profileImageUrl = user.avatar;
-    update();
-  }
-
   void _setLoading(bool value) {
     isLoading = value;
     update();
   }
 
-  Future<void> _syncAuth() async {
+  Future<void> _updateUserModel({
+    String? name,
+    String? avatar,
+    String? about,
+  }) async {
+
     final user = _auth.userModel;
     if (user == null) return;
+
     await _auth.updateUser(
       user.copyWith(
-        name: userName,
-        avatar: profileImageUrl,
+        name: name ?? user.name,
+        avatar: avatar ?? user.avatar,
+        about: about ?? user.about,
       ),
     );
   }
 
   // -------------------------
-  // Silent fetch — called from screen initState
+  // Fetch Profile (Silent)
   // -------------------------
   Future<void> silentFetchProfile() async {
     try {
-      final response = await _network.getRequest(url: AppUrl.getMyProfile);
-      if (!response.isSuccess || response.body == null) return;
+      final res = await _network.getRequest(url: AppUrl.getMyProfile);
 
-      final user = response.body?['data']?['user'];
+      if (!res.isSuccess || res.body == null) return;
+
+      final data = res.body?['data'];
+      final user = data?['user'];
+
       if (user == null) return;
 
-      userName = user['name'] ?? userName;
-      profileImageUrl = user['avatar'] ?? profileImageUrl;
-      update();
+      //  safe stats access
+      final statsJson = user['stats'];
 
-      await _syncAuth(); // ✅ keep cache fresh
+      if (statsJson != null) {
+        stats = ProfileStats.fromJson(statsJson);
+      }
+
+      await _updateUserModel(
+        name: user['name'],
+        avatar: user['avatar'],
+        about: user['about'],
+      );
+
+      update();
     } catch (_) {
-      // silent — no error shown to user
+      SnackbarService.error('Something went wrong');
     }
   }
-
   // -------------------------
-  // Manual refresh
+  // Manual Refresh
   // -------------------------
   Future<void> fetchProfile() async {
     _setLoading(true);
 
     try {
-      final response = await _network.getRequest(url: AppUrl.getMyProfile);
+      final res = await _network.getRequest(url: AppUrl.getMyProfile);
 
-      if (response.isSuccess && response.body != null) {
-        final user = response.body?['data']?['user'];
-        if (user == null) return;
-
-        userName = user['name'] ?? userName;
-        profileImageUrl = user['avatar'] ?? profileImageUrl;
-        update();
-
-        await _syncAuth();
-      } else {
+      if (!res.isSuccess || res.body == null) {
         SnackbarService.error(
-            response.errorMessage ?? 'Failed to load profile');
+          res.errorMessage ?? 'Failed to load profile',
+        );
+        return;
       }
+
+      final data = res.body?['data'];
+      final user = data?['user'];
+
+      if (user == null) {
+        SnackbarService.error('User not found');
+        return;
+      }
+
+      final statsJson = user['stats'];
+
+
+      // Update user
+
+      await _updateUserModel(
+        name: user['name'],
+        avatar: user['avatar'],
+        about: user['about'],
+      );
+
+
+      // Update stats
+
+      if (statsJson != null) {
+        stats = ProfileStats.fromJson(statsJson);
+      }
+
+      update();
     } catch (_) {
       SnackbarService.error('Something went wrong');
     } finally {
@@ -110,30 +138,33 @@ class ProfileController extends GetxController {
   // -------------------------
   Future<void> updateName(String value) async {
     final old = userName;
-    userName = value; // optimistic
+
+    // Optimistic update
+    await _updateUserModel(name: value);
     update();
 
     _setLoading(true);
 
     try {
-      final response = await _network.patchRequest(
+      final res = await _network.patchRequest(
         url: AppUrl.updateMyProfile,
         body: {'name': value},
       );
 
-      if (response.isSuccess) {
-        await _syncAuth(); // ✅ sync after update
+      if (res.isSuccess) {
         Get.back();
         SnackbarService.success(
-            response.body?['message'] ?? 'Updated successfully');
+          res.body?['message'] ?? 'Updated successfully',
+        );
       } else {
-        userName = old; // rollback
+        await _updateUserModel(name: old); // rollback
         update();
         SnackbarService.error(
-            response.errorMessage ?? 'Failed to update name');
+          res.errorMessage ?? 'Failed to update name',
+        );
       }
     } catch (_) {
-      userName = old;
+      await _updateUserModel(name: old); // rollback
       update();
       SnackbarService.error('Something went wrong');
     } finally {
@@ -146,7 +177,9 @@ class ProfileController extends GetxController {
   // -------------------------
   Future<void> updateAbout(String value) async {
     final old = about;
-    about = value; // optimistic
+
+    // Optimistic update
+    await _updateUserModel(about: value);
     update();
 
     _setLoading(true);
@@ -161,12 +194,14 @@ class ProfileController extends GetxController {
         Get.back();
         SnackbarService.success('About updated');
       } else {
-        about = old; // rollback
+        await _updateUserModel(about: old); // rollback
         update();
-        SnackbarService.error(res.errorMessage ?? 'Failed to update about');
+        SnackbarService.error(
+          res.errorMessage ?? 'Failed to update about',
+        );
       }
     } catch (_) {
-      about = old;
+      await _updateUserModel(about: old); // rollback
       update();
       SnackbarService.error('Something went wrong');
     } finally {
@@ -175,9 +210,13 @@ class ProfileController extends GetxController {
   }
 
   // -------------------------
-  // Update Image
+  // Update Profile Image
   // -------------------------
   Future<void> updateImage(File file) async {
+    // Local preview
+    profileImage = file;
+    update();
+
     _setLoading(true);
 
     try {
@@ -188,16 +227,24 @@ class ProfileController extends GetxController {
       );
 
       if (res.isSuccess) {
-        profileImage = file;
-        profileImageUrl = res.body?['data']?['user']?['avatar'];
+        final newAvatar = res.body?['data']?['user']?['avatar'];
+
+        await _updateUserModel(avatar: newAvatar);
+        profileImage = null; // clear temp after success
         update();
 
-        await _syncAuth(); // ✅ sync after image update
         SnackbarService.success('Profile image updated');
       } else {
-        SnackbarService.error(res.errorMessage ?? 'Upload failed');
+        profileImage = null; // rollback preview
+        update();
+
+        SnackbarService.error(
+          res.errorMessage ?? 'Upload failed',
+        );
       }
     } catch (_) {
+      profileImage = null;
+      update();
       SnackbarService.error('Something went wrong');
     } finally {
       _setLoading(false);

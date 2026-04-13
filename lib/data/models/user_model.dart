@@ -5,6 +5,7 @@ class UserModel {
   final String role;
   final String status;
   final String? avatar;
+  final String? about;
   final String? phone;
   final String? dateOfBirth;
   final String? zipCode;
@@ -23,6 +24,7 @@ class UserModel {
     this.zipCode,
     this.lastLoginAt,
     required this.createdAt,
+    this.about,
   });
 
   factory UserModel.fromJson(Map<String, dynamic> json) {
@@ -31,6 +33,7 @@ class UserModel {
       name: json['name'] ?? '',
       email: json['email'] ?? '',
       role: json['role'] ?? 'user',
+      about: json['about'] ?? " ",
       status: json['status'] ?? 'active',
       avatar: json['avatar'],
       phone: json['phone'],
@@ -54,6 +57,7 @@ class UserModel {
       'zipCode': zipCode,
       'lastLoginAt': lastLoginAt,
       'createdAt': createdAt,
+       "about" : about
     };
   }
 
@@ -65,6 +69,7 @@ class UserModel {
     String? role,
     String? status,
     String? avatar,
+    String? about,
     String? phone,
     String? dateOfBirth,
     String? zipCode,
@@ -78,6 +83,7 @@ class UserModel {
       role:        role        ?? this.role,
       status:      status      ?? this.status,
       avatar:      avatar      ?? this.avatar,
+      about:      about      ?? this.about,
       phone:       phone       ?? this.phone,
       dateOfBirth: dateOfBirth ?? this.dateOfBirth,
       zipCode:     zipCode     ?? this.zipCode,

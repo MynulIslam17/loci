@@ -17,9 +17,21 @@ class ProfileScreen extends StatelessWidget {
   final ProfileController controller = Get.find<ProfileController>();
 
   final List<Map<String, dynamic>> achievementData = [
-    {"icon": "assets/icons/calander.svg", "title": "Events"},
-    {"icon": "assets/icons/map.svg", "title": "Routes"},
-    {"icon": "assets/icons/rafel.svg", "title": "Raffles"},
+    {
+      "icon": "assets/icons/calander.svg",
+      "title": "Events",
+      "value": (ProfileController c) => c.stats?.eventsCheckedIn ?? 0,
+    },
+    {
+      "icon": "assets/icons/map.svg",
+      "title": "Routes",
+      "value": (ProfileController c) => c.stats?.routesCheckedIn ?? 0,
+    },
+    {
+      "icon": "assets/icons/rafel.svg",
+      "title": "Raffles",
+      "value": (ProfileController c) => c.stats?.rafflesWon ?? 0,
+    },
   ];
 
   @override
@@ -162,15 +174,19 @@ class ProfileScreen extends StatelessWidget {
 
                       const SizedBox(height: 10),
 
-                      Card(
-                        color: colorScheme.surfaceContainer,
-                        child: Padding(
-                          padding: const EdgeInsets.all(12),
-                          child: Text(
-                            c.about,
-                            textAlign: TextAlign.center,
-                            style: AppTextStyle.textXs(
-                              color: colorScheme.onSurfaceVariant,
+                      SizedBox(
+                        width: double.infinity,
+
+                        child: Card(
+                          color: colorScheme.surfaceContainer,
+                          child: Padding(
+                            padding: const EdgeInsets.all(12),
+                            child: Text(
+                              c.about,
+                              textAlign: TextAlign.center,
+                              style: AppTextStyle.textXs(
+                                color: colorScheme.onSurfaceVariant,
+                              ),
                             ),
                           ),
                         ),
@@ -179,27 +195,42 @@ class ProfileScreen extends StatelessWidget {
                       const SizedBox(height: 20),
 
                       // ================= ACHIEVEMENTS =================
-                      Row(
-                        children: achievementData.map((item) {
-                          return Expanded(
-                            child: Card(
-                              color: colorScheme.surfaceContainer,
-                              child: Padding(
-                                padding: const EdgeInsets.all(12),
-                                child: Column(
-                                  children: [
-                                    SvgPicture.asset(item["icon"], width: 24),
-                                    const SizedBox(height: 10),
-                                    const Text("0"),
-                                    const SizedBox(height: 10),
-                                    Text(item["title"]),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          );
-                        }).toList(),
+                      Align(
+                        alignment: Alignment.topLeft,
+                        child: Text(
+                          "Progress and achievements",
+                          style: AppTextStyle.textXl(
+                            color: colorScheme.primary,
+                          ),
+                        ),
                       ),
+
+                      const SizedBox(height: 10),
+
+                      Row(
+                        children: [
+                          _buildStatCard(
+                            "Events",
+                            "assets/icons/calander.svg",
+                            c.isLoading ? "_" : "${c.stats?.eventsCheckedIn ?? 0}",
+                            colorScheme,
+                          ),
+
+                          _buildStatCard(
+                            "Routes",
+                            "assets/icons/map.svg",
+                            c.isLoading ? "_": "${c.stats?.routesCheckedIn ?? 0}",
+                            colorScheme,
+                          ),
+
+                          _buildStatCard(
+                            "Raffles",
+                            "assets/icons/rafel.svg",
+                            c.isLoading ? "_": "${c.stats?.rafflesWon ?? 0}",
+                            colorScheme,
+                          ),
+                        ],
+                      )
                     ],
                   ),
                 ),
@@ -214,6 +245,36 @@ class ProfileScreen extends StatelessWidget {
             ],
           );
         },
+      ),
+    );
+  }
+
+  // ================= stats helper =================
+
+  Widget _buildStatCard(
+      String title,
+      String icon,
+      String value,
+      ColorScheme colorScheme,
+      ) {
+    return Expanded(
+      child: Padding(
+        padding: const EdgeInsets.all(4),
+        child: Card(
+          color: colorScheme.surfaceContainer,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 10),
+            child: Column(
+              children: [
+                SvgPicture.asset(icon, width: 24),
+                const SizedBox(height: 10),
+                Text(value), // now String safe
+                const SizedBox(height: 10),
+                Text(title),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }
@@ -254,47 +315,57 @@ class ProfileScreen extends StatelessWidget {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      builder: (_) {
-        return Padding(
-          padding: EdgeInsets.only(
-            bottom: MediaQuery.of(context).viewInsets.bottom + 20,
-            left: 16,
-            right: 16,
-            top: 16,
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                title,
-                style: const TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
+
+      builder: (BuildContext context) {
+        return SingleChildScrollView(
+          child: Padding(
+            padding: EdgeInsets.only(
+              bottom: MediaQuery.of(context).viewInsets.bottom + 20,
+              left: 16,
+              right: 16,
+              top: 16,
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  title,
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 10),
+                const SizedBox(height: 10),
 
-              CustomTextField(
-                controller: textController,
-                maxLine: maxLines,
-                hintText: hintText,
-              ),
+                CustomTextField(
+                  controller: textController,
+                  maxLine: maxLines,
+                  hintText: hintText,
+                ),
 
-              const SizedBox(height: 15),
+                const SizedBox(height: 15),
 
-              CustomButton(
-                text: "Save",
-                onPressed: () {
-                  onSave(textController.text.trim());
-                  Navigator.pop(context);
-                },
-              ),
+                CustomButton(
+                  text: "Save",
+                  onPressed: () {
+                    onSave(textController.text.trim());
+                    Navigator.pop(context);
+                  },
+                ),
 
-              const SizedBox(height: 10),
-            ],
+                const SizedBox(height: 10),
+              ],
+            ),
           ),
         );
       },
     );
   }
+
+
+
+
+
+
+
 }
