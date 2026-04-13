@@ -42,12 +42,18 @@ abstract class AppUrl {
   static const String checkIn="$baseUrl/checkins/scan";
 
 
+///-------business
+  static const String myBusiness="$baseUrl/businesses/me";
 
 
   ///--------------- profile
 
   static const String getMyProfile="$baseUrl/auth/me";
   static const String updateMyProfile="$baseUrl/users/me";
+
+
+
+
 
 
 

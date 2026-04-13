@@ -2,6 +2,7 @@ import 'package:get/get.dart';
 import 'package:loci/presentation/bindings/auth_bindings.dart';
 import 'package:loci/presentation/bindings/bottom_nav_binding.dart';
 import 'package:loci/presentation/bindings/event_bindings.dart';
+import 'package:loci/presentation/bindings/my_business_bindings.dart';
 import 'package:loci/presentation/bindings/routes_bindings.dart';
 import 'package:loci/presentation/pages/auth/forget_pass_screen.dart';
 import 'package:loci/presentation/pages/auth/login_screen.dart';
@@ -125,7 +126,7 @@ abstract class AppPages {
     GetPage(name: AppRoutes.rafflesDetails, page: () => RafflesDetailsScreen()),
 
     //---clam my business
-    GetPage(name: AppRoutes.searchBusiness, page: () => SearchMyBusiness()),
+    GetPage(name: AppRoutes.searchBusiness, page: () => SearchMyBusiness(),binding: MyBusinessBindings()),
     GetPage(name: AppRoutes.clamBusinessProfile, page: () => ClamMyBusiness()),
     GetPage(name: AppRoutes.myBusinessProfile, page: () => MyBusinessProfile()),
     GetPage(

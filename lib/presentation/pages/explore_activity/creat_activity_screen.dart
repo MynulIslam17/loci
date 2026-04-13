@@ -42,10 +42,12 @@ class _CreateActivityScreenState extends State<CreateActivityScreen> {
   List<TaskModel> tasks = [];
 
   List<String> createCategory = ActivityType.values.map((e) => e.name).toList();
-  List<String> routeCondition = ["Easy", "Medium", "Hard"];
+  List<String> routeCondition = ["Reservation", "Walk-in", "Reservation + Walk-in","Private Booking"];
+  List<String> myBusiness = ["Business 1", "Business 2", "Business 3 "];
 
   String? selectedCategory = ActivityType.Event.name;
   String? selectedRouteCondition;
+  String? selectedBusiness;
   bool isPublic = false;
 
   @override
@@ -315,26 +317,6 @@ class _CreateActivityScreenState extends State<CreateActivityScreen> {
           borderColor: context.colorScheme.outline,
           textColor: context.colorScheme.onSurface,
         ),
-        const SizedBox(height: 12),
-        Card(
-          color: context.colorScheme.surfaceContainerHigh,
-          child: Padding(
-            padding: const EdgeInsets.all(12),
-            child: Column(
-              children: [
-                ClipRRect(child: Image.asset(Assets.images.location.path)),
-                const SizedBox(height: 12),
-                CustomTextField(
-                  controller: urlController,
-                  title: "URL",
-                  hintText: "http://",
-                  borderColor: context.colorScheme.outline,
-                  textColor: context.colorScheme.onSurface,
-                ),
-              ],
-            ),
-          ),
-        ),
         const SizedBox(height: 16),
       ],
     );
@@ -355,6 +337,7 @@ class _CreateActivityScreenState extends State<CreateActivityScreen> {
               child: CustomTextField(
                 controller: timeTEController,
                 readOnly: true,
+                title: "Opening",
                 onTap: showTime,
                 hintText: "Select time",
                 suffixIcon: Icon(
@@ -374,6 +357,7 @@ class _CreateActivityScreenState extends State<CreateActivityScreen> {
                 hintColor: context.colorScheme.onSurfaceVariant,
                 textColor: context.colorScheme.onSurface,
                 hintText: "Route type",
+                title: "Availability types",
                 value: selectedRouteCondition,
                 items: routeCondition
                     .map(
@@ -534,12 +518,19 @@ class _CreateActivityScreenState extends State<CreateActivityScreen> {
       children: [
         _organizerToggle(),
         const SizedBox(height: 10),
-        CompanyInfoCard(
-          title: "Marland Clutch",
-          description:
-              "Lorem Ipsum is simply dummy text of the printing and typesetting industry...",
-          imagePath: Assets.images.companyLogo.path,
+
+        CustomDropdown(
+           value: selectedBusiness,
+            onChanged: (value) => setState(() => selectedBusiness = value),
+            hintText: "Select Business",
+            prefixIcon: Icon(Icons.work_outline_sharp),
+            items: myBusiness.map((item){
+              return DropdownMenuItem(value: item, child: Text(item));
+            }).toList()
+
         ),
+
+
         const SizedBox(height: 10),
         CustomButton(
           text: "Publish",
