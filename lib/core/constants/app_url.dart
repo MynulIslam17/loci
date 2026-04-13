@@ -26,6 +26,7 @@ abstract class AppUrl {
   static  String rsvpEvent(String eventId)=>"$baseUrl/events/$eventId/rsvp";
   static String eventDetails(String id)=>"$baseUrl/events/$id";
   static const String eventManualCheckIn="$baseUrl/events/check-in";
+  static const String createEvent="$baseUrl/events";
 
 
 

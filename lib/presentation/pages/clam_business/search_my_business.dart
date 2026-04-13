@@ -93,7 +93,7 @@ class _SearchMyBusinessState extends State<SearchMyBusiness> {
                     width: double.infinity,
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: colorScheme.primary.withOpacity(0.05), // Very light tint of your brand color
+                      color: colorScheme.primary.withOpacity(0.05),
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(
                         color: colorScheme.primary.withOpacity(0.2),
@@ -208,7 +208,7 @@ class _SearchMyBusinessState extends State<SearchMyBusiness> {
                }
 
                ///  CASE 3: Empty
-               if (controller.businesses.isEmpty) {
+               if (controller.businessList.isEmpty) {
                  return const Padding(
                    padding: EdgeInsets.only(top: 50),
                    child: Center(
@@ -230,14 +230,14 @@ class _SearchMyBusinessState extends State<SearchMyBusiness> {
             builder: (controller) {
 
               ///  Hide list if not valid
-              if (controller.isLoading || controller.businesses.isEmpty) {
+              if (controller.isLoading || controller.businessList.isEmpty) {
                 return const SliverToBoxAdapter(child: SizedBox());
               }
 
               return SliverList(
                 delegate: SliverChildBuilderDelegate(
                       (context, index) {
-                    final business = controller.businesses[index];
+                    final business = controller.businessList[index];
 
                     return _buildExpandableBusinessCard(
                       colorScheme: context.colorScheme,
@@ -254,7 +254,7 @@ class _SearchMyBusinessState extends State<SearchMyBusiness> {
                       },
                     );
                   },
-                  childCount: controller.businesses.length,
+                  childCount: controller.businessList.length,
                 ),
               );
             },

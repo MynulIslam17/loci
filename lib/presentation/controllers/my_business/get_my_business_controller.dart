@@ -12,7 +12,7 @@ class GetMyBusinessController extends GetxController {
   bool isBusinessOwner=false;
 
   bool isLoading = false;
-  List<BusinessModel> businesses = [];
+  List<BusinessModel> businessList = [];
 
   void _setLoading(bool value) {
     isLoading = value;
@@ -36,7 +36,7 @@ class GetMyBusinessController extends GetxController {
 
       final model = MyBusinessResponseModel.fromJson(response.body!);
 
-      businesses = model.data;
+      businessList = model.data;
     } catch (e) {
       SnackbarService.error("Something went wrong");
     } finally {

@@ -1,8 +1,15 @@
 import 'dart:io';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:get/get_core/src/get_main.dart';
+import 'package:get/get_instance/src/extension_instance.dart';
+import 'package:intl/intl.dart';
 import 'package:loci/core/constants/app_text_style.dart';
+import 'package:loci/core/constants/app_url.dart';
 import 'package:loci/core/theme/theme_extention.dart';
+import 'package:loci/presentation/controllers/my_business/create_actvity_controller.dart';
+import 'package:loci/presentation/controllers/my_business/get_my_business_controller.dart';
 import 'package:loci/presentation/widgets/custom_appbar.dart';
 import 'package:loci/presentation/widgets/custom_dropdown.dart';
 import 'package:loci/presentation/widgets/custom_image_container.dart';
@@ -12,6 +19,7 @@ import 'package:loci/presentation/widgets/task_card.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/activity_type.dart';
 import '../../../core/utils/date_parser.dart';
+import '../../../core/utils/show_snackbar.dart';
 import '../../../data/models/task_model.dart';
 import '../../../gen/assets.gen.dart';
 import '../../widgets/common/company_info_card.dart';
@@ -36,18 +44,28 @@ class _CreateActivityScreenState extends State<CreateActivityScreen> {
   final TextEditingController urlController = TextEditingController();
   final TextEditingController maxSupplyController = TextEditingController();
 
+  final myBusinessController = Get.find<GetMyBusinessController>();
+  final createActivityController = Get.find<CreateActivityController>();
+
+  final _formKey = GlobalKey<FormState>();
+  DateTime? selectedEventDate;
+
   File? bannerImage;
   File? coupon;
 
   List<TaskModel> tasks = [];
 
   List<String> createCategory = ActivityType.values.map((e) => e.name).toList();
-  List<String> routeCondition = ["Reservation", "Walk-in", "Reservation + Walk-in","Private Booking"];
-  List<String> myBusiness = ["Business 1", "Business 2", "Business 3 "];
+  List<String> routeCondition = [
+    "Reservation",
+    "Walk-in",
+    "Reservation + Walk-in",
+    "Private Booking",
+  ];
 
   String? selectedCategory = ActivityType.Event.name;
   String? selectedRouteCondition;
-  String? selectedBusiness;
+  String? selectedBusinessId;
   bool isPublic = false;
 
   @override
@@ -73,11 +91,30 @@ class _CreateActivityScreenState extends State<CreateActivityScreen> {
 
     if (pickedDate != null) {
       setState(() {
+        selectedEventDate = pickedDate;
         dateTEController.text = DateParserHelper.toFriendlyDate(pickedDate);
       });
     }
   }
+  String toUtcIso(DateTime date, String time) {
+    // time format: "6:00 PM" or "18:00"
+    try {
+      final format = DateFormat("h:mm a");
+      final parsedTime = format.parse(time);
 
+      final combined = DateTime(
+        date.year,
+        date.month,
+        date.day,
+        parsedTime.hour,
+        parsedTime.minute,
+      );
+
+      return combined.toUtc().toIso8601String(); // ✅ "2025-08-15T18:00:00.000Z"
+    } catch (_) {
+      return DateTime(date.year, date.month, date.day).toUtc().toIso8601String();
+    }
+  }
   void showTime() async {
     TimeOfDay? pickedTime = await showTimePicker(
       context: context,
@@ -141,22 +178,87 @@ class _CreateActivityScreenState extends State<CreateActivityScreen> {
     isPublic = false;
   }
 
+  void _publishHandler() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    if (bannerImage == null) {
+      SnackbarService.warning("Please select a banner image");
+      return;
+    }
+
+    // ✅ date null check
+    if (selectedCategory == ActivityType.Event.name && selectedEventDate == null) {
+      SnackbarService.warning("Please select event date");
+      return;
+    }
+
+    if (selectedCategory == ActivityType.Raffles.name) {
+      if (coupon == null) {
+        SnackbarService.warning("Please upload a voucher");
+        return;
+      }
+      if (tasks.isEmpty) {
+        SnackbarService.warning("Please add at least one requirement");
+        return;
+      }
+    }
+
+    final Map<String, String> body = {
+      "activityType": selectedCategory?.toLowerCase() ?? '',
+      "title": titleController.text.trim(),
+      "details": detailsController.text.trim(),
+      "isPublic": isPublic.toString(),
+      "organizerBusiness": selectedBusinessId ?? '',
+
+      if (selectedCategory == ActivityType.Event.name) ...{
+        "eventDate": toUtcIso(selectedEventDate!, timeTEController.text.trim()),
+        "eventTime": timeTEController.text.trim(),
+        "maxParticipants": personController.text.trim(),
+        "location": locationController.text.trim(),
+        "url": "https://maps.app.goo.gl/6dBDuYB1sg9K6KMZ9",
+      },
+
+      if (selectedCategory == ActivityType.Routes.name) ...{
+        "openingTime": timeTEController.text.trim(),
+        "availabilityType": selectedRouteCondition ?? '',
+      },
+
+      if (selectedCategory == ActivityType.Raffles.name) ...{
+        "dueDate": selectedEventDate != null
+            ? toUtcIso(selectedEventDate!, '')
+            : dateTEController.text.trim(),
+        "maxSupply": maxSupplyController.text.trim(),
+      },
+    };
+
+    final success = await createActivityController.createActivity(
+      url: AppUrl.createEvent,
+      body: body,
+      files: {"banner": bannerImage!},
+    );
+
+
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: context.colorScheme.surface,
       appBar: const CustomAppbar(title: "Create Activity"),
       body: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.all(12),
-          child: Column(
-            children: [
-              _bannerImagePicker(),
-              const SizedBox(height: 16),
-              _topFields(),
-              _middleField(),
-              _bottomFields(),
-            ],
+        child: Form(
+          key: _formKey,
+          child: Padding(
+            padding: const EdgeInsets.all(12),
+            child: Column(
+              children: [
+                _bannerImagePicker(),
+                const SizedBox(height: 16),
+                _topFields(),
+                _middleField(),
+                _bottomFields(),
+              ],
+            ),
           ),
         ),
       ),
@@ -221,6 +323,12 @@ class _CreateActivityScreenState extends State<CreateActivityScreen> {
           hintText: "Enter title",
           borderColor: colorScheme.outline,
           textColor: colorScheme.onSurface,
+          validator: (value) {
+            if (value == null || value.trim().isEmpty) {
+              return "Title is required";
+            }
+            return null;
+          },
         ),
         const SizedBox(height: 16),
         CustomTextField(
@@ -228,6 +336,12 @@ class _CreateActivityScreenState extends State<CreateActivityScreen> {
           title: "Details",
           hintText: "Enter details",
           maxLine: 5,
+          validator: (value) {
+            if (value == null || value.trim().isEmpty) {
+              return "Details are required";
+            }
+            return null;
+          },
           borderColor: colorScheme.outline,
           textColor: colorScheme.onSurface,
         ),
@@ -273,6 +387,12 @@ class _CreateActivityScreenState extends State<CreateActivityScreen> {
                 ),
                 borderColor: context.colorScheme.outline,
                 textColor: context.colorScheme.onSurface,
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return "required date";
+                  }
+                  return null;
+                },
               ),
             ),
             const SizedBox(width: 12),
@@ -289,6 +409,12 @@ class _CreateActivityScreenState extends State<CreateActivityScreen> {
                 ),
                 borderColor: context.colorScheme.outline,
                 textColor: context.colorScheme.onSurface,
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return "required time";
+                  }
+                  return null;
+                },
               ),
             ),
             const SizedBox(width: 12),
@@ -302,6 +428,12 @@ class _CreateActivityScreenState extends State<CreateActivityScreen> {
                   size: 18,
                   color: context.colorScheme.onSurfaceVariant,
                 ),
+                validator: (value) {
+                  if (value == null || value.trim().isEmpty) {
+                    return "Person is required";
+                  }
+                  return null;
+                },
                 borderColor: context.colorScheme.outline,
                 textColor: context.colorScheme.onSurface,
               ),
@@ -316,6 +448,12 @@ class _CreateActivityScreenState extends State<CreateActivityScreen> {
           prefixIcon: const Icon(Icons.location_on),
           borderColor: context.colorScheme.outline,
           textColor: context.colorScheme.onSurface,
+          validator: (value) {
+            if (value == null || value.trim().isEmpty) {
+              return "Location is required";
+            }
+            return null;
+          },
         ),
         const SizedBox(height: 16),
       ],
@@ -340,6 +478,12 @@ class _CreateActivityScreenState extends State<CreateActivityScreen> {
                 title: "Opening",
                 onTap: showTime,
                 hintText: "Select time",
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return "Please select availability type";
+                  }
+                  return null;
+                },
                 suffixIcon: Icon(
                   Icons.access_time,
                   size: 18,
@@ -358,6 +502,12 @@ class _CreateActivityScreenState extends State<CreateActivityScreen> {
                 textColor: context.colorScheme.onSurface,
                 hintText: "Route type",
                 title: "Availability types",
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return "Please select availability type";
+                  }
+                  return null;
+                },
                 value: selectedRouteCondition,
                 items: routeCondition
                     .map(
@@ -396,6 +546,12 @@ class _CreateActivityScreenState extends State<CreateActivityScreen> {
                 ),
                 borderColor: context.colorScheme.outline,
                 textColor: context.colorScheme.onSurface,
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return "required date";
+                  }
+                  return null;
+                },
               ),
             ),
             const SizedBox(width: 12),
@@ -413,6 +569,12 @@ class _CreateActivityScreenState extends State<CreateActivityScreen> {
                 ),
                 borderColor: context.colorScheme.outline,
                 textColor: context.colorScheme.onSurface,
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return "required supply";
+                  }
+                  return null;
+                },
               ),
             ),
           ],
@@ -519,25 +681,39 @@ class _CreateActivityScreenState extends State<CreateActivityScreen> {
         _organizerToggle(),
         const SizedBox(height: 10),
 
-        CustomDropdown(
-           value: selectedBusiness,
-            onChanged: (value) => setState(() => selectedBusiness = value),
-            hintText: "Select Business",
-            prefixIcon: Icon(Icons.work_outline_sharp),
-            items: myBusiness.map((item){
-              return DropdownMenuItem(value: item, child: Text(item));
-            }).toList()
+        myBusinessController.businessList.isEmpty
+            ? Text("No business found")
+            : CustomDropdown(
+                value: selectedBusinessId,
+                onChanged: (value) =>
+                    setState(() => selectedBusinessId = value),
+                hintText: "Select Business",
+                prefixIcon: Icon(Icons.work_outline_sharp),
+                items: myBusinessController.businessList.map((business) {
+                  return DropdownMenuItem(
+                    value: business.id,
+                    child: Text(business.name),
+                  );
+                }).toList(),
 
-        ),
-
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return "Select Business";
+                  }
+                  return null;
+                },
+              ),
 
         const SizedBox(height: 10),
-        CustomButton(
-          text: "Publish",
-          backgroundColor: context.colorScheme.primary,
-          textColor: context.colorScheme.onPrimary,
-          onPressed: () {},
-        ),
+        GetBuilder<CreateActivityController>(builder: (controller){
+          return  CustomButton(
+            isLoading: controller.isLoading,
+            text: "Publish",
+            backgroundColor: context.colorScheme.primary,
+            textColor: context.colorScheme.onPrimary,
+            onPressed: _publishHandler,
+          );
+        })
       ],
     );
   }
@@ -572,7 +748,6 @@ class _CreateActivityScreenState extends State<CreateActivityScreen> {
       ),
     );
   }
-
 
   void _showBottomSheet() {
     final colorScheme = context.colorScheme;
