@@ -9,6 +9,7 @@ import 'package:loci/presentation/widgets/custom_imagepicker.dart';
 import 'package:loci/presentation/widgets/custom_dropdown.dart';
 
 import '../../../core/utils/date_parser.dart';
+import '../../../core/utils/time_parser.dart';
 import '../../../gen/assets.gen.dart';
 import '../../widgets/common/company_info_card.dart';
 import '../../widgets/custom_button.dart';
@@ -73,11 +74,19 @@ class _EditRoutesScreenState extends State<EditRoutesScreen> {
     TimeOfDay? pickedTime = await showTimePicker(
       context: context,
       initialTime: TimeOfDay.now(),
+      builder: (BuildContext context, Widget? child) {
+        return MediaQuery(
+          data: MediaQuery.of(context).copyWith(
+            alwaysUse24HourFormat: false,
+          ),
+          child: child!,
+        );
+      },
     );
 
     if (pickedTime != null) {
       setState(() {
-        timeTEController.text = pickedTime.format(context);
+        timeTEController.text = formatTime(pickedTime);
       });
     }
   }

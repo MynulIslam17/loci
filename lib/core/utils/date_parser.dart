@@ -143,4 +143,47 @@ class DateParserHelper {
     if (month == null || day == null || year == null) return null;
     return DateTime(year, month, day);
   }
+
+
+  /// ✅ Convert ISO string to display format "DD/MM/YYYY"
+  static String isoToDisplay(String? isoString) {
+    if (isoString == null || isoString.isEmpty) return 'N/A';
+
+    try {
+      final date = DateTime.parse(isoString);
+      return toDisplayDate(date); // reuse your existing method
+    } catch (_) {
+      return 'N/A';
+    }
+  }
+
+
+
+  /// ✅ Format to "Mon, Jan 19 at 2:50 PM"
+  static String eventDateTime(DateTime? dateTime) {
+    if (dateTime == null) return 'N/A';
+
+    final days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+    final months = [
+      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+    ];
+
+    /// Weekday (DateTime.weekday starts from 1 = Monday)
+    String day = days[dateTime.weekday - 1];
+
+    /// Month
+    String month = months[dateTime.month - 1];
+
+    /// Time convert to 12-hour format
+    int hour = dateTime.hour % 12 == 0 ? 12 : dateTime.hour % 12;
+    String minute = dateTime.minute.toString().padLeft(2, '0');
+    String period = dateTime.hour >= 12 ? 'PM' : 'AM';
+
+    return "$day, $month ${dateTime.day} at $hour:$minute $period";
+  }
+
+
+
+
 }

@@ -97,7 +97,7 @@ class SnackbarService {
     _show(
       title: title,
       message: message,
-      backgroundColor: AppColors.base50,
+      backgroundColor: Colors.orange,
       icon: Icons.warning,
     );
   }

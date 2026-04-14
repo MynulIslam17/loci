@@ -15,45 +15,50 @@ dependencies:
   flutter_screenutil: ^5.9.3
   google_fonts: ^8.0.1
   flutter_svg: ^2.2.3
+  sliding_up_panel: ^2.0.0+1
+  carousel_slider: ^5.0.0
+  percent_indicator: ^4.2.3
+  flutter_rating_bar: ^4.0.1
+  shimmer: ^3.0.0
+  cached_network_image: ^3.3.1
 
-  # State Management & Logic
+  # State Management & Navigation
   get: ^4.6.5
+  go_router: ^17.1.0
 
-  # Form & Input Components
+  # Storage
+  shared_preferences: ^2.5.5
+  get_storage: ^2.1.1
+
+  # Form & Input
   pinput: ^6.0.1
   intl_phone_field: ^3.2.0
   image_picker: ^1.2.1
   file_picker: ^10.3.10
 
-  # Generators
-  flutter_gen: ^5.12.0
-  shimmer: ^3.0.0
-  cached_network_image: ^3.3.1
-  sliding_up_panel: ^2.0.0+1
-  #slider banner
-  carousel_slider: ^5.0.0
-   #percentage bar
-  percent_indicator: ^4.2.3
-  #review*rating
-  flutter_rating_bar: ^4.0.1
-  #barcode scanner
+  # Scanner & Hardware
   mobile_scanner: ^7.1.2
   vibration: ^2.0.0
+  qr_flutter: ^4.0.0 #genarate qr code
+  #qr code download
+  screenshot: ^3.0.0
+  permission_handler: ^11.3.1
+  gal: ^2.3.0
 
-  #nested navigation
-  go_router: ^17.1.0
-
-  #store for small file
-  get_storage: ^2.1.1
-
+  # Calendar
   table_calendar: ^3.2.0
 
+  # Utils
+  logger: ^2.7.0
+  intl: ^0.20.2
+
+  # Code Generation
+  flutter_gen: ^5.12.0
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^6.0.0
-
   build_runner: ^2.4.0
   flutter_gen_runner: ^5.12.0
 

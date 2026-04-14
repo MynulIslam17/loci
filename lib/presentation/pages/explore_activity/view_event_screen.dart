@@ -9,6 +9,7 @@ import 'package:loci/presentation/widgets/custom_image_container.dart';
 import 'package:loci/routes/app_routes.dart';
 
 import '../../../gen/assets.gen.dart';
+import '../../widgets/qrcode_maker.dart';
 import '../event/widgets/event_card.dart'; // Assuming IconTextRow is here
 
 class ViewEventScreen extends StatefulWidget {
@@ -19,8 +20,6 @@ class ViewEventScreen extends StatefulWidget {
 }
 
 class _ViewEventScreenState extends State<ViewEventScreen> {
-
-
   late String title;
 
   @override
@@ -35,11 +34,22 @@ class _ViewEventScreenState extends State<ViewEventScreen> {
     }
   }
 
+  //----- to show qr code
+  _qrCodeDownloadHandler() {
+    CustomQrCode.show(
+      context,
+      data:
+          "eyJlbnRpdHlUeXBlIjoiZXZlbnQiLCJlbnRpdHlJZCI6IjY5ZDlkZDY5Y2UwNDE2Mjk5YTkwYzRiZiIsImlzc3VlZEF0IjoxNzc1ODg1NjczNDg1fQ.e73ecb2f79afbf1a8e724d16240080077b003edff3892a537351e0e199909fa8",
+      title: "Event Check-In Code",
+      subtitle:  "Spring Pub Crawl Festival",
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    final colorScheme=context.colorScheme;
+    final colorScheme = context.colorScheme;
     return Scaffold(
-      appBar:CustomAppbar(title: title),
+      appBar: CustomAppbar(title: title),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(12),
         child: Column(
@@ -62,7 +72,9 @@ class _ViewEventScreenState extends State<ViewEventScreen> {
             const SizedBox(height: 8),
             Text(
               "Join us for the biggest pub crawl of the season! Visit 8 amazing bars in downtown and enjoy the night of your life...",
-              style: AppTextStyle.textXs(color: context.colorScheme.onSurfaceVariant),
+              style: AppTextStyle.textXs(
+                color: context.colorScheme.onSurfaceVariant,
+              ),
             ),
             const SizedBox(height: 16),
 
@@ -71,7 +83,7 @@ class _ViewEventScreenState extends State<ViewEventScreen> {
               icon: Icons.calendar_today_outlined,
               text: "Mon, Jan 19 at 2:50 PM",
               iconColor: context.colorScheme.primary,
-              textColor:colorScheme.onSurface ,
+              textColor: colorScheme.onSurface,
             ),
             const SizedBox(height: 8),
             IconTextRow(
@@ -98,11 +110,10 @@ class _ViewEventScreenState extends State<ViewEventScreen> {
                     count: "0",
                     label: "Total RSVP",
                     onTap: () {
-
-                      Get.toNamed(AppRoutes.viewTotalRSVP,arguments: {
-                        "title":"Total RSVP"
-                      });
-                      
+                      Get.toNamed(
+                        AppRoutes.viewTotalRSVP,
+                        arguments: {"title": "Total RSVP"},
+                      );
                     },
                   ),
                 ),
@@ -113,9 +124,10 @@ class _ViewEventScreenState extends State<ViewEventScreen> {
                     count: "0",
                     label: "Check-Ins",
                     onTap: () {
-                      Get.toNamed(AppRoutes.viewTotalCheckIn,arguments: {
-                        "title":"Total Checkin"
-                      });
+                      Get.toNamed(
+                        AppRoutes.viewTotalCheckIn,
+                        arguments: {"title": "Total Checkin"},
+                      );
                     },
                   ),
                 ),
@@ -125,16 +137,23 @@ class _ViewEventScreenState extends State<ViewEventScreen> {
 
             // --- Download QR Button ---
             CustomButton(
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(Icons.qr_code, color: context.colorScheme.onPrimary),
-                    const SizedBox(width: 8),
-                    Text("Download QR code",style: AppTextStyle.textMd(color: colorScheme.onPrimary,weight: FontWeight.w500),)
-                  ],
-                ),
               //icon: Icons.qr_code_scanner,
-              onPressed: () {},
+              onPressed: _qrCodeDownloadHandler,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+
+                children: [
+                  Icon(Icons.qr_code, color: context.colorScheme.onPrimary),
+                  const SizedBox(width: 8),
+                  Text(
+                    "View QR code",
+                    style: AppTextStyle.textMd(
+                      color: colorScheme.onPrimary,
+                      weight: FontWeight.w500,
+                    ),
+                  ),
+                ],
+              ),
             ),
             const SizedBox(height: 16),
 
@@ -143,7 +162,9 @@ class _ViewEventScreenState extends State<ViewEventScreen> {
               elevation: 0,
               margin: EdgeInsets.zero,
               color: context.colorScheme.surfaceContainerHigh,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
               child: Padding(
                 padding: const EdgeInsets.all(12),
                 child: ClipRRect(
@@ -169,14 +190,15 @@ class _ViewEventScreenState extends State<ViewEventScreen> {
               elevation: 2,
               margin: EdgeInsets.zero,
               color: context.colorScheme.surfaceContainerHigh,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
               child: Padding(
                 padding: const EdgeInsets.all(12),
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.center,
 
                   children: [
-
                     CustomCachedImage(
                       width: 90,
                       height: 90,
@@ -198,7 +220,9 @@ class _ViewEventScreenState extends State<ViewEventScreen> {
                           const SizedBox(height: 4),
                           Text(
                             "Lorem Ipsum is simply dummy text of the printing and typesetting industry.",
-                            style: AppTextStyle.textXs(color: context.colorScheme.onSurfaceVariant),
+                            style: AppTextStyle.textXs(
+                              color: context.colorScheme.onSurfaceVariant,
+                            ),
                             maxLines: 3,
                             overflow: TextOverflow.ellipsis,
                           ),
@@ -215,7 +239,12 @@ class _ViewEventScreenState extends State<ViewEventScreen> {
     );
   }
 
-  Widget _buildStatCard({required IconData icon, required String count, required String label,required VoidCallback onTap}) {
+  Widget _buildStatCard({
+    required IconData icon,
+    required String count,
+    required String label,
+    required VoidCallback onTap,
+  }) {
     return Card(
       elevation: 2,
       color: context.colorScheme.surfaceContainerHigh,
@@ -230,11 +259,20 @@ class _ViewEventScreenState extends State<ViewEventScreen> {
                 children: [
                   Icon(icon, size: 24, color: context.colorScheme.onSurface),
                   const SizedBox(width: 8),
-                  Text(count, style: AppTextStyle.textLg(weight: FontWeight.w700)),
+                  Text(
+                    count,
+                    style: AppTextStyle.textLg(weight: FontWeight.w700),
+                  ),
                 ],
               ),
               const SizedBox(height: 4),
-              Text(label, style: AppTextStyle.textXs(color: context.colorScheme.onSurface,weight: FontWeight.w600)),
+              Text(
+                label,
+                style: AppTextStyle.textXs(
+                  color: context.colorScheme.onSurface,
+                  weight: FontWeight.w600,
+                ),
+              ),
             ],
           ),
         ),

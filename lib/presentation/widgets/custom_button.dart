@@ -44,7 +44,7 @@ class CustomButton extends StatelessWidget {
           backgroundColor: backgroundColor ?? context.colorScheme.primary,
           foregroundColor: textColor ?? Colors.white,
           elevation: 0,
-          disabledBackgroundColor: (backgroundColor ?? const Color(0xFFDB2424)).withOpacity(0.6),
+          disabledBackgroundColor: Colors.grey,
           side: side,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(borderRadius ?? 12),

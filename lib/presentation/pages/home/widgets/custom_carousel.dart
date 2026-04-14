@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:loci/core/constants/app_text_style.dart';
 import 'package:loci/core/theme/app_colors.dart';
 import 'package:loci/core/theme/theme_extention.dart';
-import 'package:loci/data/carousel_data.dart';
+import 'package:loci/data/models/carousel_data.dart';
 
 class CustomCarousel extends StatefulWidget {
   final List<CarouselData> carouselData;

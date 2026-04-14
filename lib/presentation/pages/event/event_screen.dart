@@ -1,12 +1,13 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:get/get_core/src/get_main.dart';
 import 'package:loci/core/constants/app_text_style.dart';
 import 'package:loci/core/theme/theme_extention.dart';
+import 'package:loci/core/utils/show_snackbar.dart';
+import 'package:loci/presentation/controllers/event/rsvp_controller.dart';
 import 'package:loci/presentation/widgets/custom_text_field.dart';
 import 'package:loci/routes/app_routes.dart';
-
+import '../../../core/enums/rsvp_status.dart';
+import '../../controllers/event/event_list_controller.dart';
 import 'widgets/event_card.dart';
 
 class EventScreen extends StatefulWidget {
@@ -17,75 +18,212 @@ class EventScreen extends StatefulWidget {
 }
 
 class _EventScreenState extends State<EventScreen> {
+  //----get x controller
+  final eventController = Get.find<EventListController>();
+  final rsvpController = Get.find<RSVPController>();
+
+  //---scroll controller for pagination loader
+  final ScrollController _scrollController = ScrollController();
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController.addListener(() {
+      if (_scrollController.position.pixels >=
+          _scrollController.position.maxScrollExtent - 200) {
+        eventController.loadMoreEvents();
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  //------ event details screen
+  void _eventOnTapHandler(String eventId,String eventTitle) {
+  
+    Get.toNamed(AppRoutes.eventDetails, arguments: {
+      'eventId': eventId,
+       "eventTitle": eventTitle
+
+    });
+  }
+
+  //------ Rsvp  handle
+  void _rsvpOnTapHandler(String eventId)async {
+
+    //call the api to change rsvp status
+    bool success=await rsvpController.sendRSVP(eventId: eventId,  status: RsvpStatus.going.toJson,);
+
+    if(success){
+      eventController.updateRsvpStatus(eventId, RsvpStatus.going);
+      SnackbarService.success(rsvpController.successMessage!);
+    }else{
+      SnackbarService.error(rsvpController.errorMessage!);
+    }
+  
+    
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: SafeArea(
-        child: SingleChildScrollView(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 12),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                CustomTextField(
-                  borderColor: context.colorScheme.outline,
-                  hintText: "Search Event",
-                  hintTextColor: context.colorScheme.onSurfaceVariant,
-                  textColor: context.colorScheme.onSurface,
-                  suffixIcon: Icon(
-                    Icons.search,
-                    color: context.colorScheme.onSurfaceVariant,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 12),
+          child: GetBuilder<EventListController>(
+            builder: (controller) {
+              // Loading sate
+              if (controller.isLoading) {
+                return const Center(child: CircularProgressIndicator());
+              }
+
+              // Error state
+              if (controller.errorMessage != null &&
+                  controller.eventList.isEmpty) {
+                return Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.error_outline,
+                        size: 48,
+                        color: context.colorScheme.error,
+                      ),
+                      const SizedBox(height: 12),
+                      Text(
+                        controller.errorMessage!,
+                        style: AppTextStyle.textSm(
+                          color: context.colorScheme.error,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 16),
+                      TextButton(
+                        onPressed: () => controller.fetchEvents(),
+                        child: const Text("Try Again"),
+                      ),
+                    ],
                   ),
-                ),
+                );
+              }
 
-                const SizedBox(height: 16),
-
-                Text(
-                  "Upcoming Events",
-                  style: AppTextStyle.textXl(
-                    color: context.colorScheme.onSurface,
-                    weight: FontWeight.w700,
+              // Empty
+              if (controller.eventList.isEmpty) {
+                return Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.event_busy,
+                        size: 48,
+                        color: context.colorScheme.onSurfaceVariant,
+                      ),
+                      const SizedBox(height: 12),
+                      Text(
+                        "No upcoming events",
+                        style: AppTextStyle.textSm(
+                          color: context.colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                    ],
                   ),
+                );
+              }
+
+              //  Search + Header + List will scroll together
+              return RefreshIndicator(
+                onRefresh: () => controller.fetchEvents(isRefresh: true),
+                child: CustomScrollView(
+                  controller: _scrollController,
+                  slivers: [
+                    // Search + Header
+                    SliverToBoxAdapter(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          CustomTextField(
+                            borderColor: context.colorScheme.outline,
+                            hintText: "Search Event",
+                            hintTextColor: context.colorScheme.onSurfaceVariant,
+                            textColor: context.colorScheme.onSurface,
+                            suffixIcon: Icon(
+                              Icons.search,
+                              color: context.colorScheme.onSurfaceVariant,
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          Text(
+                            "Upcoming Events",
+                            style: AppTextStyle.textXl(
+                              color: context.colorScheme.onSurface,
+                              weight: FontWeight.w700,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            "RSVP to the events which you interested",
+                            style: AppTextStyle.textSm(
+                              color: context.colorScheme.onSurface,
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                        ],
+                      ),
+                    ),
+
+                    // Event List
+                    SliverList(
+                      delegate: SliverChildBuilderDelegate(
+                        (context, index) {
+                          // Pagination loader
+                          if (index == controller.eventList.length) {
+                            return const Padding(
+                              padding: EdgeInsets.symmetric(vertical: 16),
+                              child: Center(child: CircularProgressIndicator()),
+                            );
+                          }
+
+                          //get single event from data
+                          final event = controller.eventList[index];
+
+                          return Padding(
+                            padding: const EdgeInsets.only(bottom: 6),
+                            child: GetBuilder<RSVPController>(builder: (rsvpController){
+
+                              // check if button loading
+                              bool isThisButtonLoading=rsvpController.isLoading && event.id ==rsvpController.loadingEventId;
+
+                              return EventCard(
+                                rsvpButtonText: event.myRsvpStatus.label,//send string rsvp status
+                                onTapCard: () => _eventOnTapHandler(event.id,event.title),
+                                imageUrl: event.coverImage,
+                                title: event.title,
+                                description: event.description,
+                                date: event.date,
+                                location: event.location,
+                                attendance:
+                                "${event.goingCount} going / ${event.maxAttendees} max",
+                                organizer: event.organizerName,
+                                onRSVP: () => _rsvpOnTapHandler(event.id),
+                                isLoading: isThisButtonLoading,
+                              );
+
+                            })
+                          );
+                        },
+                        childCount:
+                            controller.eventList.length +
+                            (controller.isPaginationLoading ? 1 : 0),
+                      ),
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 8),
-                Text(
-                  "RSVP to the events which you interested",
-                  style: AppTextStyle.textSm(
-                    color: context.colorScheme.onSurface,
-                  ),
-                ),
-                const SizedBox(height: 16),
-
-                //-- Event card ---
-                ListView.separated(
-                  shrinkWrap: true,
-                  physics: NeverScrollableScrollPhysics(),
-                  itemCount: 3,
-                  itemBuilder: (context, index) {
-                    return EventCard(
-                      imageUrl: "assets/images/finedine.png",
-                      title: "Spring Pub Crawl Festival",
-                      description:
-                          "Join us for the biggest pub crawl of the season! Visit 8 amazing bars...",
-                      date: "Mon, Jan 19 at 2:50 PM",
-                      location: "Downtown District",
-                      attendance: "0 going / 200 max",
-                      organizer: "Crawl Events Co.",
-                      onRSVP: () {
-                        Get.toNamed(AppRoutes.eventDetails);
-                      },
-                    );
-                  },
-                  separatorBuilder: (BuildContext context, int index) {
-                    return const SizedBox(height: 6);
-                  },
-
-
-
-
-                ),
-              ],
-            ),
+              );
+            },
           ),
         ),
       ),

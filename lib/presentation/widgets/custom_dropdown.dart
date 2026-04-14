@@ -58,7 +58,7 @@ class CustomDropdown<T> extends StatelessWidget {
               fontWeight: FontWeight.w500
             ),
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: 10),
         ],
 
         DropdownButtonFormField<T>(

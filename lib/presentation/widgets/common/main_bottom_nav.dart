@@ -5,6 +5,7 @@ import 'package:flutter_svg/svg.dart';
 import 'package:get/get.dart';
 import 'package:loci/core/constants/app_text_style.dart';
 import 'package:loci/core/theme/theme_extention.dart';
+import 'package:loci/presentation/controllers/auth/auth_controller.dart';
 import 'package:loci/presentation/controllers/nav_controller.dart';
 import 'package:loci/presentation/pages/explore_routes/explore_routes_screen.dart';
 import 'package:loci/presentation/pages/raffles/active_raffles_screen.dart';
@@ -377,7 +378,10 @@ class _MainBottomNavState extends State<MainBottomNav> {
         break;
 
       case "Explore Routes":
-        navController.openDrawerPage(ExploreRoutesScreen());
+        navController.openDrawerPage(
+          ExploreRoutesScreen(),
+          navigatorKey: ExploreRoutesScreen.navigatorKey,
+        );
         break;
 
       case "Active Raffles":
@@ -414,6 +418,10 @@ class _MainBottomNavState extends State<MainBottomNav> {
       case "Subscription":
         Get.toNamed(AppRoutes.subscription);
         break;
+
+      case "Sign Out":
+        Get.find<AuthController>().logout();
+        break;
     }
   }
 
@@ -423,10 +431,7 @@ class _MainBottomNavState extends State<MainBottomNav> {
       case "search":
         // TODO: open search screen
 
-        showSearch(
-            context: context,
-            delegate: MySearchDelegate()
-        );
+        showSearch(context: context, delegate: MySearchDelegate());
 
         break;
 

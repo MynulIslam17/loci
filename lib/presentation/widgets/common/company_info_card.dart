@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:loci/presentation/widgets/custom_image_container.dart';
 
 class CompanyInfoCard extends StatelessWidget {
   final String title;
@@ -38,14 +39,14 @@ class CompanyInfoCard extends StatelessWidget {
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(10),
-                  child: Image.asset(
-                    imagePath,
-                    width: 60,
-                    height: 60,
-                    fit: BoxFit.cover,
-                  ),
+
+                CustomCachedImage(
+                  imageUrl: imagePath,
+                  width: 60,
+                  height: 60,
+                  fit: BoxFit.cover,
+                  borderRadius: 10,
+
                 ),
 
                 const SizedBox(width: 16),

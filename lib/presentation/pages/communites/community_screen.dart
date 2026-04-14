@@ -14,8 +14,8 @@ import 'package:loci/presentation/widgets/custom_image_container.dart';
 import 'package:loci/presentation/pages/clam_business/widgets/review_card.dart';
 import 'package:loci/routes/app_routes.dart';
 import '../../../core/theme/theme_extention.dart';
-import '../../../data/mock_data.dart';
-import '../../../data/poll.dart';
+import '../../../data/models/mock_data.dart';
+import '../../../data/models/poll.dart';
 import '../../../gen/assets.gen.dart';
 import '../../widgets/common/post_comment_section.dart';
 import '../../widgets/custom_text_field.dart';
@@ -387,8 +387,8 @@ class _CommunityScreenState extends State<CommunityScreen>
                       description:
                           "Join us for the biggest pub crawl of the season! Visit 8 amazing bars in downtown and enjoy the night of your life, also there are special guest will participate too",
                       location: "",
-                      duration: "222",
-                      difficulty: "easy",
+                      openingTime: "222",
+                      availabilityType: "easy",
                       imageUrl: "assets/images/finedine.png",
                     )
                   : CommunityNoticeCard(

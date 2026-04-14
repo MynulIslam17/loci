@@ -8,8 +8,8 @@ class RouteCard extends StatelessWidget {
   final String title;
   final String description;
   final String location;
-  final String duration;
-  final String difficulty;
+  final String openingTime;
+  final String availabilityType;
   final String imageUrl;
   final VoidCallback? onTap;
 
@@ -18,8 +18,8 @@ class RouteCard extends StatelessWidget {
     required this.title,
     required this.description,
     required this.location,
-    required this.duration,
-    required this.difficulty,
+    required this.openingTime,
+    required this.availabilityType,
     required this.imageUrl,
     this.onTap,
   });
@@ -73,20 +73,26 @@ class RouteCard extends StatelessWidget {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      _buildInfoItem(
-                        context,
-                        Icons.location_on_outlined,
-                        location,
+                      Expanded(
+                        child: _buildInfoItem(
+                          context,
+                          Icons.location_on_outlined,
+                          location,
+                        ),
                       ),
-                      _buildInfoItem(
-                        context,
-                        Icons.access_time,
-                        duration,
+                      Expanded(
+                        child: _buildInfoItem(
+                          context,
+                          Icons.access_time,
+                          openingTime,
+                        ),
                       ),
-                      _buildInfoItem(
-                        context,
-                        Icons.explore_outlined,
-                        difficulty,
+                      Expanded(
+                        child: _buildInfoItem(
+                          context,
+                          Icons.explore_outlined,
+                          availabilityType,
+                        ),
                       ),
                     ],
                   ),
@@ -107,10 +113,13 @@ class RouteCard extends StatelessWidget {
       children: [
         Icon(icon, size: 14, color: colorScheme.primary),
         const SizedBox(width: 4),
-        Text(
-          label,
-          style: AppTextStyle.textXs(
-            color: colorScheme.onSurfaceVariant,
+        Expanded(
+          child: Text(
+            label,
+            style: AppTextStyle.textXs(
+              color: colorScheme.onSurfaceVariant,
+            ),
+            overflow: TextOverflow.ellipsis,
           ),
         ),
       ],

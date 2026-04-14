@@ -10,6 +10,7 @@ import 'package:loci/presentation/widgets/custom_text_field.dart';
 import 'package:loci/routes/app_routes.dart';
 
 import '../../../core/theme/app_colors.dart';
+import '../../controllers/my_business/get_my_business_controller.dart';
 
 class SearchMyBusiness extends StatefulWidget {
   const SearchMyBusiness({super.key});
@@ -19,6 +20,9 @@ class SearchMyBusiness extends StatefulWidget {
 }
 
 class _SearchMyBusinessState extends State<SearchMyBusiness> {
+
+  final myBusinessController=Get.find<GetMyBusinessController>();
+
   final List<String> categoryList = ["food", "entertainment", "tourism"];
 
   String? selectedCategory;
@@ -89,7 +93,7 @@ class _SearchMyBusinessState extends State<SearchMyBusiness> {
                     width: double.infinity,
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: colorScheme.primary.withOpacity(0.05), // Very light tint of your brand color
+                      color: colorScheme.primary.withOpacity(0.05),
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(
                         color: colorScheme.primary.withOpacity(0.2),
@@ -177,25 +181,83 @@ class _SearchMyBusinessState extends State<SearchMyBusiness> {
             ),
           ),
 
-          // --- Business List ---
-          SliverList(
-            delegate: SliverChildBuilderDelegate(
-                  (context, index) => _buildExpandableBusinessCard(
-                colorScheme: colorScheme,
-                index: index,
-                isExpanded: _expandedIndex == index,
-                businessName: "Marland Clutch $index",
-                imagePath: "assets/images/company_logo.png",
-                description:
-                "Marland Clutch, founded in 1931, is a prominent global manufacturer...",
-                onViewPage: () {
-                  //--- go to my business page
-                  Get.toNamed(AppRoutes.myBusinessProfile);
+          /// ---------------- STATE HANDLING ----------------
 
-                },
-              ),
-              childCount: 5,
-            ),
+           SliverToBoxAdapter(
+             child: GetBuilder<GetMyBusinessController>(builder: (controller){
+
+
+               ///  CASE 1: Not business owner
+               if (!controller.isBusinessOwner) {
+                 return const Padding(
+                   padding: EdgeInsets.only(top: 50),
+                   child: Center(
+                     child: Text("You are not a business owner"),
+                   ),
+                 );
+               }
+
+               ///  CASE 2: Loading
+               if (controller.isLoading) {
+                 return const Padding(
+                   padding: EdgeInsets.only(top: 50),
+                   child: Center(
+                     child: CircularProgressIndicator(),
+                   ),
+                 );
+               }
+
+               ///  CASE 3: Empty
+               if (controller.businessList.isEmpty) {
+                 return const Padding(
+                   padding: EdgeInsets.only(top: 50),
+                   child: Center(
+                     child: Text("No business claimed yet"),
+                   ),
+                 );
+               }
+
+               /// CASE 4: Show list below
+               return const SizedBox.shrink();
+
+
+
+             }),
+           ),
+
+          // --- Business List ---
+          GetBuilder<GetMyBusinessController>(
+            builder: (controller) {
+
+              ///  Hide list if not valid
+              if (controller.isLoading || controller.businessList.isEmpty) {
+                return const SliverToBoxAdapter(child: SizedBox());
+              }
+
+              return SliverList(
+                delegate: SliverChildBuilderDelegate(
+                      (context, index) {
+                    final business = controller.businessList[index];
+
+                    return _buildExpandableBusinessCard(
+                      colorScheme: context.colorScheme,
+                      index: index,
+                      isExpanded: _expandedIndex == index,
+                      businessName: business.name ?? "",
+                      imagePath: business.logo ?? "",
+                      description: business.description ?? "",
+                      onViewPage: () {
+                        Get.toNamed(
+                          AppRoutes.myBusinessProfile,
+                          arguments: business,
+                        );
+                      },
+                    );
+                  },
+                  childCount: controller.businessList.length,
+                ),
+              );
+            },
           ),
         ],
       ),
