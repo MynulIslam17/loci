@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 
 String formatTime(TimeOfDay time) {
   int hour = time.hour;
@@ -13,4 +14,17 @@ String formatTime(TimeOfDay time) {
   }
 
   return "$hour:${minute.toString().padLeft(2, '0')} $period";
+}
+
+
+String combineToUtcIso(DateTime date, TimeOfDay time) {
+  final combined = DateTime(
+    date.year,
+    date.month,
+    date.day,
+    time.hour,
+    time.minute,
+  );
+
+  return combined.toUtc().toIso8601String();
 }

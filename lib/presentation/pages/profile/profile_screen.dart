@@ -16,23 +16,7 @@ class ProfileScreen extends StatelessWidget {
 
   final ProfileController controller = Get.find<ProfileController>();
 
-  final List<Map<String, dynamic>> achievementData = [
-    {
-      "icon": "assets/icons/calander.svg",
-      "title": "Events",
-      "value": (ProfileController c) => c.stats?.eventsCheckedIn ?? 0,
-    },
-    {
-      "icon": "assets/icons/map.svg",
-      "title": "Routes",
-      "value": (ProfileController c) => c.stats?.routesCheckedIn ?? 0,
-    },
-    {
-      "icon": "assets/icons/rafel.svg",
-      "title": "Raffles",
-      "value": (ProfileController c) => c.stats?.rafflesWon ?? 0,
-    },
-  ];
+
 
   @override
   Widget build(BuildContext context) {

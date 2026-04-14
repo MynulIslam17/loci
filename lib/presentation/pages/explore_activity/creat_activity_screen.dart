@@ -16,10 +16,12 @@ import 'package:loci/presentation/widgets/custom_image_container.dart';
 import 'package:loci/presentation/widgets/custom_imagepicker.dart';
 import 'package:loci/presentation/widgets/custom_rich_text.dart';
 import 'package:loci/presentation/widgets/task_card.dart';
+import '../../../core/enums/routeType.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/activity_type.dart';
 import '../../../core/utils/date_parser.dart';
 import '../../../core/utils/show_snackbar.dart';
+import '../../../core/utils/time_parser.dart';
 import '../../../data/models/task_model.dart';
 import '../../../gen/assets.gen.dart';
 import '../../widgets/common/company_info_card.dart';
@@ -48,7 +50,9 @@ class _CreateActivityScreenState extends State<CreateActivityScreen> {
   final createActivityController = Get.find<CreateActivityController>();
 
   final _formKey = GlobalKey<FormState>();
-  DateTime? selectedEventDate;
+
+  DateTime? selectedDate;
+  TimeOfDay? selectedTime;
 
   File? bannerImage;
   File? coupon;
@@ -56,15 +60,10 @@ class _CreateActivityScreenState extends State<CreateActivityScreen> {
   List<TaskModel> tasks = [];
 
   List<String> createCategory = ActivityType.values.map((e) => e.name).toList();
-  List<String> routeCondition = [
-    "Reservation",
-    "Walk-in",
-    "Reservation + Walk-in",
-    "Private Booking",
-  ];
+
 
   String? selectedCategory = ActivityType.Event.name;
-  String? selectedRouteCondition;
+  RouteType? selectedRouteCondition;
   String? selectedBusinessId;
   bool isPublic = false;
 
@@ -91,30 +90,12 @@ class _CreateActivityScreenState extends State<CreateActivityScreen> {
 
     if (pickedDate != null) {
       setState(() {
-        selectedEventDate = pickedDate;
+        selectedDate = pickedDate;
         dateTEController.text = DateParserHelper.toFriendlyDate(pickedDate);
       });
     }
   }
-  String toUtcIso(DateTime date, String time) {
-    // time format: "6:00 PM" or "18:00"
-    try {
-      final format = DateFormat("h:mm a");
-      final parsedTime = format.parse(time);
 
-      final combined = DateTime(
-        date.year,
-        date.month,
-        date.day,
-        parsedTime.hour,
-        parsedTime.minute,
-      );
-
-      return combined.toUtc().toIso8601String(); // ✅ "2025-08-15T18:00:00.000Z"
-    } catch (_) {
-      return DateTime(date.year, date.month, date.day).toUtc().toIso8601String();
-    }
-  }
   void showTime() async {
     TimeOfDay? pickedTime = await showTimePicker(
       context: context,
@@ -123,6 +104,7 @@ class _CreateActivityScreenState extends State<CreateActivityScreen> {
 
     if (pickedTime != null) {
       setState(() {
+        selectedTime = pickedTime;
         timeTEController.text = pickedTime.format(context);
       });
     }
@@ -186,12 +168,19 @@ class _CreateActivityScreenState extends State<CreateActivityScreen> {
       return;
     }
 
-    // ✅ date null check
-    if (selectedCategory == ActivityType.Event.name && selectedEventDate == null) {
-      SnackbarService.warning("Please select event date");
-      return;
+    // EVENT validation
+    if (selectedCategory == ActivityType.Event.name) {
+      if (selectedDate == null) {
+        SnackbarService.warning("Please select event date");
+        return;
+      }
+      if (selectedTime == null) {
+        SnackbarService.warning("Please select event time");
+        return;
+      }
     }
 
+    // RAFFLE validation
     if (selectedCategory == ActivityType.Raffles.name) {
       if (coupon == null) {
         SnackbarService.warning("Please upload a voucher");
@@ -203,39 +192,75 @@ class _CreateActivityScreenState extends State<CreateActivityScreen> {
       }
     }
 
+    // ROUTE validation
+    if (selectedCategory == ActivityType.Routes.name) {
+      if (selectedTime == null) {
+        SnackbarService.warning("Please select opening time");
+        return;
+      }
+      if (selectedRouteCondition == null) {
+        SnackbarService.warning("Please select route type");
+        return;
+      }
+    }
+
+    /// =========================
+    /// BUILD BODY (CLEAN & SAFE)
+    /// =========================
     final Map<String, String> body = {
       "activityType": selectedCategory?.toLowerCase() ?? '',
       "title": titleController.text.trim(),
       "details": detailsController.text.trim(),
       "isPublic": isPublic.toString(),
       "organizerBusiness": selectedBusinessId ?? '',
-
-      if (selectedCategory == ActivityType.Event.name) ...{
-        "eventDate": toUtcIso(selectedEventDate!, timeTEController.text.trim()),
-        "eventTime": timeTEController.text.trim(),
-        "maxParticipants": personController.text.trim(),
-        "location": locationController.text.trim(),
-        "url": "https://maps.app.goo.gl/6dBDuYB1sg9K6KMZ9",
-      },
-
-      if (selectedCategory == ActivityType.Routes.name) ...{
-        "openingTime": timeTEController.text.trim(),
-        "availabilityType": selectedRouteCondition ?? '',
-      },
-
-      if (selectedCategory == ActivityType.Raffles.name) ...{
-        "dueDate": selectedEventDate != null
-            ? toUtcIso(selectedEventDate!, '')
-            : dateTEController.text.trim(),
-        "maxSupply": maxSupplyController.text.trim(),
-      },
     };
 
+    /// EVENT payload
+    if (selectedCategory == ActivityType.Event.name) {
+      body.addAll({
+        "eventDate": combineToUtcIso(selectedDate!, selectedTime!),
+        "eventTime": selectedTime!.format(context),
+        "maxParticipants": personController.text.trim(),
+        "location": locationController.text.trim(),
+        "url": urlController.text.trim(),
+      });
+    }
+
+    /// ROUTE payload
+    if (selectedCategory == ActivityType.Routes.name) {
+      body.addAll({
+        "openingTime": selectedTime!.format(context),
+        "availabilityType": selectedRouteCondition?.apiValue ?? '',
+        "location": locationController.text.trim(),
+        "url": urlController.text.trim(),
+      });
+    }
+
+    /// RAFFLE payload
+    if (selectedCategory == ActivityType.Raffles.name) {
+      body.addAll({
+        "dueDate": selectedDate!.toUtc().toIso8601String(),
+        "maxSupply": maxSupplyController.text.trim(),
+      });
+    }
+
+    /// =========================
+    /// API CALL
+    /// =========================
     final success = await createActivityController.createActivity(
       url: AppUrl.createEvent,
       body: body,
-      files: {"banner": bannerImage!},
+      files: {"banner": bannerImage!, if (coupon != null) "coupon": coupon!},
     );
+
+    if (success) {
+      Get.back();
+      SnackbarService.success(createActivityController.message);
+
+
+    } else {
+      SnackbarService.error(createActivityController.message);
+    }
 
 
   }
@@ -326,6 +351,9 @@ class _CreateActivityScreenState extends State<CreateActivityScreen> {
           validator: (value) {
             if (value == null || value.trim().isEmpty) {
               return "Title is required";
+            }
+            if(value.length<3){
+              return "Title should be at least 3 characters";
             }
             return null;
           },
@@ -441,21 +469,6 @@ class _CreateActivityScreenState extends State<CreateActivityScreen> {
           ],
         ),
         const SizedBox(height: 12),
-        CustomTextField(
-          controller: locationController,
-          title: "Location",
-          hintText: "Enter location",
-          prefixIcon: const Icon(Icons.location_on),
-          borderColor: context.colorScheme.outline,
-          textColor: context.colorScheme.onSurface,
-          validator: (value) {
-            if (value == null || value.trim().isEmpty) {
-              return "Location is required";
-            }
-            return null;
-          },
-        ),
-        const SizedBox(height: 16),
       ],
     );
   }
@@ -480,7 +493,7 @@ class _CreateActivityScreenState extends State<CreateActivityScreen> {
                 hintText: "Select time",
                 validator: (value) {
                   if (value == null || value.isEmpty) {
-                    return "Please select availability type";
+                    return "Required opening time";
                   }
                   return null;
                 },
@@ -496,27 +509,24 @@ class _CreateActivityScreenState extends State<CreateActivityScreen> {
             const SizedBox(width: 12),
             Expanded(
               child: CustomDropdown(
-                dropdownColor: context.colorScheme.surfaceContainerHigh,
-                borderColor: context.colorScheme.outline,
-                hintColor: context.colorScheme.onSurfaceVariant,
-                textColor: context.colorScheme.onSurface,
-                hintText: "Route type",
                 title: "Availability types",
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return "Please select availability type";
-                  }
-                  return null;
+                value: selectedRouteCondition?.label,
+                hintText: "Route type",
+
+                items: RouteType.values.map((type) {
+                  return DropdownMenuItem(
+                    value: type.label,
+                    child: Text(type.label),
+                  );
+                }).toList(),
+
+                onChanged: (value) {
+                  setState(() {
+                    selectedRouteCondition = RouteType.values.firstWhere(
+                          (e) => e.label == value,
+                    );
+                  });
                 },
-                value: selectedRouteCondition,
-                items: routeCondition
-                    .map(
-                      (item) =>
-                          DropdownMenuItem(value: item, child: Text(item)),
-                    )
-                    .toList(),
-                onChanged: (value) =>
-                    setState(() => selectedRouteCondition = value),
               ),
             ),
           ],
@@ -678,6 +688,40 @@ class _CreateActivityScreenState extends State<CreateActivityScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        if (selectedCategory != ActivityType.Raffles.name) ...[
+          CustomTextField(
+            controller: locationController,
+            title: "Location",
+            hintText: "Enter location",
+            prefixIcon: const Icon(Icons.location_on),
+            borderColor: context.colorScheme.outline,
+            textColor: context.colorScheme.onSurface,
+            validator: (value) {
+              if (value == null || value.trim().isEmpty) {
+                return "Location is required";
+              }
+              return null;
+            },
+          ),
+          const SizedBox(height: 16),
+
+          CustomTextField(
+            controller: urlController,
+            title: "Location Url",
+            hintText: "Enter url",
+            prefixIcon: const Icon(Icons.location_disabled),
+            borderColor: context.colorScheme.outline,
+            textColor: context.colorScheme.onSurface,
+            validator: (value) {
+              if (value == null || value.trim().isEmpty) {
+                return "Location url is required";
+              }
+              return null;
+            },
+          ),
+          const SizedBox(height: 16),
+        ],
+
         _organizerToggle(),
         const SizedBox(height: 10),
 
@@ -705,15 +749,17 @@ class _CreateActivityScreenState extends State<CreateActivityScreen> {
               ),
 
         const SizedBox(height: 10),
-        GetBuilder<CreateActivityController>(builder: (controller){
-          return  CustomButton(
-            isLoading: controller.isLoading,
-            text: "Publish",
-            backgroundColor: context.colorScheme.primary,
-            textColor: context.colorScheme.onPrimary,
-            onPressed: _publishHandler,
-          );
-        })
+        GetBuilder<CreateActivityController>(
+          builder: (controller) {
+            return CustomButton(
+              isLoading: controller.isLoading,
+              text: "Publish",
+              backgroundColor: context.colorScheme.primary,
+              textColor: context.colorScheme.onPrimary,
+              onPressed: _publishHandler,
+            );
+          },
+        ),
       ],
     );
   }
