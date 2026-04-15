@@ -4,27 +4,22 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get/get_core/src/get_main.dart';
 import 'package:get/get_instance/src/extension_instance.dart';
-import 'package:intl/intl.dart';
 import 'package:loci/core/constants/app_text_style.dart';
 import 'package:loci/core/constants/app_url.dart';
 import 'package:loci/core/theme/theme_extention.dart';
+import 'package:loci/core/utils/acitvity_validator.dart';
 import 'package:loci/presentation/controllers/my_business/create_actvity_controller.dart';
-import 'package:loci/presentation/controllers/my_business/get_my_business_controller.dart';
+import 'package:loci/presentation/controllers/my_business/get_my_business_list _controller.dart';
 import 'package:loci/presentation/widgets/custom_appbar.dart';
 import 'package:loci/presentation/widgets/custom_dropdown.dart';
-import 'package:loci/presentation/widgets/custom_image_container.dart';
 import 'package:loci/presentation/widgets/custom_imagepicker.dart';
-import 'package:loci/presentation/widgets/custom_rich_text.dart';
 import 'package:loci/presentation/widgets/task_card.dart';
 import '../../../core/enums/routeType.dart';
-import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/activity_type.dart';
 import '../../../core/utils/date_parser.dart';
 import '../../../core/utils/show_snackbar.dart';
 import '../../../core/utils/time_parser.dart';
 import '../../../data/models/task_model.dart';
-import '../../../gen/assets.gen.dart';
-import '../../widgets/common/company_info_card.dart';
 import 'widgets/coupon_card.dart';
 import '../../widgets/custom_button.dart';
 import '../../widgets/custom_text_field.dart';
@@ -60,7 +55,6 @@ class _CreateActivityScreenState extends State<CreateActivityScreen> {
   List<TaskModel> tasks = [];
 
   List<String> createCategory = ActivityType.values.map((e) => e.name).toList();
-
 
   String? selectedCategory = ActivityType.Event.name;
   RouteType? selectedRouteCondition;
@@ -100,6 +94,14 @@ class _CreateActivityScreenState extends State<CreateActivityScreen> {
     TimeOfDay? pickedTime = await showTimePicker(
       context: context,
       initialTime: TimeOfDay.now(),
+      builder: (context, child) {
+        return MediaQuery(
+          data: MediaQuery.of(context).copyWith(
+            alwaysUse24HourFormat: false,
+          ),
+          child: child!,
+        );
+      },
     );
 
     if (pickedTime != null) {
@@ -160,49 +162,138 @@ class _CreateActivityScreenState extends State<CreateActivityScreen> {
     isPublic = false;
   }
 
+  // void _publishHandler() async {
+  //   if (!_formKey.currentState!.validate()) return;
+  //
+  //   if (bannerImage == null) {
+  //     SnackbarService.warning("Please select a banner image");
+  //     return;
+  //   }
+  //
+  //   // EVENT validation
+  //   if (selectedCategory == ActivityType.Event.name) {
+  //     if (selectedDate == null) {
+  //       SnackbarService.warning("Please select event date");
+  //       return;
+  //     }
+  //     if (selectedTime == null) {
+  //       SnackbarService.warning("Please select event time");
+  //       return;
+  //     }
+  //   }
+  //
+  //   // RAFFLE validation
+  //   if (selectedCategory == ActivityType.Raffles.name) {
+  //     if (coupon == null) {
+  //       SnackbarService.warning("Please upload a voucher");
+  //       return;
+  //     }
+  //     if (tasks.isEmpty) {
+  //       SnackbarService.warning("Please add at least one requirement");
+  //       return;
+  //     }
+  //   }
+  //
+  //   // ROUTE validation
+  //   if (selectedCategory == ActivityType.Routes.name) {
+  //     if (selectedTime == null) {
+  //       SnackbarService.warning("Please select opening time");
+  //       return;
+  //     }
+  //     if (selectedRouteCondition == null) {
+  //       SnackbarService.warning("Please select route type");
+  //       return;
+  //     }
+  //   }
+  //
+  //   /// =========================
+  //   /// BUILD BODY (CLEAN & SAFE)
+  //   /// =========================
+  //   final Map<String, String> body = {
+  //     "activityType": selectedCategory?.toLowerCase() ?? '',
+  //     "title": titleController.text.trim(),
+  //     "details": detailsController.text.trim(),
+  //     "isPublic": isPublic.toString(),
+  //     "organizerBusiness": selectedBusinessId ?? '',
+  //   };
+  //
+  //   /// EVENT payload
+  //   if (selectedCategory == ActivityType.Event.name) {
+  //     body.addAll({
+  //       "eventDate": combineToUtcIso(selectedDate!, selectedTime!),
+  //       "eventTime": selectedTime!.format(context),
+  //       "maxParticipants": personController.text.trim(),
+  //       "location": locationController.text.trim(),
+  //       "url": urlController.text.trim(),
+  //     });
+  //   }
+  //
+  //   /// ROUTE payload
+  //   if (selectedCategory == ActivityType.Routes.name) {
+  //     body.addAll({
+  //       "openingTime": selectedTime!.format(context),
+  //       "availabilityType": selectedRouteCondition?.apiValue ?? '',
+  //       "location": locationController.text.trim(),
+  //       "url": urlController.text.trim(),
+  //     });
+  //   }
+  //
+  //   /// RAFFLE payload
+  //   if (selectedCategory == ActivityType.Raffles.name) {
+  //     body.addAll({
+  //       "dueDate": selectedDate!.toUtc().toIso8601String(),
+  //       "maxSupply": maxSupplyController.text.trim(),
+  //     });
+  //   }
+  //
+  //   /// =========================
+  //   /// API CALL
+  //   /// =========================
+  //
+  //    final String url=selectedCategory==ActivityType.Event.name
+  //        ?AppUrl.createEvent
+  //        : selectedCategory==ActivityType.Routes.name
+  //         ? AppUrl.createRoute
+  //         :  AppUrl.createRaffle;
+  //
+  //   final success = await createActivityController.createActivity(
+  //     url: url,
+  //     body: body,
+  //     files: {"banner": bannerImage!, if (coupon != null) "coupon": coupon!},
+  //   );
+  //
+  //   if (success) {
+  //     Get.back();
+  //     SnackbarService.success(createActivityController.message);
+  //   } else {
+  //     SnackbarService.error(createActivityController.message);
+  //   }
+  // }
+  
   void _publishHandler() async {
-    if (!_formKey.currentState!.validate()) return;
 
-    if (bannerImage == null) {
-      SnackbarService.warning("Please select a banner image");
+    final error = ActivityValidator.validateAll(
+      formKey: _formKey,
+      bannerPath: bannerImage?.path,
+      category: selectedCategory!,
+
+      date: selectedDate,
+      time: selectedTime,
+      routeType: selectedRouteCondition,
+
+      hasCoupon: coupon != null,
+      hasTasks: tasks.isNotEmpty,
+    );
+
+    if (error != null) {
+      if (error != "FORM_INVALID") {
+        SnackbarService.warning(error);
+      }
       return;
     }
+    
+    
 
-    // EVENT validation
-    if (selectedCategory == ActivityType.Event.name) {
-      if (selectedDate == null) {
-        SnackbarService.warning("Please select event date");
-        return;
-      }
-      if (selectedTime == null) {
-        SnackbarService.warning("Please select event time");
-        return;
-      }
-    }
-
-    // RAFFLE validation
-    if (selectedCategory == ActivityType.Raffles.name) {
-      if (coupon == null) {
-        SnackbarService.warning("Please upload a voucher");
-        return;
-      }
-      if (tasks.isEmpty) {
-        SnackbarService.warning("Please add at least one requirement");
-        return;
-      }
-    }
-
-    // ROUTE validation
-    if (selectedCategory == ActivityType.Routes.name) {
-      if (selectedTime == null) {
-        SnackbarService.warning("Please select opening time");
-        return;
-      }
-      if (selectedRouteCondition == null) {
-        SnackbarService.warning("Please select route type");
-        return;
-      }
-    }
 
     /// =========================
     /// BUILD BODY (CLEAN & SAFE)
@@ -247,8 +338,15 @@ class _CreateActivityScreenState extends State<CreateActivityScreen> {
     /// =========================
     /// API CALL
     /// =========================
+
+     final String url=selectedCategory==ActivityType.Event.name
+         ?AppUrl.createEvent
+         : selectedCategory==ActivityType.Routes.name
+          ? AppUrl.createRoute
+          :  AppUrl.createRaffle;
+
     final success = await createActivityController.createActivity(
-      url: AppUrl.createEvent,
+      url: url,
       body: body,
       files: {"banner": bannerImage!, if (coupon != null) "coupon": coupon!},
     );
@@ -256,13 +354,9 @@ class _CreateActivityScreenState extends State<CreateActivityScreen> {
     if (success) {
       Get.back();
       SnackbarService.success(createActivityController.message);
-
-
     } else {
       SnackbarService.error(createActivityController.message);
     }
-
-
   }
 
   @override
@@ -352,7 +446,7 @@ class _CreateActivityScreenState extends State<CreateActivityScreen> {
             if (value == null || value.trim().isEmpty) {
               return "Title is required";
             }
-            if(value.length<3){
+            if (value.length < 3) {
               return "Title should be at least 3 characters";
             }
             return null;
@@ -508,25 +602,32 @@ class _CreateActivityScreenState extends State<CreateActivityScreen> {
             ),
             const SizedBox(width: 12),
             Expanded(
-              child: CustomDropdown(
-                title: "Availability types",
-                value: selectedRouteCondition?.label,
-                hintText: "Route type",
+              child:Expanded(
+                child: CustomDropdown<RouteType>(
+                  title: "Availability types",
+                  value: selectedRouteCondition,
+                  hintText: "Route type",
 
-                items: RouteType.values.map((type) {
-                  return DropdownMenuItem(
-                    value: type.label,
-                    child: Text(type.label),
-                  );
-                }).toList(),
-
-                onChanged: (value) {
-                  setState(() {
-                    selectedRouteCondition = RouteType.values.firstWhere(
-                          (e) => e.label == value,
+                  items: RouteType.values.map((type) {
+                    return DropdownMenuItem<RouteType>(
+                      value: type,
+                      child: Text(type.label),
                     );
-                  });
-                },
+                  }).toList(),
+
+                  onChanged: (value) {
+                    setState(() {
+                      selectedRouteCondition = value;
+                    });
+                  },
+
+                  validator: (value) {
+                    if (value == null) {
+                      return "Required Availability type";
+                    }
+                    return null;
+                  },
+                ),
               ),
             ),
           ],

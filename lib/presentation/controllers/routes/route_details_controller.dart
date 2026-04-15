@@ -61,7 +61,6 @@ class RouteDetailsController extends GetxController {
     if(_routeDetails == null) return;
 
     _routeDetails = _routeDetails!.copyWith( myCheckInStatus: status);
-    print("update=>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
 
     update();
 

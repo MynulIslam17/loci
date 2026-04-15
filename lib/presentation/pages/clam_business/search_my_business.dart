@@ -2,6 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:loci/core/constants/app_text_style.dart';
+import 'package:loci/core/enums/category_enum.dart';
 import 'package:loci/core/theme/theme_extention.dart';
 import 'package:loci/presentation/widgets/custom_button.dart';
 import 'package:loci/presentation/widgets/custom_dropdown.dart';
@@ -10,7 +11,7 @@ import 'package:loci/presentation/widgets/custom_text_field.dart';
 import 'package:loci/routes/app_routes.dart';
 
 import '../../../core/theme/app_colors.dart';
-import '../../controllers/my_business/get_my_business_controller.dart';
+import '../../controllers/my_business/get_my_business_list _controller.dart';
 
 class SearchMyBusiness extends StatefulWidget {
   const SearchMyBusiness({super.key});
@@ -23,9 +24,9 @@ class _SearchMyBusinessState extends State<SearchMyBusiness> {
 
   final myBusinessController=Get.find<GetMyBusinessController>();
 
-  final List<String> categoryList = ["food", "entertainment", "tourism"];
 
-  String? selectedCategory;
+
+  BusinessCategory? selectedCategory;
   int? _expandedIndex;
 
   @override
@@ -149,7 +150,7 @@ class _SearchMyBusinessState extends State<SearchMyBusiness> {
                     width: 200,
                     child: Card(
                       color: colorScheme.surfaceContainerHigh,
-                      child: CustomDropdown(
+                      child: CustomDropdown<BusinessCategory>(
                         dropdownColor: colorScheme.surfaceContainerHigh,
                         value: selectedCategory,
                         borderColor: colorScheme.outline,
@@ -158,16 +159,16 @@ class _SearchMyBusinessState extends State<SearchMyBusiness> {
                         hintFontSize: 14,
                         hintColor: colorScheme.onSurfaceVariant,
                         textColor: colorScheme.onSurface,
-                        onChanged: (value) {
+                        onChanged: (BusinessCategory? value) {
                           setState(() {
                             selectedCategory = value;
                           });
                         },
-                        items: categoryList
+                        items: BusinessCategory.values
                             .map(
-                              (item) => DropdownMenuItem(
-                            value: item,
-                            child: Text(item),
+                              (category) => DropdownMenuItem<BusinessCategory>(
+                            value: category,
+                            child: Text(category.label),
                           ),
                         )
                             .toList(),
@@ -249,7 +250,11 @@ class _SearchMyBusinessState extends State<SearchMyBusiness> {
                       onViewPage: () {
                         Get.toNamed(
                           AppRoutes.myBusinessProfile,
-                          arguments: business,
+                          arguments: {
+                            "businessId" : business.id,
+                             "businessName" : business.name
+                          },
+
                         );
                       },
                     );

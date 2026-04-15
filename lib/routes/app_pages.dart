@@ -128,7 +128,7 @@ abstract class AppPages {
     //---clam my business
     GetPage(name: AppRoutes.searchBusiness, page: () => SearchMyBusiness(),binding: MyBusinessBindings()),
     GetPage(name: AppRoutes.clamBusinessProfile, page: () => ClamMyBusiness()),
-    GetPage(name: AppRoutes.myBusinessProfile, page: () => MyBusinessProfile()),
+    GetPage(name: AppRoutes.myBusinessProfile, page: () => MyBusinessProfile(),binding: MyBusinessBindings()),
     GetPage(
       name: AppRoutes.manualClaimBusiness,
       page: () => ManualClaimBusiness(),

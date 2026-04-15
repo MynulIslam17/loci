@@ -26,7 +26,7 @@ abstract class AppUrl {
   static  String rsvpEvent(String eventId)=>"$baseUrl/events/$eventId/rsvp";
   static String eventDetails(String id)=>"$baseUrl/events/$id";
   static const String eventManualCheckIn="$baseUrl/events/check-in";
-  static const String createEvent="$baseUrl/routes";
+  static const String createEvent="$baseUrl/events";
 
 
 
@@ -34,9 +34,10 @@ abstract class AppUrl {
   static const String routeList="$baseUrl/routes";
   static  String routeDetails(String routeId)=>"$baseUrl/routes/$routeId";
   static  String routeManualCheckIn="$baseUrl/routes/check-in";
+  static const String createRoute="$baseUrl/routes";
 
   ///-------------raffle--------------------------------
-
+  static const String createRaffle="$baseUrl/raffles";
 
 
   ///-----check_in----------------
@@ -45,6 +46,11 @@ abstract class AppUrl {
 
 ///-------business
   static const String myBusiness="$baseUrl/businesses/me";
+  static  String businessProfile(String businessId)=>"$baseUrl/businesses/$businessId";
+  static  String updateBusinessProfile(String businessId)=>"$baseUrl/businesses/$businessId";
+
+
+
 
 
   ///--------------- profile

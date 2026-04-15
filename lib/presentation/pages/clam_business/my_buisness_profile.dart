@@ -1,20 +1,23 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:get/get_core/src/get_main.dart';
 import 'package:get/get_navigation/src/extension_navigation.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:loci/core/enums/category_enum.dart';
 import 'package:loci/core/theme/theme_extention.dart';
+import 'package:loci/presentation/controllers/my_business/my_business_profile_controller.dart';
 import 'package:loci/presentation/widgets/custom_button.dart';
 import 'package:loci/presentation/pages/clam_business/widgets/review_card.dart';
+import 'package:loci/presentation/widgets/custom_text_field.dart';
 import 'package:loci/routes/app_routes.dart';
-
 import '../../../core/constants/app_text_style.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../data/models/busniess/business_profile_model.dart';
 import '../../widgets/custom_appbar.dart';
 import '../../widgets/custom_image_container.dart';
-import '../../widgets/custom_imagepicker.dart';
 import '../home/widgets/post_input_filed.dart';
-
+import 'package:intl_phone_field/intl_phone_field.dart';
 
 class MyBusinessProfile extends StatefulWidget {
   const MyBusinessProfile({super.key});
@@ -26,12 +29,28 @@ class MyBusinessProfile extends StatefulWidget {
 class _MyBusinessProfileState extends State<MyBusinessProfile> {
   File? _profileImage;
   final List<File> _photos = [];
-  final Color primaryTeal = const Color(0xFF64BDB1);
 
-  final List<String> _apiPhotos = [
-    "https://picsum.photos/seed/1/400/300",
-    "https://picsum.photos/seed/2/400/300",
-  ];
+  final GlobalKey<FormState> _businessFormKey = GlobalKey<FormState>();
+  final GlobalKey<FormState> _descriptionFormKey = GlobalKey<FormState>();
+
+  late final String businessId;
+
+  final profileController = Get.find<MyBusinessProfileController>();
+
+
+
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+
+    final args = Get.arguments;
+    businessId = (args is Map && args['businessId'] != null)
+        ? args['businessId']
+        : '';
+
+    profileController.fetchBusinessProfile(businessId);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -39,172 +58,250 @@ class _MyBusinessProfileState extends State<MyBusinessProfile> {
 
     return Scaffold(
       backgroundColor: colorScheme.surface,
-      appBar: CustomAppbar(title:  "Business profile",),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(horizontal: 20),
-        child: Column(
-          children: [
-            _buildProfileHeader(),
-            const SizedBox(height: 20),
-            _buildDescriptionCard(context),
-            const SizedBox(height: 25),
-            _buildSectionHeader("Photos"),
-            _buildPhotoGrid(),
-            const SizedBox(height: 25),
-            _buildSectionHeader("Advertisements"),
-            _buildPollCreator(),
-            const SizedBox(height: 12),
-            CustomButton(
-              text: "Explore Activities",
-              backgroundColor: colorScheme.primary,
-              onPressed: () {
-                //--go to explore activity
-                Get.toNamed(AppRoutes.exploreActivity);
+      appBar: CustomAppbar(title: "Business profile"),
+      body: RefreshIndicator(
+        onRefresh: () async {
+         await profileController.refreshBusinessProfile(businessId);
+        },
+        child: GetBuilder<MyBusinessProfileController>(
+          builder: (controller) {
+            if (controller.isLoading) {
+              return Center(child: CircularProgressIndicator());
+            }
 
-              },
-              textStyle: AppTextStyle.textSm(
-                weight: FontWeight.w600,
-                color: colorScheme.onPrimary,
-              ),
-            ),
-            const SizedBox(height: 25),
-            _buildSectionHeader("Hero Ads"),
-            _buildHeroAd(),
-            const SizedBox(height: 12),
-            CustomButton(
-              backgroundColor: colorScheme.primary,
-              onPressed: () {
+            if (controller.errorMessage != null) {
+              return Center(child: Text(controller.errorMessage!));
+            }
 
-                Get.toNamed(AppRoutes.createAdd);
-              },
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                mainAxisSize: MainAxisSize.min,
+            if (!controller.isLoading && controller.business == null) {
+              return const Center(child: Text("No business found"));
+            }
+
+
+            final business = controller.business!;
+
+
+
+            return SingleChildScrollView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: Column(
                 children: [
-                  Icon(Icons.add, color: colorScheme.onPrimary, size: 20),
-                  const SizedBox(width: 4),
-                  Text(
-                    "Create New Ads",
-                    style: AppTextStyle.textSm(
+                  _buildProfileHeader(business),
+                  const SizedBox(height: 20),
+                  _buildDescriptionCard(context,business),
+                  const SizedBox(height: 25),
+                  _buildSectionHeader("Photos"),
+                  _buildPhotoGrid(business),
+                  const SizedBox(height: 10),
+
+                  if (_photos.isNotEmpty) Align(
+                      alignment: Alignment.topRight,
+                      child: _buildUploadButton()),
+                  const SizedBox(height: 20),
+
+                  _buildSectionHeader("Advertisements"),
+                  _buildPollCreator(),
+                  const SizedBox(height: 12),
+                  CustomButton(
+                    text: "Explore Activities",
+                    backgroundColor: colorScheme.primary,
+                    onPressed: () {
+                      //TODO --go to explore activity
+                      Get.toNamed(
+                        AppRoutes.exploreActivity,
+                        arguments: {"businessId": businessId},
+                      );
+                    },
+                    textStyle: AppTextStyle.textSm(
                       weight: FontWeight.w600,
                       color: colorScheme.onPrimary,
                     ),
                   ),
+                  const SizedBox(height: 25),
+                  _buildSectionHeader("Hero Ads"),
+                  _buildHeroAd(),
+                  const SizedBox(height: 12),
+                  CustomButton(
+                    backgroundColor: colorScheme.primary,
+                    onPressed: () {
+                      Get.toNamed(AppRoutes.createAdd);
+                    },
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.add, color: colorScheme.onPrimary, size: 20),
+                        const SizedBox(width: 4),
+                        Text(
+                          "Create New Ads",
+                          style: AppTextStyle.textSm(
+                            weight: FontWeight.w600,
+                            color: colorScheme.onPrimary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 25),
+                  _buildSectionHeader(
+                    "Reviews",
+                    showViewAll: true,
+                    onTap: () {},
+                  ),
+                  _buildReviewsList(),
+                  const SizedBox(height: 50),
                 ],
               ),
-            ),
-            const SizedBox(height: 25),
-            _buildSectionHeader("Reviews", showViewAll: true, onTap: () {}),
-            _buildReviewsList(),
-            const SizedBox(height: 50),
-          ],
+            );
+          },
         ),
+
       ),
     );
   }
 
   // ================= PROFILE HEADER =================
-  Widget _buildProfileHeader() {
+  Widget _buildProfileHeader(BusinessModel business) {
     final colorScheme = context.colorScheme;
+
+    final owner = business.owner;
+    final address = business.address;
 
     return Column(
       children: [
         const SizedBox(height: 10),
+
+        // ================= PROFILE IMAGE =================
         Stack(
           children: [
-            // Profile Image
             Container(
-              padding: EdgeInsets.all(3),
+              padding: const EdgeInsets.all(3),
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 border: Border.all(color: colorScheme.primary),
               ),
               child: CustomCachedImage(
                 imageFile: _profileImage,
-                imageUrl: "https://via.placeholder.com/150",
+                imageUrl: owner.avatar,
                 height: 110,
                 width: 110,
                 isCircle: true,
               ),
             ),
-            // Edit Profile Button
+
             Positioned(
               right: 0,
               top: 0,
-              child: _editCircleButton(onTap: (){
-                CustomImagePicker.pickImageSimple(
-                  context: context,
-                  onImageSelected: (file) => setState(() {
-                    _profileImage = file;
-                  }),
-                );
-              }),
+              child: _editCircleButton(onTap: () {}),
             ),
           ],
         ),
+
         const SizedBox(height: 15),
 
-        // Business Info Card
+        // ================= BUSINESS INFO CARD =================
         Container(
+          width: double.infinity,
           padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(borderRadius: BorderRadius.circular(12)),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(12),
+          ),
           child: Stack(
+            alignment: Alignment.center,
             children: [
-              Column(
-                children: [
-                  Text(
-                    "Marland Clutch",
-                    style: AppTextStyle.textXl(
-                      color: colorScheme.primary,
-                      weight: FontWeight.w600,
+              Padding(
+
+                padding: const EdgeInsets.symmetric(horizontal: 40),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    // NAME
+                    Text(
+                      business.name,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      textAlign: TextAlign.center,
+                      style: AppTextStyle.textXl(
+                        color: colorScheme.primary,
+                        weight: FontWeight.w600,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    "23601 Hoover Rd, Warren, MI 48089",
-                    style: AppTextStyle.textXs(
-                      color: colorScheme.onSurfaceVariant,
+                    const SizedBox(height: 6),
+
+                    // ADDRESS
+                    Text(
+                      "${address.street}, ${address.city}, ${address.state}, ${address.country}",
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      textAlign: TextAlign.center,
+                      style: AppTextStyle.textXs(
+                        color: colorScheme.onSurfaceVariant,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    "+1 800-216-3515",
-                    style: AppTextStyle.textXs(color: colorScheme.primary),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    "Maintenance & Repair | Services & More",
-                    style: AppTextStyle.textXs(
-                      color: colorScheme.onSurfaceVariant,
+                    const SizedBox(height: 6),
+
+                    Text(
+                      business.phone,
+                      style: AppTextStyle.textXs(
+                        color: colorScheme.primary,
+                        weight: FontWeight.w500,
+                      ),
                     ),
-                  ),
-                ],
+                    const SizedBox(height: 6),
+
+                    Text(
+                      business.category,
+                      style: AppTextStyle.textXs(
+                        color: colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ],
+                ),
               ),
-              // Edit Button for Business Info
-              Positioned(top: 0, right: 0, child: _editCircleButton(onTap: (){})),
+
+              // EDIT BUTTON ================
+              Positioned(
+                top: 0,
+                right: 0,
+                child: _editCircleButton(onTap:()=>_showEditBusinessBottomSheet(business)),
+              ),
             ],
           ),
         ),
-        const SizedBox(height: 6),
 
-        // Review Stars
+        const SizedBox(height: 10),
+
+        // ================= REVIEW SECTION (FIXED) =================
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Text(
-              "3 Review  ",
-              style: AppTextStyle.textXs(color: colorScheme.onSurfaceVariant),
+              "${business.reviewCount} reviews",
+              style: AppTextStyle.textXs(
+                color: colorScheme.onSurfaceVariant,
+              ),
             ),
-            ...List.generate(
-              5,
-                  (index) =>
-              const Icon(Icons.star, color: AppColors.starColor, size: 16),
+            const SizedBox(width: 6),
+
+           //review count
+            Row(
+              children: List.generate(
+                5,
+                    (index) => const Icon(
+                  Icons.star,
+                  color: AppColors.starColor,
+                  size: 16,
+                ),
+              ),
             ),
           ],
         ),
+
         const SizedBox(height: 15),
 
-        // Chips Row
+        // ================= CHIPS =================
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
@@ -216,15 +313,16 @@ class _MyBusinessProfileState extends State<MyBusinessProfile> {
             const SizedBox(width: 12),
             customChip(
               label: "QR",
+              icon: Icons.qr_code,
               onTap: () {},
               backgroundColor: colorScheme.primary,
-              icon: Icons.qr_code,
             ),
           ],
         ),
+
         const SizedBox(height: 12),
 
-        // Change Subscription Button
+        // ================= BUTTON =================
         OutlinedButton(
           onPressed: () {},
           style: OutlinedButton.styleFrom(
@@ -247,35 +345,48 @@ class _MyBusinessProfileState extends State<MyBusinessProfile> {
   }
 
   // ================= DESCRIPTION CARD =================
-  Widget _buildDescriptionCard(BuildContext context) {
+  Widget _buildDescriptionCard(BuildContext context, BusinessModel business) {
     final colorScheme = context.colorScheme;
 
-    return Card(
-      color: colorScheme.surfaceContainerHigh,
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: Stack(
-          children: [
-            Padding(
-              padding: const EdgeInsets.only(right: 25),
-              child: Text(
-                "Marland Clutch, founded in 1931, is a prominent global manufacturer specializing in heavy duty industrial backstopping and overrunning clutches...",
-                style: AppTextStyle.textXs(color: colorScheme.onSurfaceVariant),
+    return SizedBox(
+      width: double.infinity,
+      child: Card(
+        color: colorScheme.surfaceContainerHigh,
+        elevation: 2,
+        clipBehavior: Clip.antiAlias,
+        child: Padding(
+          padding: const EdgeInsets.all(12),
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              // TEXT CONTENT
+              Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: Text(
+                  business.description ,
+                  textAlign: TextAlign.center,
+                  style: AppTextStyle.textXs(
+                    color: colorScheme.onSurfaceVariant,
+                  ),
+                ),
               ),
-            ),
-            Positioned(
-              right: 0,
-              top: 0,
-              child: _editCircleButton(onTap: (){}, size: 20),
-            ),
-          ],
+
+              // EDIT BUTTON
+              Positioned(
+                right: 0,
+                top: 0,
+                child: _editCircleButton(onTap: ()=>_showEditDescriptionBottomSheet(business),size: 20),
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
 
   // ================= PHOTO GRID =================
-  Widget _buildPhotoGrid() {
+  Widget _buildPhotoGrid(BusinessModel business) {
+    final _apiPhotos=business.photos ;
     final int totalImages = _apiPhotos.length + _photos.length;
 
     return GridView.builder(
@@ -298,14 +409,14 @@ class _MyBusinessProfileState extends State<MyBusinessProfile> {
                 imageUrl: _apiPhotos[index],
                 width: double.infinity,
                 height: double.infinity,
-
               ),
               Positioned(
                 right: 5,
                 top: 5,
-                child: _editCircleButton(onTap: (){
-                  setState(() => _apiPhotos.removeAt(index));
-                },
+                child: _editCircleButton(
+                  onTap: () {
+                    setState(() => _apiPhotos.removeAt(index));
+                  },
                   size: 20,
                   icon: Icons.cancel,
                   iconColor: AppColors.danger,
@@ -322,14 +433,14 @@ class _MyBusinessProfileState extends State<MyBusinessProfile> {
               imageFile: _photos[localIndex],
               width: double.infinity,
               height: double.infinity,
-
             ),
             Positioned(
               right: 5,
               top: 5,
-              child: _editCircleButton(onTap: (){
-                setState(() => _photos.removeAt(localIndex));
-              },
+              child: _editCircleButton(
+                onTap: () {
+                  setState(() => _photos.removeAt(localIndex));
+                },
                 size: 20,
                 icon: Icons.cancel,
                 iconColor: AppColors.danger,
@@ -347,9 +458,7 @@ class _MyBusinessProfileState extends State<MyBusinessProfile> {
 
     return Container(
       width: double.infinity,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(20),
-      ),
+      decoration: BoxDecoration(borderRadius: BorderRadius.circular(20)),
       child: Column(
         children: [
           Stack(
@@ -359,7 +468,6 @@ class _MyBusinessProfileState extends State<MyBusinessProfile> {
                 width: double.infinity,
                 height: 200,
                 imageUrl: "https://picsum.photos/seed/1/400/300",
-
               ),
 
               // Text Content
@@ -381,13 +489,17 @@ class _MyBusinessProfileState extends State<MyBusinessProfile> {
                     const SizedBox(height: 4),
                     Row(
                       children: [
-                        Icon(Icons.location_on_outlined, color: colorScheme.primary, size: 18),
+                        Icon(
+                          Icons.location_on_outlined,
+                          color: colorScheme.primary,
+                          size: 18,
+                        ),
                         const SizedBox(width: 4),
                         Expanded(
                           child: Text(
                             "237 S 18th St, Philadelphia, PA 19103",
                             style: AppTextStyle.textXs(
-                              color:  AppColors.base50,
+                              color: AppColors.base50,
                               weight: FontWeight.w500,
                             ),
                             overflow: TextOverflow.ellipsis,
@@ -408,11 +520,17 @@ class _MyBusinessProfileState extends State<MyBusinessProfile> {
               children: [
                 Text(
                   "Ads will run February 2, 2026",
-                  style: AppTextStyle.textXs(color: colorScheme.onSurfaceVariant, weight: FontWeight.w400),
+                  style: AppTextStyle.textXs(
+                    color: colorScheme.onSurfaceVariant,
+                    weight: FontWeight.w400,
+                  ),
                 ),
                 Text(
                   "Credit remain: 10",
-                  style: AppTextStyle.textXs(color: colorScheme.onSurfaceVariant, weight: FontWeight.w400),
+                  style: AppTextStyle.textXs(
+                    color: colorScheme.onSurfaceVariant,
+                    weight: FontWeight.w400,
+                  ),
                 ),
               ],
             ),
@@ -460,7 +578,7 @@ class _MyBusinessProfileState extends State<MyBusinessProfile> {
     return Column(
       children: List.generate(
         2,
-            (index) => ReviewCard(
+        (index) => ReviewCard(
           name: "Alexandra ssssBroke",
           businessName: "Barclay Pizza",
           rating: 5,
@@ -472,10 +590,20 @@ class _MyBusinessProfileState extends State<MyBusinessProfile> {
     );
   }
 
+  Widget _buildUploadButton() {
+    return CustomButton(
+      width: 120,
+      height: 50,
+      child: Text("Upload"),
+      onPressed: (){},
+    );
+  }
+
   // ================= PHOTO PICKER =================
   Widget _buildAddPhotoButton() {
     return GestureDetector(
-      onTap: () => _showSimplePicker((file) => setState(() => _photos.add(file))),
+      onTap: () =>
+          _showSimplePicker((file) => setState(() => _photos.add(file))),
       child: Container(
         decoration: BoxDecoration(
           color: Colors.grey.shade400,
@@ -525,10 +653,12 @@ class _MyBusinessProfileState extends State<MyBusinessProfile> {
     );
   }
 
-
-
   // ================= SECTION HEADER =================
-  Widget _buildSectionHeader(String title, {bool showViewAll = false, VoidCallback? onTap}) {
+  Widget _buildSectionHeader(
+    String title, {
+    bool showViewAll = false,
+    VoidCallback? onTap,
+  }) {
     final colorScheme = context.colorScheme;
 
     return Padding(
@@ -548,9 +678,7 @@ class _MyBusinessProfileState extends State<MyBusinessProfile> {
               onPressed: onTap,
               child: Text(
                 "View all",
-                style: AppTextStyle.textXs(
-                  color: colorScheme.primary,
-                ),
+                style: AppTextStyle.textXs(color: colorScheme.primary),
               ),
             ),
         ],
@@ -574,15 +702,12 @@ class _MyBusinessProfileState extends State<MyBusinessProfile> {
         customBorder: const CircleBorder(),
         child: Padding(
           padding: const EdgeInsets.all(4),
-          child: Icon(
-            icon,
-            size: size * 0.7,
-            color: iconColor,
-          ),
+          child: Icon(icon, size: size * 0.7, color: iconColor),
         ),
       ),
     );
   }
+
   // ================= IMAGE PICKER =================
   void _showSimplePicker(Function(File) onSelected) {
     showModalBottomSheet(
@@ -597,7 +722,9 @@ class _MyBusinessProfileState extends State<MyBusinessProfile> {
               leading: const Icon(Icons.photo_library),
               title: const Text('Gallery'),
               onTap: () async {
-                final picked = await ImagePicker().pickImage(source: ImageSource.gallery);
+                final picked = await ImagePicker().pickImage(
+                  source: ImageSource.gallery,
+                );
                 if (picked != null) onSelected(File(picked.path));
                 if (context.mounted) Navigator.pop(context);
               },
@@ -606,7 +733,9 @@ class _MyBusinessProfileState extends State<MyBusinessProfile> {
               leading: const Icon(Icons.camera_alt),
               title: const Text('Camera'),
               onTap: () async {
-                final picked = await ImagePicker().pickImage(source: ImageSource.camera);
+                final picked = await ImagePicker().pickImage(
+                  source: ImageSource.camera,
+                );
                 if (picked != null) onSelected(File(picked.path));
                 if (context.mounted) Navigator.pop(context);
               },
@@ -616,5 +745,315 @@ class _MyBusinessProfileState extends State<MyBusinessProfile> {
       ),
     );
   }
-}
 
+
+  void _showEditBusinessBottomSheet(BusinessModel business) {
+    final nameController = TextEditingController(text: business.name);
+    final streetController =
+    TextEditingController(text: business.address.street);
+    final cityController =
+    TextEditingController(text: business.address.city);
+    final stateController =
+    TextEditingController(text: business.address.state);
+    final countryController =
+    TextEditingController(text: business.address.country);
+
+    BusinessCategory selectedCategory =
+    BusinessCategory.fromString(business.category);
+
+    String phoneNumber = business.phone;
+
+    final colorScheme = context.colorScheme;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return Padding(
+              padding: EdgeInsets.only(
+                bottom: MediaQuery.of(context).viewInsets.bottom,
+                left: 16,
+                right: 16,
+                top: 20,
+              ),
+              child: SingleChildScrollView(
+                child: Form(
+                  key: _businessFormKey ,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // ================= TITLE =================
+                      Center(
+                        child: Text(
+                          "Edit Business Info",
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: colorScheme.primary,
+                          ),
+                        ),
+                      ),
+
+                      const SizedBox(height: 20),
+
+                      // ================= NAME =================
+                      TextFormField(
+                        controller: nameController,
+                        decoration: InputDecoration(
+                          labelText: "Business Name",
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        validator: (value) {
+                          if (value == null || value.trim().isEmpty) {
+                            return "Name is required";
+                          }
+                          return null;
+                        },
+                      ),
+
+                      const SizedBox(height: 12),
+
+                      // ================= PHONE =================
+                      IntlPhoneField(
+                        initialValue: business.phone,
+                        initialCountryCode: 'US',
+                        decoration: InputDecoration(
+                          labelText: "Phone Number",
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        onChanged: (phone) {
+                          phoneNumber = phone.completeNumber;
+                        },
+                        validator: (phone) {
+                          if (phone == null || phone.number.isEmpty) {
+                            return "Phone is required";
+                          }
+                          return null;
+                        },
+                      ),
+
+                      const SizedBox(height: 12),
+
+                      // ================= STREET =================
+                      TextFormField(
+                        controller: streetController,
+                        decoration: InputDecoration(
+                          labelText: "Street",
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                      ),
+
+                      const SizedBox(height: 10),
+
+                      // ================= CITY =================
+                      TextFormField(
+                        controller: cityController,
+                        decoration: InputDecoration(
+                          labelText: "City",
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                      ),
+
+                      const SizedBox(height: 10),
+
+                      // ================= STATE =================
+                      TextFormField(
+                        controller: stateController,
+                        decoration: InputDecoration(
+                          labelText: "State",
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                      ),
+
+                      const SizedBox(height: 10),
+
+                      // ================= COUNTRY =================
+                      TextFormField(
+                        controller: countryController,
+                        decoration: InputDecoration(
+                          labelText: "Country",
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                      ),
+
+                      const SizedBox(height: 12),
+
+                      // ================= CATEGORY =================
+                      DropdownButtonFormField<BusinessCategory>(
+                        value: selectedCategory,
+                        decoration: InputDecoration(
+                          labelText: "Category",
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        items: BusinessCategory.values.map((category) {
+                          return DropdownMenuItem(
+                            value: category,
+                            child: Text(category.label),
+                          );
+                        }).toList(),
+                        onChanged: (value) {
+                          setState(() {
+                            selectedCategory = value!;
+                          });
+                        },
+                        validator: (value) {
+                          if (value == null) {
+                            return "Category required";
+                          }
+                          return null;
+                        },
+                      ),
+
+                      const SizedBox(height: 20),
+
+                      // ================= BUTTON =================
+                      SizedBox(
+                        width: double.infinity,
+                        child: CustomButton(
+                          text: "Update",
+                          onPressed: () {
+                            if (_businessFormKey .currentState!.validate()) {
+                              final updatedData = {
+                                "name": nameController.text,
+                                "phone": phoneNumber,
+                                "category": selectedCategory.toJson,
+                                "address": {
+                                  "street": streetController.text,
+                                  "city": cityController.text,
+                                  "state": stateController.text,
+                                  "country": countryController.text,
+                                }
+                              };
+
+                              Navigator.pop(context);
+                            }
+                          },
+                        ),
+                      ),
+
+                      const SizedBox(height: 20),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+
+  void _showEditDescriptionBottomSheet(BusinessModel business) {
+    final descriptionController =
+    TextEditingController(text: business.description);
+
+    final colorScheme = context.colorScheme;
+
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return Padding(
+              padding: EdgeInsets.only(
+                bottom: MediaQuery.of(context).viewInsets.bottom,
+                left: 16,
+                right: 16,
+                top: 20,
+              ),
+              child: SingleChildScrollView(
+                child: Form(
+                  key: _descriptionFormKey ,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // ================= TITLE =================
+                      Center(
+                        child: Text(
+                          "Edit Description",
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: colorScheme.primary,
+                          ),
+                        ),
+                      ),
+
+                      const SizedBox(height: 20),
+
+                      // ================= DESCRIPTION FIELD =================
+                      CustomTextField(
+                        controller: descriptionController,
+                        hintText: "Description",
+                        maxLine: 3,
+                        borderRadius: 10,
+                        borderColor: colorScheme.outline,
+                        validator: (value){
+                          if( value==null||value.isEmpty){
+                            return "Description is required";
+                          }
+                          return null;
+                        },
+                      ),
+
+                      const SizedBox(height: 20),
+
+                      // ================= UPDATE BUTTON =================
+                      SizedBox(
+                        width: double.infinity,
+                        child: CustomButton(
+                          text: "Update Description",
+                          onPressed: () {
+                            if (_descriptionFormKey .currentState!.validate()) {
+                              final updatedData = {
+                                "description": descriptionController.text.trim(),
+                              };
+
+                              profileController.updateBusinessData(businessId: businessId, body: updatedData);
+
+
+                            }
+                          },
+                        ),
+                      ),
+
+                      const SizedBox(height: 20),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+
+
+}
