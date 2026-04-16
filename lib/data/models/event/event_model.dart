@@ -31,6 +31,7 @@ class EventModel {
   final String title;
   final String description;
   final String date;
+  final String? activityType;
   final String location;
   final bool isPublic;
   final int goingCount;
@@ -49,6 +50,7 @@ class EventModel {
     required this.goingCount,
     required this.maxAttendees,
     required this.organizerName,
+    this.activityType,
     this.organizerAvatar,
     required this.isPublic,
     required this.myRsvpStatus,
@@ -70,6 +72,7 @@ class EventModel {
       location: json['location'] ?? '',
       goingCount: json['rsvpCount'] ?? 0,
       maxAttendees: json['maxParticipants'] ?? 0,
+      activityType: json['activityType'],
       organizerName: json['organizerBusiness']?['name'] ?? '',
       organizerAvatar: json['organizerBusiness']?['logo'],
       isPublic: json['isPublic'] ?? false,
@@ -85,6 +88,7 @@ class EventModel {
     String? description,
     String? date,
     String? location,
+    String? activityType,
     bool? isPublic,
     int? goingCount,
     int? maxAttendees,
@@ -99,6 +103,7 @@ class EventModel {
       description: description ?? this.description,
       date: date ?? this.date,
       location: location ?? this.location,
+      activityType: activityType ?? this.activityType,
       isPublic: isPublic ?? this.isPublic,
       goingCount: goingCount ?? this.goingCount,
       maxAttendees: maxAttendees ?? this.maxAttendees,

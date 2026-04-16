@@ -7,6 +7,7 @@ import '../../../data/models/event/event_model.dart';
 
 class EventListController extends GetxController {
   bool _isLoading = false;
+  String? _businessId; //optional variable used for business owner
 
   bool _isPaginationLoading = false;
 
@@ -14,10 +15,10 @@ class EventListController extends GetxController {
 
   List<EventModel> _eventList = [];
 
-  /// 🔹 Current page number for pagination
+  ///  Current page number for pagination
   int _currentPage = 1;
 
-  /// 🔹 Flag to check if there is a next page
+  ///  Flag to check if there is a next page
   bool _hasNextPage = true;
 
   // use to change the limit of events per page
@@ -35,9 +36,11 @@ class EventListController extends GetxController {
     fetchEvents();
   }
 
-  /// 🔹 Fetch events from API
+  ///  Fetch events from API
   /// [isRefresh] → if true, reset page & clear list
-  Future<void> fetchEvents({bool isRefresh = false}) async {
+  Future<void> fetchEvents({bool isRefresh = false, String? businessId}) async {
+    _businessId = businessId;
+
     if (isRefresh) {
       _currentPage = 1; // reset page
       _hasNextPage = true; // reset pagination
@@ -49,8 +52,12 @@ class EventListController extends GetxController {
     update();
 
     try {
+      final url = _businessId != null
+          ? '${AppUrl.eventList}?page=$_currentPage&limit=$_limit&businessId=$_businessId' // for business owner
+          : '${AppUrl.eventList}?page=$_currentPage&limit=$_limit';
+
       final NetworkResponse response = await Get.find<NetworkCaller>()
-          .getRequest( url: '${AppUrl.eventList}?page=$_currentPage&limit=$_limit',);
+          .getRequest(url: url);
 
       if (response.isSuccess && response.body != null) {
         final model = EventListResponseModel.fromJson(response.body!);
@@ -67,7 +74,7 @@ class EventListController extends GetxController {
     }
   }
 
-  /// 🔹 Load next page for pagination
+  ///  Load next page for pagination
   Future<void> loadMoreEvents() async {
     if (!_hasNextPage || _isPaginationLoading) return;
 
@@ -76,29 +83,28 @@ class EventListController extends GetxController {
     update(); // update UI
 
     try {
+      final url = _businessId != null
+          ? '${AppUrl.eventList}?page=$_currentPage&limit=$_limit&businessId=$_businessId'
+          : '${AppUrl.eventList}?page=$_currentPage&limit=$_limit';
+
       final NetworkResponse response = await Get.find<NetworkCaller>()
-          .getRequest(url: '${AppUrl.eventList}?page=$_currentPage&limit=$_limit',);
+          .getRequest(url: url);
 
       if (response.isSuccess && response.body != null) {
         final model = EventListResponseModel.fromJson(response.body!);
         _eventList.addAll(model.events); // append new events
         _hasNextPage = model.meta.hasNextPage; // update flag
       } else {
-        _currentPage--; // 🔄 rollback page if failed
+        _currentPage--; //  rollback page if failed
       }
     } catch (e) {
-      _currentPage--; // 🔄 rollback page on error
+      _currentPage--; //  rollback page on error
       _errorMessage = 'Pagination error: $e';
     } finally {
       _isPaginationLoading = false;
       update();
     }
   }
-
-
-
-
-
 
   /// update rsvp status and count locally
   void updateRsvpStatus(String eventId, RsvpStatus status) {
@@ -113,12 +119,4 @@ class EventListController extends GetxController {
       update();
     }
   }
-
-
-
-
-
-
-
-
 }

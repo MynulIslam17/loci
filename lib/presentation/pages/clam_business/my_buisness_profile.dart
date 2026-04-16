@@ -34,9 +34,9 @@ class MyBusinessProfile extends StatefulWidget {
 }
 
 class _MyBusinessProfileState extends State<MyBusinessProfile> {
+  //-----states------
   File? _profileImage;
   final List<File> _photos = [];
-
 
   late final String businessId;
 
@@ -86,8 +86,7 @@ class _MyBusinessProfileState extends State<MyBusinessProfile> {
     }
   }
 
-
-//----- method to remove business phots
+  //----- method to remove business phots
   Future<void> _removeApiPhoto(String photoUrl) async {
     final success = await profileController.removeBusinessPhoto(
       businessId: businessId,
@@ -95,13 +94,13 @@ class _MyBusinessProfileState extends State<MyBusinessProfile> {
     );
 
     if (success) {
-      SnackbarService.success("Photo removed");
+     // SnackbarService.success("Photo removed");
     } else {
-      SnackbarService.error(profileController.errorMessage ?? "Failed to remove photo");
+      SnackbarService.error(
+        profileController.errorMessage ?? "Failed to remove photo",
+      );
     }
   }
-
-
 
   @override
   Widget build(BuildContext context) {
@@ -135,9 +134,7 @@ class _MyBusinessProfileState extends State<MyBusinessProfile> {
               if (controller.isUpdating)
                 Container(
                   color: Colors.black.withOpacity(0.15), //dim the background
-                  child: const Center(
-                    child: CircularProgressIndicator(),
-                  ),
+                  child: const Center(child: CircularProgressIndicator()),
                 ),
             ],
           );
@@ -145,7 +142,6 @@ class _MyBusinessProfileState extends State<MyBusinessProfile> {
       ),
     );
   }
-
 
   ///----- main body widget
   Widget _buildBody(
@@ -686,7 +682,6 @@ class _MyBusinessProfileState extends State<MyBusinessProfile> {
       ),
     );
   }
-
 
   // ================= BUTTON TO PICK MULTIPLE PHOTO =================
   Widget _buildAddPhotoButton() {

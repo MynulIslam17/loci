@@ -193,7 +193,9 @@ class MyBusinessProfileController extends GetxController {
   }
 
 
-
+  // =========================
+  // REMOVE BUSINESS PHOTOS
+  // =========================
 
   Future<bool> removeBusinessPhoto({
     required String businessId,

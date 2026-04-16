@@ -8,6 +8,8 @@ import 'package:loci/presentation/widgets/custom_appbar.dart';
 import 'package:loci/routes/app_routes.dart';
 
 import '../../../core/constants/app_text_style.dart';
+import '../../controllers/event/event_list_controller.dart';
+import '../../controllers/routes/route_list_controller.dart';
 import '../../widgets/custom_button.dart';
 import '../../widgets/custom_text_field.dart';
 
@@ -21,6 +23,10 @@ class ExploreActivityScreen extends StatefulWidget {
 class _ExploreActivityScreenState extends State<ExploreActivityScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
+
+  final eventListController=Get.put(EventListController());
+  final routeListController = Get.put(RouteListController());
+
 
   @override
   void initState() {
@@ -151,50 +157,102 @@ class _ExploreActivityScreenState extends State<ExploreActivityScreen>
   }
 
   Widget _eventsTab() {
-    return SliverList.separated(
-      itemCount: 5,
-      itemBuilder: (context, index) => EventEditCard(
-        imageUrl: "assets/images/finedine.png",
-        title: "Spring Pub Crawl Festival",
-        description: "...",
-        dateTime: "Mon, Jan 19 at 2:50 PM",
-        location: "Downtown District",
-        attendance: "0 going / 200 max",
-        organizerName: "Crawl Events Co.",
-        onEditInfo: () => Get.toNamed(
-          AppRoutes.editEvent,
-          arguments: {"title": "Spring Pub Crawl Edit"},
-        ),
-        onViewDetails: () => Get.toNamed(
-          AppRoutes.viewEvent,
-          arguments: {"title": "Spring Pub Crawl"},
-        ),
-      ),
-      separatorBuilder: (_, __) => const SizedBox(height: 10),
+    return GetBuilder<EventListController>(
+      builder: (controller) {
+        // ===== LOADING
+        if (controller.isLoading) {
+          return const SliverFillRemaining(
+            child: Center(child: CircularProgressIndicator()),
+          );
+        }
+
+        // ===== ERROR
+        if (controller.errorMessage != null) {
+          return SliverFillRemaining(
+            child: Center(child: Text(controller.errorMessage!)),
+          );
+        }
+
+        // ===== EMPTY
+        if (controller.eventList.isEmpty) {
+          return const SliverFillRemaining(
+            child: Center(child: Text("No events found")),
+          );
+        }
+
+        // ===== LIST
+        return SliverList.separated(
+          itemCount: controller.eventList.length,
+          itemBuilder: (context, index) {
+            final event = controller.eventList[index];
+            return EventEditCard(
+              imageUrl: event.coverImage,
+              title: event.title,
+              description: event.description,
+              dateTime: event.date,
+              location: event.location,
+              attendance: "${event.goingCount} going / ${event.maxAttendees} max",
+              organizerName: event.organizerName,
+              onEditInfo: () => Get.toNamed(
+                AppRoutes.editEvent,
+                arguments: {"eventId": event.id},
+              ),
+              onViewDetails: () => Get.toNamed(
+                AppRoutes.viewEvent,
+                arguments: {"eventId": event.id},
+              ),
+            );
+          },
+          separatorBuilder: (_, __) => const SizedBox(height: 10),
+        );
+      },
     );
   }
 
   Widget _routesTab() {
-    return SliverList.separated(
-      itemCount: 5,
-      itemBuilder: (context, index) => RouteEditCard(
-        title: "Adventure Trail ${index + 1}",
-        description: "A scenic hike through the valley with breathtaking views...",
-        location: "Philadelphia, PA",
-        duration: "2h 30m",
-        difficulty: "Moderate",
-        imageUrl: "https://picsum.photos/seed/${index + 10}/400/300",
-        onEdit: () => Get.toNamed(
-          AppRoutes.editRoutes,
-          arguments: {"title": "Routes Edit"},
-        ),
-        onView: () {
-          Get.toNamed(AppRoutes.viewRoutes,
-              arguments: {"title": "Adventure trall 1"}
+    return GetBuilder<RouteListController>(
+      builder: (controller) {
+        // ===== LOADING
+        if (controller.isLoading) {
+          return const SliverFillRemaining(
+            child: Center(child: CircularProgressIndicator()),
           );
-        },
-      ),
-      separatorBuilder: (_, __) => const SizedBox(height: 10),
+        }
+
+        // ===== ERROR
+        if (controller.errorMessage != null) {
+          return SliverFillRemaining(
+            child: Center(child: Text(controller.errorMessage!)),
+          );
+        }
+
+        // ===== EMPTY
+        if (controller.routeList.isEmpty) {
+          return const SliverFillRemaining(
+            child: Center(child: Text("No routes found")),
+          );
+        }
+
+        // ===== LIST
+        return SliverList.separated(
+          itemCount: controller.routeList.length,
+          itemBuilder: (context, index) {
+            final route = controller.routeList[index];
+            return RouteEditCard(
+              imageUrl: route.banner,
+              title: route.title,
+              description: route.details,
+              location: route.location,
+              openingTime: route.openingTime,
+              availabilityType: route.availabilityType,
+              isPublic: route.isRoutePublic,
+              onEdit: () => Get.toNamed(AppRoutes.editRoutes, arguments: {"routeId": route.routeId}),
+              onView: () => Get.toNamed(AppRoutes.viewRoutes, arguments: {"routeId": route.routeId}),
+            );
+          },
+          separatorBuilder: (_, __) => const SizedBox(height: 10),
+        );
+      },
     );
   }
 

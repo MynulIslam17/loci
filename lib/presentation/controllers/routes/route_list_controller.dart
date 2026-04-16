@@ -7,6 +7,7 @@ import '../../../data/models/routes/routes_model.dart';
 
 
 class RouteListController extends GetxController {
+  String? _businessId; //optional variable used for business owner
   bool _isLoading = false;
   bool _isPaginationLoading = false;
   String? _errorMessage;
@@ -31,6 +32,7 @@ class RouteListController extends GetxController {
 
   //--- fetch routes
   Future<void> fetchRoutes({bool isRefresh = false}) async {
+    _businessId = _businessId;
     if (isRefresh) {
       _currentPage = 1;
       _hasNextPage = true;
@@ -42,9 +44,15 @@ class RouteListController extends GetxController {
     update();
 
     try {
+
+      final url = _businessId != null
+          ? '${AppUrl.routeList}?page=$_currentPage&limit=$_limit&businessId=$_businessId'
+          : '${AppUrl.routeList}?page=$_currentPage&limit=$_limit';
+
+
       final NetworkResponse response = await Get.find<NetworkCaller>()
           .getRequest(
-        url: '${AppUrl.routeList}?page=$_currentPage&limit=$_limit',
+        url: url,
       );
 
       if (response.isSuccess && response.body != null) {
@@ -72,9 +80,13 @@ class RouteListController extends GetxController {
     update();
 
     try {
+      final url = _businessId != null
+          ? '${AppUrl.routeList}?page=$_currentPage&limit=$_limit&businessId=$_businessId'
+          : '${AppUrl.routeList}?page=$_currentPage&limit=$_limit';
+
       final NetworkResponse response = await Get.find<NetworkCaller>()
           .getRequest(
-        url: '${AppUrl.routeList}?page=$_currentPage&limit=$_limit',
+        url:url,
       );
 
       if (response.isSuccess && response.body != null) {
