@@ -326,6 +326,7 @@ class NetworkCaller {
     String method = 'POST',
     Map<String, String>? fields,
     Map<String, File>? files,
+    Map<String, List<File>>? multiFiles, // for multiple files with the same key
     bool isFromLogin = false,
   }) async {
     try {
@@ -353,6 +354,33 @@ class NetworkCaller {
           );
         }
       }
+
+
+      // ADD THIS BLOCK (multiple files support ( optional)) ===========================================
+      if (multiFiles != null) {
+        for (final entry in multiFiles.entries) {
+          final key = entry.key;
+          final fileList = entry.value;
+
+          for (final file in fileList) {
+            final fileName = file.path.split('/').last;
+            final mimeType = lookupMimeType(file.path);
+
+            request.files.add(
+              http.MultipartFile(
+                key,
+                file.readAsBytes().asStream(),
+                file.lengthSync(),
+                filename: fileName,
+                contentType:
+                mimeType != null ? MediaType.parse(mimeType) : null,
+              ),
+            );
+          }
+        }
+      }
+
+
 
       _logMultipartRequest(url, fields, files, request.headers);
 

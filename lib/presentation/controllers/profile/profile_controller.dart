@@ -227,9 +227,11 @@ class ProfileController extends GetxController {
       );
 
       if (res.isSuccess) {
-        final newAvatar = res.body?['data']?['user']?['avatar'];
+        final newAvatar = res.body?['data']?['avatar'];
 
-        await _updateUserModel(avatar: newAvatar);
+        await _updateUserModel(
+          avatar: newAvatar,
+        );
         profileImage = null; // clear temp after success
         update();
 

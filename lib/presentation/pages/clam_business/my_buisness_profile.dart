@@ -3,19 +3,26 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get/get_core/src/get_main.dart';
 import 'package:get/get_navigation/src/extension_navigation.dart';
+import 'package:get_storage/get_storage.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:loci/core/enums/category_enum.dart';
 import 'package:loci/core/theme/theme_extention.dart';
+import 'package:loci/data/models/busniess/update_business_request_model.dart';
 import 'package:loci/presentation/controllers/my_business/my_business_profile_controller.dart';
+import 'package:loci/presentation/controllers/profile/profile_controller.dart';
 import 'package:loci/presentation/widgets/custom_button.dart';
 import 'package:loci/presentation/pages/clam_business/widgets/review_card.dart';
+import 'package:loci/presentation/widgets/custom_dropdown.dart';
 import 'package:loci/presentation/widgets/custom_text_field.dart';
 import 'package:loci/routes/app_routes.dart';
 import '../../../core/constants/app_text_style.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/utils/show_snackbar.dart';
 import '../../../data/models/busniess/business_profile_model.dart';
+import '../../widgets/app_bottom_seet.dart';
 import '../../widgets/custom_appbar.dart';
 import '../../widgets/custom_image_container.dart';
+import '../../widgets/image_picker_helper.dart';
 import '../home/widgets/post_input_filed.dart';
 import 'package:intl_phone_field/intl_phone_field.dart';
 
@@ -30,14 +37,10 @@ class _MyBusinessProfileState extends State<MyBusinessProfile> {
   File? _profileImage;
   final List<File> _photos = [];
 
-  final GlobalKey<FormState> _businessFormKey = GlobalKey<FormState>();
-  final GlobalKey<FormState> _descriptionFormKey = GlobalKey<FormState>();
 
   late final String businessId;
 
   final profileController = Get.find<MyBusinessProfileController>();
-
-
 
   @override
   void initState() {
@@ -52,6 +55,54 @@ class _MyBusinessProfileState extends State<MyBusinessProfile> {
     profileController.fetchBusinessProfile(businessId);
   }
 
+  //----- method to upload business logo
+  Future<void> _uploadLogo(File file) async {
+    final success = await profileController.uploadBusinessImages(
+      businessId: businessId,
+      logo: file,
+    );
+
+    if (success) {
+      SnackbarService.success("Logo updated successfully");
+    } else {
+      SnackbarService.error(profileController.errorMessage!);
+    }
+  }
+
+  //----- method to upload business phots
+  Future<void> _uploadPhotos(List<File> files) async {
+    if (files.isEmpty) return;
+
+    final success = await profileController.uploadBusinessImages(
+      businessId: businessId,
+      photos: files,
+    );
+
+    if (success) {
+      _photos.clear();
+      SnackbarService.success("Photos updated successfully");
+    } else {
+      SnackbarService.error(profileController.errorMessage!);
+    }
+  }
+
+
+//----- method to remove business phots
+  Future<void> _removeApiPhoto(String photoUrl) async {
+    final success = await profileController.removeBusinessPhoto(
+      businessId: businessId,
+      photoUrl: photoUrl,
+    );
+
+    if (success) {
+      SnackbarService.success("Photo removed");
+    } else {
+      SnackbarService.error(profileController.errorMessage ?? "Failed to remove photo");
+    }
+  }
+
+
+
   @override
   Widget build(BuildContext context) {
     final colorScheme = context.colorScheme;
@@ -59,104 +110,138 @@ class _MyBusinessProfileState extends State<MyBusinessProfile> {
     return Scaffold(
       backgroundColor: colorScheme.surface,
       appBar: CustomAppbar(title: "Business profile"),
-      body: RefreshIndicator(
-        onRefresh: () async {
-         await profileController.refreshBusinessProfile(businessId);
+      body: GetBuilder<MyBusinessProfileController>(
+        builder: (controller) {
+          //===== FULL PAGE LOADING STATE
+
+          if (controller.isLoading) {
+            return const Center(child: CircularProgressIndicator());
+          }
+
+          //===== EMPTY / ERROR STATE
+
+          if (controller.business == null) {
+            return const Center(child: Text("No business found"));
+          }
+
+          //==== MAIN UI + LOADING OVERLAY
+
+          return Stack(
+            children: [
+              //==== MAIN PAGE CONTENT
+              _buildBody(context, controller, controller.business!),
+
+              // =====Edit overlay loader
+              if (controller.isUpdating)
+                Container(
+                  color: Colors.black.withOpacity(0.15), //dim the background
+                  child: const Center(
+                    child: CircularProgressIndicator(),
+                  ),
+                ),
+            ],
+          );
         },
-        child: GetBuilder<MyBusinessProfileController>(
-          builder: (controller) {
-            if (controller.isLoading) {
-              return Center(child: CircularProgressIndicator());
-            }
-
-            if (controller.errorMessage != null) {
-              return Center(child: Text(controller.errorMessage!));
-            }
-
-            if (!controller.isLoading && controller.business == null) {
-              return const Center(child: Text("No business found"));
-            }
+      ),
+    );
+  }
 
 
-            final business = controller.business!;
+  ///----- main body widget
+  Widget _buildBody(
+    BuildContext context,
+    MyBusinessProfileController controller,
+    BusinessModel business,
+  ) {
+    final colorScheme = context.colorScheme;
 
+    return RefreshIndicator(
+      onRefresh: () async {
+        await controller.silentRefresh(businessId);
+      },
+      child: SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.symmetric(horizontal: 20),
+        child: Column(
+          children: [
+            // ================= PROFILE HEADER =================
+            _buildProfileHeader(business),
 
+            const SizedBox(height: 20),
 
-            return SingleChildScrollView(
-              physics: const AlwaysScrollableScrollPhysics(),
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: Column(
+            // ================= DESCRIPTION =================
+            _buildDescriptionCard(context, business),
+
+            const SizedBox(height: 25),
+
+            // ================= PHOTOS =================
+            _buildSectionHeader("Photos"),
+            _buildPhotoGrid(business),
+
+            const SizedBox(height: 20),
+
+            // ================= POLL / AD CREATOR =================
+            _buildSectionHeader("Advertisements"),
+            _buildPollCreator(),
+
+            const SizedBox(height: 12),
+
+            CustomButton(
+              text: "Explore Activities",
+              backgroundColor: colorScheme.primary,
+              onPressed: () {
+                Get.toNamed(
+                  AppRoutes.exploreActivity,
+                  arguments: {"businessId": businessId},
+                );
+              },
+              textStyle: AppTextStyle.textSm(
+                weight: FontWeight.w600,
+                color: colorScheme.onPrimary,
+              ),
+            ),
+
+            const SizedBox(height: 25),
+
+            // ================= HERO ADS =================
+            _buildSectionHeader("Hero Ads"),
+
+            _buildHeroAd(),
+
+            const SizedBox(height: 12),
+
+            CustomButton(
+              backgroundColor: colorScheme.primary,
+              onPressed: () {
+                Get.toNamed(AppRoutes.createAdd);
+              },
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                mainAxisSize: MainAxisSize.min,
                 children: [
-                  _buildProfileHeader(business),
-                  const SizedBox(height: 20),
-                  _buildDescriptionCard(context,business),
-                  const SizedBox(height: 25),
-                  _buildSectionHeader("Photos"),
-                  _buildPhotoGrid(business),
-                  const SizedBox(height: 10),
-
-                  if (_photos.isNotEmpty) Align(
-                      alignment: Alignment.topRight,
-                      child: _buildUploadButton()),
-                  const SizedBox(height: 20),
-
-                  _buildSectionHeader("Advertisements"),
-                  _buildPollCreator(),
-                  const SizedBox(height: 12),
-                  CustomButton(
-                    text: "Explore Activities",
-                    backgroundColor: colorScheme.primary,
-                    onPressed: () {
-                      //TODO --go to explore activity
-                      Get.toNamed(
-                        AppRoutes.exploreActivity,
-                        arguments: {"businessId": businessId},
-                      );
-                    },
-                    textStyle: AppTextStyle.textSm(
+                  Icon(Icons.add, color: colorScheme.onPrimary, size: 20),
+                  const SizedBox(width: 4),
+                  Text(
+                    "Create New Ads",
+                    style: AppTextStyle.textSm(
                       weight: FontWeight.w600,
                       color: colorScheme.onPrimary,
                     ),
                   ),
-                  const SizedBox(height: 25),
-                  _buildSectionHeader("Hero Ads"),
-                  _buildHeroAd(),
-                  const SizedBox(height: 12),
-                  CustomButton(
-                    backgroundColor: colorScheme.primary,
-                    onPressed: () {
-                      Get.toNamed(AppRoutes.createAdd);
-                    },
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(Icons.add, color: colorScheme.onPrimary, size: 20),
-                        const SizedBox(width: 4),
-                        Text(
-                          "Create New Ads",
-                          style: AppTextStyle.textSm(
-                            weight: FontWeight.w600,
-                            color: colorScheme.onPrimary,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 25),
-                  _buildSectionHeader(
-                    "Reviews",
-                    showViewAll: true,
-                    onTap: () {},
-                  ),
-                  _buildReviewsList(),
-                  const SizedBox(height: 50),
                 ],
               ),
-            );
-          },
-        ),
+            ),
 
+            const SizedBox(height: 25),
+
+            // ================= REVIEWS =================
+            _buildSectionHeader("Reviews", showViewAll: true, onTap: () {}),
+
+            _buildReviewsList(),
+
+            const SizedBox(height: 50),
+          ],
+        ),
       ),
     );
   }
@@ -165,8 +250,7 @@ class _MyBusinessProfileState extends State<MyBusinessProfile> {
   Widget _buildProfileHeader(BusinessModel business) {
     final colorScheme = context.colorScheme;
 
-    final owner = business.owner;
-    final address = business.address;
+    final location = business.location;
 
     return Column(
       children: [
@@ -183,7 +267,7 @@ class _MyBusinessProfileState extends State<MyBusinessProfile> {
               ),
               child: CustomCachedImage(
                 imageFile: _profileImage,
-                imageUrl: owner.avatar,
+                imageUrl: business.logo,
                 height: 110,
                 width: 110,
                 isCircle: true,
@@ -193,7 +277,20 @@ class _MyBusinessProfileState extends State<MyBusinessProfile> {
             Positioned(
               right: 0,
               top: 0,
-              child: _editCircleButton(onTap: () {}),
+              child: _editCircleButton(
+                onTap: () => showImagePickerSheet(
+                  context: context,
+                  allowMultiple: false,
+
+                  onPicked: (file) {
+                    setState(() {
+                      _profileImage = file.isNotEmpty ? file.first : null;
+                    });
+
+                    _uploadLogo(file.first);
+                  },
+                ),
+              ),
             ),
           ],
         ),
@@ -204,14 +301,11 @@ class _MyBusinessProfileState extends State<MyBusinessProfile> {
         Container(
           width: double.infinity,
           padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(12),
-          ),
+          decoration: BoxDecoration(borderRadius: BorderRadius.circular(12)),
           child: Stack(
             alignment: Alignment.center,
             children: [
               Padding(
-
                 padding: const EdgeInsets.symmetric(horizontal: 40),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
@@ -232,7 +326,7 @@ class _MyBusinessProfileState extends State<MyBusinessProfile> {
 
                     // ADDRESS
                     Text(
-                      "${address.street}, ${address.city}, ${address.state}, ${address.country}",
+                      location,
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                       textAlign: TextAlign.center,
@@ -265,7 +359,9 @@ class _MyBusinessProfileState extends State<MyBusinessProfile> {
               Positioned(
                 top: 0,
                 right: 0,
-                child: _editCircleButton(onTap:()=>_showEditBusinessBottomSheet(business)),
+                child: _editCircleButton(
+                  onTap: () => _showEditBusinessBottomSheet(business),
+                ),
               ),
             ],
           ),
@@ -279,17 +375,15 @@ class _MyBusinessProfileState extends State<MyBusinessProfile> {
           children: [
             Text(
               "${business.reviewCount} reviews",
-              style: AppTextStyle.textXs(
-                color: colorScheme.onSurfaceVariant,
-              ),
+              style: AppTextStyle.textXs(color: colorScheme.onSurfaceVariant),
             ),
             const SizedBox(width: 6),
 
-           //review count
+            //review count
             Row(
               children: List.generate(
                 5,
-                    (index) => const Icon(
+                (index) => const Icon(
                   Icons.star,
                   color: AppColors.starColor,
                   size: 16,
@@ -363,7 +457,7 @@ class _MyBusinessProfileState extends State<MyBusinessProfile> {
               Padding(
                 padding: const EdgeInsets.all(8.0),
                 child: Text(
-                  business.description ,
+                  business.description,
                   textAlign: TextAlign.center,
                   style: AppTextStyle.textXs(
                     color: colorScheme.onSurfaceVariant,
@@ -375,7 +469,10 @@ class _MyBusinessProfileState extends State<MyBusinessProfile> {
               Positioned(
                 right: 0,
                 top: 0,
-                child: _editCircleButton(onTap: ()=>_showEditDescriptionBottomSheet(business),size: 20),
+                child: _editCircleButton(
+                  onTap: () => _showEditDescriptionBottomSheet(business),
+                  size: 20,
+                ),
               ),
             ],
           ),
@@ -386,7 +483,7 @@ class _MyBusinessProfileState extends State<MyBusinessProfile> {
 
   // ================= PHOTO GRID =================
   Widget _buildPhotoGrid(BusinessModel business) {
-    final _apiPhotos=business.photos ;
+    final _apiPhotos = business.photos;
     final int totalImages = _apiPhotos.length + _photos.length;
 
     return GridView.builder(
@@ -415,7 +512,7 @@ class _MyBusinessProfileState extends State<MyBusinessProfile> {
                 top: 5,
                 child: _editCircleButton(
                   onTap: () {
-                    setState(() => _apiPhotos.removeAt(index));
+                    setState(() => _removeApiPhoto(_apiPhotos[index]));
                   },
                   size: 20,
                   icon: Icons.cancel,
@@ -590,20 +687,22 @@ class _MyBusinessProfileState extends State<MyBusinessProfile> {
     );
   }
 
-  Widget _buildUploadButton() {
-    return CustomButton(
-      width: 120,
-      height: 50,
-      child: Text("Upload"),
-      onPressed: (){},
-    );
-  }
 
-  // ================= PHOTO PICKER =================
+  // ================= BUTTON TO PICK MULTIPLE PHOTO =================
   Widget _buildAddPhotoButton() {
     return GestureDetector(
-      onTap: () =>
-          _showSimplePicker((file) => setState(() => _photos.add(file))),
+      onTap: () => showImagePickerSheet(
+        context: context,
+        allowMultiple: true,
+        onPicked: (files) {
+          if (files.isEmpty) return;
+
+          setState(() {
+            _photos.addAll(files);
+          });
+          _uploadPhotos(files);
+        },
+      ),
       child: Container(
         decoration: BoxDecoration(
           color: Colors.grey.shade400,
@@ -708,352 +807,130 @@ class _MyBusinessProfileState extends State<MyBusinessProfile> {
     );
   }
 
-  // ================= IMAGE PICKER =================
-  void _showSimplePicker(Function(File) onSelected) {
-    showModalBottomSheet(
-      context: context,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(15)),
-      ),
-      builder: (context) => SafeArea(
-        child: Wrap(
-          children: [
-            ListTile(
-              leading: const Icon(Icons.photo_library),
-              title: const Text('Gallery'),
-              onTap: () async {
-                final picked = await ImagePicker().pickImage(
-                  source: ImageSource.gallery,
-                );
-                if (picked != null) onSelected(File(picked.path));
-                if (context.mounted) Navigator.pop(context);
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.camera_alt),
-              title: const Text('Camera'),
-              onTap: () async {
-                final picked = await ImagePicker().pickImage(
-                  source: ImageSource.camera,
-                );
-                if (picked != null) onSelected(File(picked.path));
-                if (context.mounted) Navigator.pop(context);
-              },
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
+  // ================= EDIT BUSINESS INFO BOTTOM SHEET =================
 
   void _showEditBusinessBottomSheet(BusinessModel business) {
-    final nameController = TextEditingController(text: business.name);
-    final streetController =
-    TextEditingController(text: business.address.street);
-    final cityController =
-    TextEditingController(text: business.address.city);
-    final stateController =
-    TextEditingController(text: business.address.state);
-    final countryController =
-    TextEditingController(text: business.address.country);
+    final colorScheme = context.colorScheme;
+    final formKey = GlobalKey<FormState>();
 
-    BusinessCategory selectedCategory =
-    BusinessCategory.fromString(business.category);
+    final nameTEController = TextEditingController(text: business.name);
+    final locationTEController = TextEditingController(text: business.location);
+
+    BusinessCategory selectedCategory = BusinessCategory.fromString(
+      business.category,
+    );
 
     String phoneNumber = business.phone;
 
-    final colorScheme = context.colorScheme;
+    AppBottomSheet.show(
+      title: "Edit Business Info",
+      formKey: formKey,
+      child: Column(
+        children: [
+          // ================= NAME =================
+          CustomTextField(
+            controller: nameTEController,
+            borderColor: colorScheme.outline,
+            validator: (value) => value == null || value.trim().isEmpty
+                ? "Name is required"
+                : null,
+          ),
 
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+          const SizedBox(height: 12),
+
+          // ================= PHONE =================
+          IntlPhoneField(
+            initialValue: business.phone,
+            initialCountryCode: 'US',
+            decoration: InputDecoration(
+              labelText: "Phone Number",
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+            onChanged: (phone) {
+              phoneNumber = phone.completeNumber;
+            },
+            validator: (phone) => phone == null || phone.number.isEmpty
+                ? "Phone is required"
+                : null,
+          ),
+
+          const SizedBox(height: 12),
+
+          // ================= LOCATION =================
+          CustomTextField(
+            controller: locationTEController,
+            borderColor: colorScheme.outline,
+            validator: (value) => value == null || value.trim().isEmpty
+                ? "Location required"
+                : null,
+          ),
+
+          const SizedBox(height: 12),
+
+          // ================= CATEGORY =================
+          CustomDropdown<BusinessCategory>(
+            value: selectedCategory,
+            onChanged: (BusinessCategory? value) {
+              if (value == null) return;
+              setState(() {
+                selectedCategory = value;
+              });
+            },
+            items: BusinessCategory.values.map((category) {
+              return DropdownMenuItem<BusinessCategory>(
+                value: category,
+                child: Text(category.label),
+              );
+            }).toList(),
+          ),
+        ],
       ),
-      builder: (context) {
-        return StatefulBuilder(
-          builder: (context, setState) {
-            return Padding(
-              padding: EdgeInsets.only(
-                bottom: MediaQuery.of(context).viewInsets.bottom,
-                left: 16,
-                right: 16,
-                top: 20,
-              ),
-              child: SingleChildScrollView(
-                child: Form(
-                  key: _businessFormKey ,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // ================= TITLE =================
-                      Center(
-                        child: Text(
-                          "Edit Business Info",
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            color: colorScheme.primary,
-                          ),
-                        ),
-                      ),
 
-                      const SizedBox(height: 20),
+      onSubmit: () async {
+        final requestData = UpdateBusinessRequest(
+          name: nameTEController.text.trim(),
+          location: locationTEController.text.trim(),
+          phone: phoneNumber.trim(),
+          category: selectedCategory.toJson,
+        );
 
-                      // ================= NAME =================
-                      TextFormField(
-                        controller: nameController,
-                        decoration: InputDecoration(
-                          labelText: "Business Name",
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                        validator: (value) {
-                          if (value == null || value.trim().isEmpty) {
-                            return "Name is required";
-                          }
-                          return null;
-                        },
-                      ),
-
-                      const SizedBox(height: 12),
-
-                      // ================= PHONE =================
-                      IntlPhoneField(
-                        initialValue: business.phone,
-                        initialCountryCode: 'US',
-                        decoration: InputDecoration(
-                          labelText: "Phone Number",
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                        onChanged: (phone) {
-                          phoneNumber = phone.completeNumber;
-                        },
-                        validator: (phone) {
-                          if (phone == null || phone.number.isEmpty) {
-                            return "Phone is required";
-                          }
-                          return null;
-                        },
-                      ),
-
-                      const SizedBox(height: 12),
-
-                      // ================= STREET =================
-                      TextFormField(
-                        controller: streetController,
-                        decoration: InputDecoration(
-                          labelText: "Street",
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                      ),
-
-                      const SizedBox(height: 10),
-
-                      // ================= CITY =================
-                      TextFormField(
-                        controller: cityController,
-                        decoration: InputDecoration(
-                          labelText: "City",
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                      ),
-
-                      const SizedBox(height: 10),
-
-                      // ================= STATE =================
-                      TextFormField(
-                        controller: stateController,
-                        decoration: InputDecoration(
-                          labelText: "State",
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                      ),
-
-                      const SizedBox(height: 10),
-
-                      // ================= COUNTRY =================
-                      TextFormField(
-                        controller: countryController,
-                        decoration: InputDecoration(
-                          labelText: "Country",
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                      ),
-
-                      const SizedBox(height: 12),
-
-                      // ================= CATEGORY =================
-                      DropdownButtonFormField<BusinessCategory>(
-                        value: selectedCategory,
-                        decoration: InputDecoration(
-                          labelText: "Category",
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                        items: BusinessCategory.values.map((category) {
-                          return DropdownMenuItem(
-                            value: category,
-                            child: Text(category.label),
-                          );
-                        }).toList(),
-                        onChanged: (value) {
-                          setState(() {
-                            selectedCategory = value!;
-                          });
-                        },
-                        validator: (value) {
-                          if (value == null) {
-                            return "Category required";
-                          }
-                          return null;
-                        },
-                      ),
-
-                      const SizedBox(height: 20),
-
-                      // ================= BUTTON =================
-                      SizedBox(
-                        width: double.infinity,
-                        child: CustomButton(
-                          text: "Update",
-                          onPressed: () {
-                            if (_businessFormKey .currentState!.validate()) {
-                              final updatedData = {
-                                "name": nameController.text,
-                                "phone": phoneNumber,
-                                "category": selectedCategory.toJson,
-                                "address": {
-                                  "street": streetController.text,
-                                  "city": cityController.text,
-                                  "state": stateController.text,
-                                  "country": countryController.text,
-                                }
-                              };
-
-                              Navigator.pop(context);
-                            }
-                          },
-                        ),
-                      ),
-
-                      const SizedBox(height: 20),
-                    ],
-                  ),
-                ),
-              ),
-            );
-          },
+        await profileController.updateBusinessText(
+          businessId: businessId,
+          body: requestData.toJson(),
         );
       },
     );
   }
-
 
   void _showEditDescriptionBottomSheet(BusinessModel business) {
-    final descriptionController =
-    TextEditingController(text: business.description);
-
     final colorScheme = context.colorScheme;
+    final formKey = GlobalKey<FormState>();
+    final descriptionTEController = TextEditingController(
+      text: business.description,
+    );
 
-
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+    AppBottomSheet.show(
+      title: "Edit Description",
+      formKey: formKey,
+      child: CustomTextField(
+        controller: descriptionTEController,
+        hintText: "Enter Description",
+        maxLine: 3,
+        borderColor: colorScheme.outline,
+        validator: (value) =>
+            value == null || value.isEmpty ? "Required" : null,
       ),
-      builder: (context) {
-        return StatefulBuilder(
-          builder: (context, setState) {
-            return Padding(
-              padding: EdgeInsets.only(
-                bottom: MediaQuery.of(context).viewInsets.bottom,
-                left: 16,
-                right: 16,
-                top: 20,
-              ),
-              child: SingleChildScrollView(
-                child: Form(
-                  key: _descriptionFormKey ,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // ================= TITLE =================
-                      Center(
-                        child: Text(
-                          "Edit Description",
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            color: colorScheme.primary,
-                          ),
-                        ),
-                      ),
-
-                      const SizedBox(height: 20),
-
-                      // ================= DESCRIPTION FIELD =================
-                      CustomTextField(
-                        controller: descriptionController,
-                        hintText: "Description",
-                        maxLine: 3,
-                        borderRadius: 10,
-                        borderColor: colorScheme.outline,
-                        validator: (value){
-                          if( value==null||value.isEmpty){
-                            return "Description is required";
-                          }
-                          return null;
-                        },
-                      ),
-
-                      const SizedBox(height: 20),
-
-                      // ================= UPDATE BUTTON =================
-                      SizedBox(
-                        width: double.infinity,
-                        child: CustomButton(
-                          text: "Update Description",
-                          onPressed: () {
-                            if (_descriptionFormKey .currentState!.validate()) {
-                              final updatedData = {
-                                "description": descriptionController.text.trim(),
-                              };
-
-                              profileController.updateBusinessData(businessId: businessId, body: updatedData);
-
-
-                            }
-                          },
-                        ),
-                      ),
-
-                      const SizedBox(height: 20),
-                    ],
-                  ),
-                ),
-              ),
-            );
-          },
+      onSubmit: () async {
+        final requestData = UpdateBusinessRequest(
+          description: descriptionTEController.text.trim(),
+        );
+        await profileController.updateBusinessText(
+          businessId: businessId,
+          body: requestData.toJson(),
         );
       },
     );
   }
-
-
-
 }

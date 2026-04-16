@@ -3,13 +3,19 @@ class BusinessModel {
   final String name;
   final String category;
   final String description;
+  final String location;
   final String phone;
+  final String website;
   final String logo;
+
   final double rating;
   final int reviewCount;
+
   final List<String> photos;
+  final List<String> attachments;
+
   final bool isActive;
-  final AddressModel address;
+
   final OwnerModel owner;
   final CommunityModel community;
 
@@ -18,13 +24,15 @@ class BusinessModel {
     required this.name,
     required this.category,
     required this.description,
+    required this.location,
     required this.phone,
+    required this.website,
     required this.logo,
     required this.rating,
-    required this.photos,
     required this.reviewCount,
+    required this.photos,
+    required this.attachments,
     required this.isActive,
-    required this.address,
     required this.owner,
     required this.community,
   });
@@ -35,44 +43,64 @@ class BusinessModel {
       name: json['name'] ?? '',
       category: json['category'] ?? '',
       description: json['description'] ?? '',
+      location: json['location'] ?? '',
       phone: json['phone'] ?? '',
+      website: json['website'] ?? '',
       logo: json['logo'] ?? '',
-      rating: (json['rating'] ?? 0).toDouble(),
+
+      rating: double.tryParse(json['rating'].toString()) ?? 0.0,
       reviewCount: json['reviewCount'] ?? 0,
+
+      photos: List<String>.from(json['photos'] ?? []),
+      attachments: List<String>.from(json['attachments'] ?? []),
+
       isActive: json['isActive'] ?? false,
-      address: AddressModel.fromJson(json['address'] ?? {}),
+
       owner: OwnerModel.fromJson(json['owner'] ?? {}),
       community: CommunityModel.fromJson(json['communityId'] ?? {}),
-      photos: List<String>.from(json['photos'] ?? []),
+    );
+  }
+
+
+  ///===== for update the model any specific part
+  BusinessModel copyWith({
+    String? id,
+    String? name,
+    String? category,
+    String? description,
+    String? location,
+    String? phone,
+    String? website,
+    String? logo,
+    double? rating,
+    int? reviewCount,
+    List<String>? photos,
+    List<String>? attachments,
+    bool? isActive,
+    OwnerModel? owner,
+    CommunityModel? community,
+  }) {
+    return BusinessModel(
+      id: id ?? this.id,
+      name: name ?? this.name,
+      category: category ?? this.category,
+      description: description ?? this.description,
+      location: location ?? this.location,
+      phone: phone ?? this.phone,
+      website: website ?? this.website,
+      logo: logo ?? this.logo,
+      rating: rating ?? this.rating,
+      reviewCount: reviewCount ?? this.reviewCount,
+      photos: photos ?? this.photos,
+      attachments: attachments ?? this.attachments,
+      isActive: isActive ?? this.isActive,
+      owner: owner ?? this.owner,
+      community: community ?? this.community,
     );
   }
 }
 
-class AddressModel {
-  final String street;
-  final String city;
-  final String state;
-  final String zip;
-  final String country;
 
-  AddressModel({
-    required this.street,
-    required this.city,
-    required this.state,
-    required this.zip,
-    required this.country,
-  });
-
-  factory AddressModel.fromJson(Map<String, dynamic> json) {
-    return AddressModel(
-      street: json['street'] ?? '',
-      city: json['city'] ?? '',
-      state: json['state'] ?? '',
-      zip: json['zip'] ?? '',
-      country: json['country'] ?? '',
-    );
-  }
-}
 
 
 
@@ -93,7 +121,7 @@ class OwnerModel {
 
   factory OwnerModel.fromJson(Map<String, dynamic> json) {
     return OwnerModel(
-      id: json['id'] ?? '',
+      id: json['id'] ?? json['_id'] ?? '',
       name: json['name'] ?? '',
       email: json['email'] ?? '',
       avatar: json['avatar'] ?? '',
@@ -101,7 +129,6 @@ class OwnerModel {
     );
   }
 }
-
 
 class CommunityModel {
   final String id;
