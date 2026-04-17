@@ -188,7 +188,9 @@ class _MyBusinessProfileState extends State<MyBusinessProfile> {
               onPressed: () {
                 Get.toNamed(
                   AppRoutes.exploreActivity,
-                  arguments: {"businessId": businessId},
+                  arguments: {
+                    "businessName":business.name,
+                    "businessId": business.id},
                 );
               },
               textStyle: AppTextStyle.textSm(

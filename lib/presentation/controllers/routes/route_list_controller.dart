@@ -7,7 +7,7 @@ import '../../../data/models/routes/routes_model.dart';
 
 
 class RouteListController extends GetxController {
-  String? _businessId; //optional variable used for business owner
+
   bool _isLoading = false;
   bool _isPaginationLoading = false;
   String? _errorMessage;
@@ -22,17 +22,13 @@ class RouteListController extends GetxController {
   bool get isPaginationLoading => _isPaginationLoading;
   String? get errorMessage => _errorMessage;
   List<RouteModel> get routeList => _routeList;
+  bool get hasMore => _hasNextPage;
 
-  @override
-  void onInit() {
-    super.onInit();
-    fetchRoutes();
-  }
 
 
   //--- fetch routes
-  Future<void> fetchRoutes({bool isRefresh = false}) async {
-    _businessId = _businessId;
+  Future<void> fetchRoutes({bool isRefresh = false, String? businessId}) async {
+
     if (isRefresh) {
       _currentPage = 1;
       _hasNextPage = true;
@@ -45,8 +41,8 @@ class RouteListController extends GetxController {
 
     try {
 
-      final url = _businessId != null
-          ? '${AppUrl.routeList}?page=$_currentPage&limit=$_limit&businessId=$_businessId'
+      final url = businessId != null
+          ? '${AppUrl.routeList}?page=$_currentPage&limit=$_limit&businessId=$businessId'
           : '${AppUrl.routeList}?page=$_currentPage&limit=$_limit';
 
 
@@ -72,7 +68,7 @@ class RouteListController extends GetxController {
 
   ///  Load next page for pagination
 
-  Future<void> loadMoreRoutes() async {
+  Future<void> loadMoreRoutes({String? businessId}) async {
     if (!_hasNextPage || _isPaginationLoading) return;
 
     _isPaginationLoading = true;
@@ -80,8 +76,8 @@ class RouteListController extends GetxController {
     update();
 
     try {
-      final url = _businessId != null
-          ? '${AppUrl.routeList}?page=$_currentPage&limit=$_limit&businessId=$_businessId'
+      final url = businessId != null
+          ? '${AppUrl.routeList}?page=$_currentPage&limit=$_limit&businessId=$businessId'
           : '${AppUrl.routeList}?page=$_currentPage&limit=$_limit';
 
       final NetworkResponse response = await Get.find<NetworkCaller>()
@@ -104,4 +100,16 @@ class RouteListController extends GetxController {
       update();
     }
   }
+
+/// reset the controller
+  void reset() {
+    _isLoading = false;
+    _isPaginationLoading = false;
+    _errorMessage = null;
+    _routeList.clear();
+    _currentPage = 1;
+    _hasNextPage = true;
+  }
+
+
 }

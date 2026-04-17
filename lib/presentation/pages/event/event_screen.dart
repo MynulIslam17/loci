@@ -34,6 +34,9 @@ class _EventScreenState extends State<EventScreen> {
         eventController.loadMoreEvents();
       }
     });
+
+    eventController.fetchEvents();
+
   }
 
   @override
@@ -75,6 +78,7 @@ class _EventScreenState extends State<EventScreen> {
         child: Padding(
           padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 12),
           child: GetBuilder<EventListController>(
+            init: EventListController(),
             builder: (controller) {
               // Loading sate
               if (controller.isLoading) {

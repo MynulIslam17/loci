@@ -24,14 +24,48 @@ class _ExploreActivityScreenState extends State<ExploreActivityScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
 
-  final eventListController=Get.put(EventListController());
-  final routeListController = Get.put(RouteListController());
+  //---get x controller
+  final eventListController = Get.find<EventListController>();
+  final routeListController = Get.find<RouteListController>();
 
+  late final String businessId;
+  late final String businessName;
 
   @override
   void initState() {
     super.initState();
+
     _tabController = TabController(length: 3, vsync: this);
+
+    final args = Get.arguments as Map<String, dynamic>?;
+
+    businessId = args?["businessId"] ?? "";
+    businessName = args?["businessName"] ?? "";
+
+
+    //-----Clear old data first, then fetch with new businessId because use same controller
+    eventListController.reset();
+    routeListController.reset();
+
+    eventListController.fetchEvents(isRefresh: true, businessId: businessId);
+
+    //===== call data during tab switch
+    _tabController.addListener(() {
+      if (!_tabController.indexIsChanging) return;
+
+      if (_tabController.index == 0 && eventListController.eventList.isEmpty) {
+        eventListController.fetchEvents(
+          isRefresh: true,
+          businessId: businessId,
+        );
+      } else if (_tabController.index == 1 &&
+          routeListController.routeList.isEmpty) {
+        routeListController.fetchRoutes(
+          isRefresh: true,
+          businessId: businessId,
+        );
+      }
+    });
   }
 
   @override
@@ -60,12 +94,24 @@ class _ExploreActivityScreenState extends State<ExploreActivityScreen>
                     hintText: "Explore Activities",
                     hintTextColor: colorScheme.onSurfaceVariant,
                     textColor: colorScheme.onSurface,
-                    suffixIcon: Icon(Icons.search, color: colorScheme.onSurfaceVariant),
+                    suffixIcon: Icon(
+                      Icons.search,
+                      color: colorScheme.onSurfaceVariant,
+                    ),
                   ),
                   const SizedBox(height: 12),
                   CustomButton(
                     backgroundColor: colorScheme.primary,
-                    onPressed: () => Get.toNamed(AppRoutes.createActivity),
+                    onPressed: () {
+                      //TODO : go to crate activity page
+                      Get.toNamed(
+                        AppRoutes.createActivity,
+                         arguments: {
+                          "businessName":businessName,
+                          "businessId": businessId
+                         }
+                      );
+                    },
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
@@ -74,7 +120,9 @@ class _ExploreActivityScreenState extends State<ExploreActivityScreen>
                         Text(
                           "Create New Activity",
                           style: AppTextStyle.textSm(
-                              weight: FontWeight.w600, color: colorScheme.onPrimary),
+                            weight: FontWeight.w600,
+                            color: colorScheme.onPrimary,
+                          ),
                         ),
                       ],
                     ),
@@ -83,12 +131,16 @@ class _ExploreActivityScreenState extends State<ExploreActivityScreen>
                   Text(
                     "Explore Activities",
                     style: AppTextStyle.textLg(
-                        weight: FontWeight.w600, color: colorScheme.onSurface),
+                      weight: FontWeight.w600,
+                      color: colorScheme.onSurface,
+                    ),
                   ),
                   const SizedBox(height: 4),
                   Text(
                     "Track ongoing activities like events, routes or raffles",
-                    style: AppTextStyle.textSm(color: colorScheme.onSurfaceVariant),
+                    style: AppTextStyle.textSm(
+                      color: colorScheme.onSurfaceVariant,
+                    ),
                   ),
                   const SizedBox(height: 12),
                 ],
@@ -124,9 +176,30 @@ class _ExploreActivityScreenState extends State<ExploreActivityScreen>
         body: TabBarView(
           controller: _tabController,
           children: [
-            _buildTabContent(_eventsTab()),
-            _buildTabContent(_routesTab()),
-            _buildTabContent(_rafflesTab()),
+            // TabBarView children:
+            _buildTabContent(
+              _eventsTab(),
+              onRefresh: () => eventListController.fetchEvents(
+                businessId: businessId,
+                isRefresh: true,
+              ),
+              onLoadMore: () =>
+                  eventListController.loadMoreEvents(businessId: businessId),
+            ),
+            _buildTabContent(
+              _routesTab(),
+              onRefresh: () => routeListController.fetchRoutes(
+                businessId: businessId,
+                isRefresh: true,
+              ),
+              onLoadMore: () =>
+                  routeListController.loadMoreRoutes(businessId: businessId),
+            ),
+            _buildTabContent(
+              _rafflesTab(),
+              onRefresh: () {},
+              onLoadMore: () {},
+            ),
           ],
         ),
       ),
@@ -134,23 +207,42 @@ class _ExploreActivityScreenState extends State<ExploreActivityScreen>
   }
 
   // Wraps each tab's SliverList inside a CustomScrollView with overlap handling
-  Widget _buildTabContent(Widget sliver) {
+  Widget _buildTabContent(
+    Widget sliver, {
+    required VoidCallback onRefresh,
+    required VoidCallback onLoadMore,
+  }) {
     return Builder(
       builder: (context) {
-        return CustomScrollView(
-          physics: const AlwaysScrollableScrollPhysics(
-            parent: BouncingScrollPhysics(),
+        return NotificationListener<ScrollNotification>(
+          onNotification: (notification) {
+            if (notification.metrics.pixels >=
+                notification.metrics.maxScrollExtent - 200) {
+              onLoadMore();
+            }
+            return false;
+          },
+
+          child: RefreshIndicator(
+            onRefresh: () async => onRefresh(),
+            child: CustomScrollView(
+              physics: const AlwaysScrollableScrollPhysics(
+                parent: BouncingScrollPhysics(),
+              ),
+              slivers: [
+                // Pushes content below the pinned TabBar
+                SliverOverlapInjector(
+                  handle: NestedScrollView.sliverOverlapAbsorberHandleFor(
+                    context,
+                  ),
+                ),
+                SliverPadding(
+                  padding: const EdgeInsets.fromLTRB(6, 6, 6, 20),
+                  sliver: sliver,
+                ),
+              ],
+            ),
           ),
-          slivers: [
-            // Pushes content below the pinned TabBar
-            SliverOverlapInjector(
-              handle: NestedScrollView.sliverOverlapAbsorberHandleFor(context),
-            ),
-            SliverPadding(
-              padding: const EdgeInsets.fromLTRB(6, 6, 6, 20),
-              sliver: sliver,
-            ),
-          ],
         );
       },
     );
@@ -182,8 +274,27 @@ class _ExploreActivityScreenState extends State<ExploreActivityScreen>
 
         // ===== LIST
         return SliverList.separated(
-          itemCount: controller.eventList.length,
+          itemCount: controller.eventList.length + 1,
           itemBuilder: (context, index) {
+            //  Last item = loader
+            if (index == controller.eventList.length) {
+              if (controller.isPaginationLoading) {
+                return const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 16),
+                  child: Center(child: CircularProgressIndicator()),
+                );
+              }
+              if (!controller.hasMore) {
+                return const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 16),
+                  child: Center(child: Text("No more events")),
+                );
+              }
+              return const SizedBox.shrink(); // nothing to show
+            }
+
+            // Normal items
+
             final event = controller.eventList[index];
             return EventEditCard(
               imageUrl: event.coverImage,
@@ -191,7 +302,8 @@ class _ExploreActivityScreenState extends State<ExploreActivityScreen>
               description: event.description,
               dateTime: event.date,
               location: event.location,
-              attendance: "${event.goingCount} going / ${event.maxAttendees} max",
+              attendance:
+                  "${event.goingCount} going / ${event.maxAttendees} max",
               organizerName: event.organizerName,
               onEditInfo: () => Get.toNamed(
                 AppRoutes.editEvent,
@@ -210,6 +322,7 @@ class _ExploreActivityScreenState extends State<ExploreActivityScreen>
   }
 
   Widget _routesTab() {
+    final colorScheme = context.colorScheme;
     return GetBuilder<RouteListController>(
       builder: (controller) {
         // ===== LOADING
@@ -228,15 +341,55 @@ class _ExploreActivityScreenState extends State<ExploreActivityScreen>
 
         // ===== EMPTY
         if (controller.routeList.isEmpty) {
-          return const SliverFillRemaining(
-            child: Center(child: Text("No routes found")),
+          return SliverFillRemaining(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  Icons.route,
+                  size: 48,
+                  color: colorScheme.onSurfaceVariant,
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  "No routes found",
+                  style: AppTextStyle.textSm(
+                    color: colorScheme.onSurfaceVariant,
+                  ),
+                ),
+                TextButton(
+                  onPressed: () => controller.fetchRoutes(
+                    businessId: businessId,
+                    isRefresh: true,
+                  ),
+                  child: const Text("Try Again"),
+                ),
+              ],
+            ),
           );
         }
 
         // ===== LIST
         return SliverList.separated(
-          itemCount: controller.routeList.length,
+          itemCount: controller.routeList.length + 1,
           itemBuilder: (context, index) {
+            //  Last item = loader
+            if (index == controller.routeList.length) {
+              if (controller.isPaginationLoading) {
+                return const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 16),
+                  child: Center(child: CircularProgressIndicator()),
+                );
+              }
+              if (!controller.hasMore) {
+                return const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 16),
+                  child: Center(child: Text("No more routes")),
+                );
+              }
+              return const SizedBox.shrink(); // nothing to show
+            }
+
             final route = controller.routeList[index];
             return RouteEditCard(
               imageUrl: route.banner,
@@ -246,8 +399,14 @@ class _ExploreActivityScreenState extends State<ExploreActivityScreen>
               openingTime: route.openingTime,
               availabilityType: route.availabilityType,
               isPublic: route.isRoutePublic,
-              onEdit: () => Get.toNamed(AppRoutes.editRoutes, arguments: {"routeId": route.routeId}),
-              onView: () => Get.toNamed(AppRoutes.viewRoutes, arguments: {"routeId": route.routeId}),
+              onEdit: () => Get.toNamed(
+                AppRoutes.editRoutes,
+                arguments: {"routeId": route.routeId},
+              ),
+              onView: () => Get.toNamed(
+                AppRoutes.viewRoutes,
+                arguments: {"routeId": route.routeId},
+              ),
             );
           },
           separatorBuilder: (_, __) => const SizedBox(height: 10),
@@ -261,7 +420,8 @@ class _ExploreActivityScreenState extends State<ExploreActivityScreen>
       itemCount: 5,
       itemBuilder: (context, index) => RaffleEditCard(
         title: "Summer Charity Raffle ${index + 1}",
-        description: "Enter for a chance to win an all-expenses-paid trip while supporting local youth programs...",
+        description:
+            "Enter for a chance to win an all-expenses-paid trip while supporting local youth programs...",
         endDate: "Mar 25, 2026",
         ticketPrice: "\$5.00",
         totalTickets: "500 Sold",
@@ -285,7 +445,11 @@ class _StickyTabBarDelegate extends SliverPersistentHeaderDelegate {
   _StickyTabBarDelegate(this.tabBar, {required this.color});
 
   @override
-  Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) {
+  Widget build(
+    BuildContext context,
+    double shrinkOffset,
+    bool overlapsContent,
+  ) {
     return Container(color: color, child: tabBar);
   }
 

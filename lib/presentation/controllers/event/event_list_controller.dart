@@ -7,7 +7,7 @@ import '../../../data/models/event/event_model.dart';
 
 class EventListController extends GetxController {
   bool _isLoading = false;
-  String? _businessId; //optional variable used for business owner
+
 
   bool _isPaginationLoading = false;
 
@@ -29,17 +29,13 @@ class EventListController extends GetxController {
   bool get isPaginationLoading => _isPaginationLoading;
   String? get errorMessage => _errorMessage;
   List<EventModel> get eventList => _eventList;
+  bool get hasMore => _hasNextPage;
 
-  @override
-  void onInit() {
-    super.onInit();
-    fetchEvents();
-  }
 
   ///  Fetch events from API
   /// [isRefresh] → if true, reset page & clear list
   Future<void> fetchEvents({bool isRefresh = false, String? businessId}) async {
-    _businessId = businessId;
+
 
     if (isRefresh) {
       _currentPage = 1; // reset page
@@ -52,8 +48,8 @@ class EventListController extends GetxController {
     update();
 
     try {
-      final url = _businessId != null
-          ? '${AppUrl.eventList}?page=$_currentPage&limit=$_limit&businessId=$_businessId' // for business owner
+      final url = businessId != null
+          ? '${AppUrl.eventList}?page=$_currentPage&limit=$_limit&businessId=$businessId' // for business owner
           : '${AppUrl.eventList}?page=$_currentPage&limit=$_limit';
 
       final NetworkResponse response = await Get.find<NetworkCaller>()
@@ -75,7 +71,7 @@ class EventListController extends GetxController {
   }
 
   ///  Load next page for pagination
-  Future<void> loadMoreEvents() async {
+  Future<void> loadMoreEvents({String? businessId}) async {
     if (!_hasNextPage || _isPaginationLoading) return;
 
     _isPaginationLoading = true;
@@ -83,8 +79,8 @@ class EventListController extends GetxController {
     update(); // update UI
 
     try {
-      final url = _businessId != null
-          ? '${AppUrl.eventList}?page=$_currentPage&limit=$_limit&businessId=$_businessId'
+      final url = businessId != null
+          ? '${AppUrl.eventList}?page=$_currentPage&limit=$_limit&businessId=$businessId'
           : '${AppUrl.eventList}?page=$_currentPage&limit=$_limit';
 
       final NetworkResponse response = await Get.find<NetworkCaller>()
@@ -119,4 +115,15 @@ class EventListController extends GetxController {
       update();
     }
   }
+
+  /// reset the controller
+  void reset() {
+    _isLoading = false;
+    _isPaginationLoading = false;
+    _errorMessage = null;
+    _eventList.clear();
+    _currentPage = 1;
+    _hasNextPage = true;
+  }
+
 }

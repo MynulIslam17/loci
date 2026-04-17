@@ -10,12 +10,13 @@ import 'package:loci/core/theme/theme_extention.dart';
 import 'package:loci/core/utils/acitvity_validator.dart';
 import 'package:loci/presentation/controllers/my_business/create_actvity_controller.dart';
 import 'package:loci/presentation/controllers/my_business/get_my_business_list _controller.dart';
+import 'package:loci/presentation/pages/clam_business/widgets/my_business.dart';
 import 'package:loci/presentation/widgets/custom_appbar.dart';
 import 'package:loci/presentation/widgets/custom_dropdown.dart';
 import 'package:loci/presentation/widgets/custom_imagepicker.dart';
 import 'package:loci/presentation/widgets/task_card.dart';
 import '../../../core/enums/routeType.dart';
-import '../../../core/utils/activity_type.dart';
+import '../../../core/enums/activity_type.dart';
 import '../../../core/utils/date_parser.dart';
 import '../../../core/utils/show_snackbar.dart';
 import '../../../core/utils/time_parser.dart';
@@ -54,12 +55,23 @@ class _CreateActivityScreenState extends State<CreateActivityScreen> {
 
   List<TaskModel> tasks = [];
 
-  List<String> createCategory = ActivityType.values.map((e) => e.name).toList();
-
-  String? selectedCategory = ActivityType.Event.name;
+  ActivityType selectedCategory = ActivityType.event;
   RouteType? selectedRouteCondition;
-  String? selectedBusinessId;
   bool isPublic = false;
+
+  late final String businessId;
+  late final String businessName;
+
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+
+    final args = Get.arguments as Map<String, dynamic>?;
+
+    businessId = args?["businessId"] ?? "";
+    businessName = args?["businessName"] ?? "";
+  }
 
   @override
   void dispose() {
@@ -96,9 +108,7 @@ class _CreateActivityScreenState extends State<CreateActivityScreen> {
       initialTime: TimeOfDay.now(),
       builder: (context, child) {
         return MediaQuery(
-          data: MediaQuery.of(context).copyWith(
-            alwaysUse24HourFormat: false,
-          ),
+          data: MediaQuery.of(context).copyWith(alwaysUse24HourFormat: false),
           child: child!,
         );
       },
@@ -269,9 +279,8 @@ class _CreateActivityScreenState extends State<CreateActivityScreen> {
   //     SnackbarService.error(createActivityController.message);
   //   }
   // }
-  
-  void _publishHandler() async {
 
+  void _publishHandler() async {
     final error = ActivityValidator.validateAll(
       formKey: _formKey,
       bannerPath: bannerImage?.path,
@@ -291,23 +300,20 @@ class _CreateActivityScreenState extends State<CreateActivityScreen> {
       }
       return;
     }
-    
-    
-
 
     /// =========================
     /// BUILD BODY (CLEAN & SAFE)
     /// =========================
     final Map<String, String> body = {
-      "activityType": selectedCategory?.toLowerCase() ?? '',
+      "activityType": selectedCategory.toJson,
       "title": titleController.text.trim(),
       "details": detailsController.text.trim(),
       "isPublic": isPublic.toString(),
-      "organizerBusiness": selectedBusinessId ?? '',
+      "organizerBusiness": businessId ?? '',
     };
 
     /// EVENT payload
-    if (selectedCategory == ActivityType.Event.name) {
+    if (selectedCategory == ActivityType.event) {
       body.addAll({
         "eventDate": combineToUtcIso(selectedDate!, selectedTime!),
         "eventTime": selectedTime!.format(context),
@@ -318,7 +324,7 @@ class _CreateActivityScreenState extends State<CreateActivityScreen> {
     }
 
     /// ROUTE payload
-    if (selectedCategory == ActivityType.Routes.name) {
+    if (selectedCategory == ActivityType.routes) {
       body.addAll({
         "openingTime": selectedTime!.format(context),
         "availabilityType": selectedRouteCondition?.apiValue ?? '',
@@ -328,7 +334,7 @@ class _CreateActivityScreenState extends State<CreateActivityScreen> {
     }
 
     /// RAFFLE payload
-    if (selectedCategory == ActivityType.Raffles.name) {
+    if (selectedCategory == ActivityType.raffles) {
       body.addAll({
         "dueDate": selectedDate!.toUtc().toIso8601String(),
         "maxSupply": maxSupplyController.text.trim(),
@@ -339,11 +345,11 @@ class _CreateActivityScreenState extends State<CreateActivityScreen> {
     /// API CALL
     /// =========================
 
-     final String url=selectedCategory==ActivityType.Event.name
-         ?AppUrl.createEvent
-         : selectedCategory==ActivityType.Routes.name
-          ? AppUrl.createRoute
-          :  AppUrl.createRaffle;
+    final String url = selectedCategory == ActivityType.event
+        ? AppUrl.createEvent
+        : selectedCategory == ActivityType.routes
+        ? AppUrl.createRoute
+        : AppUrl.createRaffle;
 
     final success = await createActivityController.createActivity(
       url: url,
@@ -417,23 +423,27 @@ class _CreateActivityScreenState extends State<CreateActivityScreen> {
     final colorScheme = context.colorScheme;
     return Column(
       children: [
-        CustomDropdown(
-          title: "Activity type",
-          dropdownColor: colorScheme.surfaceContainerHigh,
+        CustomDropdown<ActivityType>(
           value: selectedCategory,
-          borderColor: colorScheme.outline,
           hintText: "Select Category",
+          dropdownColor: colorScheme.surfaceContainerHigh,
+          borderColor: colorScheme.outline,
           hintColor: colorScheme.onSurfaceVariant,
           textColor: colorScheme.onSurface,
+          textFontSize: 14,
+          hintFontSize: 14,
+          items: ActivityType.values.map((type) {
+            return DropdownMenuItem<ActivityType>(
+              value: type,
+              child: Text(type.label),
+            );
+          }).toList(),
           onChanged: (value) {
             if (value != selectedCategory) {
               _clearCategoryData();
             }
-            setState(() => selectedCategory = value);
+            setState(() => selectedCategory = value!);
           },
-          items: createCategory
-              .map((c) => DropdownMenuItem(value: c, child: Text(c)))
-              .toList(),
         ),
         const SizedBox(height: 16),
         CustomTextField(
@@ -474,14 +484,12 @@ class _CreateActivityScreenState extends State<CreateActivityScreen> {
 
   Widget _middleField() {
     switch (selectedCategory) {
-      case "Event":
+      case ActivityType.event:
         return _eventFields();
-      case "Routes":
+      case ActivityType.routes:
         return _routeFields();
-      case "Raffles":
+      case ActivityType.raffles:
         return _raffleFields();
-      default:
-        return const SizedBox();
     }
   }
 
@@ -602,7 +610,7 @@ class _CreateActivityScreenState extends State<CreateActivityScreen> {
             ),
             const SizedBox(width: 12),
             Expanded(
-              child:Expanded(
+              child: Expanded(
                 child: CustomDropdown<RouteType>(
                   title: "Availability types",
                   value: selectedRouteCondition,
@@ -789,7 +797,7 @@ class _CreateActivityScreenState extends State<CreateActivityScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        if (selectedCategory != ActivityType.Raffles.name) ...[
+        if (selectedCategory != ActivityType.raffles) ...[
           CustomTextField(
             controller: locationController,
             title: "Location",
@@ -808,7 +816,7 @@ class _CreateActivityScreenState extends State<CreateActivityScreen> {
 
           CustomTextField(
             controller: urlController,
-            title: "Location Url",
+            title: "Map Url",
             hintText: "Enter url",
             prefixIcon: const Icon(Icons.location_disabled),
             borderColor: context.colorScheme.outline,
@@ -828,26 +836,7 @@ class _CreateActivityScreenState extends State<CreateActivityScreen> {
 
         myBusinessController.businessList.isEmpty
             ? Text("No business found")
-            : CustomDropdown(
-                value: selectedBusinessId,
-                onChanged: (value) =>
-                    setState(() => selectedBusinessId = value),
-                hintText: "Select Business",
-                prefixIcon: Icon(Icons.work_outline_sharp),
-                items: myBusinessController.businessList.map((business) {
-                  return DropdownMenuItem(
-                    value: business.id,
-                    child: Text(business.name),
-                  );
-                }).toList(),
-
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return "Select Business";
-                  }
-                  return null;
-                },
-              ),
+            : MyOwnBusiness(businessName: businessName,),
 
         const SizedBox(height: 10),
         GetBuilder<CreateActivityController>(

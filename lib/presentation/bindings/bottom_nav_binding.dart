@@ -13,7 +13,7 @@ class BottomNavBinding extends Bindings{
   void dependencies() {
     // TODO: implement dependencies
     Get.lazyPut(() => EventListController(),fenix: true);
-    Get.lazyPut(() => RouteListController());
+    Get.lazyPut(() => RouteListController(),fenix: true);
     Get.lazyPut(() => RouteDetailsController());
     Get.lazyPut(() => RSVPController(),fenix: true);
     Get.lazyPut(() => CheckInController(),fenix: true);

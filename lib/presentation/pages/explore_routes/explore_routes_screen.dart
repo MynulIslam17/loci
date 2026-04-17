@@ -43,6 +43,10 @@ class _ExploreRoutesPageState extends State<ExploreRoutesPage> {
         routeController.loadMoreRoutes();
       }
     });
+
+    //routes call
+    routeController.fetchRoutes();
+
   }
 
   @override

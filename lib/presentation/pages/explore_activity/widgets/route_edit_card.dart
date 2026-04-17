@@ -275,7 +275,9 @@ class RouteEditCard extends StatelessWidget {
                 const SizedBox(height: 12),
 
                 // meta row
-                Row(
+                Wrap(
+                  spacing: 2,
+                  runSpacing: 10,
                   children: [
                     _buildMetaItem(
                         context, Icons.location_on_outlined, location),

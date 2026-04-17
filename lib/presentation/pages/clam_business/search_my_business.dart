@@ -152,13 +152,13 @@ class _SearchMyBusinessState extends State<SearchMyBusiness> {
                       color: colorScheme.surfaceContainerHigh,
                       child: CustomDropdown<BusinessCategory>(
                         dropdownColor: colorScheme.surfaceContainerHigh,
-                        value: selectedCategory,
                         borderColor: colorScheme.outline,
-                        hintText: "Select Category",
-                        textFontSize: 14,
-                        hintFontSize: 14,
                         hintColor: colorScheme.onSurfaceVariant,
                         textColor: colorScheme.onSurface,
+                        textFontSize: 14,
+                        hintFontSize: 14,
+                        value: selectedCategory,
+                        hintText: "Select Category",
                         onChanged: (BusinessCategory? value) {
                           setState(() {
                             selectedCategory = value;
