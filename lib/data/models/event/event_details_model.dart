@@ -8,6 +8,7 @@ class EventDetailsModel {
   final double lng;
 
   final int rsvpCount;
+
   final List<Rsvp> rsvpList;
   final String checkInCode;
   final bool isPublic;

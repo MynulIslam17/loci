@@ -47,6 +47,19 @@ class DateParserHelper {
         '${date.day}';
   }
 
+  /// ✅ Format DateTime to =>>>12 Jan - 18 Jan
+
+ static String shortDate(DateTime date) {
+    const months = [
+      "Jan","Feb","Mar","Apr","May","Jun",
+      "Jul","Aug","Sep","Oct","Nov","Dec"
+    ];
+
+    return "${date.day} ${months[date.month - 1]}";
+  }
+
+
+
   /// ✅ Get full day name (Monday, Tuesday, etc.)
   static String getDayName(DateTime? date) {
     if (date == null) return 'N/A';

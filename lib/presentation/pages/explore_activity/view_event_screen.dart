@@ -10,7 +10,7 @@ import 'package:loci/routes/app_routes.dart';
 
 import '../../../gen/assets.gen.dart';
 import '../../widgets/qrcode_maker.dart';
-import '../event/widgets/event_card.dart'; // Assuming IconTextRow is here
+import '../event/widgets/event_card.dart';
 
 class ViewEventScreen extends StatefulWidget {
   const ViewEventScreen({super.key});

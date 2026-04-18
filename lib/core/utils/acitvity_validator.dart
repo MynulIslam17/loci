@@ -1,5 +1,7 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:loci/core/enums/activity_type.dart';
+
+import '../enums/activity_type.dart';
 import '../enums/routeType.dart';
 
 class ActivityValidator {
@@ -8,41 +10,50 @@ class ActivityValidator {
     required String? bannerPath,
     required ActivityType category,
 
-    DateTime? date,
-    TimeOfDay? time,
+    // EVENT
+    DateTime? eventDate,
+    TimeOfDay? eventTime,
+
+    // ROUTE
+    TimeOfDay? routeOpeningTime,
     RouteType? routeType,
+
+    // RAFFLE
+    DateTimeRange? raffleRange,
+
     bool hasCoupon = false,
     bool hasTasks = false,
   }) {
-    // 1. Form fields validation
     if (!formKey.currentState!.validate()) {
       return "FORM_INVALID";
     }
 
-    // 2. Banner
     if (bannerPath == null) {
       return "Please select banner image";
     }
 
-    // 3. Event
+    // EVENT
     if (category == ActivityType.event) {
-      if (date == null) return "Select event date";
-      if (time == null) return "Select event time";
+      if (eventDate == null) return "Select event date";
+      if (eventTime == null) return "Select event time";
     }
 
-    // 4. Route
+    // ROUTE
     if (category == ActivityType.routes) {
-      if (time == null) return "Select opening time";
+      if (routeOpeningTime == null) return "Select opening time";
       if (routeType == null) return "Select route type";
     }
 
-    // 5. Raffle
+    // RAFFLE
     if (category == ActivityType.raffles) {
-      if (date == null) return "Select due date";
+      if (raffleRange == null) {
+        return "Select raffle date range";
+      }
+
       if (!hasCoupon) return "Upload voucher";
       if (!hasTasks) return "Add tasks";
     }
 
-    return null; // no error
+    return null;
   }
 }

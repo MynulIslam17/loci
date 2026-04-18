@@ -6,7 +6,7 @@ import 'package:loci/core/network/network_response.dart';
 class CreateActivityController extends GetxController {
   bool isLoading = false;
 
-  String message = ""; // 👈 single variable for both success/error
+  String message = "";
 
   void setLoading(bool value) {
     isLoading = value;
@@ -33,8 +33,11 @@ class CreateActivityController extends GetxController {
         message = response.body?['message'] ?? "Created successfully";
         update();
         return true;
-      } else {
-        message = response.errorMessage ?? "Failed to create activity";
+      }else {
+        message = response.body?["errors"]?["details"]?[0]
+            ?? response.body?["message"]
+            ?? "Failed to create activity";
+
         update();
         return false;
       }

@@ -41,17 +41,26 @@ class _CreateActivityScreenState extends State<CreateActivityScreen> {
   final TextEditingController locationController = TextEditingController();
   final TextEditingController urlController = TextEditingController();
   final TextEditingController maxSupplyController = TextEditingController();
+  final TextEditingController raffleDateController = TextEditingController();
+  final TextEditingController couponTitleController = TextEditingController();
 
   final myBusinessController = Get.find<GetMyBusinessController>();
   final createActivityController = Get.find<CreateActivityController>();
 
   final _formKey = GlobalKey<FormState>();
 
-  DateTime? selectedDate;
-  TimeOfDay? selectedTime;
+  // EVENT
+  DateTime? eventDate;
+  TimeOfDay? eventTime;
+
+  // ROUTE
+  TimeOfDay? routeOpeningTime;
+
+  // RAFFLE (range)
+  DateTimeRange? raffleRange;
 
   File? bannerImage;
-  File? coupon;
+  File? rafflePrizeImage;
 
   List<TaskModel> tasks = [];
 
@@ -81,25 +90,49 @@ class _CreateActivityScreenState extends State<CreateActivityScreen> {
     detailsController.dispose();
     personController.dispose();
     locationController.dispose();
+    raffleDateController.dispose();
     urlController.dispose();
     maxSupplyController.dispose();
+    couponTitleController.dispose();
     super.dispose();
   }
 
   void showCalendar() async {
     DateTime? pickedDate = await showDatePicker(
       context: context,
-      firstDate: DateTime(1940),
+      firstDate: DateTime.now(),
       initialDate: DateTime.now(),
       lastDate: DateTime(2049),
     );
 
-    if (pickedDate != null) {
-      setState(() {
-        selectedDate = pickedDate;
+    if (pickedDate == null) return;
+
+    setState(() {
+      if (selectedCategory == ActivityType.event) {
+        eventDate = pickedDate;
         dateTEController.text = DateParserHelper.toFriendlyDate(pickedDate);
-      });
-    }
+      }
+
+      if (selectedCategory == ActivityType.raffles) {}
+    });
+  }
+
+  void pickRaffleRange() async {
+    final picked = await showDateRangePicker(
+      context: context,
+      firstDate: DateTime.now(),
+      lastDate: DateTime(2049),
+    );
+
+    if (picked == null) return;
+
+    setState(() {
+      raffleRange = picked;
+
+      raffleDateController.text =
+          "${DateParserHelper.shortDate(picked.start)} → "
+          "${DateParserHelper.shortDate(picked.end)}";
+    });
   }
 
   void showTime() async {
@@ -114,12 +147,19 @@ class _CreateActivityScreenState extends State<CreateActivityScreen> {
       },
     );
 
-    if (pickedTime != null) {
-      setState(() {
-        selectedTime = pickedTime;
-        timeTEController.text = pickedTime.format(context);
-      });
-    }
+    if (pickedTime == null) return;
+
+    setState(() {
+      if (selectedCategory == ActivityType.event) {
+        eventTime = pickedTime;
+      }
+
+      if (selectedCategory == ActivityType.routes) {
+        routeOpeningTime = pickedTime;
+      }
+
+      timeTEController.text = pickedTime.format(context);
+    });
   }
 
   Future<void> _pickCoupon() async {
@@ -134,7 +174,7 @@ class _CreateActivityScreenState extends State<CreateActivityScreen> {
     if (path == null) return;
 
     setState(() {
-      coupon = File(path);
+      rafflePrizeImage = File(path);
     });
   }
 
@@ -156,144 +196,57 @@ class _CreateActivityScreenState extends State<CreateActivityScreen> {
     });
   }
 
+  // clear data when do switch category
   void _clearCategoryData() {
-    dateTEController.clear();
-    timeTEController.clear();
-    titleController.clear();
-    detailsController.clear();
-    personController.clear();
-    locationController.clear();
-    urlController.clear();
-    maxSupplyController.clear();
-    bannerImage = null;
-    coupon = null;
-    tasks.clear();
-    selectedRouteCondition = null;
-    isPublic = false;
-  }
+    setState(() {
+      dateTEController.clear();
+      timeTEController.clear();
+      titleController.clear();
+      detailsController.clear();
+      personController.clear();
+      locationController.clear();
+      urlController.clear();
+      maxSupplyController.clear();
+      raffleDateController.clear();
 
-  // void _publishHandler() async {
-  //   if (!_formKey.currentState!.validate()) return;
-  //
-  //   if (bannerImage == null) {
-  //     SnackbarService.warning("Please select a banner image");
-  //     return;
-  //   }
-  //
-  //   // EVENT validation
-  //   if (selectedCategory == ActivityType.Event.name) {
-  //     if (selectedDate == null) {
-  //       SnackbarService.warning("Please select event date");
-  //       return;
-  //     }
-  //     if (selectedTime == null) {
-  //       SnackbarService.warning("Please select event time");
-  //       return;
-  //     }
-  //   }
-  //
-  //   // RAFFLE validation
-  //   if (selectedCategory == ActivityType.Raffles.name) {
-  //     if (coupon == null) {
-  //       SnackbarService.warning("Please upload a voucher");
-  //       return;
-  //     }
-  //     if (tasks.isEmpty) {
-  //       SnackbarService.warning("Please add at least one requirement");
-  //       return;
-  //     }
-  //   }
-  //
-  //   // ROUTE validation
-  //   if (selectedCategory == ActivityType.Routes.name) {
-  //     if (selectedTime == null) {
-  //       SnackbarService.warning("Please select opening time");
-  //       return;
-  //     }
-  //     if (selectedRouteCondition == null) {
-  //       SnackbarService.warning("Please select route type");
-  //       return;
-  //     }
-  //   }
-  //
-  //   /// =========================
-  //   /// BUILD BODY (CLEAN & SAFE)
-  //   /// =========================
-  //   final Map<String, String> body = {
-  //     "activityType": selectedCategory?.toLowerCase() ?? '',
-  //     "title": titleController.text.trim(),
-  //     "details": detailsController.text.trim(),
-  //     "isPublic": isPublic.toString(),
-  //     "organizerBusiness": selectedBusinessId ?? '',
-  //   };
-  //
-  //   /// EVENT payload
-  //   if (selectedCategory == ActivityType.Event.name) {
-  //     body.addAll({
-  //       "eventDate": combineToUtcIso(selectedDate!, selectedTime!),
-  //       "eventTime": selectedTime!.format(context),
-  //       "maxParticipants": personController.text.trim(),
-  //       "location": locationController.text.trim(),
-  //       "url": urlController.text.trim(),
-  //     });
-  //   }
-  //
-  //   /// ROUTE payload
-  //   if (selectedCategory == ActivityType.Routes.name) {
-  //     body.addAll({
-  //       "openingTime": selectedTime!.format(context),
-  //       "availabilityType": selectedRouteCondition?.apiValue ?? '',
-  //       "location": locationController.text.trim(),
-  //       "url": urlController.text.trim(),
-  //     });
-  //   }
-  //
-  //   /// RAFFLE payload
-  //   if (selectedCategory == ActivityType.Raffles.name) {
-  //     body.addAll({
-  //       "dueDate": selectedDate!.toUtc().toIso8601String(),
-  //       "maxSupply": maxSupplyController.text.trim(),
-  //     });
-  //   }
-  //
-  //   /// =========================
-  //   /// API CALL
-  //   /// =========================
-  //
-  //    final String url=selectedCategory==ActivityType.Event.name
-  //        ?AppUrl.createEvent
-  //        : selectedCategory==ActivityType.Routes.name
-  //         ? AppUrl.createRoute
-  //         :  AppUrl.createRaffle;
-  //
-  //   final success = await createActivityController.createActivity(
-  //     url: url,
-  //     body: body,
-  //     files: {"banner": bannerImage!, if (coupon != null) "coupon": coupon!},
-  //   );
-  //
-  //   if (success) {
-  //     Get.back();
-  //     SnackbarService.success(createActivityController.message);
-  //   } else {
-  //     SnackbarService.error(createActivityController.message);
-  //   }
-  // }
+      bannerImage = null;
+      rafflePrizeImage = null;
+
+      tasks.clear();
+
+      selectedRouteCondition = null;
+      isPublic = false;
+
+      // reset dates/times
+      eventDate = null;
+      eventTime = null;
+      routeOpeningTime = null;
+      raffleRange = null;
+    });
+  }
 
   void _publishHandler() async {
     final error = ActivityValidator.validateAll(
       formKey: _formKey,
       bannerPath: bannerImage?.path,
-      category: selectedCategory!,
+      category: selectedCategory,
 
-      date: selectedDate,
-      time: selectedTime,
+      // EVENT
+      eventDate: eventDate,
+      eventTime: eventTime,
+
+      // ROUTE
+      routeOpeningTime: routeOpeningTime,
       routeType: selectedRouteCondition,
 
-      hasCoupon: coupon != null,
+      // RAFFLE
+      raffleRange: raffleRange,
+
+      hasCoupon: rafflePrizeImage != null,
       hasTasks: tasks.isNotEmpty,
     );
 
+    //----show the error  ---------------
     if (error != null) {
       if (error != "FORM_INVALID") {
         SnackbarService.warning(error);
@@ -315,8 +268,8 @@ class _CreateActivityScreenState extends State<CreateActivityScreen> {
     /// EVENT payload
     if (selectedCategory == ActivityType.event) {
       body.addAll({
-        "eventDate": combineToUtcIso(selectedDate!, selectedTime!),
-        "eventTime": selectedTime!.format(context),
+        "eventDate": combineToUtcIso(eventDate!, eventTime!),
+        "eventTime": eventTime!.format(context),
         "maxParticipants": personController.text.trim(),
         "location": locationController.text.trim(),
         "url": urlController.text.trim(),
@@ -326,7 +279,7 @@ class _CreateActivityScreenState extends State<CreateActivityScreen> {
     /// ROUTE payload
     if (selectedCategory == ActivityType.routes) {
       body.addAll({
-        "openingTime": selectedTime!.format(context),
+        "openingTime": routeOpeningTime!.format(context),
         "availabilityType": selectedRouteCondition?.apiValue ?? '',
         "location": locationController.text.trim(),
         "url": urlController.text.trim(),
@@ -336,8 +289,10 @@ class _CreateActivityScreenState extends State<CreateActivityScreen> {
     /// RAFFLE payload
     if (selectedCategory == ActivityType.raffles) {
       body.addAll({
-        "dueDate": selectedDate!.toUtc().toIso8601String(),
+        "startDate": raffleRange!.start.toIso8601String(),
+        "endDate": raffleRange!.end.toIso8601String(),
         "maxSupply": maxSupplyController.text.trim(),
+        "raffleBundleName": couponTitleController.text.trim(),
       });
     }
 
@@ -354,7 +309,7 @@ class _CreateActivityScreenState extends State<CreateActivityScreen> {
     final success = await createActivityController.createActivity(
       url: url,
       body: body,
-      files: {"banner": bannerImage!, if (coupon != null) "coupon": coupon!},
+      files: {"banner": bannerImage!, if (rafflePrizeImage != null) "rafflePrizeImage": rafflePrizeImage!},
     );
 
     if (success) {
@@ -472,6 +427,11 @@ class _CreateActivityScreenState extends State<CreateActivityScreen> {
             if (value == null || value.trim().isEmpty) {
               return "Details are required";
             }
+
+            if (value.trim().length > 200) {
+              return "Details must be under 200 characters";
+            }
+
             return null;
           },
           borderColor: colorScheme.outline,
@@ -576,6 +536,7 @@ class _CreateActivityScreenState extends State<CreateActivityScreen> {
   }
 
   Widget _routeFields() {
+    final colorScheme = context.colorScheme;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -612,6 +573,12 @@ class _CreateActivityScreenState extends State<CreateActivityScreen> {
             Expanded(
               child: Expanded(
                 child: CustomDropdown<RouteType>(
+                  dropdownColor: colorScheme.surfaceContainerHigh,
+                  borderColor: colorScheme.outline,
+                  hintColor: colorScheme.onSurfaceVariant,
+                  textColor: colorScheme.onSurface,
+                  textFontSize: 14,
+                  hintFontSize: 14,
                   title: "Availability types",
                   value: selectedRouteCondition,
                   hintText: "Route type",
@@ -653,11 +620,11 @@ class _CreateActivityScreenState extends State<CreateActivityScreen> {
           children: [
             Expanded(
               child: CustomTextField(
-                controller: dateTEController,
-                title: "Due date",
+                controller: raffleDateController,
+                title: "Date validity",
                 readOnly: true,
-                onTap: showCalendar,
-                hintText: "Select date",
+                onTap: pickRaffleRange,
+                hintText: "Select date range",
                 suffixIcon: Icon(
                   Icons.calendar_today_outlined,
                   size: 18,
@@ -699,24 +666,34 @@ class _CreateActivityScreenState extends State<CreateActivityScreen> {
           ],
         ),
         const SizedBox(height: 16),
-        Text(
-          "Voucher",
-          style: AppTextStyle.textSm(
-            weight: FontWeight.w700,
-            color: colorScheme.onSurface,
-          ),
+
+        CustomTextField(
+          controller: couponTitleController,
+          title: "coupon",
+          hintText: "Enter coupon title",
+          prefixIcon: const Icon(Icons.card_giftcard),
+          borderColor: context.colorScheme.outline,
+          textColor: context.colorScheme.onSurface,
+          validator: (value) {
+            if (value == null || value.trim().isEmpty) {
+              return "Coupon title is required";
+            }
+            return null;
+          },
         ),
+
         const SizedBox(height: 12),
         CouponUploadCard(
-          file: coupon,
+          file: rafflePrizeImage,
           onTap: _pickCoupon,
           onDelete: () {
             setState(() {
-              coupon = null;
+              rafflePrizeImage = null;
             });
           },
         ),
         const SizedBox(height: 16),
+
         Card(
           elevation: 2,
           margin: EdgeInsets.zero,
@@ -836,7 +813,7 @@ class _CreateActivityScreenState extends State<CreateActivityScreen> {
 
         myBusinessController.businessList.isEmpty
             ? Text("No business found")
-            : MyOwnBusiness(businessName: businessName,),
+            : MyOwnBusiness(businessName: businessName),
 
         const SizedBox(height: 10),
         GetBuilder<CreateActivityController>(
