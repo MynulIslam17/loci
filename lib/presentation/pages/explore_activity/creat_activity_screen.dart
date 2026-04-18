@@ -44,7 +44,7 @@ class _CreateActivityScreenState extends State<CreateActivityScreen> {
   final TextEditingController raffleDateController = TextEditingController();
   final TextEditingController couponTitleController = TextEditingController();
 
-  final myBusinessController = Get.find<GetMyBusinessController>();
+  //---get x controller
   final createActivityController = Get.find<CreateActivityController>();
 
   final _formKey = GlobalKey<FormState>();
@@ -811,9 +811,8 @@ class _CreateActivityScreenState extends State<CreateActivityScreen> {
         _organizerToggle(),
         const SizedBox(height: 10),
 
-        myBusinessController.businessList.isEmpty
-            ? Text("No business found")
-            : MyOwnBusiness(businessName: businessName),
+
+          MyOwnBusiness(businessName: businessName),
 
         const SizedBox(height: 10),
         GetBuilder<CreateActivityController>(

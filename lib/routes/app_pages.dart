@@ -52,6 +52,7 @@ import 'package:loci/presentation/pages/subscription/subscription_screen.dart';
 import 'package:loci/presentation/widgets/common/main_bottom_nav.dart';
 import 'package:loci/routes/app_routes.dart';
 
+import '../presentation/bindings/explore_activity_bindings.dart';
 import '../presentation/pages/browse/browse_businesses.dart';
 import '../presentation/pages/explore_activity/creat_activity_screen.dart';
 import '../presentation/pages/notification/notification_screen.dart';
@@ -139,15 +140,16 @@ abstract class AppPages {
     GetPage(
       name: AppRoutes.exploreActivity,
       page: () => ExploreActivityScreen(),
+      binding: ExploreActivityBindings(),
     ),
-    GetPage(name: AppRoutes.createActivity, page: () => CreateActivityScreen(),binding: MyBusinessBindings()),
+    GetPage(name: AppRoutes.createActivity, page: () => CreateActivityScreen(),binding: ExploreActivityBindings()),
     GetPage(name: AppRoutes.editEvent, page: () => EditEventScreen()),
     GetPage(name: AppRoutes.editRaffles, page: () => EditRafflesScreen()),
     GetPage(name: AppRoutes.editRoutes, page: () => EditRoutesScreen()),
 
-    GetPage(name: AppRoutes.viewEvent, page: () => ViewEventScreen()),
-    GetPage(name: AppRoutes.viewRoutes, page: () => ViewRouteScreen()),
-    GetPage(name: AppRoutes.viewRaffles, page: () => ViewRafflesScreen()),
+    GetPage(name: AppRoutes.viewEvent, page: () => ViewEventScreen(),binding: ExploreActivityBindings()),
+    GetPage(name: AppRoutes.viewRoutes, page: () => ViewRouteScreen(),binding: ExploreActivityBindings()),
+    GetPage(name: AppRoutes.viewRaffles, page: () => ViewRafflesScreen(),binding: ExploreActivityBindings()),
 
     GetPage(name: AppRoutes.viewTotalCheckIn, page: () => TotalCheckInScreen()),
     GetPage(name: AppRoutes.viewTotalRSVP, page: () => TotalRsvpScreen()),

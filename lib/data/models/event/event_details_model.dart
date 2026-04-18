@@ -8,9 +8,11 @@ class EventDetailsModel {
   final double lng;
 
   final int rsvpCount;
+  final int checkInCount;
 
   final List<Rsvp> rsvpList;
   final String checkInCode;
+  final String qrCode;
   final bool isPublic;
   final CheckInStatus myCheckInStatus;
 
@@ -21,11 +23,13 @@ class EventDetailsModel {
     required this.lat,
     required this.lng,
     required this.rsvpCount,
+    required this.checkInCount,
     required this.rsvpList,
     required this.checkInCode,
     required this.isPublic,
     required this.organizerBusiness,
     required this.myCheckInStatus,
+    required this.qrCode,
   });
 
   factory EventDetailsModel.fromJson(Map<String, dynamic> json) {
@@ -39,17 +43,18 @@ class EventDetailsModel {
       lat: (coordinates['lat'] ?? 0).toDouble(),
       lng: (coordinates['lng'] ?? 0).toDouble(),
 
-
       rsvpCount:
           int.tryParse(data['rsvpCount'].toString()) ??
           (data['rsvpList'] as List?)?.length ??
           0,
+      checkInCount: int.tryParse(data["checkInCount"].toString()) ?? 0,
 
       rsvpList: (data['rsvpList'] as List? ?? [])
           .map((e) => Rsvp.fromJson(e))
           .toList(),
 
       checkInCode: data['checkInCode'] ?? '',
+      qrCode: data["qrCode"] ?? '',
       myCheckInStatus: CheckInStatus.fromString(data['myCheckInStatus']),
       isPublic: data['isPublic'] ?? false,
       organizerBusiness: OrganizerBusiness.fromJson(
@@ -58,33 +63,27 @@ class EventDetailsModel {
     );
   }
 
-
-
-
-
-// for update the model
+  // for update the model
   EventDetailsModel copyWith({
     EventModel? eventModel,
     int? rsvpCount,
-    CheckInStatus ? myCheckInStatus
+    int? checkInCount,
+    CheckInStatus? myCheckInStatus,
   }) {
     return EventDetailsModel(
-      eventModel:        eventModel        ?? this.eventModel,
-      lat:               lat,
-      lng:               lng,
-      rsvpCount:         rsvpCount         ?? this.rsvpCount,
-      rsvpList:          rsvpList,
-      checkInCode:       checkInCode,
-      isPublic:          isPublic,
-      myCheckInStatus:   myCheckInStatus ?? this.myCheckInStatus,
+      eventModel: eventModel ?? this.eventModel,
+      lat: lat,
+      lng: lng,
+      rsvpCount: rsvpCount ?? this.rsvpCount,
+      checkInCount: checkInCount ?? this.checkInCount,
+      rsvpList: rsvpList,
+      checkInCode: checkInCode,
+      isPublic: isPublic,
+      myCheckInStatus: myCheckInStatus ?? this.myCheckInStatus,
       organizerBusiness: organizerBusiness,
+      qrCode: qrCode,
     );
   }
-
-
-
-
-
 }
 
 class Rsvp {

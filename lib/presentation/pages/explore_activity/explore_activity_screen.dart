@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:loci/core/theme/theme_extention.dart';
+import 'package:loci/presentation/controllers/explore_acitivity/business_event_list_controller.dart';
 import 'package:loci/presentation/pages/explore_activity/widgets/event_edit_card.dart';
 import 'package:loci/presentation/pages/explore_activity/widgets/raffles_edit_card.dart';
 import 'package:loci/presentation/pages/explore_activity/widgets/route_edit_card.dart';
@@ -9,6 +10,7 @@ import 'package:loci/routes/app_routes.dart';
 
 import '../../../core/constants/app_text_style.dart';
 import '../../controllers/event/event_list_controller.dart';
+import '../../controllers/explore_acitivity/business_route_list_controller.dart';
 import '../../controllers/routes/route_list_controller.dart';
 import '../../widgets/custom_button.dart';
 import '../../widgets/custom_text_field.dart';
@@ -25,8 +27,8 @@ class _ExploreActivityScreenState extends State<ExploreActivityScreen>
   late TabController _tabController;
 
   //---get x controller
-  final eventListController = Get.find<EventListController>();
-  final routeListController = Get.find<RouteListController>();
+  final eventListController = Get.find<BusinessEventListController>();
+  final routeListController = Get.find<BusinessRouteListController>();
 
   late final String businessId;
   late final String businessName;
@@ -43,9 +45,6 @@ class _ExploreActivityScreenState extends State<ExploreActivityScreen>
     businessName = args?["businessName"] ?? "";
 
 
-    //-----Clear old data first, then fetch with new businessId because use same controller
-    eventListController.reset();
-    routeListController.reset();
 
     eventListController.fetchEvents(isRefresh: true, businessId: businessId);
 
@@ -249,7 +248,7 @@ class _ExploreActivityScreenState extends State<ExploreActivityScreen>
   }
 
   Widget _eventsTab() {
-    return GetBuilder<EventListController>(
+    return GetBuilder<BusinessEventListController>(
       builder: (controller) {
         // ===== LOADING
         if (controller.isLoading) {
@@ -311,7 +310,9 @@ class _ExploreActivityScreenState extends State<ExploreActivityScreen>
               ),
               onViewDetails: () => Get.toNamed(
                 AppRoutes.viewEvent,
-                arguments: {"eventId": event.id},
+                arguments: {
+                  "eventId": event.id,
+                "title": event.title},
               ),
             );
           },
@@ -323,7 +324,7 @@ class _ExploreActivityScreenState extends State<ExploreActivityScreen>
 
   Widget _routesTab() {
     final colorScheme = context.colorScheme;
-    return GetBuilder<RouteListController>(
+    return GetBuilder<BusinessRouteListController>(
       builder: (controller) {
         // ===== LOADING
         if (controller.isLoading) {
