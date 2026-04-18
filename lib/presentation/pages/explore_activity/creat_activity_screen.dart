@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
@@ -8,6 +9,8 @@ import 'package:loci/core/constants/app_text_style.dart';
 import 'package:loci/core/constants/app_url.dart';
 import 'package:loci/core/theme/theme_extention.dart';
 import 'package:loci/core/utils/acitvity_validator.dart';
+import 'package:loci/data/models/explore_activity/task_model.dart';
+import 'package:loci/presentation/controllers/explore_acitivity/task_controller.dart';
 import 'package:loci/presentation/controllers/my_business/create_actvity_controller.dart';
 import 'package:loci/presentation/controllers/my_business/get_my_business_list _controller.dart';
 import 'package:loci/presentation/pages/clam_business/widgets/my_business.dart';
@@ -46,6 +49,7 @@ class _CreateActivityScreenState extends State<CreateActivityScreen> {
 
   //---get x controller
   final createActivityController = Get.find<CreateActivityController>();
+  final taskController = Get.find<TaskController>();
 
   final _formKey = GlobalKey<FormState>();
 
@@ -70,6 +74,8 @@ class _CreateActivityScreenState extends State<CreateActivityScreen> {
 
   late final String businessId;
   late final String businessName;
+
+  List<Map<String, dynamic>> tasksPayload = [];
 
   @override
   void initState() {
@@ -178,16 +184,19 @@ class _CreateActivityScreenState extends State<CreateActivityScreen> {
     });
   }
 
-  void _addTask() {
-    setState(() {
-      tasks.add(
-        TaskModel(
-          title: "Task1",
-          description: "afafafaf",
-          logoUrl: 'assets/images/finedine.png',
-        ),
-      );
-    });
+  
+  void _addTask(TaskModel item) {
+    // 1. Check if the task ID already exists in your main 'tasks' list
+    final bool isDuplicate = tasks.any((element) => element.id == item.id);
+
+    if (!isDuplicate) {
+      setState(() {
+        tasks.add(item); 
+      });
+      Navigator.pop(context); // Closes the bottom sheet
+    } else {
+      SnackbarService.warning("Task already added");
+    }
   }
 
   void _removeTask(int index) {
@@ -195,6 +204,9 @@ class _CreateActivityScreenState extends State<CreateActivityScreen> {
       tasks.removeAt(index);
     });
   }
+
+
+
 
   // clear data when do switch category
   void _clearCategoryData() {
@@ -254,6 +266,11 @@ class _CreateActivityScreenState extends State<CreateActivityScreen> {
       return;
     }
 
+
+
+
+
+
     /// =========================
     /// BUILD BODY (CLEAN & SAFE)
     /// =========================
@@ -262,8 +279,13 @@ class _CreateActivityScreenState extends State<CreateActivityScreen> {
       "title": titleController.text.trim(),
       "details": detailsController.text.trim(),
       "isPublic": isPublic.toString(),
-      "organizerBusiness": businessId ?? '',
     };
+
+    if (selectedCategory == ActivityType.raffles) {
+      body["sponsor"] = businessId;
+    } else {
+      body["organizerBusiness"] = businessId;
+    }
 
     /// EVENT payload
     if (selectedCategory == ActivityType.event) {
@@ -288,13 +310,28 @@ class _CreateActivityScreenState extends State<CreateActivityScreen> {
 
     /// RAFFLE payload
     if (selectedCategory == ActivityType.raffles) {
+      // 1. Create the simplified task list
+      List<Map<String, dynamic>> tasksPayload = [];
+      for (int i = 0; i < tasks.length; i++) {
+        bool isRoute = tasks[i].activityType.toLowerCase().contains("route");
+        tasksPayload.add({
+          isRoute ? "routeActivity" : "eventActivity": tasks[i].id,
+          "order": i + 1,
+        });
+      }
+
+      // 2. Add to body
       body.addAll({
         "startDate": raffleRange!.start.toIso8601String(),
         "endDate": raffleRange!.end.toIso8601String(),
         "maxSupply": maxSupplyController.text.trim(),
         "raffleBundleName": couponTitleController.text.trim(),
+        "tasks": jsonEncode(tasksPayload), // The magic line
+
       });
     }
+
+
 
     /// =========================
     /// API CALL
@@ -727,20 +764,23 @@ class _CreateActivityScreenState extends State<CreateActivityScreen> {
                   ),
                 ),
                 const SizedBox(height: 12),
+
                 if (tasks.isNotEmpty)
                   ListView.builder(
                     shrinkWrap: true,
                     padding: EdgeInsets.zero,
                     physics: const NeverScrollableScrollPhysics(),
                     itemCount: tasks.length,
-                    itemBuilder: (context, index) => TaskCard(
-                      title: tasks[index].title,
-                      description: tasks[index].description,
-                      imageUrl: tasks[index].logoUrl,
-                      onRemove: () {
-                        _removeTask(index);
-                      },
-                    ),
+                    itemBuilder: (context, index) {
+                      final task = tasks[index];
+                      return TaskCard(
+                        id: task.id,
+                        title: task.title,
+                        description: task.details,
+                        imageUrl: task.banner,
+                        onRemove: () => _removeTask(index),
+                      );
+                    },
                   ),
                 const SizedBox(height: 12),
                 CustomButton(
@@ -863,11 +903,15 @@ class _CreateActivityScreenState extends State<CreateActivityScreen> {
 
   void _showBottomSheet() {
     final colorScheme = context.colorScheme;
+
+    // Clear previous data before showing
+    taskController.reset();
+
     showModalBottomSheet(
       backgroundColor: colorScheme.surface,
       context: context,
       isScrollControlled: true,
-      shape: RoundedRectangleBorder(
+      shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       builder: (context) {
@@ -878,56 +922,91 @@ class _CreateActivityScreenState extends State<CreateActivityScreen> {
             top: 20,
             bottom: MediaQuery.of(context).viewInsets.bottom + 20,
           ),
-          child: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      "Add Requirement",
-                      style: AppTextStyle.textLg(
-                        weight: FontWeight.w600,
-                        color: colorScheme.onSurface,
-                      ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    "Add Requirement",
+                    style: AppTextStyle.textLg(
+                      weight: FontWeight.w600,
+                      color: colorScheme.onSurface,
                     ),
-                    IconButton(
-                      onPressed: () => Navigator.pop(context),
-                      icon: Icon(Icons.cancel, color: colorScheme.onSurface),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 20),
-                CustomTextField(
-                  hintText: "Add requirement",
-                  borderColor: colorScheme.outline,
-                  fontSize: 14,
-                  textColor: colorScheme.onSurface,
-                  hintTextColor: colorScheme.onSurfaceVariant,
-                  suffixIcon: Icon(
-                    Icons.search,
-                    color: colorScheme.onSurfaceVariant,
                   ),
+                  IconButton(
+                    onPressed: () => Navigator.pop(context),
+                    icon: Icon(Icons.cancel, color: colorScheme.onSurface),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 20),
+
+              // --- SEARCH FIELD ---
+              CustomTextField(
+                hintText: "Search for a task...",
+                borderColor: colorScheme.outline,
+                fontSize: 14,
+                textColor: colorScheme.onSurface,
+                hintTextColor: colorScheme.onSurfaceVariant,
+                suffixIcon: Icon(
+                  Icons.search,
+                  color: colorScheme.onSurfaceVariant,
                 ),
-                const SizedBox(height: 20),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    CustomButton(
-                      width: 120,
-                      height: 50,
-                      text: "Add",
-                      onPressed: () {
-                        _addTask();
-                        Navigator.pop(context);
+                // Use onChanged for real-time searching
+                onChanged: (value) {
+                  if (value.isNotEmpty) {
+                    taskController.fetchTasks(
+                        query: value,
+                        isRefresh: true,
+                        businessId: businessId
+                    );
+                  }
+                },
+              ),
+
+              const SizedBox(height: 10),
+
+              // --- SEARCH RESULTS ---
+              ConstrainedBox(
+                constraints: BoxConstraints(
+                  maxHeight: MediaQuery.of(context).size.height * 0.4,
+                ),
+                child: GetBuilder<TaskController>(
+                  builder: (controller) {
+                    if (controller.isLoading) {
+                      return const Center(child: Padding(
+                        padding: EdgeInsets.all(20.0),
+                        child: CircularProgressIndicator(),
+                      ));
+                    }
+
+                    if (controller.taskList.isEmpty) {
+                      return const Center(child: Padding(
+                        padding: EdgeInsets.all(20.0),
+                        child: Text("Search for activities to add"),
+                      ));
+                    }
+
+                    return ListView.builder(
+                      shrinkWrap: true,
+                      itemCount: controller.taskList.length,
+                      itemBuilder: (context, index) {
+                        final item = controller.taskList[index];
+                        return ListTile(
+                          title: Text(item.title),
+                          subtitle: Text(item.activityType),
+                          trailing: Icon(Icons.add_circle, color: colorScheme.primary),
+                          onTap:()=>_addTask(item),
+                        );
                       },
-                    ),
-                  ],
+                    );
+                  },
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         );
       },

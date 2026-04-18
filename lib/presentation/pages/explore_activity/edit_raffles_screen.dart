@@ -58,18 +58,18 @@ class _EditRafflesScreenState extends State<EditRafflesScreen> {
   /// ===============================================================
   /// Dummy Task Data
   /// ===============================================================
-  List<TaskModel> tasks = [
-    TaskModel(
+  List<DummyTaskModel> tasks = [
+    DummyTaskModel(
       title: "David Smith",
       description: "Lorem Ipsum is simply dummy text...",
       logoUrl: "assets/images/logo.png",
     ),
-    TaskModel(
+    DummyTaskModel(
       title: "David Smith",
       description: "Lorem Ipsum is simply dummy text...",
       logoUrl: "assets/images/logo.png",
     ),
-    TaskModel(
+    DummyTaskModel(
       title: "David Smith",
       description: "Lorem Ipsum is simply dummy text...",
       logoUrl: "assets/images/logo.png",
@@ -144,7 +144,7 @@ class _EditRafflesScreenState extends State<EditRafflesScreen> {
   void _addTask() {
     setState(() {
       tasks.add(
-        TaskModel(
+        DummyTaskModel(
           title: taskController.text.isEmpty
               ? "Task"
               : taskController.text,
@@ -421,6 +421,7 @@ class _EditRafflesScreenState extends State<EditRafflesScreen> {
                 physics: const NeverScrollableScrollPhysics(),
                 itemCount: tasks.length,
                 itemBuilder: (context, index) => TaskCard(
+                  id: "af",//fake
                   title: tasks[index].title,
                   description: tasks[index].description,
                   imageUrl: tasks[index].logoUrl,

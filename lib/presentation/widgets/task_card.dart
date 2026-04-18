@@ -7,16 +7,18 @@ import 'custom_image_container.dart';
 
 
 class TaskCard extends StatelessWidget {
+  final String id;
   final String title;
-  final String description;
-  final String imageUrl;
+  final String? description;
+  final String? imageUrl;
   final VoidCallback? onRemove;
 
   const TaskCard({
     super.key,
+    required this.id,
     required this.title,
-    required this.description,
-    required this.imageUrl,
+    this.description,
+    this.imageUrl,
     this.onRemove,
   });
 
@@ -25,6 +27,8 @@ class TaskCard extends StatelessWidget {
     final colorScheme = context.colorScheme;
 
     return Container(
+
+      key: ValueKey(id),
       margin: const EdgeInsets.symmetric(vertical: 6),
       decoration: BoxDecoration(
         color: colorScheme.surface,
@@ -83,14 +87,17 @@ class TaskCard extends StatelessWidget {
                       weight: FontWeight.w600,
                     ),
                   ),
-                  Text(
-                    description,
-                    overflow: TextOverflow.ellipsis,
-                    maxLines: 2,
-                    style: AppTextStyle.textXs(
-                      color: colorScheme.onSurfaceVariant,
+                  if (description != null) ...[
+                    const SizedBox(height: 4),
+                    Text(
+                      description!,
+                      overflow: TextOverflow.ellipsis,
+                      maxLines: 2,
+                      style: AppTextStyle.textXs(
+                        color: colorScheme.onSurfaceVariant,
+                      ),
                     ),
-                  ),
+                  ],
                 ],
               ),
             ),

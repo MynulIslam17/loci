@@ -1,9 +1,9 @@
-class TaskModel {
+class DummyTaskModel {
   String title;
   String description;
   String logoUrl;
 
-  TaskModel({
+  DummyTaskModel({
     required this.title,
     required this.description,
     required this.logoUrl,
