@@ -9,6 +9,8 @@ class RouteDetails {
   final Coordinates coordinates;
   final OrganizerBusiness organizerBusiness;
   final String checkInCode;
+  final String qrCode;
+  final int checkInCount;
   final  CheckInStatus myCheckInStatus;
 
   RouteDetails({
@@ -17,6 +19,8 @@ class RouteDetails {
     required this.organizerBusiness,
     required this.checkInCode,
     required this.myCheckInStatus,
+    required this.checkInCount,
+    required this.qrCode,
   });
 
   factory RouteDetails.fromJson(Map<String, dynamic> json) {
@@ -25,6 +29,8 @@ class RouteDetails {
       coordinates: Coordinates.fromJson(json['mapCoordinates'] ?? {}),
       organizerBusiness: OrganizerBusiness.fromJson(json['organizerBusiness'] ?? {}),
       checkInCode: json['checkInCode'] ?? '',
+        qrCode: json['qrCode'] ?? "",
+      checkInCount: int.tryParse(json["checkInCount"].toString()) ?? 0,
       myCheckInStatus: CheckInStatus.fromString(json["myCheckInStatus"]),
     );
   }
@@ -43,6 +49,8 @@ class RouteDetails {
       organizerBusiness: organizerBusiness ?? this.organizerBusiness,
       checkInCode: checkInCode ?? this.checkInCode,
       myCheckInStatus: myCheckInStatus ?? this.myCheckInStatus,
+      checkInCount: checkInCount,
+      qrCode: qrCode,
     );
   }
 

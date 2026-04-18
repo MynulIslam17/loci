@@ -77,6 +77,9 @@ class _ViewEventScreenState extends State<ViewEventScreen> {
             return const Center(child: Text("No event details found"));
           }
 
+
+          //---------main part----------------
+
           final eventDetails = controller.eventDetails;
           final eventModel = eventDetails?.eventModel;
           final organization = eventDetails?.organizerBusiness;

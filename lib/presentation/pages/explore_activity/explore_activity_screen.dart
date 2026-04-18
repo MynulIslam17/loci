@@ -402,11 +402,17 @@ class _ExploreActivityScreenState extends State<ExploreActivityScreen>
               isPublic: route.isRoutePublic,
               onEdit: () => Get.toNamed(
                 AppRoutes.editRoutes,
-                arguments: {"routeId": route.routeId},
+                arguments: {
+                  "routeName": route.title,
+                  "routeId": route.routeId,
+                },
               ),
               onView: () => Get.toNamed(
                 AppRoutes.viewRoutes,
-                arguments: {"routeId": route.routeId},
+                arguments: {
+                  "routeName": route.title,
+                  "routeId": route.routeId,
+                },
               ),
             );
           },
