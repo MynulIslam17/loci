@@ -31,4 +31,16 @@ enum RouteType {
         return 'private_booking';
     }
   }
+
+
+  static RouteType fromString(String? value) {
+    switch (value) {
+      case 'reservation': return RouteType.reservation;
+      case 'walk_in': return RouteType.walkIn;
+      case 'reservation_and_walk_in': return RouteType.reservationAndWalkIn;
+      case 'private_booking': return RouteType.privateBooking;
+      default: return RouteType.walkIn;
+    }
+  }
+
 }

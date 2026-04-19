@@ -3,7 +3,7 @@ import 'package:get/get.dart';
 import 'package:loci/presentation/controllers/my_business/my_business_profile_controller.dart';
 import 'package:loci/presentation/widgets/custom_button.dart';
 
-class AppBottomSheet {
+class ProfileBottomSheet {
   static void show({
     required String title,
     required GlobalKey<FormState> formKey,

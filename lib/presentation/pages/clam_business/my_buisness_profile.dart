@@ -19,7 +19,7 @@ import '../../../core/constants/app_text_style.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/show_snackbar.dart';
 import '../../../data/models/busniess/business_profile_model.dart';
-import '../../widgets/app_bottom_seet.dart';
+import 'widgets/bottom_sheet.dart';
 import '../../widgets/custom_appbar.dart';
 import '../../widgets/custom_image_container.dart';
 import '../../widgets/image_picker_helper.dart';
@@ -819,7 +819,7 @@ class _MyBusinessProfileState extends State<MyBusinessProfile> {
 
     String phoneNumber = business.phone;
 
-    AppBottomSheet.show(
+    ProfileBottomSheet.show(
       title: "Edit Business Info",
       formKey: formKey,
       child: Column(
@@ -908,7 +908,7 @@ class _MyBusinessProfileState extends State<MyBusinessProfile> {
       text: business.description,
     );
 
-    AppBottomSheet.show(
+    ProfileBottomSheet.show(
       title: "Edit Description",
       formKey: formKey,
       child: CustomTextField(
