@@ -9,9 +9,9 @@ class RaffleEditCard extends StatelessWidget {
   final String title;
   final String description;
   final String endDate;
-  final String ticketPrice;
-  final String totalTickets;
+  final String prizeText;
   final String imageUrl;
+  final String organizerName;
   final VoidCallback onEdit;
   final VoidCallback onView;
 
@@ -20,9 +20,9 @@ class RaffleEditCard extends StatelessWidget {
     required this.title,
     required this.description,
     required this.endDate,
-    required this.ticketPrice,
-    required this.totalTickets,
+    required this.prizeText,
     required this.imageUrl,
+    required this.organizerName,
     required this.onEdit,
     required this.onView,
   });
@@ -32,82 +32,111 @@ class RaffleEditCard extends StatelessWidget {
     final colorScheme = context.colorScheme;
 
     return Card(
-      color: colorScheme.surfaceContainerHigh,
+      elevation: 2,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          CustomCachedImage(
-            imageUrl: imageUrl,
-            height: 160,
-            width: double.infinity,
-            fit: BoxFit.cover,
-            customBorderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+          ClipRRect(
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+            child: CustomCachedImage(
+              imageUrl: imageUrl,
+              height: 180,
+              width: double.infinity,
+              fit: BoxFit.cover,
+            ),
           ),
           Padding(
-            padding: const EdgeInsets.all(12.0),
+            padding: const EdgeInsets.all(16.0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   title,
-                  style: AppTextStyle.textMd(
+                  style: AppTextStyle.textLg(
                     weight: FontWeight.w700,
                     color: colorScheme.onSurface,
                   ),
                 ),
-                const SizedBox(height: 6),
+                const SizedBox(height: 8),
                 Text(
                   description,
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
-                  style: AppTextStyle.textXs(
+                  style: AppTextStyle.textSm(
                     color: colorScheme.onSurfaceVariant,
                   ),
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 16),
+
+                // Prize Value Badge -
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
+                  decoration: BoxDecoration(
+                    // Using a light teal for light mode, or surfaceVariant for dark mode
+                    color: Theme.of(context).brightness == Brightness.light
+                        ? const Color(0xFFE0F2F1)
+                        : colorScheme.primaryContainer.withOpacity(0.2),
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: Text(
+                    prizeText,
+                    style: AppTextStyle.textMd(
+                      weight: FontWeight.w700,
+                      color: const Color(0xFF26A69A), // Brand Teal
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+
+                // Date Row
                 Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    _buildMetaItem(
-                      context,
-                      Icons.calendar_today_outlined,
-                      endDate,
-                    ),
-                    _buildMetaItem(
-                        context,
-                        Icons.confirmation_number_outlined,
-                        ticketPrice
-                    ),
-                    _buildMetaItem(
-                        context,
-                        Icons.group_outlined,
-                        totalTickets
+                    Icon(Icons.calendar_today_outlined,
+                        size: 16,
+                        color: const Color(0xFF26A69A)),
+                    const SizedBox(width: 8),
+                    Text(
+                      "Ends $endDate",
+                      style: AppTextStyle.textSm(
+                        weight: FontWeight.w600,
+                        color: colorScheme.onSurface,
+                      ),
                     ),
                   ],
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 20),
+
+                // Buttons Section
                 Row(
                   children: [
                     Expanded(
-                      child: OutlinedButton.icon(
-                        onPressed: onEdit,
-                        style: OutlinedButton.styleFrom(
-                          side: BorderSide(color: colorScheme.outlineVariant),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
+                      child: Container(
+                        decoration: BoxDecoration(
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.05),
+                                blurRadius: 10,
+                                offset: const Offset(0, 4),
+                              )
+                            ]
+                        ),
+                        child: OutlinedButton(
+                          onPressed: onEdit,
+                          style: OutlinedButton.styleFrom(
+                            backgroundColor: colorScheme.surface,
+                            side: BorderSide(color: colorScheme.outlineVariant),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                            padding: const EdgeInsets.symmetric(vertical: 14),
                           ),
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                        ),
-                        icon: Icon(
-                          Icons.edit_outlined,
-                          size: 18,
-                          color: colorScheme.onSurface,
-                        ),
-                        label: Text(
-                          "Edit Info",
-                          style: AppTextStyle.textSm(
-                            weight: FontWeight.w600,
-                            color: colorScheme.onSurface,
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(Icons.edit_outlined, size: 20, color: colorScheme.onSurface),
+                              const SizedBox(width: 8),
+                              Text("Edit Info",
+                                  style: AppTextStyle.textSm(weight: FontWeight.w600, color: colorScheme.onSurface)),
+                            ],
                           ),
                         ),
                       ),
@@ -117,58 +146,39 @@ class RaffleEditCard extends StatelessWidget {
                       child: ElevatedButton(
                         onPressed: onView,
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: colorScheme.primary,
+                          backgroundColor: const Color(0xFF64BDB4), // Brand Teal from image
                           elevation: 0,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          padding: const EdgeInsets.symmetric(vertical: 14),
                         ),
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Text(
-                              "View Details",
-                              style: AppTextStyle.textSm(
-                                weight: FontWeight.w600,
-                                color: Colors.white,
-                              ),
-                            ),
-                            const SizedBox(width: 4),
-                            const Icon(
-                              Icons.arrow_forward,
-                              size: 18,
-                              color: Colors.white,
-                            ),
+                            Text("View Details",
+                                style: AppTextStyle.textSm(weight: FontWeight.w600, color: Colors.white)),
+                            const SizedBox(width: 8),
+                            const Icon(Icons.arrow_forward, size: 20, color: Colors.white),
                           ],
                         ),
                       ),
                     ),
                   ],
                 ),
+
+                const SizedBox(height: 12),
+                Center(
+                  child: Text(
+                    "by $organizerName",
+                    style: AppTextStyle.textXs(
+                      color: colorScheme.onSurfaceVariant.withOpacity(0.6),
+                    ),
+                  ),
+                ),
               ],
             ),
           ),
         ],
       ),
-    );
-  }
-
-  Widget _buildMetaItem(BuildContext context, IconData icon, String text) {
-    final colorScheme = context.colorScheme;
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Icon(icon, size: 14, color: colorScheme.primary),
-        const SizedBox(width: 4),
-        Text(
-          text,
-          style: AppTextStyle.textXs(
-            color: colorScheme.onSurfaceVariant,
-            weight: FontWeight.w500,
-          ),
-        ),
-      ],
     );
   }
 }

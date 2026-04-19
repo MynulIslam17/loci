@@ -13,6 +13,8 @@ class BusinessEventListController extends GetxController {
 
   String? _errorMessage;
 
+
+
   List<EventModel> _eventList = [];
 
   ///  Current page number for pagination
@@ -41,6 +43,7 @@ class BusinessEventListController extends GetxController {
       _currentPage = 1; // reset page
       _hasNextPage = true; // reset pagination
       _eventList.clear(); // clear existing events
+
     }
 
     _isLoading = true;
@@ -65,13 +68,14 @@ class BusinessEventListController extends GetxController {
       _errorMessage = 'An error occurred: $e';
     } finally {
       _isLoading = false;
+
       update();
     }
   }
 
   ///  Load next page for pagination
   Future<void> loadMoreEvents({required String businessId,}) async {
-    if (!_hasNextPage || _isPaginationLoading) return;
+    if (!_hasNextPage || _isPaginationLoading || _isLoading ) return;
 
     _isPaginationLoading = true;
     _currentPage++; // increment page
@@ -108,6 +112,7 @@ class BusinessEventListController extends GetxController {
     _eventList.clear();
     _currentPage = 1;
     _hasNextPage = true;
+
   }
 
 }

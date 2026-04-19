@@ -65,7 +65,7 @@ class _EditEventScreenState extends State<EditEventScreen> {
     if (args != null && args is Map && args["title"] != null) {
       title = args["title"];
     } else {
-      title = "Event Details";
+      title = "Edit Event";
     }
   }
 

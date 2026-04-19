@@ -33,6 +33,7 @@ class _ExploreActivityScreenState extends State<ExploreActivityScreen>
   late final String businessId;
   late final String businessName;
 
+  bool _isFetchingMore = false;
   @override
   void initState() {
     super.initState();
@@ -43,8 +44,6 @@ class _ExploreActivityScreenState extends State<ExploreActivityScreen>
 
     businessId = args?["businessId"] ?? "";
     businessName = args?["businessName"] ?? "";
-
-
 
     eventListController.fetchEvents(isRefresh: true, businessId: businessId);
 
@@ -105,10 +104,10 @@ class _ExploreActivityScreenState extends State<ExploreActivityScreen>
                       //TODO : go to crate activity page
                       Get.toNamed(
                         AppRoutes.createActivity,
-                         arguments: {
-                          "businessName":businessName,
-                          "businessId": businessId
-                         }
+                        arguments: {
+                          "businessName": businessName,
+                          "businessId": businessId,
+                        },
                       );
                     },
                     child: Row(
@@ -175,32 +174,38 @@ class _ExploreActivityScreenState extends State<ExploreActivityScreen>
         body: TabBarView(
           controller: _tabController,
           children: [
-            // TabBarView children:
-            _buildTabContent(
-              _eventsTab(),
-              onRefresh: () => eventListController.fetchEvents(
-                businessId: businessId,
-                isRefresh: true,
+            // 1. Events Tab
+            GetBuilder<BusinessEventListController>(
+              builder: (controller) => _buildTabContent(
+                _eventsTab(),
+                isLoading: controller.isLoading,
+                isPaginationLoading: controller.isPaginationLoading,
+                onRefresh: () => controller.fetchEvents(businessId: businessId, isRefresh: true),
+                onLoadMore: () => controller.loadMoreEvents(businessId: businessId),
               ),
-              onLoadMore: () =>
-                  eventListController.loadMoreEvents(businessId: businessId),
             ),
-            _buildTabContent(
-              _routesTab(),
-              onRefresh: () => routeListController.fetchRoutes(
-                businessId: businessId,
-                isRefresh: true,
+
+            // 2. Routes Tab
+            GetBuilder<BusinessRouteListController>(
+              builder: (controller) => _buildTabContent(
+                _routesTab(),
+                isLoading: controller.isLoading,
+                isPaginationLoading: controller.isPaginationLoading,
+                onRefresh: () => controller.fetchRoutes(businessId: businessId, isRefresh: true),
+                onLoadMore: () => controller.loadMoreRoutes(businessId: businessId),
               ),
-              onLoadMore: () =>
-                  routeListController.loadMoreRoutes(businessId: businessId),
             ),
+
+            // 3. Raffles Tab
             _buildTabContent(
               _rafflesTab(),
+              isLoading: false,
+              isPaginationLoading: false,
               onRefresh: () {},
               onLoadMore: () {},
             ),
           ],
-        ),
+        )
       ),
     );
   }
@@ -210,18 +215,22 @@ class _ExploreActivityScreenState extends State<ExploreActivityScreen>
     Widget sliver, {
     required VoidCallback onRefresh,
     required VoidCallback onLoadMore,
+    required bool isLoading,
+    required bool isPaginationLoading,
   }) {
     return Builder(
       builder: (context) {
         return NotificationListener<ScrollNotification>(
           onNotification: (notification) {
-            if (notification.metrics.pixels >=
-                notification.metrics.maxScrollExtent - 200) {
-              onLoadMore();
+            if (notification is ScrollUpdateNotification) {
+              if (notification.metrics.extentAfter < 300) {
+                if (!isLoading && !isPaginationLoading) {
+                  onLoadMore();
+                }
+              }
             }
             return false;
           },
-
           child: RefreshIndicator(
             onRefresh: () async => onRefresh(),
             child: CustomScrollView(
@@ -229,7 +238,6 @@ class _ExploreActivityScreenState extends State<ExploreActivityScreen>
                 parent: BouncingScrollPhysics(),
               ),
               slivers: [
-                // Pushes content below the pinned TabBar
                 SliverOverlapInjector(
                   handle: NestedScrollView.sliverOverlapAbsorberHandleFor(
                     context,
@@ -310,9 +318,7 @@ class _ExploreActivityScreenState extends State<ExploreActivityScreen>
               ),
               onViewDetails: () => Get.toNamed(
                 AppRoutes.viewEvent,
-                arguments: {
-                  "eventId": event.id,
-                "title": event.title},
+                arguments: {"eventId": event.id, "title": event.title},
               ),
             );
           },
@@ -402,17 +408,11 @@ class _ExploreActivityScreenState extends State<ExploreActivityScreen>
               isPublic: route.isRoutePublic,
               onEdit: () => Get.toNamed(
                 AppRoutes.editRoutes,
-                arguments: {
-                  "routeName": route.title,
-                  "routeId": route.routeId,
-                },
+                arguments: {"routeName": route.title, "routeId": route.routeId},
               ),
               onView: () => Get.toNamed(
                 AppRoutes.viewRoutes,
-                arguments: {
-                  "routeName": route.title,
-                  "routeId": route.routeId,
-                },
+                arguments: {"routeName": route.title, "routeId": route.routeId},
               ),
             );
           },
@@ -426,18 +426,22 @@ class _ExploreActivityScreenState extends State<ExploreActivityScreen>
     return SliverList.separated(
       itemCount: 5,
       itemBuilder: (context, index) => RaffleEditCard(
-        title: "Summer Charity Raffle ${index + 1}",
-        description:
-            "Enter for a chance to win an all-expenses-paid trip while supporting local youth programs...",
-        endDate: "Mar 25, 2026",
-        ticketPrice: "\$5.00",
-        totalTickets: "500 Sold",
+        title: "Coffee Lovers Bundle",
+        description: "Check in to 3 or more stops to enter. Win a bundle of coffee beans and best beer to drink of your life.",
+        endDate: "Jan 26, 2026", //date range
+        prizeText: "Premium Coffee Bundle (\$200 value)",//bundle prize name
+        organizerName: "Crawl Events Co.",
         imageUrl: "https://picsum.photos/seed/raffle$index/400/300",
         onEdit: () => Get.toNamed(
           AppRoutes.editRaffles,
-          arguments: {"title": "Edit Raffles"},
+          arguments: {
+            "title": "Edit Raffles",
+            "businessId": businessId,
+          },
         ),
-        onView: () {},
+        onView: () {
+          // Navigate to details
+        },
       ),
       separatorBuilder: (_, __) => const SizedBox(height: 10),
     );

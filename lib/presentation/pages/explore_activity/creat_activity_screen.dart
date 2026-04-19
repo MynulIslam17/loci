@@ -103,6 +103,7 @@ class _CreateActivityScreenState extends State<CreateActivityScreen> {
     super.dispose();
   }
 
+  //-----------------date picker-----------
   void showCalendar() async {
     DateTime? pickedDate = await showDatePicker(
       context: context,
@@ -123,6 +124,7 @@ class _CreateActivityScreenState extends State<CreateActivityScreen> {
     });
   }
 
+  //--------------------date range ---------------
   void pickRaffleRange() async {
     final picked = await showDateRangePicker(
       context: context,
@@ -141,6 +143,7 @@ class _CreateActivityScreenState extends State<CreateActivityScreen> {
     });
   }
 
+  //------------time picker-------------
   void showTime() async {
     TimeOfDay? pickedTime = await showTimePicker(
       context: context,
@@ -168,6 +171,8 @@ class _CreateActivityScreenState extends State<CreateActivityScreen> {
     });
   }
 
+  //--------------pick file------------------------
+
   Future<void> _pickCoupon() async {
     final result = await FilePicker.platform.pickFiles(
       type: FileType.custom,
@@ -184,14 +189,14 @@ class _CreateActivityScreenState extends State<CreateActivityScreen> {
     });
   }
 
-  
+  //------task add method---------------
   void _addTask(TaskModel item) {
     // 1. Check if the task ID already exists in your main 'tasks' list
     final bool isDuplicate = tasks.any((element) => element.id == item.id);
 
     if (!isDuplicate) {
       setState(() {
-        tasks.add(item); 
+        tasks.add(item);
       });
       Navigator.pop(context); // Closes the bottom sheet
     } else {
@@ -204,9 +209,6 @@ class _CreateActivityScreenState extends State<CreateActivityScreen> {
       tasks.removeAt(index);
     });
   }
-
-
-
 
   // clear data when do switch category
   void _clearCategoryData() {
@@ -237,6 +239,8 @@ class _CreateActivityScreenState extends State<CreateActivityScreen> {
     });
   }
 
+  //------------acitivity create handler--------------
+
   void _publishHandler() async {
     final error = ActivityValidator.validateAll(
       formKey: _formKey,
@@ -265,11 +269,6 @@ class _CreateActivityScreenState extends State<CreateActivityScreen> {
       }
       return;
     }
-
-
-
-
-
 
     /// =========================
     /// BUILD BODY (CLEAN & SAFE)
@@ -326,12 +325,9 @@ class _CreateActivityScreenState extends State<CreateActivityScreen> {
         "endDate": raffleRange!.end.toIso8601String(),
         "maxSupply": maxSupplyController.text.trim(),
         "raffleBundleName": couponTitleController.text.trim(),
-        "tasks": jsonEncode(tasksPayload), // The magic line
-
+        "tasks": jsonEncode(tasksPayload),
       });
     }
-
-
 
     /// =========================
     /// API CALL
@@ -346,7 +342,10 @@ class _CreateActivityScreenState extends State<CreateActivityScreen> {
     final success = await createActivityController.createActivity(
       url: url,
       body: body,
-      files: {"banner": bannerImage!, if (rafflePrizeImage != null) "rafflePrizeImage": rafflePrizeImage!},
+      files: {
+        "banner": bannerImage!,
+        if (rafflePrizeImage != null) "rafflePrizeImage": rafflePrizeImage!,
+      },
     );
 
     if (success) {
@@ -658,7 +657,7 @@ class _CreateActivityScreenState extends State<CreateActivityScreen> {
             Expanded(
               child: CustomTextField(
                 controller: raffleDateController,
-                title: "Date validity",
+                title: "Entry Period",
                 readOnly: true,
                 onTap: pickRaffleRange,
                 hintText: "Select date range",
@@ -851,8 +850,7 @@ class _CreateActivityScreenState extends State<CreateActivityScreen> {
         _organizerToggle(),
         const SizedBox(height: 10),
 
-
-          MyOwnBusiness(businessName: businessName),
+        MyOwnBusiness(businessName: businessName),
 
         const SizedBox(height: 10),
         GetBuilder<CreateActivityController>(
@@ -959,9 +957,9 @@ class _CreateActivityScreenState extends State<CreateActivityScreen> {
                 onChanged: (value) {
                   if (value.isNotEmpty) {
                     taskController.fetchTasks(
-                        query: value,
-                        isRefresh: true,
-                        businessId: businessId
+                      query: value,
+                      isRefresh: true,
+                      businessId: businessId,
                     );
                   }
                 },
@@ -977,31 +975,83 @@ class _CreateActivityScreenState extends State<CreateActivityScreen> {
                 child: GetBuilder<TaskController>(
                   builder: (controller) {
                     if (controller.isLoading) {
-                      return const Center(child: Padding(
-                        padding: EdgeInsets.all(20.0),
-                        child: CircularProgressIndicator(),
-                      ));
+                      return const Center(
+                        child: Padding(
+                          padding: EdgeInsets.all(20.0),
+                          child: CircularProgressIndicator(),
+                        ),
+                      );
                     }
 
                     if (controller.taskList.isEmpty) {
-                      return const Center(child: Padding(
-                        padding: EdgeInsets.all(20.0),
-                        child: Text("Search for activities to add"),
-                      ));
+                      return const Center(
+                        child: Padding(
+                          padding: EdgeInsets.all(20.0),
+                          child: Text("Search for activities to add"),
+                        ),
+                      );
                     }
 
-                    return ListView.builder(
-                      shrinkWrap: true,
-                      itemCount: controller.taskList.length,
-                      itemBuilder: (context, index) {
-                        final item = controller.taskList[index];
-                        return ListTile(
-                          title: Text(item.title),
-                          subtitle: Text(item.activityType),
-                          trailing: Icon(Icons.add_circle, color: colorScheme.primary),
-                          onTap:()=>_addTask(item),
-                        );
+                    return NotificationListener<ScrollNotification>(
+                      onNotification: (ScrollNotification scrollNotify) {
+                        if (scrollNotify.metrics.pixels >=
+                            scrollNotify.metrics.maxScrollExtent - 200) {
+                          if (!controller.isPaginationLoading &&
+                              controller.hasMore) {
+                            controller.loadMoreTasks(businessId: businessId);
+                          }
+                        }
+
+                        return false;
                       },
+
+                      child: ListView.builder(
+                        shrinkWrap: true,
+                        itemCount: controller.taskList.length + 1,
+                        itemBuilder: (context, index) {
+                          //-------pagination loader on last index-------------
+
+                          if (index == controller.taskList.length) {
+                            //----loader
+                            if (controller.isPaginationLoading) {
+                              return Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 16,
+                                ),
+                                child: Center(
+                                  child: SizedBox(
+                                    width: 20,
+                                    height: 20,
+                                    child: CircularProgressIndicator(),
+                                  ),
+                                ),
+                              );
+                            }
+
+                            //--if  no more data
+                            if (!controller.hasMore) {
+                              return const Padding(
+                                padding: EdgeInsets.symmetric(vertical: 16),
+                                child: Center(child: Text("No more activity")),
+                              );
+                            }
+
+                            return const SizedBox.shrink(); // nothing to show
+                          }
+
+                          final item = controller.taskList[index];
+
+                          return ListTile(
+                            title: Text(item.title),
+                            subtitle: Text(item.activityType),
+                            trailing: Icon(
+                              Icons.add_circle,
+                              color: colorScheme.primary,
+                            ),
+                            onTap: () => _addTask(item),
+                          );
+                        },
+                      ),
                     );
                   },
                 ),
