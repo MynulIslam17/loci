@@ -1,7 +1,7 @@
 import 'package:intl/intl.dart';
 import 'package:loci/core/utils/date_parser.dart';
 
-import '../models/common/paginatation_model.dart';
+import '../common/paginatation_model.dart';
 
 
 
@@ -73,14 +73,8 @@ class RaffleModel {
       title: json['title'] ?? '',
       description: json['details'] ?? '',
 
-      startDate: json['startDate'] != null
-        ? DateParserHelper.eventDateTime(
-        DateTime.parse(json['startDate'])
-      ): "",
-      endDate: json['endDate'] != null
-          ? DateParserHelper.eventDateTime(
-          DateTime.parse(json['endDate'])
-      ): "",
+      startDate: json['startDate'] ?? '',
+      endDate: json['endDate'] ?? '',
 
       maxSupply: json['maxSupply'] ?? 0,
 

@@ -23,7 +23,7 @@ class PostCardWidget extends StatefulWidget {
   final void Function(String postId)? onClickPoll;
 
   /// Optional controller from parent
-  final TextEditingController? controller; // 👈 optional from parent
+  final TextEditingController? controller;
 
   /// Parent handles text submit
   final void Function(String postId, String value)? onSubmit;
@@ -39,7 +39,7 @@ class PostCardWidget extends StatefulWidget {
     this.onLikeTap,
     this.onCommentTap,
     this.onClickPoll,
-    this.controller, // 👈 optional
+    this.controller,
     this.onSubmit,
     this.onChanged,
   });

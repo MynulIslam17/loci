@@ -19,7 +19,7 @@ class _BrowseScreenState extends State<BrowseScreen> {
     {"Icon": Assets.icons.care, "title": "Boutiques & Beauty"},
     {"Icon": Assets.icons.foodie, "title": "Foodie"},
     {"Icon": Assets.icons.advanture, "title": "Adventure"},
-    {"Icon": Assets.icons.party, "title": "Party Like a Loci"},
+    {"Icon": Assets.icons.party, "title": "Party Like raffles Loci"},
     {"Icon": Assets.icons.helth, "title": "Wellness"},
     {"Icon": Assets.icons.repair, "title": "Home and Repair"},
     {"Icon": Assets.icons.nonProfit, "title": "Non Profits"},

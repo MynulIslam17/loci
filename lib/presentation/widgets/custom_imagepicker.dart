@@ -43,7 +43,7 @@ class CustomImagePicker extends StatelessWidget {
           children: [
             ListTile(
               leading: const Icon(Icons.camera_alt),
-              title: const Text('Take a Photo'),
+              title: const Text('Take raffles Photo'),
               onTap: () => Navigator.pop(context, ImageSource.camera),
             ),
             ListTile(
@@ -84,7 +84,7 @@ class CustomImagePicker extends StatelessWidget {
           children: [
             ListTile(
               leading: const Icon(Icons.camera_alt),
-              title: const Text('Take a Photo'),
+              title: const Text('Take raffles Photo'),
               onTap: () => _pickImage(ImageSource.camera, context),
             ),
             ListTile(

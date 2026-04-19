@@ -140,8 +140,8 @@ class _BusinessProfileScreenState extends State<BusinessProfileScreen> {
                   vertical: 12,
                 ),
                 child: Text(
-                  "Marland Clutch, founded in 1931, is a prominent global manufacturer specializing in heavy duty industrial backstopping and overrunning clutches. The company is currently a brand of Regal Rexnord Corporation.\n\n"
-                  "Marland Clutch, founded in 1931, is a prominent global manufacturer specializing in heavy duty industrial backstopping and overrunning clutches. The company is currently a brand of Regal Rexnord Corporation.",
+                  "Marland Clutch, founded in 1931, is raffles prominent global manufacturer specializing in heavy duty industrial backstopping and overrunning clutches. The company is currently raffles brand of Regal Rexnord Corporation.\n\n"
+                  "Marland Clutch, founded in 1931, is raffles prominent global manufacturer specializing in heavy duty industrial backstopping and overrunning clutches. The company is currently raffles brand of Regal Rexnord Corporation.",
                   style: AppTextStyle.textXs(
                     color: context.colorScheme.onSurfaceVariant,
                   ),

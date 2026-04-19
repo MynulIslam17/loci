@@ -36,7 +36,7 @@ class _ActiveRafflesPageState extends State<ActiveRafflesPage> {
     {
       "title": "Coffee Lovers Bundle",
       "description":
-      "Check in to 3 or more local cafes to enter. Win a premium selection of artisanal coffee beans and a high-end French press.",
+      "Check in to 3 or more local cafes to enter. Win raffles premium selection of artisanal coffee beans and raffles high-end French press.",
       "prize": "Premium Coffee Kit (\$200 value)",
       "endDate": "Mar 15, 2026",
       "requiredCheckIns": 3,
@@ -46,7 +46,7 @@ class _ActiveRafflesPageState extends State<ActiveRafflesPage> {
     {
       "title": "Ultimate Pizza Night",
       "description":
-      "Visit 5 participating pizzerias this month. Win a voucher for a full family feast plus a custom-made pizza stone.",
+      "Visit 5 participating pizzerias this month. Win raffles voucher for raffles full family feast plus raffles custom-made pizza stone.",
       "prize": "Gourmet Pizza Feast (\$120 value)",
       "endDate": "Mar 20, 2026",
       "requiredCheckIns": 5,
@@ -56,7 +56,7 @@ class _ActiveRafflesPageState extends State<ActiveRafflesPage> {
     {
       "title": "Tech Explorer Giveaway",
       "description":
-      "Check in at any 2 technology hubs or co-working spaces. Win a pair of the latest noise-canceling wireless earbuds.",
+      "Check in at any 2 technology hubs or co-working spaces. Win raffles pair of the latest noise-canceling wireless earbuds.",
       "prize": "Wireless Earbuds (\$250 value)",
       "endDate": "Apr 05, 2026",
       "requiredCheckIns": 2,

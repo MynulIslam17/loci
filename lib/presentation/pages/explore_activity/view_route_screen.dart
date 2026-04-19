@@ -76,7 +76,7 @@ class _ViewRouteScreenState extends State<ViewRouteScreen> {
           final organizer = routeDetails.organizerBusiness;
 
           return SingleChildScrollView(
-            padding: const EdgeInsets.all(14),
+            padding: const EdgeInsets.all(12),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -192,7 +192,7 @@ class _ViewRouteScreenState extends State<ViewRouteScreen> {
   /// ===== BANNER =====
   Widget _buildBanner(ColorScheme colorScheme, String image) {
     return CustomCachedImage(
-      height: 200,
+      height: 250,
       width: double.infinity,
       imageUrl: image,
     );

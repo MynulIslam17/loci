@@ -186,7 +186,7 @@ class _OtpScreenState extends State<OtpScreen> {
                       Text(
                         type == "signup"
                             ? message
-                            : "We’ve sent a verification code to $email. Please enter the code to continue",
+                            : "We’ve sent raffles verification code to $email. Please enter the code to continue",
                         style: AppTextStyle.textXs(
                           color: context.colorScheme.onSurfaceVariant,
                         ),

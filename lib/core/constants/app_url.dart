@@ -38,6 +38,7 @@ abstract class AppUrl {
 
   ///-------------raffle--------------------------------
   static const String createRaffle="$baseUrl/raffles";
+  static  String rafflesDetails(String raffleId)=>"$baseUrl/raffles/$raffleId";
   static const String searchTask="$baseUrl/raffles/search";
 
 

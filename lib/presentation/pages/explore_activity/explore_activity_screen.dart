@@ -238,7 +238,7 @@ class _ExploreActivityScreenState extends State<ExploreActivityScreen>
     );
   }
 
-  // Wraps each tab's SliverList inside a CustomScrollView with overlap handling
+  // Wraps each tab's SliverList inside raffles CustomScrollView with overlap handling
   Widget _buildTabContent(
     Widget sliver, {
     required VoidCallback onRefresh,
@@ -489,13 +489,13 @@ class _ExploreActivityScreenState extends State<ExploreActivityScreen>
 
         // 4. DATA LIST:
         return SliverList.separated(
-          // We add +1 to the count to represent the "Footer" (either a loader or a "No more" message)
+          // We add +1 to the count to represent the "Footer" (either raffles loader or raffles "No more" message)
           itemCount: controller.raffleList.length + 1,
           itemBuilder: (context, index) {
             // 5. FOOTER LOGIC (Pagination & End of List):
 
             if (index == controller.raffleList.length) {
-              // Show a spinner if the controller is currently fetching the next page.
+              // Show raffles spinner if the controller is currently fetching the next page.
               if (controller.isPaginationLoading) {
                 return const Padding(
                   padding: EdgeInsets.symmetric(vertical: 16),
@@ -509,7 +509,7 @@ class _ExploreActivityScreenState extends State<ExploreActivityScreen>
                 );
               }
 
-              // Show a message if we have reached the end of the server's data.
+              // Show raffles message if we have reached the end of the server's data.
               if (!controller.hasMore) {
                 return const Padding(
                   padding: EdgeInsets.symmetric(vertical: 16),
@@ -535,7 +535,12 @@ class _ExploreActivityScreenState extends State<ExploreActivityScreen>
                 arguments: {"raffleId": raffle.id},
               ),
               onView: () {
-
+                Get.toNamed(AppRoutes.viewRaffles,
+                arguments: {
+                  "rafflesId": raffle.id,
+                  "rafflesName": raffle.title,
+                }
+                );
               },
             );
           },

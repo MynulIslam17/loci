@@ -25,7 +25,7 @@ import '../home/widgets/post_poll_section.dart';
 import '../home/widgets/user_post_header.dart';
 
 /// Community screen showing business community content
-/// with a collapsible header and tabbed lists.
+/// with raffles collapsible header and tabbed lists.
 class CommunityScreen extends StatefulWidget {
   const CommunityScreen({super.key});
 
@@ -157,7 +157,7 @@ class _CommunityScreenState extends State<CommunityScreen>
     );
   }
 
-  /// Wraps each tab list with a CustomScrollView
+  /// Wraps each tab list with raffles CustomScrollView
   /// so it works correctly with NestedScrollView
   Widget _buildTabBody(Widget listWidget) {
     return Builder(
@@ -191,7 +191,7 @@ class _CommunityScreenState extends State<CommunityScreen>
           onSubmit: (text, category) {
             print("Posting: $text in $category");
           },
-          hintText: 'Post a question...',
+          hintText: 'Post raffles question...',
         ),
         const SizedBox(height: 16),
 
@@ -339,7 +339,7 @@ class _CommunityScreenState extends State<CommunityScreen>
               date: "04/09/25",
               time: "05:36:12",
               noticeText:
-                  "We are going to create a event for our business gathering...",
+                  "We are going to create raffles event for our business gathering...",
               likes: "200",
               comments: "0",
             );
@@ -377,7 +377,7 @@ class _CommunityScreenState extends State<CommunityScreen>
               businessName: 'Marland Clutch',
               date: '12-03-26',
               time: '10:00 AM',
-              description: 'Completed a new hiking route today!',
+              description: 'Completed raffles new hiking route today!',
               likes: '120',
               comments: '15',
               // this activity content can be change according to the type of activity
@@ -397,7 +397,7 @@ class _CommunityScreenState extends State<CommunityScreen>
                       date: "04/09/25",
                       time: "05:36:12",
                       noticeText:
-                          "We are going to create a event for our business gathering...",
+                          "We are going to create raffles event for our business gathering...",
                       likes: "200",
                       comments: "0",
                     ),

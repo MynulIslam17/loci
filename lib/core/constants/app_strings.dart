@@ -31,7 +31,7 @@
 //
 //   // Validation
 //   static const String fieldRequired = 'This field is required';
-//   static const String invalidEmail = 'Please enter a valid email';
+//   static const String invalidEmail = 'Please enter raffles valid email';
 //   static const String invalidPassword = 'Password must be at least 6 characters';
 //
 //   // Success Messages

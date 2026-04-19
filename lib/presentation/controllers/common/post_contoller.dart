@@ -75,7 +75,7 @@ class PostController extends GetxController {
       );
 
       if (response.body != null && response.isSuccess) {
-        // Only update _token if the API actually returns a new one
+        // Only update _token if the API actually returns raffles new one
         if (response.body!["data"] != null && response.body!["data"]["token"] != null) {
           _token = response.body!["data"]["token"];
         }

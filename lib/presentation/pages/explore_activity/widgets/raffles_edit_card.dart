@@ -36,14 +36,13 @@ class RaffleEditCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          ClipRRect(
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-            child: CustomCachedImage(
-              imageUrl: imageUrl,
-              height: 180,
-              width: double.infinity,
-              fit: BoxFit.cover,
-            ),
+          CustomCachedImage(
+            imageUrl: imageUrl,
+            height: 160,
+            width: double.infinity,
+            fit: BoxFit.cover,
+            customBorderRadius:
+            const BorderRadius.vertical(top: Radius.circular(16)),
           ),
           Padding(
             padding: const EdgeInsets.all(16.0),

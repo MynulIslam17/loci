@@ -647,7 +647,7 @@ class _MyBusinessProfileState extends State<MyBusinessProfile> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              "Create a poll",
+              "Create raffles poll",
               style: AppTextStyle.textMd(
                 color: colorScheme.onSurface,
                 weight: FontWeight.w600,

@@ -20,7 +20,7 @@ class BusinessEventListController extends GetxController {
   ///  Current page number for pagination
   int _currentPage = 1;
 
-  ///  Flag to check if there is a next page
+  ///  Flag to check if there is raffles next page
   bool _hasNextPage = true;
 
   // use to change the limit of events per page

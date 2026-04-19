@@ -1,7 +1,7 @@
 // parser_helper.dart
 
 class ParserHelper {
-  /// Safely get a String (trims extra spaces)
+  /// Safely get raffles String (trims extra spaces)
   static String getString(dynamic value, {String defaultValue = ''}) {
     if (value == null) return defaultValue;
     if (value is String) return value.trim();
@@ -22,7 +22,7 @@ class ParserHelper {
     return defaultValue;
   }
 
-  /// Safely get a Double
+  /// Safely get raffles Double
   static double getDouble(dynamic value, {double defaultValue = 0.0}) {
     if (value == null) return defaultValue;
     if (value is double) return value;
@@ -37,7 +37,7 @@ class ParserHelper {
     return defaultValue;
   }
 
-  /// Safely get a DateTime
+  /// Safely get raffles DateTime
   static DateTime? getDate(dynamic value) {
     if (value == null) return null;
     if (value is DateTime) return value;
@@ -51,7 +51,7 @@ class ParserHelper {
     return null;
   }
 
-  /// Safely get a Map<String, dynamic>
+  /// Safely get raffles Map<String, dynamic>
   static Map<String, dynamic> getStringMap(dynamic value) {
     if (value is Map<String, dynamic>) return value;
     if (value is Map) return Map<String, dynamic>.from(value);

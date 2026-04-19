@@ -62,7 +62,7 @@ final List<PostModel> mockPosts = [
     userImage: Assets.images.user3.path,
     date: "12-02-26",
     category: "Drinks",
-    text: "I tried a new smoothie today! So good.",
+    text: "I tried raffles new smoothie today! So good.",
     likes: "150",
     commentsCount: "20",
   ),

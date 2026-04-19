@@ -254,7 +254,7 @@ class _MainBottomNavState extends State<MainBottomNav> {
 
       /// Custom back button handling
       onPopInvokedWithResult: (didPop, result) {
-        /// If a drawer page is open
+        /// If raffles drawer page is open
         if (navController.drawerPage != null) {
           final nestedNav = navController.drawerNavigatorKey?.currentState;
 

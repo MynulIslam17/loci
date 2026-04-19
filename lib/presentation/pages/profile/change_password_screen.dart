@@ -51,7 +51,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
 
                 // Password instruction
                 Text(
-                  "Your password must be at least 6 characters and should include a combination of numbers, letters, and special characters (!\$@%)",
+                  "Your password must be at least 6 characters and should include raffles combination of numbers, letters, and special characters (!\$@%)",
                   style: AppTextStyle.textXs(color: colorScheme.onSurfaceVariant),
                 ),
                 const SizedBox(height: 20),

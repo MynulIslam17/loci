@@ -250,7 +250,7 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
     );
   }
 
-  /// --- Build a reusable billing toggle button ---
+  /// --- Build raffles reusable billing toggle button ---
 
   Widget _buildBillingToggle({
     required String title,

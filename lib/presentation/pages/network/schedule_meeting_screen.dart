@@ -66,7 +66,7 @@ class _ScheduleMeetingScreenState extends State<ScheduleMeetingScreen> {
       appBar: AppBar(
         leading: const BackButton(),
         title: Text(
-          "Schedule a meeting",
+          "Schedule raffles meeting",
           style: AppTextStyle.textLg(weight: FontWeight.w600),
         ),
       ),
@@ -239,7 +239,7 @@ class _ScheduleMeetingScreenState extends State<ScheduleMeetingScreen> {
         Text("Meeting", style: AppTextStyle.textXl(weight: FontWeight.w700)),
         const SizedBox(height: 4),
         Text(
-          "Schedule a meeting with business owner",
+          "Schedule raffles meeting with business owner",
           style: AppTextStyle.textSm(
             color: context.colorScheme.onSurfaceVariant,
           ),

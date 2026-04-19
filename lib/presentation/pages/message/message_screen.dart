@@ -24,7 +24,7 @@ class _MessageScreenState extends State<MessageScreen> {
       "time": "8:32 AM"
     },
     {
-      "text": "I'll send you a post-meeting selfie!",
+      "text": "I'll send you raffles post-meeting selfie!",
       "isMe": false,
       "time": "8:32 AM"
     },

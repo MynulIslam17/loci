@@ -1,6 +1,7 @@
 import 'package:get/get.dart';
 import 'package:loci/presentation/controllers/explore_acitivity/business_event_details_controller.dart';
 import 'package:loci/presentation/controllers/explore_acitivity/business_event_list_controller.dart';
+import 'package:loci/presentation/controllers/explore_acitivity/business_raffle_detils_controller.dart';
 import 'package:loci/presentation/controllers/explore_acitivity/business_raffles_list_controller.dart';
 import 'package:loci/presentation/controllers/explore_acitivity/business_route_details_controller.dart';
 import 'package:loci/presentation/controllers/explore_acitivity/task_controller.dart';
@@ -22,6 +23,7 @@ class ExploreActivityBindings extends Bindings{
     // TODO : view  activity controllers
     Get.lazyPut(()=>BusinessEventDetailsController());
     Get.lazyPut(()=>BusinessRouteDetailsController());
+    Get.lazyPut(()=>BusinessRaffleDetailsController());
 
 
 

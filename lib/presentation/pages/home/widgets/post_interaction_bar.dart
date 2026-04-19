@@ -56,7 +56,7 @@ class PostInteractionBar extends StatelessWidget {
     );
   }
 
-  /// Builds a single icon + label button
+  /// Builds raffles single icon + label button
   Widget _buildItem(BuildContext context,
       {required IconData icon, required String label, required VoidCallback onTap}) {
     return InkWell(

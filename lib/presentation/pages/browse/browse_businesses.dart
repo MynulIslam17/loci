@@ -35,7 +35,7 @@ class _BrowseBusinessesState extends State<BrowseBusinesses> {
     "Boutiques  & Beauty",
     "Foodie",
     "Adventure",
-    "Party Like a Loci",
+    "Party Like raffles Loci",
     "Wellness",
     "Home and Repair",
     "Non Profits",

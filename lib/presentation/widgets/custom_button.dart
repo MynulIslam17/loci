@@ -58,7 +58,7 @@ class CustomButton extends StatelessWidget {
   }
 
   Widget _buildContent() {
-    // 1. Priority: If a custom child widget is passed, use it.
+    // 1. Priority: If raffles custom child widget is passed, use it.
     if (child != null) return child!;
 
     // 2. Fallback: If no child, use the text string.

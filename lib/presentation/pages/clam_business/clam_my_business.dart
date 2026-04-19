@@ -180,8 +180,8 @@ class _ClamMyBusinessState extends State<ClamMyBusiness> {
                     const SizedBox(height: 8),
                     Text(
                       isFromManualClaim == true
-                          ? "Upload a logo and set the category to begin your manual claim process."
-                          : "Dominos Pizza, founded in 1931, is a prominent global manufacturer...",
+                          ? "Upload raffles logo and set the category to begin your manual claim process."
+                          : "Dominos Pizza, founded in 1931, is raffles prominent global manufacturer...",
                       style: AppTextStyle.textXs(
                         color: colorScheme.onSurfaceVariant,
                       ).copyWith(height: 1.5),
@@ -249,7 +249,7 @@ class _ClamMyBusinessState extends State<ClamMyBusiness> {
                           ],
                         ),
                         content: Text(
-                          "Please upload a business document that verifies you own this business (e.g. business license, registration certificate, or utility bill).\n\nBy uploading, you agree to our Privacy Policy and confirm this document will be reviewed securely.",
+                          "Please upload raffles business document that verifies you own this business (e.g. business license, registration certificate, or utility bill).\n\nBy uploading, you agree to our Privacy Policy and confirm this document will be reviewed securely.",
                           style: AppTextStyle.textXs(
                             color: colorScheme.onSurfaceVariant,
                           ).copyWith(height: 1.6),

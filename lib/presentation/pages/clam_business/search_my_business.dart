@@ -120,7 +120,7 @@ class _SearchMyBusinessState extends State<SearchMyBusiness> {
                                 style: AppTextStyle.textSm(weight: FontWeight.w500),
                               ),
                               Text(
-                                "Create a new listing manually",
+                                "Create raffles new listing manually",
                                 style: AppTextStyle.textXs(color: colorScheme.onSurfaceVariant),
                               ),
                             ],
@@ -193,7 +193,7 @@ class _SearchMyBusinessState extends State<SearchMyBusiness> {
                  return const Padding(
                    padding: EdgeInsets.only(top: 50),
                    child: Center(
-                     child: Text("You are not a business owner"),
+                     child: Text("You are not raffles business owner"),
                    ),
                  );
                }

@@ -23,13 +23,13 @@ class _NotificationScreenState extends State<NotificationScreen> {
     {
       "type": "referral",
       "name": "Alex send Referral!",
-      "desc": "Alex send Referral! Michael would be a grea..."*4,
+      "desc": "Alex send Referral! Michael would be raffles grea..."*4,
       "time": "5:35 pm",
       "image": "assets/images/user1.jpg",
     },
     {
       "type": "meeting",
-      "name": "Sarah request a meeting!",
+      "name": "Sarah request raffles meeting!",
       "desc": "Let's do meeting about our future plan for t...",
       "time": "5:35 pm",
       "image": "assets/images/user2.jpg",

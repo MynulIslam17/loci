@@ -60,7 +60,7 @@ class BusinessRouteListController extends GetxController {
   }
 
   Future<void> loadMoreRoutes({required String? businessId}) async {
-    // IMPORTANT: Added _isLoading here to block pagination during a main refresh
+    // IMPORTANT: Added _isLoading here to block pagination during raffles main refresh
     if (!_hasNextPage || _isPaginationLoading || _isLoading) return;
 
     _isPaginationLoading = true;

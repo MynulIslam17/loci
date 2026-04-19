@@ -944,7 +944,7 @@ class _CreateActivityScreenState extends State<CreateActivityScreen> {
 
               // --- SEARCH FIELD ---
               CustomTextField(
-                hintText: "Search for a task...",
+                hintText: "Search for raffles task...",
                 borderColor: colorScheme.outline,
                 fontSize: 14,
                 textColor: colorScheme.onSurface,

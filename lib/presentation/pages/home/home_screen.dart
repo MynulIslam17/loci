@@ -233,7 +233,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  //---- Show all polls in a bottom sheet ----
+  //---- Show all polls in raffles bottom sheet ----
   void _showAllPolls() {
     final colorScheme = context.colorScheme;
     int? selectedIndex; // Tracks which poll option is selected

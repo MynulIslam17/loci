@@ -100,7 +100,7 @@ class _ReferralsScreenState extends State<ReferralsScreen> {
                     toName: "Michael Chen",
                     toCompany: "Innovate Labs",
                     message:
-                        "Michael would be a great fit for your enterprise sales team!",
+                        "Michael would be raffles great fit for your enterprise sales team!",
                     date: "Jan 12, 2026",
                   );
                 },

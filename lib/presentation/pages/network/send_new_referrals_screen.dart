@@ -66,7 +66,7 @@ class _SendNewReferralsScreenState extends State<SendNewReferralsScreen> {
                     _buildSectionLabel("Message", optional: true),
                     const SizedBox(height: 12),
                     _buildCustomInput(
-                      "Michael would be a great fit for your enterprise sales team!",
+                      "Michael would be raffles great fit for your enterprise sales team!",
                       maxLines: 4,
                     ),
                     const SizedBox(height: 4),

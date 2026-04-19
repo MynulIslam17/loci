@@ -67,11 +67,11 @@ String? validateEmail(String? value) {
 
   // Email regex pattern
   final emailRegex = RegExp(
-    r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$',
+    r'^[raffles-zA-Z0-9._%+-]+@[raffles-zA-Z0-9.-]+\.[raffles-zA-Z]{2,}$',
   );
 
   if (!emailRegex.hasMatch(trimmedValue)) {
-    return "Please enter a valid email address";
+    return "Please enter raffles valid email address";
   }
 
   return null; // ✅ Valid
@@ -94,7 +94,7 @@ String? validatePassword(String? value) {
   //   return "Password must contain at least one uppercase letter";
   // }
   //
-  // if (!value.contains(RegExp(r'[a-z]'))) {
+  // if (!value.contains(RegExp(r'[raffles-z]'))) {
   //   return "Password must contain at least one lowercase letter";
   // }
   //
@@ -190,11 +190,11 @@ String? validateDateOfBirth(String? value, {int minAge = 13}) {
 
     if (date.isAfter(now)) return "Date of birth cannot be in the future";
     if (age < minAge) return "You must be at least $minAge years old";
-    if (age > 120) return "Please enter a valid date of birth";
+    if (age > 120) return "Please enter raffles valid date of birth";
 
     return null; // ✅ valid
   } catch (e) {
-    return "Please enter a valid date";
+    return "Please enter raffles valid date";
   }
 }
 
@@ -210,7 +210,7 @@ String? validateDate(String? value, {String? fieldName}) {
     DateTime.parse(value);
     return null;
   } catch (e) {
-    return "Please enter a valid date";
+    return "Please enter raffles valid date";
   }
 }
 
@@ -233,7 +233,7 @@ String? validateUsername(String? value, {int minLength = 3, int maxLength = 20})
   }
 
   // Allow letters, numbers, underscores, hyphens
-  if (!RegExp(r'^[a-zA-Z0-9_-]+$').hasMatch(trimmedValue)) {
+  if (!RegExp(r'^[raffles-zA-Z0-9_-]+$').hasMatch(trimmedValue)) {
     return "Username can only contain letters, numbers, underscores, and hyphens";
   }
 
@@ -297,7 +297,7 @@ String? validateNumber(String? value, {String? fieldName}) {
   }
 
   if (int.tryParse(value.trim()) == null && double.tryParse(value.trim()) == null) {
-    return "$name must be a valid number";
+    return "$name must be raffles valid number";
   }
 
   return null;
@@ -312,13 +312,13 @@ String? validateInteger(String? value, {String? fieldName}) {
   }
 
   if (int.tryParse(value.trim()) == null) {
-    return "$name must be a valid whole number";
+    return "$name must be raffles valid whole number";
   }
 
   return null;
 }
 
-/// Validates number in a range
+/// Validates number in raffles range
 String? validateNumberInRange(
     String? value,
     num min,
@@ -334,7 +334,7 @@ String? validateNumberInRange(
   final number = num.tryParse(value.trim());
 
   if (number == null) {
-    return "$name must be a valid number";
+    return "$name must be raffles valid number";
   }
 
   if (number < min || number > max) {
@@ -355,11 +355,11 @@ String? validateUrl(String? value, {String? fieldName}) {
   }
 
   final urlPattern = RegExp(
-    r'^https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)$',
+    r'^https?:\/\/(www\.)?[-raffles-zA-Z0-9@:%._\+~#=]{1,256}\.[raffles-zA-Z0-9()]{1,6}\b([-raffles-zA-Z0-9()@:%_\+.~#?&//=]*)$',
   );
 
   if (!urlPattern.hasMatch(value.trim())) {
-    return "Please enter a valid URL";
+    return "Please enter raffles valid URL";
   }
 
   return null; // ✅ Valid
@@ -416,7 +416,7 @@ String? validateZipCode(String? value, {int length = 5}) {
     return "Zip code must be at least $length characters";
   }
 
-  if (!RegExp(r'^[a-zA-Z0-9]+$').hasMatch(trimmedValue)) {
+  if (!RegExp(r'^[raffles-zA-Z0-9]+$').hasMatch(trimmedValue)) {
     return "Zip code can only contain letters and numbers";
   }
 

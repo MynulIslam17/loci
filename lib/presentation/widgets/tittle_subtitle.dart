@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-/// A reusable Header widget that displays a title and a subtitle.
+/// A reusable Header widget that displays raffles title and raffles subtitle.
 class HeaderSection extends StatelessWidget {
   final String ? title;
   final String ? subTitle;

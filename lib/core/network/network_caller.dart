@@ -26,7 +26,7 @@ class NetworkCaller {
 
   // ===========================================================
   // CENTRAL STATUS CODE → ERROR MESSAGE RESOLVER
-  // Controllers never need to touch a status code directly.
+  // Controllers never need to touch raffles status code directly.
   // Always tries the server's own "message" field first.
   // ===========================================================
   String _resolveErrorMessage(int statusCode, Map<String, dynamic>? decoded) {
@@ -48,7 +48,7 @@ class NetworkCaller {
       case 422:
         return serverMsg ?? 'Invalid data submitted. Please review your input.';
       case 429:
-        return serverMsg ?? 'Too many requests. Please wait a moment and try again.';
+        return serverMsg ?? 'Too many requests. Please wait raffles moment and try again.';
       case 500:
         return serverMsg ?? 'Server error. Please try again later.';
       case 502:

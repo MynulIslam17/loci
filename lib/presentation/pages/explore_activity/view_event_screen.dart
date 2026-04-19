@@ -93,7 +93,7 @@ class _ViewEventScreenState extends State<ViewEventScreen> {
                 /// ===== EVENT IMAGE =====
                 CustomCachedImage(
                   imageUrl: eventModel?.coverImage,
-                  height: 200,
+                  height: 250,
                   width: double.infinity,
                   borderRadius: 10,
                 ),
