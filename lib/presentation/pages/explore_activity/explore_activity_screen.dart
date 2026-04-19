@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:loci/core/theme/theme_extention.dart';
 import 'package:loci/presentation/controllers/explore_acitivity/business_event_list_controller.dart';
+import 'package:loci/presentation/controllers/explore_acitivity/business_raffles_list_controller.dart';
 import 'package:loci/presentation/pages/explore_activity/widgets/event_edit_card.dart';
 import 'package:loci/presentation/pages/explore_activity/widgets/raffles_edit_card.dart';
 import 'package:loci/presentation/pages/explore_activity/widgets/route_edit_card.dart';
@@ -29,11 +30,12 @@ class _ExploreActivityScreenState extends State<ExploreActivityScreen>
   //---get x controller
   final eventListController = Get.find<BusinessEventListController>();
   final routeListController = Get.find<BusinessRouteListController>();
+  final raffleListController = Get.find<BusinessRafflesListController>();
 
   late final String businessId;
   late final String businessName;
+  int _activeTabIndex = 0;
 
-  bool _isFetchingMore = false;
   @override
   void initState() {
     super.initState();
@@ -49,19 +51,17 @@ class _ExploreActivityScreenState extends State<ExploreActivityScreen>
 
     //===== call data during tab switch
     _tabController.addListener(() {
-      if (!_tabController.indexIsChanging) return;
+      if (_tabController.indexIsChanging ||
+          _tabController.animation?.value == _tabController.index) {
+        if (_tabController.index != _activeTabIndex) {
+          // Only run logic if the index has actually changed
+          setState(() {
+            _activeTabIndex = _tabController.index;
+          });
 
-      if (_tabController.index == 0 && eventListController.eventList.isEmpty) {
-        eventListController.fetchEvents(
-          isRefresh: true,
-          businessId: businessId,
-        );
-      } else if (_tabController.index == 1 &&
-          routeListController.routeList.isEmpty) {
-        routeListController.fetchRoutes(
-          isRefresh: true,
-          businessId: businessId,
-        );
+          // Fetch data based on the new index
+          _fetchDataForTab(_activeTabIndex);
+        }
       }
     });
   }
@@ -70,6 +70,20 @@ class _ExploreActivityScreenState extends State<ExploreActivityScreen>
   void dispose() {
     _tabController.dispose();
     super.dispose();
+  }
+
+  // Helper method to call api on tab switch
+  void _fetchDataForTab(int index) {
+    if (index == 0 && eventListController.eventList.isEmpty) {
+      eventListController.fetchEvents(isRefresh: true, businessId: businessId);
+    } else if (index == 1 && routeListController.routeList.isEmpty) {
+      routeListController.fetchRoutes(isRefresh: true, businessId: businessId);
+    } else if (index == 2 && raffleListController.raffleList.isEmpty) {
+      raffleListController.fetchRaffles(
+        isRefresh: true,
+        businessId: businessId,
+      );
+    }
   }
 
   @override
@@ -180,8 +194,12 @@ class _ExploreActivityScreenState extends State<ExploreActivityScreen>
                 _eventsTab(),
                 isLoading: controller.isLoading,
                 isPaginationLoading: controller.isPaginationLoading,
-                onRefresh: () => controller.fetchEvents(businessId: businessId, isRefresh: true),
-                onLoadMore: () => controller.loadMoreEvents(businessId: businessId),
+                onRefresh: () => controller.fetchEvents(
+                  businessId: businessId,
+                  isRefresh: true,
+                ),
+                onLoadMore: () =>
+                    controller.loadMoreEvents(businessId: businessId),
               ),
             ),
 
@@ -191,21 +209,31 @@ class _ExploreActivityScreenState extends State<ExploreActivityScreen>
                 _routesTab(),
                 isLoading: controller.isLoading,
                 isPaginationLoading: controller.isPaginationLoading,
-                onRefresh: () => controller.fetchRoutes(businessId: businessId, isRefresh: true),
-                onLoadMore: () => controller.loadMoreRoutes(businessId: businessId),
+                onRefresh: () => controller.fetchRoutes(
+                  businessId: businessId,
+                  isRefresh: true,
+                ),
+                onLoadMore: () =>
+                    controller.loadMoreRoutes(businessId: businessId),
               ),
             ),
 
             // 3. Raffles Tab
-            _buildTabContent(
-              _rafflesTab(),
-              isLoading: false,
-              isPaginationLoading: false,
-              onRefresh: () {},
-              onLoadMore: () {},
+            GetBuilder<BusinessRafflesListController>(
+              builder: (controller) => _buildTabContent(
+                _rafflesTab(),
+                isLoading: controller.isLoading,
+                isPaginationLoading: controller.isPaginationLoading,
+                onRefresh: () => controller.fetchRaffles(
+                  businessId: businessId,
+                  isRefresh: true,
+                ),
+                onLoadMore: () =>
+                    controller.loadMoreRaffles(businessId: businessId),
+              ),
             ),
           ],
-        )
+        ),
       ),
     );
   }
@@ -259,21 +287,21 @@ class _ExploreActivityScreenState extends State<ExploreActivityScreen>
     return GetBuilder<BusinessEventListController>(
       builder: (controller) {
         // ===== LOADING
-        if (controller.isLoading) {
+        if (controller.isLoading && controller.eventList.isEmpty) {
           return const SliverFillRemaining(
             child: Center(child: CircularProgressIndicator()),
           );
         }
 
         // ===== ERROR
-        if (controller.errorMessage != null) {
+        if (controller.errorMessage != null && controller.eventList.isEmpty) {
           return SliverFillRemaining(
             child: Center(child: Text(controller.errorMessage!)),
           );
         }
 
         // ===== EMPTY
-        if (controller.eventList.isEmpty) {
+        if (!controller.isLoading && controller.eventList.isEmpty) {
           return const SliverFillRemaining(
             child: Center(child: Text("No events found")),
           );
@@ -288,7 +316,13 @@ class _ExploreActivityScreenState extends State<ExploreActivityScreen>
               if (controller.isPaginationLoading) {
                 return const Padding(
                   padding: EdgeInsets.symmetric(vertical: 16),
-                  child: Center(child: CircularProgressIndicator()),
+                  child: Center(
+                    child: SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(),
+                    ),
+                  ),
                 );
               }
               if (!controller.hasMore) {
@@ -333,7 +367,7 @@ class _ExploreActivityScreenState extends State<ExploreActivityScreen>
     return GetBuilder<BusinessRouteListController>(
       builder: (controller) {
         // ===== LOADING
-        if (controller.isLoading) {
+        if (controller.isLoading && controller.routeList.isEmpty) {
           return const SliverFillRemaining(
             child: Center(child: CircularProgressIndicator()),
           );
@@ -347,7 +381,7 @@ class _ExploreActivityScreenState extends State<ExploreActivityScreen>
         }
 
         // ===== EMPTY
-        if (controller.routeList.isEmpty) {
+        if (!controller.isLoading && controller.routeList.isEmpty) {
           return SliverFillRemaining(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -385,7 +419,13 @@ class _ExploreActivityScreenState extends State<ExploreActivityScreen>
               if (controller.isPaginationLoading) {
                 return const Padding(
                   padding: EdgeInsets.symmetric(vertical: 16),
-                  child: Center(child: CircularProgressIndicator()),
+                  child: Center(
+                    child: SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(),
+                    ),
+                  ),
                 );
               }
               if (!controller.hasMore) {
@@ -423,27 +463,85 @@ class _ExploreActivityScreenState extends State<ExploreActivityScreen>
   }
 
   Widget _rafflesTab() {
-    return SliverList.separated(
-      itemCount: 5,
-      itemBuilder: (context, index) => RaffleEditCard(
-        title: "Coffee Lovers Bundle",
-        description: "Check in to 3 or more stops to enter. Win a bundle of coffee beans and best beer to drink of your life.",
-        endDate: "Jan 26, 2026", //date range
-        prizeText: "Premium Coffee Bundle (\$200 value)",//bundle prize name
-        organizerName: "Crawl Events Co.",
-        imageUrl: "https://picsum.photos/seed/raffle$index/400/300",
-        onEdit: () => Get.toNamed(
-          AppRoutes.editRaffles,
-          arguments: {
-            "title": "Edit Raffles",
-            "businessId": businessId,
+    return GetBuilder<BusinessRafflesListController>(
+      builder: (controller) {
+        // 1. INITIAL LOADING STATE:
+
+        if (controller.isLoading && controller.raffleList.isEmpty) {
+          return const SliverFillRemaining(
+            child: Center(child: CircularProgressIndicator()),
+          );
+        }
+
+        // 2. ERROR STATE:
+        if (controller.errorMessage != null && controller.raffleList.isEmpty) {
+          return SliverFillRemaining(
+            child: Center(child: Text(controller.errorMessage!)),
+          );
+        }
+
+        // 3. EMPTY STATE:
+        if (!controller.isLoading && controller.raffleList.isEmpty) {
+          return const SliverFillRemaining(
+            child: Center(child: Text("No raffles found")),
+          );
+        }
+
+        // 4. DATA LIST:
+        return SliverList.separated(
+          // We add +1 to the count to represent the "Footer" (either a loader or a "No more" message)
+          itemCount: controller.raffleList.length + 1,
+          itemBuilder: (context, index) {
+            // 5. FOOTER LOGIC (Pagination & End of List):
+
+            if (index == controller.raffleList.length) {
+              // Show a spinner if the controller is currently fetching the next page.
+              if (controller.isPaginationLoading) {
+                return const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 16),
+                  child: Center(
+                    child: SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(),
+                    ),
+                  ),
+                );
+              }
+
+              // Show a message if we have reached the end of the server's data.
+              if (!controller.hasMore) {
+                return const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 16),
+                  child: Center(child: Text("No more raffles")),
+                );
+              }
+
+              // Otherwise, show nothing (this happens while the user hasn't scrolled to the bottom yet).
+              return const SizedBox.shrink();
+            }
+
+            // 6. NORMAL LIST ITEM:
+            final raffle = controller.raffleList[index];
+            return RaffleEditCard(
+              title: raffle.title,
+              description: raffle.description,
+              endDate: raffle.endDate,
+              prizeText: raffle.prizeText,
+              imageUrl: raffle.banner,
+              organizerName: raffle.organizerName,
+              onEdit: () => Get.toNamed(
+                AppRoutes.editRaffles,
+                arguments: {"raffleId": raffle.id},
+              ),
+              onView: () {
+
+              },
+            );
           },
-        ),
-        onView: () {
-          // Navigate to details
-        },
-      ),
-      separatorBuilder: (_, __) => const SizedBox(height: 10),
+          separatorBuilder: (_, __) => const SizedBox(height: 10),
+        );
+      },
     );
   }
 }

@@ -1,28 +1,30 @@
 import 'package:get/get.dart';
+
 import 'package:loci/core/constants/app_url.dart';
 import 'package:loci/core/network/network_caller.dart';
 import 'package:loci/core/network/network_response.dart';
 
-import '../../../data/models/routes/routes_model.dart';
+import '../../../data/raffles/raffles_model.dart';
 
-
-class BusinessRouteListController extends GetxController {
+class BusinessRafflesListController extends GetxController {
   bool _isLoading = false;
   bool _isPaginationLoading = false;
   String? _errorMessage;
-  List<RouteModel> _routeList = [];
+  List<RaffleModel> _raffleList = [];
   int _currentPage = 1;
   bool _hasNextPage = true;
-  final int _limit = 2;
+  final int _limit = 3;
 
+  // --- Getters
   bool get isLoading => _isLoading;
   bool get isPaginationLoading => _isPaginationLoading;
   String? get errorMessage => _errorMessage;
-  List<RouteModel> get routeList => _routeList;
+  List<RaffleModel> get raffleList => _raffleList;
   bool get hasMore => _hasNextPage;
 
-  Future<void> fetchRoutes({bool isRefresh = false, required String businessId}) async {
-    if (_isLoading) return; // Prevent multiple simultaneous refreshes
+  // --- Fetch Raffles
+  Future<void> fetchRaffles({bool isRefresh = false, required String businessId}) async {
+    if (_isLoading) return;
 
     if (isRefresh) {
       _currentPage = 1;
@@ -35,21 +37,22 @@ class BusinessRouteListController extends GetxController {
     update();
 
     try {
-      final url = '${AppUrl.routeList}?page=$_currentPage&limit=$_limit&businessId=$businessId';
+      final url = '${AppUrl.createRaffle}?page=$_currentPage&limit=$_limit&businessId=$businessId';
+
       final NetworkResponse response = await Get.find<NetworkCaller>().getRequest(url: url);
 
       if (response.isSuccess && response.body != null) {
-        final model = RouteResponseModel.fromJson(response.body!);
+        final model = RaffleListResponseModel.fromJson(response.body!);
 
         if (isRefresh) {
-          _routeList = model.routes; // Overwrite the list
+          _raffleList = model.raffles;
         } else {
-          _routeList.addAll(model.routes);
+          _raffleList.addAll(model.raffles);
         }
 
         _hasNextPage = model.meta.hasNextPage;
       } else {
-        _errorMessage = response.errorMessage ?? 'Failed to load routes';
+        _errorMessage = response.errorMessage ?? 'Failed to load raffles';
       }
     } catch (e) {
       _errorMessage = 'An error occurred: $e';
@@ -59,8 +62,9 @@ class BusinessRouteListController extends GetxController {
     }
   }
 
-  Future<void> loadMoreRoutes({required String? businessId}) async {
-    // IMPORTANT: Added _isLoading here to block pagination during a main refresh
+  // --- Load Next Page (Pagination)
+  Future<void> loadMoreRaffles({required String businessId}) async {
+    // Lock: Prevent pagination if already loading or no more data
     if (!_hasNextPage || _isPaginationLoading || _isLoading) return;
 
     _isPaginationLoading = true;
@@ -68,18 +72,19 @@ class BusinessRouteListController extends GetxController {
     update();
 
     try {
-      final url = '${AppUrl.routeList}?page=$_currentPage&limit=$_limit&businessId=$businessId';
+      final url = '${AppUrl.createRaffle}?page=$_currentPage&limit=$_limit&businessId=$businessId';
+
       final NetworkResponse response = await Get.find<NetworkCaller>().getRequest(url: url);
 
       if (response.isSuccess && response.body != null) {
-        final model = RouteResponseModel.fromJson(response.body!);
-        _routeList.addAll(model.routes);
+        final model = RaffleListResponseModel.fromJson(response.body!);
+        _raffleList.addAll(model.raffles);
         _hasNextPage = model.meta.hasNextPage;
       } else {
-        _currentPage--; // Revert page number on failure
+        _currentPage--; // Rollback page on failure
       }
     } catch (e) {
-      _currentPage--;
+      _currentPage--; // Rollback page on error
       _errorMessage = 'Pagination error: $e';
     } finally {
       _isPaginationLoading = false;
@@ -87,11 +92,12 @@ class BusinessRouteListController extends GetxController {
     }
   }
 
+  // --- Reset Controller
   void reset() {
     _isLoading = false;
     _isPaginationLoading = false;
     _errorMessage = null;
-    _routeList.clear();
+    _raffleList.clear();
     _currentPage = 1;
     _hasNextPage = true;
     update();
