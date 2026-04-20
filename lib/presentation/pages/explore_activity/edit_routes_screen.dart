@@ -133,6 +133,7 @@ class _EditRoutesScreenState extends State<EditRoutesScreen> {
 
   //-----update handler---------------
   void _handleUpdate() async {
+    FocusScope.of(context).unfocus();
     if (!_mainFormKey.currentState!.validate()) return;
 
     final route = _routeController.routeDetails!.routeModel;
@@ -450,8 +451,9 @@ class _EditRoutesScreenState extends State<EditRoutesScreen> {
               return CustomButton(
                 isLoading: updateController.isLoading,
                 text: "Update",
-                // Disable button if no changes OR if currently loading
-                onPressed: (_isChanged && !updateController.isLoading) ? _handleUpdate : null,
+
+                onPressed: !_isChanged ? null
+                    : _handleUpdate
               );
             },
           ),

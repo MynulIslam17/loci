@@ -30,24 +30,37 @@ String combineToUtcIso(DateTime date, TimeOfDay time) {
 }
 
 
-TimeOfDay parseTime(String time) {
+TimeOfDay? parseTime(String? time) {
+  if (time == null || time.trim().isEmpty) return null;
+
   try {
     time = time.trim().replaceAll(RegExp(r'\s+'), ' ');
 
-    final parts = time.split(' ');
-    final timePart = parts[0];
-    final period = parts.length > 1 ? parts[1].toUpperCase() : "AM";
+    final is12Hour = time.toUpperCase().contains("AM") || time.toUpperCase().contains("PM");
 
-    final split = timePart.split(':');
-    int hour = int.parse(split[0]);
-    int minute = int.parse(split[1]);
+    if (is12Hour) {
+      final parts = time.split(' ');
+      final timePart = parts[0];
+      final period = parts[1].toUpperCase();
 
-    if (period == "PM" && hour != 12) hour += 12;
-    if (period == "AM" && hour == 12) hour = 0;
+      final split = timePart.split(':');
+      int hour = int.parse(split[0]);
+      int minute = int.parse(split[1]);
 
-    return TimeOfDay(hour: hour, minute: minute);
+      if (period == "PM" && hour != 12) hour += 12;
+      if (period == "AM" && hour == 12) hour = 0;
+
+      return TimeOfDay(hour: hour, minute: minute);
+    } else {
+      // 24-hour format support
+      final split = time.split(':');
+      int hour = int.parse(split[0]);
+      int minute = int.parse(split[1]);
+
+      return TimeOfDay(hour: hour, minute: minute);
+    }
   } catch (e) {
     debugPrint("parseTime failed: $time → $e");
-    return TimeOfDay.now(); // fallback (safe)
+    return null;
   }
 }

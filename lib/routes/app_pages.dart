@@ -143,7 +143,7 @@ abstract class AppPages {
       binding: ExploreActivityBindings(),
     ),
     GetPage(name: AppRoutes.createActivity, page: () => CreateActivityScreen(),binding: ExploreActivityBindings()),
-    GetPage(name: AppRoutes.editEvent, page: () => EditEventScreen()),
+    GetPage(name: AppRoutes.editEvent, page: () => EditEventScreen(),binding: ExploreActivityBindings()),
     GetPage(name: AppRoutes.editRaffles, page: () => EditRafflesScreen()),
     GetPage(name: AppRoutes.editRoutes, page: () => EditRoutesScreen(),binding: ExploreActivityBindings()),
 

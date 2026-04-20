@@ -346,10 +346,21 @@ class _ExploreActivityScreenState extends State<ExploreActivityScreen>
               attendance:
                   "${event.goingCount} going / ${event.maxAttendees} max",
               organizerName: event.organizerName,
-              onEditInfo: () => Get.toNamed(
-                AppRoutes.editEvent,
-                arguments: {"eventId": event.id},
-              ),
+              onEditInfo: () async{
+                final result = await Get.toNamed(
+                  AppRoutes.editEvent,
+                  arguments: {"eventId": event.id},
+                );
+
+
+                //reload data after update
+                if (result == true) {
+                  controller.fetchEvents(
+                    isRefresh: true,
+                    businessId: businessId,
+                  );
+                }
+              },
               onViewDetails: () => Get.toNamed(
                 AppRoutes.viewEvent,
                 arguments: {"eventId": event.id, "title": event.title},
@@ -446,23 +457,22 @@ class _ExploreActivityScreenState extends State<ExploreActivityScreen>
               openingTime: route.openingTime,
               availabilityType: route.availabilityType,
               isPublic: route.isRoutePublic,
-              onEdit: ()async {
-
-                final result=await Get.toNamed(
+              onEdit: () async {
+                final result = await Get.toNamed(
                   AppRoutes.editRoutes,
-                  arguments: {"routeName": route.title, "routeId": route.routeId},
+                  arguments: {
+                    "routeName": route.title,
+                    "routeId": route.routeId,
+                  },
                 );
 
-
-                if(result==true){
+                //reload data after update
+                if (result == true) {
                   await controller.fetchRoutes(
                     businessId: businessId,
                     isRefresh: true,
                   );
                 }
-
-
-
               },
               onView: () => Get.toNamed(
                 AppRoutes.viewRoutes,
@@ -549,11 +559,12 @@ class _ExploreActivityScreenState extends State<ExploreActivityScreen>
                 arguments: {"raffleId": raffle.id},
               ),
               onView: () {
-                Get.toNamed(AppRoutes.viewRaffles,
-                arguments: {
-                  "rafflesId": raffle.id,
-                  "rafflesName": raffle.title,
-                }
+                Get.toNamed(
+                  AppRoutes.viewRaffles,
+                  arguments: {
+                    "rafflesId": raffle.id,
+                    "rafflesName": raffle.title,
+                  },
                 );
               },
             );

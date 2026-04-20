@@ -31,6 +31,7 @@ class EventModel {
   final String title;
   final String description;
   final String date;
+  final String eventTime;
   final String? activityType;
   final String location;
   final bool isPublic;
@@ -46,6 +47,7 @@ class EventModel {
     required this.title,
     required this.description,
     required this.date,
+    required this.eventTime,
     required this.location,
     required this.goingCount,
     required this.maxAttendees,
@@ -64,11 +66,8 @@ class EventModel {
       coverImage: json['banner'] ?? '',
       title: json['title'] ?? '',
       description: json['details'] ?? '',
-      date: json['eventDate'] != null
-          ? DateParserHelper.eventDateTime(
-              DateTime.parse(json['eventDate']).toLocal(),
-            )
-          : '',
+      date: json['eventDate'] ?? '',
+      eventTime: json['eventTime'] ?? '',
       location: json['location'] ?? '',
       goingCount: json['rsvpCount'] ?? 0,
       maxAttendees: json['maxParticipants'] ?? 0,
@@ -87,6 +86,7 @@ class EventModel {
     String? title,
     String? description,
     String? date,
+    String? eventTime,
     String? location,
     String? activityType,
     bool? isPublic,
@@ -102,6 +102,7 @@ class EventModel {
       title: title ?? this.title,
       description: description ?? this.description,
       date: date ?? this.date,
+      eventTime:eventTime ?? this.eventTime ,
       location: location ?? this.location,
       activityType: activityType ?? this.activityType,
       isPublic: isPublic ?? this.isPublic,

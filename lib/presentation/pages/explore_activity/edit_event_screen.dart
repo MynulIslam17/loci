@@ -1,12 +1,21 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:get/get_core/src/get_main.dart';
 import 'package:get/get_navigation/src/extension_navigation.dart';
 import 'package:loci/core/constants/app_text_style.dart';
 import 'package:loci/core/theme/theme_extention.dart';
+import 'package:loci/data/models/event/event_model.dart';
+import 'package:loci/presentation/controllers/explore_acitivity/business_event_details_controller.dart';
+import 'package:loci/presentation/controllers/explore_acitivity/business_event_update_controller.dart';
 import 'package:loci/presentation/widgets/custom_appbar.dart';
 import 'package:loci/presentation/widgets/custom_imagepicker.dart';
 
 import '../../../core/utils/date_parser.dart';
+import '../../../core/utils/show_snackbar.dart';
+import '../../../core/utils/time_parser.dart';
+import '../../../data/models/explore_activity/event_update_request_model.dart';
 import '../../../gen/assets.gen.dart';
 import '../../widgets/common/company_info_card.dart';
 import '../../widgets/custom_button.dart';
@@ -23,61 +32,172 @@ class EditEventScreen extends StatefulWidget {
 }
 
 class _EditEventScreenState extends State<EditEventScreen> {
+  // Controllers
+  final eventController = Get.find<BusinessEventDetailsController>();
+  final eventUpdateController = Get.find<BusinessEventUpdateController>();
+  late final String eventId;
+  Map<String, dynamic>? _initialData;
+  File? bannerImage;
+  bool isPublic = false;
+  DateTime? selectedDate;
+  TimeOfDay? selectedTime;
 
-  /// ===============================================================
-  /// Controllers
-  /// ===============================================================
-
-  late String title;
-
-  final TextEditingController titleController = TextEditingController(
-    text: "Spring Pub Crawl Festival",
-  );
-
-  final TextEditingController detailsController = TextEditingController(
-    text:
-    "Join us for the biggest pub crawl of the season! Visit 8 amazing bars...",
-  );
-
+  // Text Controllers
+  final TextEditingController titleTEController = TextEditingController();
+  final TextEditingController detailsTEController = TextEditingController();
   final TextEditingController dateTEController = TextEditingController();
   final TextEditingController timeTEController = TextEditingController();
-  final TextEditingController personController = TextEditingController();
+  final TextEditingController personTEController = TextEditingController();
+  final TextEditingController locationTEController = TextEditingController();
+  final TextEditingController mapUrlTEController = TextEditingController();
 
-  final TextEditingController locationController = TextEditingController(
-    text: "Downtown District",
-  );
-
-  final TextEditingController mapUrlController = TextEditingController(
-    text: "http://",
-  );
-
-  bool isPublic = false;
-
-  /// ===============================================================
-  /// Lifecycle
-  /// ===============================================================
+  final GlobalKey<FormState> _mainFormKey = GlobalKey<FormState>();
 
   @override
   void initState() {
     super.initState();
 
-    var args = Get.arguments;
-    if (args != null && args is Map && args["title"] != null) {
-      title = args["title"];
+    var args = Get.arguments as Map<String, dynamic>?;
+    eventId = args?["eventId"] ?? "";
+
+    //  Add Listeners to all controllers to trigger _isChanged check
+    [
+      titleTEController,
+      detailsTEController,
+      dateTEController,
+      timeTEController,
+      personTEController,
+      locationTEController,
+      mapUrlTEController,
+    ].forEach((controller) => controller.addListener(_onStateChange));
+
+    // 2. Fetch and Populate
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      await eventController.fetchEventDetails(eventId);
+      _populateFields();
+    });
+  }
+
+  void _onStateChange() => setState(() {});
+
+  /// ===============================================================
+  /// Populate Fields from API
+
+  void _populateFields() {
+    final details = eventController.eventDetails;
+    final event = details?.eventModel;
+
+    if (event == null) return;
+
+    // 1. Parse Date and Time for Logical Objects (used by Pickers)
+    final DateTime parsedDate = DateTime.parse(event.date).toLocal();
+    selectedDate = parsedDate;
+
+    // Using your custom parser from time_parser.dart
+    selectedTime = parseTime(event.eventTime);
+
+    // 2. Format friendly strings for the UI Comparison
+    final String friendlyDate = DateParserHelper.toFriendlyDate(parsedDate);
+    final String friendlyTime = event.eventTime;
+
+    // 3. Store initial data to compare later in the _isChanged getter
+    _initialData = {
+      'title': event.title,
+      'details': event.description,
+      'date': friendlyDate,
+      'time': friendlyTime,
+      'location': event.location,
+      'mapUrl': details?.mapUrl ?? "",
+      'maxParticipants': event.maxAttendees.toString(),
+      'isPublic': event.isPublic,
+    };
+
+    // 4. Fill the TextControllers with the correct keys
+    titleTEController.text = _initialData!['title'];
+    detailsTEController.text = _initialData!['details'];
+    locationTEController.text = _initialData!['location'];
+    mapUrlTEController.text = _initialData!['mapUrl'];
+    personTEController.text = _initialData!['maxParticipants'];
+    dateTEController.text = _initialData!['date'];
+    timeTEController.text = _initialData!['time'];
+
+    // 5. Set Toggle state
+    isPublic = event.isPublic;
+
+    setState(() {});
+  }
+
+  /// ===============================================================
+  /// Change Detection Logic
+  /// ===============================================================
+  bool get _isChanged {
+    if (_initialData == null) return false;
+
+    return titleTEController.text != _initialData!['title'] ||
+        detailsTEController.text != _initialData!['details'] ||
+        locationTEController.text != _initialData!['location'] ||
+        mapUrlTEController.text != _initialData!['mapUrl'] ||
+        personTEController.text != _initialData!['maxParticipants'] ||
+        dateTEController.text != _initialData!['date'] ||
+        timeTEController.text != _initialData!['time']||
+        isPublic != _initialData!['isPublic'] ||
+        bannerImage != null;
+  }
+
+
+  void _updateHandler() async {
+    FocusScope.of(context).unfocus();
+
+    if (!(_mainFormKey.currentState?.validate() ?? false)) return;
+
+    final event = eventController.eventDetails?.eventModel;
+    final eventDetails = eventController.eventDetails;
+    if (event == null) return;
+
+    final request = EventUpdateRequest(
+      eventId: eventId,
+      title: titleTEController.text != event.title ? titleTEController.text : null,
+      details: detailsTEController.text != event.description ? detailsTEController.text : null,
+      location: locationTEController.text != event.location ? locationTEController.text : null,
+      url: mapUrlTEController.text != eventDetails?.mapUrl ? mapUrlTEController.text : null,
+      maxParticipants: personTEController.text != _initialData?['maxParticipants']
+          ? int.tryParse(personTEController.text)
+          : null,
+      isPublic: isPublic != event.isPublic ? isPublic : null,
+
+      eventTime: timeTEController.text != _initialData?['time']
+          ? timeTEController.text
+          : null,
+
+      eventDate: dateTEController.text != _initialData?['date']
+          ? selectedDate?.toUtc().toIso8601String()
+          : null,
+
+      banner: bannerImage,
+    );
+
+    final success = await eventUpdateController.updateEvent(request);
+
+    if (success) {
+      Get.back(result: true);
+      SnackbarService.success("Event updated successfully");
     } else {
-      title = "Edit Event";
+      SnackbarService.error(
+        eventUpdateController.errorMessage ?? "Update failed",
+      );
     }
   }
 
+
   @override
   void dispose() {
-    titleController.dispose();
-    detailsController.dispose();
+    titleTEController.dispose();
+    detailsTEController.dispose();
     dateTEController.dispose();
     timeTEController.dispose();
-    personController.dispose();
-    locationController.dispose();
-    mapUrlController.dispose();
+    personTEController.dispose();
+    locationTEController.dispose();
+    mapUrlTEController.dispose();
     super.dispose();
   }
 
@@ -89,12 +209,13 @@ class _EditEventScreenState extends State<EditEventScreen> {
     DateTime? pickedDate = await showDatePicker(
       context: context,
       firstDate: DateTime(1940),
-      initialDate: DateTime.now(),
+      initialDate: selectedDate ?? DateTime.now(), // Uses populated date
       lastDate: DateTime(2049),
     );
 
     if (pickedDate != null) {
       setState(() {
+        selectedDate = pickedDate;
         dateTEController.text = DateParserHelper.toFriendlyDate(pickedDate);
       });
     }
@@ -107,11 +228,12 @@ class _EditEventScreenState extends State<EditEventScreen> {
   void showTime() async {
     TimeOfDay? pickedTime = await showTimePicker(
       context: context,
-      initialTime: TimeOfDay.now(),
+      initialTime: selectedTime ?? TimeOfDay.now(),
     );
 
     if (pickedTime != null) {
       setState(() {
+        selectedTime = pickedTime;
         timeTEController.text = pickedTime.format(context);
       });
     }
@@ -127,59 +249,82 @@ class _EditEventScreenState extends State<EditEventScreen> {
 
     return Scaffold(
       backgroundColor: colorScheme.surface,
-      appBar: CustomAppbar(title: title),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(14),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
+      appBar: CustomAppbar(title: "Edit Event"),
+      body: GetBuilder<BusinessEventDetailsController>(
+        builder: (controller) {
+          if (controller.isLoading) {
+            return const Center(child: CircularProgressIndicator());
+          }
 
-            /// Event Banner Image
-            _buildBanner(colorScheme),
+          if (controller.errorMessage != null) {
+            return Center(child: Text(controller.errorMessage!));
+          }
 
-            const SizedBox(height: 18),
+          if (controller.eventDetails == null) {
+            return Center(child: Text("No event fount"));
+          }
 
-            /// Event Header (Title + Edit Button)
-            _buildHeaderSection(colorScheme),
+          final details = controller.eventDetails;
+          final event = details?.eventModel;
 
-            const SizedBox(height: 6),
+          return Form(
+            key: _mainFormKey,
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(14),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  /// Event Banner Image
+                  _buildBanner(colorScheme, event!),
 
-            /// Event Description
-            Text(
-              detailsController.text,
-              style: AppTextStyle.textXs(color: colorScheme.onSurfaceVariant),
+                  const SizedBox(height: 18),
+
+                  /// Event Header (Title + Edit Button)
+                  _buildHeaderSection(colorScheme),
+
+                  const SizedBox(height: 6),
+
+                  /// Event Description
+                  Text(
+                    detailsTEController.text,
+                    style: AppTextStyle.textXs(
+                      color: colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+
+                  const SizedBox(height: 22),
+
+                  /// Event Schedule
+                  _buildScheduleSection(colorScheme),
+
+                  const SizedBox(height: 20),
+
+                  /// Location Section
+                  _buildLocationSection(colorScheme),
+
+                  const SizedBox(height: 24),
+
+                  /// Organizer Toggle
+                  _buildOrganizerToggle(colorScheme),
+
+                  const SizedBox(height: 12),
+
+                  /// Company Info
+                  CompanyInfoCard(
+                    title: "Marland Clutch",
+                    description: "Lorem Ipsum is simply dummy text...",
+                    imagePath: Assets.images.companyLogo.path,
+                  ),
+
+                  const SizedBox(height: 28),
+
+                  /// Bottom Action Buttons
+                  _buildBottomButtons(colorScheme),
+                ],
+              ),
             ),
-
-            const SizedBox(height: 22),
-
-            /// Event Schedule
-            _buildScheduleSection(colorScheme),
-
-            const SizedBox(height: 20),
-
-            /// Location Section
-            _buildLocationSection(colorScheme),
-
-            const SizedBox(height: 24),
-
-            /// Organizer Toggle
-            _buildOrganizerToggle(colorScheme),
-
-            const SizedBox(height: 12),
-
-            /// Company Info
-            CompanyInfoCard(
-              title: "Marland Clutch",
-              description: "Lorem Ipsum is simply dummy text...",
-              imagePath: Assets.images.companyLogo.path,
-            ),
-
-            const SizedBox(height: 28),
-
-            /// Bottom Action Buttons
-            _buildBottomButtons(colorScheme),
-          ],
-        ),
+          );
+        },
       ),
     );
   }
@@ -188,12 +333,13 @@ class _EditEventScreenState extends State<EditEventScreen> {
   /// Banner Image
   /// ===============================================================
 
-  Widget _buildBanner(ColorScheme colorScheme) {
+  Widget _buildBanner(ColorScheme colorScheme, EventModel event) {
     return CustomImagePicker(
+      imageUrl: event.coverImage,
       height: 200,
       backgroundColor: colorScheme.surfaceContainerHigh,
-      selectedImage: null,
-      onImageSelected: (file) {},
+      selectedImage: bannerImage,
+      onImageSelected: (file) => setState(() => bannerImage = file),
       placeholder: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -226,7 +372,7 @@ class _EditEventScreenState extends State<EditEventScreen> {
       children: [
         Expanded(
           child: Text(
-            titleController.text,
+            titleTEController.text,
             style: AppTextStyle.textMd(
               weight: FontWeight.w700,
               color: colorScheme.onSurface,
@@ -252,16 +398,17 @@ class _EditEventScreenState extends State<EditEventScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          "Event Schedule and Seats",
+          "Event Schedule and Seats : ",
           style: AppTextStyle.textSm(
             weight: FontWeight.w700,
             color: colorScheme.onSurface,
           ),
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 20),
         Row(
           children: [
             _expandedInput(
+              "Date",
               "Date",
               Icons.calendar_today_outlined,
               colorScheme,
@@ -271,6 +418,7 @@ class _EditEventScreenState extends State<EditEventScreen> {
             const SizedBox(width: 10),
             _expandedInput(
               "Time",
+              "Time",
               Icons.access_time,
               colorScheme,
               onTap: showTime,
@@ -279,10 +427,11 @@ class _EditEventScreenState extends State<EditEventScreen> {
             const SizedBox(width: 10),
             _expandedInput(
               "200",
+              "Person",
               Icons.people_outline,
               colorScheme,
               isNumber: true,
-              controller: personController,
+              controller: personTEController,
             ),
           ],
         ),
@@ -292,24 +441,34 @@ class _EditEventScreenState extends State<EditEventScreen> {
 
   /// Input Field
   Widget _expandedInput(
-      String hint,
-      IconData icon,
-      ColorScheme colorScheme, {
-        VoidCallback? onTap,
-        TextEditingController? controller,
-        bool isNumber = false,
-      }) {
+    String hint,
+    String title,
+    IconData icon,
+    ColorScheme colorScheme, {
+    VoidCallback? onTap,
+    TextEditingController? controller,
+    bool isNumber = false,
+  }) {
     return Expanded(
       child: CustomTextField(
+        title: title,
         controller: controller,
         onTap: onTap,
         hintText: hint,
+        fontSize: 10,
         readOnly: onTap != null,
         keyboardType: isNumber ? TextInputType.number : TextInputType.text,
         textColor: colorScheme.onSurface,
         hintTextColor: colorScheme.onSurfaceVariant,
         suffixIcon: Icon(icon, size: 18, color: colorScheme.onSurfaceVariant),
         borderColor: colorScheme.outline,
+        validator: (value) {
+          if (value == null || value.isEmpty) {
+            return "$title required";
+          } else {
+            return null;
+          }
+        },
       ),
     );
   }
@@ -331,7 +490,7 @@ class _EditEventScreenState extends State<EditEventScreen> {
         ),
         const SizedBox(height: 12),
         CustomTextField(
-          controller: locationController,
+          controller: locationTEController,
           hintText: "Enter location",
           prefixIcon: Icon(
             Icons.location_on_outlined,
@@ -340,8 +499,30 @@ class _EditEventScreenState extends State<EditEventScreen> {
           ),
           borderColor: colorScheme.outline,
           textColor: colorScheme.onSurface,
+          validator: (value) {
+            if (value == null || value.isEmpty) {
+              return "Location required";
+            }
+            return null;
+          },
         ),
         const SizedBox(height: 12),
+
+        CustomTextField(
+          title: "Map url",
+          controller: mapUrlTEController,
+          hintText: "Enter map url",
+          borderColor: colorScheme.outline,
+          textColor: colorScheme.onSurface,
+          validator: (value) {
+            if (value == null || value.isEmpty) {
+              return "Map url required";
+            }
+            return null;
+          },
+        ),
+        const SizedBox(height: 12),
+
         Card(
           elevation: 2,
           margin: EdgeInsets.zero,
@@ -356,13 +537,6 @@ class _EditEventScreenState extends State<EditEventScreen> {
                 ClipRRect(
                   borderRadius: BorderRadius.circular(12),
                   child: Image.asset(Assets.images.location.path),
-                ),
-                const SizedBox(height: 12),
-                CustomTextField(
-                  controller: mapUrlController,
-                  hintText: "Enter map url",
-                  borderColor: colorScheme.outline,
-                  textColor: colorScheme.onSurface,
                 ),
               ],
             ),
@@ -418,12 +592,15 @@ class _EditEventScreenState extends State<EditEventScreen> {
         ),
         const SizedBox(width: 12),
         Expanded(
-          child: CustomButton(
-            text: "Update",
-            backgroundColor: colorScheme.primary,
-            textColor: colorScheme.onPrimary,
-            onPressed: () {},
-          ),
+          child: GetBuilder<BusinessEventUpdateController>(builder: (controller){
+            return CustomButton(
+              isLoading: controller.isLoading,
+              text: "Update",
+              backgroundColor: colorScheme.primary,
+              textColor: colorScheme.onPrimary,
+              onPressed:_isChanged ? _updateHandler : null,
+            );
+          }),
         ),
       ],
     );
@@ -436,6 +613,10 @@ class _EditEventScreenState extends State<EditEventScreen> {
   void _showBottomSheet() {
     final colorScheme = context.colorScheme;
 
+    final localTitleController = TextEditingController(text: titleTEController.text);
+    final localDetailsController = TextEditingController(text: detailsTEController.text);
+    final formKey = GlobalKey<FormState>();
+
     showModalBottomSheet(
       context: context,
       backgroundColor: colorScheme.surface,
@@ -444,90 +625,59 @@ class _EditEventScreenState extends State<EditEventScreen> {
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       builder: (context) {
-        return Padding(
-          padding: EdgeInsets.only(
-            left: 20,
-            right: 20,
-            top: 20,
-            bottom: MediaQuery.of(context).viewInsets.bottom + 20,
-          ),
-          child: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
+        return Form(
+          key: formKey,
+          child: Padding(
+            padding: EdgeInsets.only(
+              left: 20,
+              right: 20,
+              top: 20,
+              bottom: MediaQuery.of(context).viewInsets.bottom + 20,
+            ),
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // ... (Handle bar and Header remain the same)
 
-                /// Header
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      "Add Task",
-                      style: AppTextStyle.textLg(
-                        weight: FontWeight.w600,
-                        color: colorScheme.onSurface,
-                      ),
-                    ),
-                    IconButton(
-                      onPressed: () => Navigator.pop(context),
-                      icon: Icon(Icons.cancel, color: colorScheme.onSurface),
-                    ),
-                  ],
-                ),
+                  CustomTextField(
+                    title: "Title",
+                    controller: localTitleController,
+                    // ... props
+                    validator: (v) => (v == null || v.isEmpty) ? "Title required" : null,
+                  ),
 
-                const SizedBox(height: 20),
+                  const SizedBox(height: 16),
 
-                /// Title Field
-                CustomTextField(
-                  controller: titleController,
-                  hintText: "Title",
-                  borderColor: colorScheme.outline,
-                  fontSize: 14,
-                  textColor: colorScheme.onSurface,
-                  hintTextColor: colorScheme.onSurfaceVariant,
-                ),
+                  CustomTextField(
+                    title: "Description",
+                    controller: localDetailsController,
+                    maxLine: 4,
+                    // ... props
+                    validator: (v) => (v == null || v.isEmpty) ? "Description required" : null,
+                  ),
 
-                const SizedBox(height: 16),
+                  const SizedBox(height: 24),
 
-                /// Description Field
-                CustomTextField(
-                  controller: detailsController,
-                  hintText: "Description",
-                  borderColor: colorScheme.outline,
-                  fontSize: 14,
-                  textColor: colorScheme.onSurface,
-                  hintTextColor: colorScheme.onSurfaceVariant,
-                  maxLine: 4,
-                ),
+                  CustomButton(
+                    width: double.infinity,
+                    height: 50,
+                    text: "Done",
+                    onPressed: () {
+                      if (!formKey.currentState!.validate()) return;
 
-                const SizedBox(height: 24),
 
-                /// Done Button
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    CustomButton(
-                      width: 120,
-                      height: 50,
-                      text: "Done",
-                      onPressed: () {
+                      setState(() {
+                        titleTEController.text = localTitleController.text.trim();
+                        detailsTEController.text = localDetailsController.text.trim();
+                      });
 
-                        final title = titleController.text.trim();
-                        final description = detailsController.text.trim();
-
-                        if (title.isNotEmpty && description.isNotEmpty) {
-                          setState(() {
-                            titleController.text = title;
-                            detailsController.text = description;
-                          });
-
-                          Navigator.pop(context);
-                        }
-                      },
-                    ),
-                  ],
-                ),
-              ],
+                      Navigator.pop(context);
+                    },
+                  ),
+                ],
+              ),
             ),
           ),
         );
