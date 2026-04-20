@@ -99,11 +99,13 @@ class SponsorModel {
   final String id;
   final String name;
   final String logo;
+  final String description;
 
   SponsorModel({
     required this.id,
     required this.name,
     required this.logo,
+    required this.description,
   });
 
   factory SponsorModel.fromJson(Map<String, dynamic> json) {
@@ -111,6 +113,7 @@ class SponsorModel {
       id: json['_id'] ?? '',
       name: json['name'] ?? '',
       logo: json['logo'] ?? '',
+      description: json["description"]
     );
   }
 
@@ -119,11 +122,13 @@ class SponsorModel {
     String? id,
     String? name,
     String? logo,
+    String? description,
   }) {
     return SponsorModel(
       id: id ?? this.id,
       name: name ?? this.name,
       logo: logo ?? this.logo,
+      description: description ?? this.description,
     );
   }
 }

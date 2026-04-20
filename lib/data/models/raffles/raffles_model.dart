@@ -1,5 +1,4 @@
-import 'package:intl/intl.dart';
-import 'package:loci/core/utils/date_parser.dart';
+
 
 import '../common/paginatation_model.dart';
 
@@ -41,7 +40,7 @@ class RaffleModel {
 
   final int maxSupply;
 
-  final String prizeText; //this will be fix
+  final String rafflePrizeImage;
   final String bundleName;
 
   final String banner;
@@ -57,7 +56,7 @@ class RaffleModel {
     required this.startDate,
     required this.endDate,
     required this.maxSupply,
-    required this.prizeText,
+    required this.rafflePrizeImage,
     required this.bundleName,
     required this.banner,
     required this.organizerName,
@@ -78,7 +77,7 @@ class RaffleModel {
 
       maxSupply: json['maxSupply'] ?? 0,
 
-      prizeText: json['raffleBundleName'] ?? '',
+      rafflePrizeImage: json['rafflePrizeImage'] ?? '',
       bundleName: json['raffleBundleName'] ?? '',
 
       banner: json['banner'] ?? '',
@@ -110,7 +109,7 @@ class RaffleModel {
       startDate: startDate ?? this.startDate,
       endDate: endDate ?? this.endDate,
       maxSupply: maxSupply ?? this.maxSupply,
-      prizeText: prizeText ?? this.prizeText,
+      rafflePrizeImage: prizeText ?? this.rafflePrizeImage,
       bundleName: bundleName ?? this.bundleName,
       banner: banner ?? this.banner,
       organizerName: organizerName ?? this.organizerName,

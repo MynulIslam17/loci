@@ -551,7 +551,7 @@ class _ExploreActivityScreenState extends State<ExploreActivityScreen>
               title: raffle.title,
               description: raffle.description,
               endDate: raffle.endDate,
-              prizeText: raffle.prizeText,
+              prizeText: raffle.bundleName,
               imageUrl: raffle.banner,
               organizerName: raffle.organizerName,
               onEdit: () => Get.toNamed(
