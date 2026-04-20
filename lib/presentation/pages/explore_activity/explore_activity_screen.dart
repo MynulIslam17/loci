@@ -446,10 +446,24 @@ class _ExploreActivityScreenState extends State<ExploreActivityScreen>
               openingTime: route.openingTime,
               availabilityType: route.availabilityType,
               isPublic: route.isRoutePublic,
-              onEdit: () => Get.toNamed(
-                AppRoutes.editRoutes,
-                arguments: {"routeName": route.title, "routeId": route.routeId},
-              ),
+              onEdit: ()async {
+
+                final result=await Get.toNamed(
+                  AppRoutes.editRoutes,
+                  arguments: {"routeName": route.title, "routeId": route.routeId},
+                );
+
+
+                if(result==true){
+                  await controller.fetchRoutes(
+                    businessId: businessId,
+                    isRefresh: true,
+                  );
+                }
+
+
+
+              },
               onView: () => Get.toNamed(
                 AppRoutes.viewRoutes,
                 arguments: {"routeName": route.title, "routeId": route.routeId},

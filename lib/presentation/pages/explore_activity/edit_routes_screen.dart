@@ -1,22 +1,25 @@
 import 'dart:io';
+import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:loci/core/constants/app_text_style.dart';
 import 'package:loci/core/enums/routeType.dart';
 import 'package:loci/core/theme/theme_extention.dart';
+import 'package:loci/core/utils/show_snackbar.dart';
 import 'package:loci/data/models/routes/routes_model.dart';
 import 'package:loci/presentation/widgets/custom_appbar.dart';
 import 'package:loci/presentation/widgets/custom_imagepicker.dart';
 import 'package:loci/presentation/widgets/custom_dropdown.dart';
 
 import '../../../core/utils/time_parser.dart';
+import '../../../data/models/explore_activity/route_update_request_model.dart';
 import '../../../gen/assets.gen.dart';
 import '../../controllers/explore_acitivity/business_route_details_controller.dart';
+import '../../controllers/explore_acitivity/business_route_update_controller.dart';
 import '../../widgets/common/company_info_card.dart';
 import '../../widgets/custom_button.dart';
 import '../../widgets/custom_text_field.dart';
-
 
 class EditRoutesScreen extends StatefulWidget {
   const EditRoutesScreen({super.key});
@@ -26,147 +29,197 @@ class EditRoutesScreen extends StatefulWidget {
 }
 
 class _EditRoutesScreenState extends State<EditRoutesScreen> {
-  /// ===============================================================
-  /// Controllers & State
-  /// ===============================================================
-  late String appBarTitle;
-  late String routeId;
+  late final String routeId;
 
-  RouteType? selectedDifficulty;
+  // Controllers
+  final _routeController = Get.find<BusinessRouteDetailsController>();
+  final _routeUpdateController = Get.find<BusinessRouteUpdateController>();
+
+  // State Variables
+  TimeOfDay? selectedTime;
+  RouteType? selectAvailabilityType;
   bool isPublic = true;
   File? bannerImage;
-  String? bannerUrl;
+  Map<String, dynamic>? _initialData;
 
   final GlobalKey<FormState> _mainFormKey = GlobalKey<FormState>();
 
-  final TextEditingController titleController = TextEditingController();
-  final TextEditingController detailsController = TextEditingController();
+  // Text Controllers
+  final TextEditingController titleTEController = TextEditingController();
+  final TextEditingController detailsTEController = TextEditingController();
   final TextEditingController timeTEController = TextEditingController();
-  final TextEditingController locationController = TextEditingController();
-  final TextEditingController mapUrlController = TextEditingController();
-
-  late final BusinessRouteDetailsController _routeController;
+  final TextEditingController locationTEController = TextEditingController();
+  final TextEditingController mapUrlTEController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
 
-    final args = Get.arguments;
-    appBarTitle = (args != null && args is Map)
-        ? args["title"] ?? "Edit Route"
-        : "Edit Route";
-    routeId = (args != null && args is Map) ? args["routeId"] ?? "" : "";
+    final args = Get.arguments as Map<String, dynamic>?;
+    routeId = args?["routeId"] ?? "";
 
-    _routeController = Get.find<BusinessRouteDetailsController>();
+    //  ADD LISTENERS: This makes the Update button respond to typing
+    titleTEController.addListener(_onStateChange);
+    detailsTEController.addListener(_onStateChange);
+    locationTEController.addListener(_onStateChange);
+    mapUrlTEController.addListener(_onStateChange);
+    timeTEController.addListener(_onStateChange);
 
-    // Fetch & populate
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       await _routeController.fetchRouteDetails(routeId);
       _populateFields();
     });
   }
 
-  /// API data দিয়ে field গুলো fill করুন
-  void _populateFields() {
-    final routeDetails= _routeController.routeDetails;
-    final route = routeDetails?.routeModel;
-
-    if (route == null) return;
-
-    setState(() {
-      titleController.text = route.title;
-      detailsController.text = route.details;
-      timeTEController.text = route.openingTime;
-      locationController.text = route.location;
-      isPublic = route.isRoutePublic;
-      selectedDifficulty = RouteType.fromString(route.activityType);
-      //
-      mapUrlController.text = routeDetails?.mapUrl ??"";
-      bannerUrl=route.banner;
-    });
-  }
+  // Helper to trigger UI refresh when any field changes
+  void _onStateChange() => setState(() {});
 
   @override
   void dispose() {
-    titleController.dispose();
-    detailsController.dispose();
+    // Clean up listeners and controllers
+    titleTEController.dispose();
+    detailsTEController.dispose();
     timeTEController.dispose();
-    locationController.dispose();
-    mapUrlController.dispose();
+    locationTEController.dispose();
+    mapUrlTEController.dispose();
     super.dispose();
   }
 
-  /// ===============================================================
-  /// Helper Methods
-  /// ===============================================================
-  void showTime() async {
-    TimeOfDay? pickedTime = await showTimePicker(
-      context: context,
-      initialTime: TimeOfDay.now(),
-      builder: (BuildContext context, Widget? child) {
-        return MediaQuery(
-          data: MediaQuery.of(context).copyWith(alwaysUse24HourFormat: false),
-          child: child!,
-        );
-      },
+  void _populateFields() {
+    final route = _routeController.routeDetails?.routeModel;
+    final details = _routeController.routeDetails;
+    if (route == null) return;
+
+    final parsedTime = parseTime(route.openingTime);
+
+    // Store original state for comparison logic
+    _initialData = {
+      'title': route.title,
+      'details': route.details,
+      'location': route.location,
+      'mapUrl': details?.mapUrl ?? "",
+      'isPublic': route.isRoutePublic,
+      'availabilityType': RouteType.fromString(route.activityType),
+      'time': parsedTime != null ? formatTime(parsedTime) : "",
+    };
+
+    // Fill the UI with initial data
+    titleTEController.text = _initialData!['title'];
+    detailsTEController.text = _initialData!['details'];
+    locationTEController.text = _initialData!['location'];
+    mapUrlTEController.text = _initialData!['mapUrl'];
+    isPublic = _initialData!['isPublic'];
+    selectAvailabilityType = _initialData!['availabilityType'];
+    selectedTime = parsedTime;
+    timeTEController.text = _initialData!['time'];
+
+    setState(() {});
+  }
+
+  // GETTER: Compares current state vs original data
+  bool get _isChanged {
+    if (_initialData == null) return false;
+
+    return titleTEController.text != _initialData!['title'] ||
+        detailsTEController.text != _initialData!['details'] ||
+        locationTEController.text != _initialData!['location'] ||
+        mapUrlTEController.text != _initialData!['mapUrl'] ||
+        isPublic != _initialData!['isPublic'] ||
+        selectAvailabilityType != _initialData!['availabilityType'] ||
+        timeTEController.text != _initialData!['time'] ||
+        bannerImage != null;
+  }
+
+
+  //-----update handler---------------
+  void _handleUpdate() async {
+    if (!_mainFormKey.currentState!.validate()) return;
+
+    final route = _routeController.routeDetails!.routeModel;
+    final details = _routeController.routeDetails!;
+
+
+    //---check if value not change then not sent
+    final request = RouteUpdateRequest(
+      routeId: routeId,
+      title: titleTEController.text != route.title ? titleTEController.text : null,
+      details: detailsTEController.text != route.details ? detailsTEController.text : null,
+      location: locationTEController.text != route.location ? locationTEController.text : null,
+      url: mapUrlTEController.text != (details.mapUrl ?? "") ? mapUrlTEController.text : null,
+      isPublic: isPublic != route.isRoutePublic ? isPublic : null,
+      availabilityType: selectAvailabilityType?.apiValue != route.activityType ? selectAvailabilityType : null,
+      openingTime: timeTEController.text != _initialData!['time'] ? timeTEController.text : null,
+      bannerFile: bannerImage,
     );
 
-    if (pickedTime != null) {
-      setState(() {
-        timeTEController.text = formatTime(pickedTime);
-      });
+    final success = await _routeUpdateController.updateRoute(request);
+
+    if (success) {
+      Get.back(result: true);
+      SnackbarService.success("Route updated successfully");
+    } else {
+      SnackbarService.success(_routeUpdateController.errorMessage!);
     }
+  }
+
+  void _showTimePicker() async {
+    final picked = await showTimePicker(
+      context: context,
+      initialTime: selectedTime ?? TimeOfDay.now(),
+      builder: (context, child) => MediaQuery(
+        data: MediaQuery.of(context).copyWith(alwaysUse24HourFormat: false),
+        child: child!,
+      ),
+    );
+
+    if (picked == null) return;
+
+    setState(() {
+      selectedTime = picked;
+      timeTEController.text = formatTime(picked);
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     final colorScheme = context.colorScheme;
 
-    return GetBuilder<BusinessRouteDetailsController>(
-      builder: (controller) {
-        // Loading state
-        if (controller.isLoading) {
-          return Scaffold(
-            backgroundColor: colorScheme.surface,
-            appBar: CustomAppbar(title: appBarTitle),
-            body: const Center(child: CircularProgressIndicator()),
-          );
-        }
+    return Scaffold(
+      backgroundColor: colorScheme.surface,
+      appBar: const CustomAppbar(title: "Edit Route"),
+      body: GetBuilder<BusinessRouteDetailsController>(
+        builder: (controller) {
+          if (controller.isLoading) {
+            return const Center(child: CircularProgressIndicator());
+          }
 
-        // Error state
-        if (controller.errorMessage != null) {
-          return Scaffold(
-            backgroundColor: colorScheme.surface,
-            appBar: CustomAppbar(title: appBarTitle),
-            body: Center(
-              child: Text(
-                controller.errorMessage!,
-                style: AppTextStyle.textSm(color: colorScheme.error),
-              ),
-            ),
-          );
-        }
+          if (controller.errorMessage != null) {
+            return Center(child: Text(controller.errorMessage!));
+          }
 
-        final routeDetails= controller.routeDetails;
-        final route = routeDetails?.routeModel;
-        return Scaffold(
-          backgroundColor: colorScheme.surface,
-          appBar: CustomAppbar(title: appBarTitle),
-          body: Form(
-            key: _mainFormKey,
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(14),
+          final routeDetails = controller.routeDetails;
+          final route = routeDetails?.routeModel;
+
+          if (route == null) {
+            return const Center(child: Text("No route found"));
+          }
+
+          return SingleChildScrollView(
+            padding: const EdgeInsets.all(14),
+            child: Form(
+              key: _mainFormKey,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _buildBanner(colorScheme,route!),
+                  _buildBanner(colorScheme, route),
                   const SizedBox(height: 18),
-                  _buildHeaderSection(colorScheme),
+                  _buildHeaderSection(colorScheme, route),
                   const SizedBox(height: 6),
                   Text(
-                    detailsController.text,
+                    detailsTEController.text,
                     style: AppTextStyle.textXs(
-                        color: colorScheme.onSurfaceVariant),
+                      color: colorScheme.onSurfaceVariant,
+                    ),
                   ),
                   const SizedBox(height: 20),
                   _buildLocationField(colorScheme),
@@ -177,49 +230,48 @@ class _EditRoutesScreenState extends State<EditRoutesScreen> {
                   const SizedBox(height: 24),
                   _buildOwnerToggle(colorScheme),
                   const SizedBox(height: 12),
-                  // OrganizerBusiness থেকে data
                   CompanyInfoCard(
-                    title: controller.routeDetails?.organizerBusiness.name ?? "",
-                    description: controller.routeDetails?.organizerBusiness.description ?? "",
-                    imagePath: controller.routeDetails?.organizerBusiness.logo ?? Assets.images.companyLogo.path,
+                    title: routeDetails?.organizerBusiness.name ?? "",
+                    description:
+                        routeDetails?.organizerBusiness.description ?? "",
+                    imagePath:
+                        routeDetails?.organizerBusiness.logo ??
+                        Assets.images.companyLogo.path,
                   ),
                   const SizedBox(height: 28),
                   _buildBottomButtons(colorScheme),
                 ],
               ),
             ),
-          ),
-        );
-      },
+          );
+        },
+      ),
     );
   }
 
-  /// ===============================================================
-  /// UI Components
-  /// ===============================================================
-
-  Widget _buildBanner(ColorScheme colorScheme,RouteModel route) {
+  Widget _buildBanner(ColorScheme colorScheme, RouteModel route) {
     return CustomImagePicker(
-      imageUrl: bannerUrl,
+      imageUrl: route.banner,
       height: 200,
       backgroundColor: colorScheme.surfaceContainerHigh,
       selectedImage: bannerImage,
-      onImageSelected: (file) {
-        setState(() {
-          bannerImage = file;
-        });
-      },
+      onImageSelected: (file) => setState(() => bannerImage = file),
       placeholder: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.cloud_upload_outlined,
-                color: colorScheme.onSurface, size: 30),
+            Icon(
+              Icons.cloud_upload_outlined,
+              color: colorScheme.onSurface,
+              size: 30,
+            ),
             const SizedBox(height: 6),
             Text(
               "Browse image",
               style: AppTextStyle.textMd(
-                  color: colorScheme.onSurface, weight: FontWeight.w600),
+                color: colorScheme.onSurface,
+                weight: FontWeight.w600,
+              ),
             ),
           ],
         ),
@@ -227,20 +279,21 @@ class _EditRoutesScreenState extends State<EditRoutesScreen> {
     );
   }
 
-  Widget _buildHeaderSection(ColorScheme colorScheme) {
+  Widget _buildHeaderSection(ColorScheme colorScheme, RouteModel route) {
     return Row(
       children: [
         Expanded(
           child: Text(
-            titleController.text,
+            titleTEController.text,
             style: AppTextStyle.textMd(
-                weight: FontWeight.w700, color: colorScheme.onSurface),
+              weight: FontWeight.w700,
+              color: colorScheme.onSurface,
+            ),
           ),
         ),
         IconButton(
-          onPressed: () => _showEditBottomSheet(),
-          icon:
-          Icon(Icons.edit_outlined, color: colorScheme.primary, size: 20),
+          onPressed: _showEditBottomSheet,
+          icon: Icon(Icons.edit_outlined, color: colorScheme.primary, size: 20),
         ),
       ],
     );
@@ -250,31 +303,41 @@ class _EditRoutesScreenState extends State<EditRoutesScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text("Location",
-            style: AppTextStyle.textSm(
-                weight: FontWeight.w700, color: colorScheme.onSurface)),
-        const SizedBox(height: 12),
-        CustomTextField(
-          controller: locationController,
-          hintText: "Location",
-          prefixIcon: Icon(Icons.location_on_outlined,
-              size: 18, color: colorScheme.onSurfaceVariant),
-          borderColor: colorScheme.outline,
-          textColor: colorScheme.onSurface,
-          validator: (value) {
-            if (value == null || value.trim().isEmpty) {
-              return "Location cannot be empty";
-            }
-            return null;
-          },
+        Text(
+          "Location",
+          style: AppTextStyle.textSm(
+            weight: FontWeight.w700,
+            color: colorScheme.onSurface,
+          ),
         ),
         const SizedBox(height: 12),
         CustomTextField(
-          controller: mapUrlController,
+          controller: locationTEController,
+          hintText: "Location",
+          prefixIcon: Icon(
+            Icons.location_on_outlined,
+            size: 18,
+            color: colorScheme.onSurfaceVariant,
+          ),
+          borderColor: colorScheme.outline,
+          textColor: colorScheme.onSurface,
+          validator: (v) => (v == null || v.trim().isEmpty)
+              ? "Location cannot be empty"
+              : null,
+        ),
+        const SizedBox(height: 12),
+        CustomTextField(
+          controller: mapUrlTEController,
           title: "Map url",
           hintText: "http://",
           borderColor: colorScheme.outline,
           textColor: colorScheme.onSurface,
+          validator: (value){
+            if(value==null ||value.isEmpty){
+              return  "Map url required";
+            }
+            return null;
+          },
         ),
       ],
     );
@@ -284,46 +347,49 @@ class _EditRoutesScreenState extends State<EditRoutesScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text("Routes detail",
-            style: AppTextStyle.textSm(
-                weight: FontWeight.w700, color: colorScheme.onSurface)),
+        Text(
+          "Routes detail",
+          style: AppTextStyle.textSm(
+            weight: FontWeight.w700,
+            color: colorScheme.onSurface,
+          ),
+        ),
         const SizedBox(height: 12),
         Row(
           children: [
             Expanded(
               child: CustomTextField(
+                title: "Opening Time",
                 controller: timeTEController,
                 hintText: "Select Time",
                 readOnly: true,
-                onTap: showTime,
-                suffixIcon: Icon(Icons.access_time,
-                    size: 18, color: colorScheme.onSurfaceVariant),
+                onTap: _showTimePicker,
+                suffixIcon: Icon(
+                  Icons.access_time,
+                  size: 18,
+                  color: colorScheme.onSurfaceVariant,
+                ),
                 borderColor: colorScheme.outline,
-                validator: (value) {
-                  if (value == null || value.trim().isEmpty) {
-                    return "Select a time";
-                  }
-                  return null;
-                },
               ),
             ),
             const SizedBox(width: 12),
             Expanded(
               child: CustomDropdown(
-                value: selectedDifficulty,
-                hintText: "select type",
                 dropdownColor: colorScheme.surfaceContainerHigh,
                 borderColor: colorScheme.outline,
                 hintColor: colorScheme.onSurfaceVariant,
                 textColor: colorScheme.onSurface,
                 textFontSize: 14,
                 hintFontSize: 14,
+                title: "Availability types",
+                value: selectAvailabilityType,
+                hintText: "Select type",
                 items: RouteType.values
-                    .map((type) => DropdownMenuItem(
-                    value: type, child: Text(type.label)))
+                    .map(
+                      (e) => DropdownMenuItem(value: e, child: Text(e.label)),
+                    )
                     .toList(),
-                onChanged: (value) =>
-                    setState(() => selectedDifficulty = value),
+                onChanged: (v) => setState(() => selectAvailabilityType = v),
               ),
             ),
           ],
@@ -337,18 +403,12 @@ class _EditRoutesScreenState extends State<EditRoutesScreen> {
       elevation: 2,
       margin: EdgeInsets.zero,
       color: colorScheme.surfaceContainerHigh,
-      shape:
-      RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: Padding(
         padding: const EdgeInsets.all(12),
-        child: Column(
-          children: [
-            ClipRRect(
-              borderRadius: BorderRadius.circular(12),
-              child: Image.asset(Assets.images.location.path),
-            ),
-            const SizedBox(height: 12),
-          ],
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(12),
+          child: Image.asset(Assets.images.location.path),
         ),
       ),
     );
@@ -357,18 +417,16 @@ class _EditRoutesScreenState extends State<EditRoutesScreen> {
   Widget _buildOwnerToggle(ColorScheme colorScheme) {
     return Row(
       children: [
-        Text("Owner",
-            style: AppTextStyle.textMd(
-                weight: FontWeight.w700, color: colorScheme.onSurface)),
-        const Spacer(),
-        Text(isPublic ? "Public" : "Private",
-            style: AppTextStyle.textSm(color: colorScheme.onSurfaceVariant)),
-        const SizedBox(width: 8),
-        Switch(
-          value: isPublic,
-          activeColor: colorScheme.primary,
-          onChanged: (v) => setState(() => isPublic = v),
+        Text(
+          "Owner",
+          style: AppTextStyle.textMd(
+            weight: FontWeight.w700,
+            color: colorScheme.onSurface,
+          ),
         ),
+        const Spacer(),
+        Text(isPublic ? "Public" : "Private"),
+        Switch(value: isPublic, onChanged: (v) => setState(() => isPublic = v)),
       ],
     );
   }
@@ -387,21 +445,14 @@ class _EditRoutesScreenState extends State<EditRoutesScreen> {
         ),
         const SizedBox(width: 12),
         Expanded(
-          child: CustomButton(
-            text: "Update",
-            backgroundColor: colorScheme.primary,
-            textColor: colorScheme.onPrimary,
-            onPressed: () {
-              // ✅ Full screen validation
-              if (!_mainFormKey.currentState!.validate()) return;
-
-              // TODO: API call with updated data
-              // title: titleController.text
-              // details: detailsController.text
-              // location: locationController.text
-              // time: timeTEController.text
-              // activityType: selectedDifficulty?.apiValue
-              // isPublic: isPublic
+          child: GetBuilder<BusinessRouteUpdateController>(
+            builder: (updateController) {
+              return CustomButton(
+                isLoading: updateController.isLoading,
+                text: "Update",
+                // Disable button if no changes OR if currently loading
+                onPressed: (_isChanged && !updateController.isLoading) ? _handleUpdate : null,
+              );
             },
           ),
         ),
@@ -409,70 +460,71 @@ class _EditRoutesScreenState extends State<EditRoutesScreen> {
     );
   }
 
-  /// ===============================================================
-  /// Bottom Sheet — শুধু title & description edit
-  /// ===============================================================
   void _showEditBottomSheet() {
     final colorScheme = context.colorScheme;
 
     showModalBottomSheet(
       context: context,
-      backgroundColor: colorScheme.surface,
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
-      builder: (context) {
+      builder: (_) {
         final formKey = GlobalKey<FormState>();
-        final tempTitleController = TextEditingController(text: titleController.text);
-        final tempDetailsController = TextEditingController(text: detailsController.text);
+        // Initialize with current text from the screen
+        final t = TextEditingController(text: titleTEController.text);
+        final d = TextEditingController(text: detailsTEController.text);
 
         return Padding(
           padding: EdgeInsets.only(
             left: 20,
             right: 20,
-            top: 20,
             bottom: MediaQuery.of(context).viewInsets.bottom + 20,
+            top: 20,
           ),
           child: Form(
             key: formKey,
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                CustomTextField(
-                  controller: tempTitleController,
-                  hintText: "Title",
-                  borderColor: colorScheme.outline,
-                  validator: (value) {
-                    if (value == null || value.trim().isEmpty) {
-                      return "Title cannot be empty";
-                    }
-                    return null;
-                  },
+                Text(
+                  "Update Info",
+                  style: AppTextStyle.textMd(
+                    color: colorScheme.onSurface,
+                    weight: FontWeight.w600,
+                  ),
                 ),
                 const SizedBox(height: 16),
                 CustomTextField(
-                  controller: tempDetailsController,
-                  hintText: "Description",
-                  maxLine: 4,
+                  title: "Title",
                   borderColor: colorScheme.outline,
-                  validator: (value) {
-                    if (value == null || value.trim().isEmpty) {
-                      return "Description cannot be empty";
-                    }
-                    return null;
-                  },
+                  controller: t,
+                  hintText: "Title",
+                  validator: (value) => (value == null || value.isEmpty) ? "Title required" : null,
+                ),
+                const SizedBox(height: 16),
+                CustomTextField(
+                  title: "Description",
+                  controller: d,
+                  hintText: "Description",
+                  borderColor: colorScheme.outline,
+                  maxLine: 4,
+                  validator: (value) => (value == null || value.isEmpty) ? "Description required" : null,
                 ),
                 const SizedBox(height: 20),
                 CustomButton(
                   text: "Done",
                   onPressed: () {
                     if (!formKey.currentState!.validate()) return;
+
+                    // SAVE TO SCREEN CONTROLLERS
                     setState(() {
-                      titleController.text = tempTitleController.text;
-                      detailsController.text = tempDetailsController.text;
+                      titleTEController.text = t.text;
+                      detailsTEController.text = d.text;
                     });
-                    Navigator.pop(context);
+
+                    Navigator.pop(context); // Close sheet
+                    // The main Update button will now enable because title/details are changed
                   },
                 ),
               ],
