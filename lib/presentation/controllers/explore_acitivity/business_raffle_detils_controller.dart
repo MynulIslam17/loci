@@ -48,6 +48,7 @@ class BusinessRaffleDetailsController extends GetxController {
     await fetchRaffleDetails(raffleId);
   }
 
+
   /// ===== CLEANUP =====
   void clearDetails() {
     _raffleDetails = null;

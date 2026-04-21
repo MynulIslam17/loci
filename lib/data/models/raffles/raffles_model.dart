@@ -40,7 +40,7 @@ class RaffleModel {
 
   final int maxSupply;
 
-  final String rafflePrizeImage;
+  final String? rafflePrizeImage;
   final String bundleName;
 
   final String banner;
@@ -77,7 +77,7 @@ class RaffleModel {
 
       maxSupply: json['maxSupply'] ?? 0,
 
-      rafflePrizeImage: json['rafflePrizeImage'] ?? '',
+      rafflePrizeImage: json['rafflePrizeImage'],
       bundleName: json['raffleBundleName'] ?? '',
 
       banner: json['banner'] ?? '',
@@ -96,7 +96,7 @@ class RaffleModel {
     String? startDate,
     String? endDate,
     int? maxSupply,
-    String? prizeText,
+    String? rafflePrizeImage,
     String? bundleName,
     String? banner,
     String? organizerName,
@@ -109,7 +109,7 @@ class RaffleModel {
       startDate: startDate ?? this.startDate,
       endDate: endDate ?? this.endDate,
       maxSupply: maxSupply ?? this.maxSupply,
-      rafflePrizeImage: prizeText ?? this.rafflePrizeImage,
+      rafflePrizeImage: rafflePrizeImage ?? this.rafflePrizeImage,
       bundleName: bundleName ?? this.bundleName,
       banner: banner ?? this.banner,
       organizerName: organizerName ?? this.organizerName,

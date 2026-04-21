@@ -4,14 +4,39 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:loci/core/constants/app_text_style.dart';
 import 'package:loci/core/theme/theme_extention.dart';
+import 'package:loci/core/utils/show_snackbar.dart';
+import 'package:loci/data/models/raffles/raffles_details_model.dart';
+import 'package:loci/data/models/raffles/raffles_model.dart';
+import 'package:loci/presentation/controllers/explore_acitivity/business_raffle_detils_controller.dart';
 import 'package:loci/presentation/pages/explore_activity/widgets/coupon_card.dart';
 import 'package:loci/presentation/widgets/custom_appbar.dart';
 import 'package:loci/presentation/widgets/custom_imagepicker.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/date_parser.dart';
+import '../../../data/models/explore_activity/raffle_update_request_model.dart';
 import '../../../data/models/task_model.dart';
 import '../../../gen/assets.gen.dart';
+import '../../controllers/explore_acitivity/raffle_edit_controller.dart';
+import '../../widgets/common/company_info_card.dart';
+import '../../widgets/custom_button.dart';
+import '../../widgets/custom_text_field.dart';
+import '../../widgets/task_card.dart';
+
+import 'dart:io';
+import 'package:file_picker/file_picker.dart';
+import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:loci/core/constants/app_text_style.dart';
+import 'package:loci/core/theme/theme_extention.dart';
+import 'package:loci/data/models/raffles/raffles_model.dart';
+import 'package:loci/presentation/controllers/explore_acitivity/business_raffle_detils_controller.dart';
+import 'package:loci/presentation/pages/explore_activity/widgets/coupon_card.dart';
+import 'package:loci/presentation/widgets/custom_appbar.dart';
+import 'package:loci/presentation/widgets/custom_imagepicker.dart';
+
+import '../../../core/utils/date_parser.dart';
+import '../../../data/models/raffles/raffles_details_model.dart';
 import '../../widgets/common/company_info_card.dart';
 import '../../widgets/custom_button.dart';
 import '../../widgets/custom_text_field.dart';
@@ -25,230 +50,172 @@ class EditRafflesScreen extends StatefulWidget {
 }
 
 class _EditRafflesScreenState extends State<EditRafflesScreen> {
+  final raffleDetailsController = Get.find<BusinessRaffleDetailsController>();
+  final editController = Get.find<RaffleEditController>();
 
-  /// ===============================================================
-  /// AppBar Title
-  /// ===============================================================
-  late String appBarTitle;
-
-  /// ===============================================================
-  /// Text Controllers
-  /// ===============================================================
-  final TextEditingController titleController =
-  TextEditingController(text: "Coffee Lovers Bundle");
-
-  final TextEditingController detailsController = TextEditingController(
-    text: "Experience the best craft beer spots in downtown...",
-  );
-
-  final TextEditingController dateTEController = TextEditingController();
-  final TextEditingController maxSupplyController = TextEditingController();
-
-  /// Task Search Controller (BottomSheet)
-  final TextEditingController taskController = TextEditingController();
-
-  /// ===============================================================
-  /// State Variables
-  /// ===============================================================
-  File? couponFile;
-  File? bannerImage;
-
-  bool isPublic = true;
-
-  /// ===============================================================
-  /// Dummy Task Data
-  /// ===============================================================
-  List<DummyTaskModel> tasks = [
-    DummyTaskModel(
-      title: "David Smith",
-      description: "Lorem Ipsum is simply dummy text...",
-      logoUrl: "assets/images/logo.png",
-    ),
-    DummyTaskModel(
-      title: "David Smith",
-      description: "Lorem Ipsum is simply dummy text...",
-      logoUrl: "assets/images/logo.png",
-    ),
-    DummyTaskModel(
-      title: "David Smith",
-      description: "Lorem Ipsum is simply dummy text...",
-      logoUrl: "assets/images/logo.png",
-    ),
-  ];
-
-  /// ===============================================================
-  /// Lifecycle
-  /// ===============================================================
+  late final String raffleId;
+  final GlobalKey<FormState> _mainFormKey = GlobalKey<FormState>();
 
   @override
   void initState() {
     super.initState();
 
-    /// Receive title from previous screen
-    var args = Get.arguments;
-    appBarTitle =
-    (args != null && args is Map) ? args["title"] ?? "Edit Raffle" : "Edit Raffle";
+    var args = Get.arguments as Map<String, dynamic>?;
+    raffleId = args?["raffleId"] ?? "";
+
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      //----call api to get data
+      await raffleDetailsController.fetchRaffleDetails(raffleId);
+
+      final details = raffleDetailsController.raffleDetails;
+
+      if (details != null) {
+        editController.setData(details);
+      }
+    });
   }
 
-  @override
-  void dispose() {
-    titleController.dispose();
-    detailsController.dispose();
-    dateTEController.dispose();
-    maxSupplyController.dispose();
-    taskController.dispose();
-    super.dispose();
-  }
 
-  /// ===============================================================
-  /// Date Picker
-  /// ===============================================================
-  void showCalendar() async {
-    DateTime? pickedDate = await showDatePicker(
-      context: context,
-      firstDate: DateTime(1940),
-      initialDate: DateTime.now(),
-      lastDate: DateTime(2049),
-    );
 
-    if (pickedDate != null) {
-      setState(() {
-        dateTEController.text =
-            DateParserHelper.toFriendlyDate(pickedDate);
-      });
+  void _onUpdate() async {
+    final ctr = editController;
+
+    if (!(_mainFormKey.currentState?.validate() ?? false)) return;
+
+    // -----------------------------
+    // UI LEVEL VALIDATION (FAST FAIL)
+    // -----------------------------
+
+    // Banner validation
+    final hasBanner = ctr.bannerImage != null ||
+        (ctr.initialRaffle?.banner.isNotEmpty ?? false);
+
+    if (!hasBanner) {
+      SnackbarService.error("Banner image is required");
+      return;
+    }
+
+    // Coupon validation
+    final hasCoupon = ctr.couponFile != null ||
+        (ctr.existingCouponUrl != null && ctr.removeCoupon == false);
+
+    if (!hasCoupon) {
+      SnackbarService.error("Coupon image is required");
+      return;
+    }
+
+    // Tasks validation
+    if (ctr.tasks.isEmpty) {
+      SnackbarService.error("At least one task is required");
+      return;
+    }
+
+
+
+    // -----------------------------
+    // BUILD REQUEST
+    // -----------------------------
+    final request = ctr.buildRequest();
+
+
+    // -----------------------------
+    // API CALL
+    // -----------------------------
+    final success = await ctr.updateRaffles(request);
+
+    if (success) {
+      Get.back(result: true);
+      SnackbarService.success("Raffle updated");
+    } else {
+      SnackbarService.error(ctr.errorMessage ?? "Update failed");
     }
   }
 
-  /// ===============================================================
-  /// Pick Coupon File (PDF/Image)
-  /// ===============================================================
-  Future<void> _pickCoupon() async {
-    final result = await FilePicker.platform.pickFiles(
-      type: FileType.custom,
-      allowedExtensions: ['jpg', 'jpeg', 'png', 'pdf'],
-    );
 
-    if (result == null) return;
 
-    final path = result.files.single.path;
-    if (path == null) return;
 
-    setState(() {
-      couponFile = File(path);
-    });
-  }
-
-  /// ===============================================================
-  /// Add Task
-  /// ===============================================================
-  void _addTask() {
-    setState(() {
-      tasks.add(
-        DummyTaskModel(
-          title: taskController.text.isEmpty
-              ? "Task"
-              : taskController.text,
-          description: "New Task",
-          logoUrl: "assets/images/logo.png",
-        ),
-      );
-    });
-
-    taskController.clear();
-  }
-
-  /// ===============================================================
-  /// Main UI
-  /// ===============================================================
   @override
   Widget build(BuildContext context) {
     final colorScheme = context.colorScheme;
 
-    return Scaffold(
-      backgroundColor: colorScheme.surface,
-      appBar: CustomAppbar(title: appBarTitle),
+    return GetBuilder<RaffleEditController>(
+      builder: (editController) {
+        return Scaffold(
+          backgroundColor: colorScheme.surface,
+          appBar: const CustomAppbar(title: "Edit Raffle"),
+          body: GetBuilder<BusinessRaffleDetailsController>(
+            builder: (detailsCtr) {
+              if (detailsCtr.isLoading) {
+                return const Center(child: CircularProgressIndicator());
+              }
 
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(14),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
+              final raffle = detailsCtr.raffleDetails?.raffleModel;
+              final sponsor = detailsCtr.raffleDetails?.sponsor;
 
-            /// Banner Image
-            _buildBanner(colorScheme),
+              if (raffle == null)
+                return const Center(child: Text("Raffle not found"));
 
-            const SizedBox(height: 18),
-
-            /// Title Section
-            _buildHeaderSection(colorScheme),
-
-            const SizedBox(height: 6),
-
-            /// Description Text
-            Text(
-              detailsController.text,
-              style:
-              AppTextStyle.textXs(color: colorScheme.onSurfaceVariant),
-            ),
-
-            const SizedBox(height: 22),
-
-            /// Due Date + Supply
-            _buildDueDateAndSupply(colorScheme),
-
-            const SizedBox(height: 20),
-
-            /// Coupon Upload Section
-            _buildPriceSection(colorScheme),
-
-            const SizedBox(height: 20),
-
-            /// Tasks Section
-            _buildTasksSection(colorScheme),
-
-            const SizedBox(height: 24),
-
-            /// Sponsor Toggle
-            _buildSponsorToggle(colorScheme),
-
-            const SizedBox(height: 12),
-
-            /// Company Info
-            CompanyInfoCard(
-              title: "Marland Clutch",
-              description: "Lorem Ipsum is simply dummy text...",
-              imagePath: Assets.images.companyLogo.path,
-            ),
-
-            const SizedBox(height: 28),
-
-            /// Bottom Buttons
-            _buildBottomButtons(colorScheme),
-          ],
-        ),
-      ),
+              return Form(
+                key: _mainFormKey,
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.all(14),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _buildBanner(colorScheme, editController),
+                      const SizedBox(height: 18),
+                      _buildHeaderSection(colorScheme, editController),
+                      const SizedBox(height: 6),
+                      Text(
+                        editController.detailsController.text,
+                        style: AppTextStyle.textXs(
+                          color: colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                      const SizedBox(height: 22),
+                      _buildDueDateAndSupply(colorScheme, editController),
+                      const SizedBox(height: 20),
+                      _buildVoucherSection(colorScheme, editController),
+                      const SizedBox(height: 20),
+                      _buildTasksSection(colorScheme, editController),
+                      const SizedBox(height: 24),
+                      _buildSponsorToggle(colorScheme, editController),
+                      const SizedBox(height: 12),
+                      CompanyInfoCard(
+                        title: sponsor?.name ?? "No Name",
+                        description: sponsor?.description ?? "No Description",
+                        imagePath: sponsor?.logo ?? "",
+                      ),
+                      const SizedBox(height: 28),
+                      _buildBottomButtons(colorScheme, editController),
+                    ],
+                  ),
+                ),
+              );
+            },
+          ),
+        );
+      },
     );
   }
 
-  /// ===============================================================
-  /// Banner Image Picker
-  /// ===============================================================
-  Widget _buildBanner(ColorScheme colorScheme) {
+  /// Banner Image
+  Widget _buildBanner(ColorScheme colorScheme, RaffleEditController ctr) {
     return CustomImagePicker(
+      imageUrl: ctr.initialRaffle?.banner,
       height: 200,
       backgroundColor: colorScheme.surfaceContainerHigh,
-      selectedImage: bannerImage,
-      onImageSelected: (file) {
-        setState(() {
-          bannerImage = file;
-        });
-      },
+      selectedImage: ctr.bannerImage,
+      onImageSelected: (file) => ctr.setBanner(file),
       placeholder: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.cloud_upload_outlined,
-                color: colorScheme.onSurface, size: 30),
+            Icon(
+              Icons.cloud_upload_outlined,
+              color: colorScheme.onSurface,
+              size: 30,
+            ),
             const SizedBox(height: 6),
             Text(
               "Browse image",
@@ -263,15 +230,16 @@ class _EditRafflesScreenState extends State<EditRafflesScreen> {
     );
   }
 
-  /// ===============================================================
-  /// Header Section (Title + Edit Button)
-  /// ===============================================================
-  Widget _buildHeaderSection(ColorScheme colorScheme) {
+  /// Title + Edit Icon
+  Widget _buildHeaderSection(
+    ColorScheme colorScheme,
+    RaffleEditController ctr,
+  ) {
     return Row(
       children: [
         Expanded(
           child: Text(
-            titleController.text,
+            ctr.titleController.text,
             style: AppTextStyle.textMd(
               weight: FontWeight.w700,
               color: colorScheme.onSurface,
@@ -280,171 +248,121 @@ class _EditRafflesScreenState extends State<EditRafflesScreen> {
         ),
         IconButton(
           onPressed: _showEditBottomSheet,
-          icon: Icon(Icons.edit_outlined,
-              color: colorScheme.primary, size: 20),
+          icon: Icon(Icons.edit_outlined, color: colorScheme.primary, size: 20),
         ),
       ],
     );
   }
 
-  /// ===============================================================
-  /// Due Date + Max Supply
-  /// ===============================================================
-  Widget _buildDueDateAndSupply(ColorScheme colorScheme) {
+  /// Date & Supply Fields
+  Widget _buildDueDateAndSupply(
+    ColorScheme colorScheme,
+    RaffleEditController ctr,
+  ) {
     return Row(
       children: [
         Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text("Due date",
-                  style: AppTextStyle.textSm(
-                      weight: FontWeight.w700,
-                      color: colorScheme.onSurface)),
-              const SizedBox(height: 8),
-              CustomTextField(
-                onTap: showCalendar,
-                controller: dateTEController,
-                readOnly: true,
-                hintText: "Select date",
-                suffixIcon: Icon(Icons.calendar_today_outlined,
-                    size: 18,
-                    color: colorScheme.onSurfaceVariant),
-                borderColor: colorScheme.outline,
-              ),
-            ],
+          child: CustomTextField(
+            title: "Expire Date",
+            onTap: _showDateRangePicker,
+            controller: ctr.dateController,
+            readOnly: true,
+            hintText: "Select date",
+            suffixIcon: Icon(
+              Icons.calendar_today_outlined,
+              size: 18,
+              color: colorScheme.onSurfaceVariant,
+            ),
+            borderColor: colorScheme.outline,
+            validator: (v) => v == null || v.isEmpty ? 'Required' : null,
           ),
         ),
-
         const SizedBox(width: 12),
-
         Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text("Max Supply",
-                  style: AppTextStyle.textSm(
-                      weight: FontWeight.w700,
-                      color: colorScheme.onSurface)),
-              const SizedBox(height: 8),
-              CustomTextField(
-                controller: maxSupplyController,
-                keyboardType: TextInputType.number,
-                hintText: "Enter supply",
-                borderColor: colorScheme.outline,
-              ),
-            ],
+          child: CustomTextField(
+            title: "Max Supply",
+            controller: ctr.maxSupplyController,
+            keyboardType: TextInputType.number,
+            hintText: "Enter supply",
+            borderColor: colorScheme.outline,
+            onChanged: (v) => ctr.update(),
+            validator: (v) => v == null || v.isEmpty ? 'Required' : null,
           ),
         ),
       ],
     );
   }
 
-  /// ===============================================================
-  /// Coupon Upload Section
-  /// ===============================================================
-  Widget _buildPriceSection(ColorScheme colorScheme) {
+  /// Voucher Section
+  Widget _buildVoucherSection(
+    ColorScheme colorScheme,
+    RaffleEditController ctr,
+  ) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          "Voucher",
-          style: AppTextStyle.textSm(
-            weight: FontWeight.w700,
-            color: colorScheme.onSurface,
-          ),
+        CustomTextField(
+          controller: ctr.raffleBundleNameTEController,
+          title: "coupon",
+          hintText: "Enter coupon title",
+          prefixIcon: const Icon(Icons.card_giftcard),
+          borderColor: context.colorScheme.outline,
+          textColor: context.colorScheme.onSurface,
+          validator: (v) => v == null || v.isEmpty ? "Required" : null,
         ),
 
         const SizedBox(height: 12),
-
         CouponUploadCard(
-          file: couponFile,
+          file: ctr.couponFile,
+          imageUrl: ctr.removeCoupon
+              ? null
+              : (ctr.couponFile == null ? ctr.existingCouponUrl : null),
           onTap: _pickCoupon,
-          onDelete: () {
-            setState(() {
-              couponFile = null;
-            });
-          },
-        )
+          onDelete: () => ctr.removeCouponFile(),
+        ),
       ],
     );
   }
 
-  /// ===============================================================
   /// Tasks Section
-  /// ===============================================================
-  Widget _buildTasksSection(ColorScheme colorScheme) {
+  Widget _buildTasksSection(ColorScheme colorScheme, RaffleEditController ctr) {
     return Card(
       elevation: 2,
       margin: EdgeInsets.zero,
       color: colorScheme.surfaceContainer,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-      ),
-
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: Padding(
         padding: const EdgeInsets.all(12.0),
-
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-
-            /// Section Title
-            RichText(
-              text: TextSpan(
-                children: [
-                  TextSpan(
-                    text: 'Tasks required ',
-                    style: AppTextStyle.textSm(
-                      weight: FontWeight.w700,
-                      color: colorScheme.onSurface,
-                    ),
-                  ),
-                  TextSpan(
-                    text: '(Check-in):',
-                    style: AppTextStyle.textXs(
-                      weight: FontWeight.w400,
-                      color: colorScheme.onSurfaceVariant,
-                    ),
-                  ),
-                ],
+            Text(
+              "Tasks required (Check-in):",
+              style: AppTextStyle.textSm(
+                weight: FontWeight.w700,
+                color: colorScheme.onSurface,
               ),
             ),
-
             const SizedBox(height: 12),
-
-            /// Task List
-            if (tasks.isNotEmpty)
-              ListView.builder(
-                shrinkWrap: true,
-                padding: EdgeInsets.zero,
-                physics: const NeverScrollableScrollPhysics(),
-                itemCount: tasks.length,
-                itemBuilder: (context, index) => TaskCard(
-                  id: "af",//fake
-                  title: tasks[index].title,
-                  description: tasks[index].description,
-                  imageUrl: tasks[index].logoUrl,
-                  onRemove: () {
-                    setState(() {
-                      tasks.removeAt(index);
-                    });
-                  },
-                ),
-              ),
-
+            ...ctr.tasks.map((task) {
+              final activity = task.activity;
+              return TaskCard(
+                id: activity?.id ?? "",
+                title: activity?.title ?? "No title",
+                description: activity?.details ?? "No description",
+                imageUrl: activity?.banner ?? "",
+                onRemove: () => ctr.removeTask(activity?.id ?? ""),
+              );
+            }),
             const SizedBox(height: 12),
-
-            /// Add Task Button
             CustomButton(
               backgroundColor: colorScheme.surface,
               side: BorderSide(color: colorScheme.primary),
-              onPressed: _showBottomSheet,
+              onPressed: () {}, // Implementation for search/add
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.add,
-                      color: colorScheme.primary, size: 22),
+                  Icon(Icons.add, color: colorScheme.primary, size: 22),
                   const SizedBox(width: 8),
                   Text(
                     "Add requirement",
@@ -462,10 +380,11 @@ class _EditRafflesScreenState extends State<EditRafflesScreen> {
     );
   }
 
-  /// ===============================================================
-  /// Sponsor Toggle
-  /// ===============================================================
-  Widget _buildSponsorToggle(ColorScheme colorScheme) {
+  /// Toggle Section
+  Widget _buildSponsorToggle(
+    ColorScheme colorScheme,
+    RaffleEditController ctr,
+  ) {
     return Row(
       children: [
         Text(
@@ -477,25 +396,23 @@ class _EditRafflesScreenState extends State<EditRafflesScreen> {
         ),
         const Spacer(),
         Text(
-          isPublic ? "Public" : "Private",
-          style: AppTextStyle.textSm(
-            color: colorScheme.onSurfaceVariant,
-          ),
+          ctr.isPublic ? "Public" : "Private",
+          style: AppTextStyle.textSm(color: colorScheme.onSurfaceVariant),
         ),
-        const SizedBox(width: 8),
         Switch(
-          value: isPublic,
+          value: ctr.isPublic,
           activeColor: colorScheme.primary,
-          onChanged: (v) => setState(() => isPublic = v),
+          onChanged: (v) => ctr.togglePublic(v),
         ),
       ],
     );
   }
 
-  /// ===============================================================
   /// Bottom Buttons
-  /// ===============================================================
-  Widget _buildBottomButtons(ColorScheme colorScheme) {
+  Widget _buildBottomButtons(
+    ColorScheme colorScheme,
+    RaffleEditController ctr,
+  ) {
     return Row(
       children: [
         Expanded(
@@ -510,168 +427,104 @@ class _EditRafflesScreenState extends State<EditRafflesScreen> {
         const SizedBox(width: 12),
         Expanded(
           child: CustomButton(
+            isLoading: ctr.isLoading,
             text: "Update",
             backgroundColor: colorScheme.primary,
             textColor: colorScheme.onPrimary,
-            onPressed: () {},
+            onPressed: ctr.hasChanged() ? _onUpdate : null,
           ),
         ),
       ],
     );
   }
 
-  /// ===============================================================
-  /// BottomSheet : Add Task
-  /// ===============================================================
-  void _showBottomSheet() {
-    final colorScheme = context.colorScheme;
 
-    showModalBottomSheet(
-      backgroundColor: colorScheme.surface,
+
+  Future<void> _showDateRangePicker() async {
+    final picked = await showDateRangePicker(
       context: context,
-      isScrollControlled: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius:
-        BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-
-      builder: (context) {
-        return Padding(
-          padding: EdgeInsets.only(
-            left: 20,
-            right: 20,
-            top: 20,
-            bottom:
-            MediaQuery.of(context).viewInsets.bottom + 20,
-          ),
-
-          child: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment:
-              CrossAxisAlignment.start,
-              children: [
-
-                /// Header
-                Row(
-                  mainAxisAlignment:
-                  MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      "Add Requirement",
-                      style: AppTextStyle.textLg(
-                        weight: FontWeight.w600,
-                        color: colorScheme.onSurface,
-                      ),
-                    ),
-                    IconButton(
-                      onPressed: () =>
-                          Navigator.pop(context),
-                      icon: Icon(Icons.cancel,
-                          color: colorScheme.onSurface),
-                    ),
-                  ],
-                ),
-
-                const SizedBox(height: 20),
-
-                /// Task Input
-                CustomTextField(
-                  controller: taskController,
-                  hintText: "Add requirement",
-                  borderColor: colorScheme.outline,
-                  fontSize: 14,
-                  textColor: colorScheme.onSurface,
-                  hintTextColor:
-                  colorScheme.onSurfaceVariant,
-                  suffixIcon: Icon(
-                    Icons.search,
-                    color: colorScheme.onSurfaceVariant,
-                  ),
-                ),
-
-                const SizedBox(height: 20),
-
-                /// Add Button
-                Row(
-                  mainAxisAlignment:
-                  MainAxisAlignment.end,
-                  children: [
-                    CustomButton(
-                      width: 120,
-                      height: 50,
-                      text: "Add",
-                      onPressed: () {
-                        _addTask();
-                        Navigator.pop(context);
-                      },
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        );
-      },
+      firstDate: DateTime(2000),
+      lastDate: DateTime(2100),
+      initialDateRange:
+          editController.startDate != null && editController.endDate != null
+          ? DateTimeRange(
+              start: editController.startDate!,
+              end: editController.endDate!,
+            )
+          : null,
     );
+    if (picked != null) {
+      editController.updateDateRange(picked.start, picked.end);
+    }
   }
 
-  /// ===============================================================
-  /// BottomSheet : Edit Title & Description
-  /// ===============================================================
+  Future<void> _pickCoupon() async {
+    final result = await FilePicker.platform.pickFiles(
+      type: FileType.custom,
+      allowedExtensions: ['jpg', 'png', 'pdf'],
+    );
+    if (result != null)
+      editController.setCoupon(File(result.files.single.path!));
+  }
+
   void _showEditBottomSheet() {
     final colorScheme = context.colorScheme;
+    final localTitle = TextEditingController(
+      text: editController.titleController.text,
+    );
+    final localDetails = TextEditingController(
+      text: editController.detailsController.text,
+    );
+    final _formKey = GlobalKey<FormState>();
 
     showModalBottomSheet(
       context: context,
-      backgroundColor: colorScheme.surface,
       isScrollControlled: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius:
-        BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-
       builder: (context) => Padding(
         padding: EdgeInsets.only(
           left: 20,
           right: 20,
           top: 20,
-          bottom:
-          MediaQuery.of(context).viewInsets.bottom + 20,
+          bottom: MediaQuery.of(context).viewInsets.bottom + 20,
         ),
+        child: Form(
+          key: _formKey,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                "Update Info",
+                style: AppTextStyle.textMd(color: colorScheme.onSurface),
+              ),
 
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
+              CustomTextField(
+                title: "Title",
+                controller: localTitle,
+                borderColor: colorScheme.outline,
+                validator: (v) => v == null || v.isEmpty ? "Required" : null,
+              ),
+              const SizedBox(height: 16),
+              CustomTextField(
+                title: "Description",
+                controller: localDetails,
+                borderColor: colorScheme.outline,
+                maxLine: 4,
+                validator: (v) => v == null || v.isEmpty ? 'Required' : null,
+              ),
+              const SizedBox(height: 20),
+              CustomButton(
+                text: "Done",
+                onPressed: () {
+                  if (!_formKey.currentState!.validate()) return;
 
-            /// Title Field
-            CustomTextField(
-              controller: titleController,
-              hintText: "Title",
-              borderColor: colorScheme.outline,
-            ),
-
-            const SizedBox(height: 16),
-
-            /// Description Field
-            CustomTextField(
-              controller: detailsController,
-              hintText: "Description",
-              maxLine: 4,
-              borderColor: colorScheme.outline,
-            ),
-
-            const SizedBox(height: 20),
-
-            /// Save Button
-            CustomButton(
-              text: "Done",
-              onPressed: () {
-                setState(() {});
-                Navigator.pop(context);
-              },
-            ),
-          ],
+                  editController.titleController.text = localTitle.text;
+                  editController.detailsController.text = localDetails.text;
+                  editController.update();
+                  Navigator.pop(context);
+                },
+              ),
+            ],
+          ),
         ),
       ),
     );

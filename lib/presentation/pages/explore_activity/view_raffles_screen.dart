@@ -29,7 +29,7 @@ class _ViewRafflesScreenState extends State<ViewRafflesScreen> {
     super.initState();
 
     var arg = Get.arguments as Map<String, dynamic>?;
-    rafflesId = arg?["rafflesId"] ?? "";
+    rafflesId = arg?["raffleId"] ?? "";
     rafflesName = arg?["rafflesName"] ?? "";
 
     // Trigger the API call
@@ -108,7 +108,7 @@ class _ViewRafflesScreenState extends State<ViewRafflesScreen> {
                     const SizedBox(height: 20),
 
                     /// 4. Raffle Status Section
-                    _buildRaffleStatus(colorScheme, rafflesDetails.totalTasks),
+                    _buildRaffleStatus(colorScheme, rafflesDetails.tasks),
                     const SizedBox(height: 24),
 
                     /// 5. Tasks List
@@ -189,32 +189,55 @@ class _ViewRafflesScreenState extends State<ViewRafflesScreen> {
         separatorBuilder: (context, index) => const SizedBox(height: 8),
         itemBuilder: (context, index) {
           final task = tasks[index];
+          final activity = task.activity;
+
           return TaskCard(
-            id: "id_$index",
-            // Displaying task type based on what's available
-            title: task.routeActivity != null ? "Route Activity" : "Event Activity",
-            description: "Task order: ${task.order}. Complete this check-in to progress.",
+            id: activity?.id ?? "id_$index",
+            imageUrl: activity?.banner ?? "",
+            title: activity?.title ?? "No title",
+            description: "${task.isRouteTask ? "Route" : "Event"} • Step ${task.order}\n${activity?.details ?? "No description"}",
           );
         },
       ),
     );
   }
 
-  Widget _buildRaffleStatus(ColorScheme colorScheme, int totalTasks) {
-    const double progressValue = 0.0;
+  Widget _buildRaffleStatus(
+      ColorScheme colorScheme,
+      List<RaffleTaskModel> tasks,
+      ) {
+    final int totalTasks = tasks.length;
+
+    final int completedTasks =
+        tasks.where((t) => t.isCompleted).length;
+
+    final double progressValue =
+    totalTasks == 0 ? 0.0 : completedTasks / totalTasks;
+
+    final int remainingTasks = totalTasks - completedTasks;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text("Raffle status:", style: AppTextStyle.textSm(weight: FontWeight.w700)),
-            Text("${(progressValue * 100).toInt()}%",
-                style: AppTextStyle.textSm(
-                    weight: FontWeight.w700, color: colorScheme.primary)),
+            Text(
+              "Raffle status:",
+              style: AppTextStyle.textSm(weight: FontWeight.w700),
+            ),
+            Text(
+              "${(progressValue * 100).toInt()}%",
+              style: AppTextStyle.textSm(
+                weight: FontWeight.w700,
+                color: colorScheme.primary,
+              ),
+            ),
           ],
         ),
+
         const SizedBox(height: 10),
+
         LinearPercentIndicator(
           lineHeight: 10.0,
           percent: progressValue,
@@ -225,15 +248,25 @@ class _ViewRafflesScreenState extends State<ViewRafflesScreen> {
           animationDuration: 1000,
           padding: EdgeInsets.zero,
         ),
+
         const SizedBox(height: 10),
+
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text("0 of $totalTasks Tasks Completed",
-                style: AppTextStyle.textXs(color: colorScheme.onSurfaceVariant)),
-            Text("$totalTasks remaining",
-                style: AppTextStyle.textXs(
-                    weight: FontWeight.w600, color: colorScheme.onSurface)),
+            Text(
+              "$completedTasks of $totalTasks Tasks Completed",
+              style: AppTextStyle.textXs(
+                color: colorScheme.onSurfaceVariant,
+              ),
+            ),
+            Text(
+              "$remainingTasks remaining",
+              style: AppTextStyle.textXs(
+                weight: FontWeight.w600,
+                color: colorScheme.onSurface,
+              ),
+            ),
           ],
         ),
       ],
@@ -243,7 +276,7 @@ class _ViewRafflesScreenState extends State<ViewRafflesScreen> {
   Widget _buildSponsorCard(ColorScheme colorScheme, SponsorModel sponsor) {
     return CompanyInfoCard(
       title: sponsor.name,
-      description: "Official partner and sponsor.",
+      description: sponsor.description,
       imagePath: sponsor.logo,
     );
   }

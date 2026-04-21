@@ -8,7 +8,7 @@ import '../../../../core/constants/app_text_style.dart';
 class RaffleEditCard extends StatelessWidget {
   final String title;
   final String description;
-  final String endDate;
+  final String dateRange;
   final String prizeText;
   final String imageUrl;
   final String organizerName;
@@ -19,7 +19,7 @@ class RaffleEditCard extends StatelessWidget {
     super.key,
     required this.title,
     required this.description,
-    required this.endDate,
+    required this.dateRange,
     required this.prizeText,
     required this.imageUrl,
     required this.organizerName,
@@ -96,7 +96,7 @@ class RaffleEditCard extends StatelessWidget {
                         color: const Color(0xFF26A69A)),
                     const SizedBox(width: 8),
                     Text(
-                      "Ends $endDate",
+                      "Ends $dateRange",
                       style: AppTextStyle.textSm(
                         weight: FontWeight.w600,
                         color: colorScheme.onSurface,

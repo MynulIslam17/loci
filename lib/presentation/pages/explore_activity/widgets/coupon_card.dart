@@ -5,12 +5,14 @@ import 'package:loci/core/theme/theme_extention.dart';
 
 class CouponUploadCard extends StatelessWidget {
   final File? file;
+  final String? imageUrl;
   final VoidCallback? onTap;
   final VoidCallback? onDelete;
 
   const CouponUploadCard({
     super.key,
     required this.file,
+    this.imageUrl,
     this.onTap,
     this.onDelete,
   });
@@ -19,7 +21,11 @@ class CouponUploadCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final colorScheme = context.colorScheme;
 
-    if (file == null) {
+    final bool hasLocalFile = file != null;
+    final bool hasNetworkFile = imageUrl != null && imageUrl!.isNotEmpty;
+
+    /// ================= EMPTY STATE =================
+    if (!hasLocalFile && !hasNetworkFile) {
       return GestureDetector(
         onTap: onTap,
         child: AnimatedContainer(
@@ -96,10 +102,15 @@ class CouponUploadCard extends StatelessWidget {
       );
     }
 
-    final isPdf = file!.path.toLowerCase().endsWith(".pdf");
-    final fileName = file!.path.split("/").last;
+    /// ================= SOURCE =================
+    final String source =
+    hasLocalFile ? file!.path : imageUrl!;
+
+    final isPdf = source.toLowerCase().endsWith(".pdf");
+    final fileName = source.split("/").last;
     final fileColor = isPdf ? Colors.red : colorScheme.primary;
 
+    /// ================= UPLOADED STATE =================
     return Container(
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(16),
@@ -119,10 +130,11 @@ class CouponUploadCard extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Container(width: 4, color: fileColor),
+
               Expanded(
                 child: Padding(
-                  padding:
-                  const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 16, vertical: 14),
                   child: Row(
                     children: [
                       Container(
@@ -139,7 +151,9 @@ class CouponUploadCard extends StatelessWidget {
                           size: 20,
                         ),
                       ),
+
                       const SizedBox(width: 14),
+
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -174,7 +188,9 @@ class CouponUploadCard extends StatelessWidget {
                                 ),
                                 const SizedBox(width: 6),
                                 Text(
-                                  "Coupon uploaded",
+                                  hasNetworkFile
+                                      ? "Uploaded (API)"
+                                      : "Coupon uploaded",
                                   style: AppTextStyle.textXs(
                                     color: colorScheme.onSurfaceVariant,
                                   ),
@@ -184,7 +200,9 @@ class CouponUploadCard extends StatelessWidget {
                           ],
                         ),
                       ),
+
                       const SizedBox(width: 8),
+
                       if (onDelete != null)
                         Material(
                           color: Colors.red.withOpacity(0.08),

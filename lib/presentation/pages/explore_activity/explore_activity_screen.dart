@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:loci/core/theme/theme_extention.dart';
+import 'package:loci/core/utils/date_parser.dart';
+import 'package:loci/data/models/raffles/raffles_model.dart';
 import 'package:loci/presentation/controllers/explore_acitivity/business_event_list_controller.dart';
 import 'package:loci/presentation/controllers/explore_acitivity/business_raffles_list_controller.dart';
 import 'package:loci/presentation/pages/explore_activity/widgets/event_edit_card.dart';
@@ -550,19 +552,29 @@ class _ExploreActivityScreenState extends State<ExploreActivityScreen>
             return RaffleEditCard(
               title: raffle.title,
               description: raffle.description,
-              endDate: raffle.endDate,
+              dateRange: _dateRange(raffle),
               prizeText: raffle.bundleName,
               imageUrl: raffle.banner,
               organizerName: raffle.organizerName,
-              onEdit: () => Get.toNamed(
-                AppRoutes.editRaffles,
-                arguments: {"raffleId": raffle.id},
-              ),
+              onEdit: () async{
+
+               final result=await Get.toNamed(
+                  AppRoutes.editRaffles,
+                  arguments: {"raffleId": raffle.id},
+                );
+                if(result==true){
+                  await controller.fetchRaffles(
+                    businessId: businessId,
+                    isRefresh: true,
+                  );
+                }
+
+              },
               onView: () {
                 Get.toNamed(
                   AppRoutes.viewRaffles,
                   arguments: {
-                    "rafflesId": raffle.id,
+                    "raffleId": raffle.id,
                     "rafflesName": raffle.title,
                   },
                 );
@@ -574,7 +586,24 @@ class _ExploreActivityScreenState extends State<ExploreActivityScreen>
       },
     );
   }
+
+
+//--------------- date range helper-------------------------------
+  String _dateRange(RaffleModel model) {
+    final startDate = DateTime.parse(model.startDate).toLocal();
+    final endDate = DateTime.parse(model.endDate).toLocal();
+
+    return "${DateParserHelper.shortDate(startDate)} - ${DateParserHelper.shortDate(endDate)}";
+  }
+
+
+
 }
+
+
+
+
+
 
 //---- sticky tab bar work as header
 class _StickyTabBarDelegate extends SliverPersistentHeaderDelegate {

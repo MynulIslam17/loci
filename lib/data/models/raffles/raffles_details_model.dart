@@ -2,16 +2,14 @@ import 'package:loci/data/models/raffles/raffles_model.dart';
 
 class RaffleDetailsModel {
   final RaffleModel raffleModel;
-
   final List<RaffleTaskModel> tasks;
   final bool isPublic;
   final String status;
-
   final SponsorModel sponsor;
-
   final int totalTasks;
-
-
+  final String userRole;
+  final bool isParticipating;
+  final int participantCount;
 
   RaffleDetailsModel({
     required this.raffleModel,
@@ -20,29 +18,29 @@ class RaffleDetailsModel {
     required this.status,
     required this.sponsor,
     required this.totalTasks,
+    required this.userRole,
+    required this.isParticipating,
+    required this.participantCount,
   });
 
   factory RaffleDetailsModel.fromJson(Map<String, dynamic> json) {
-
     final data = json['data'] ?? {};
 
     return RaffleDetailsModel(
       raffleModel: RaffleModel.fromJson(data),
-
       tasks: (data['tasks'] as List<dynamic>? ?? [])
           .map((e) => RaffleTaskModel.fromJson(e))
           .toList(),
-
       isPublic: data['isPublic'] ?? false,
       status: data['status'] ?? '',
-
       sponsor: SponsorModel.fromJson(data['sponsor'] ?? {}),
-
       totalTasks: data['totalTasks'] ?? 0,
+      userRole: data['userRole'] ?? '',
+      isParticipating: data['isParticipating'] ?? false,
+      participantCount: data['participantCount'] ?? 0,
     );
   }
 
-  ///  COPY WITH
   RaffleDetailsModel copyWith({
     RaffleModel? raffleModel,
     List<RaffleTaskModel>? tasks,
@@ -50,6 +48,9 @@ class RaffleDetailsModel {
     String? status,
     SponsorModel? sponsor,
     int? totalTasks,
+    String? userRole,
+    bool? isParticipating,
+    int? participantCount,
   }) {
     return RaffleDetailsModel(
       raffleModel: raffleModel ?? this.raffleModel,
@@ -58,42 +59,103 @@ class RaffleDetailsModel {
       status: status ?? this.status,
       sponsor: sponsor ?? this.sponsor,
       totalTasks: totalTasks ?? this.totalTasks,
+      userRole: userRole ?? this.userRole,
+      isParticipating: isParticipating ?? this.isParticipating,
+      participantCount: participantCount ?? this.participantCount,
     );
   }
 }
 
+// ─── Nested activity model used inside tasks ───────────────────────────────
+
+class TaskActivityModel {
+  final String id;
+  final String banner;
+  final String title;
+  final String details;
+
+  TaskActivityModel({
+    required this.id,
+    required this.banner,
+    required this.title,
+    required this.details,
+  });
+
+  factory TaskActivityModel.fromJson(Map<String, dynamic> json) {
+    return TaskActivityModel(
+      id: json['_id'] ?? '',
+      banner: json['banner'] ?? '',
+      title: json['title'] ?? '',
+      details: json['details'] ?? '',
+    );
+  }
+
+  TaskActivityModel copyWith({
+    String? id,
+    String? banner,
+    String? title,
+    String? details,
+  }) {
+    return TaskActivityModel(
+      id: id ?? this.id,
+      banner: banner ?? this.banner,
+      title: title ?? this.title,
+      details: details ?? this.details,
+    );
+  }
+}
+
+// ───  RaffleTaskModel ──────────────────────────────────────────────────
+
 class RaffleTaskModel {
-  final String? routeActivity;
-  final String? eventActivity;
+  final TaskActivityModel? routeActivity;
+  final TaskActivityModel? eventActivity;
   final int order;
+  final bool isCompleted;
 
   RaffleTaskModel({
     this.routeActivity,
     this.eventActivity,
     required this.order,
+    required this.isCompleted,
   });
 
   factory RaffleTaskModel.fromJson(Map<String, dynamic> json) {
     return RaffleTaskModel(
-      routeActivity: json['routeActivity'],
-      eventActivity: json['eventActivity'],
+      routeActivity: json['routeActivity'] != null
+          ? TaskActivityModel.fromJson(json['routeActivity'])
+          : null,
+      eventActivity: json['eventActivity'] != null
+          ? TaskActivityModel.fromJson(json['eventActivity'])
+          : null,
       order: json['order'] ?? 0,
+      isCompleted: json['isCompleted'] ?? false,
     );
   }
 
-  ///  COPY WITH
+  /// Helper — returns whichever activity is present
+  TaskActivityModel? get activity => routeActivity ?? eventActivity;
+
+  /// Whether this task is a route or event type
+  bool get isRouteTask => routeActivity != null;
+  bool get isEventTask => eventActivity != null;
+
   RaffleTaskModel copyWith({
-    String? routeActivity,
-    String? eventActivity,
+    TaskActivityModel? routeActivity,
+    TaskActivityModel? eventActivity,
     int? order,
+    bool? isCompleted,
   }) {
     return RaffleTaskModel(
       routeActivity: routeActivity ?? this.routeActivity,
       eventActivity: eventActivity ?? this.eventActivity,
       order: order ?? this.order,
+      isCompleted: isCompleted ?? this.isCompleted,
     );
   }
 }
+
+// ─── SponsorModel  ──────────────────────────────
 
 class SponsorModel {
   final String id;
@@ -113,11 +175,10 @@ class SponsorModel {
       id: json['_id'] ?? '',
       name: json['name'] ?? '',
       logo: json['logo'] ?? '',
-      description: json["description"]
+      description: json['description'] ?? '',
     );
   }
 
-  ///  COPY WITH
   SponsorModel copyWith({
     String? id,
     String? name,
