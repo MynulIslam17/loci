@@ -4,10 +4,12 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:loci/core/constants/app_text_style.dart';
+import 'package:loci/core/enums/category_enum.dart';
 import 'package:loci/core/theme/theme_extention.dart';
 import 'package:loci/presentation/widgets/custom_button.dart';
 import 'package:loci/presentation/widgets/custom_dropdown.dart';
 import 'package:loci/presentation/widgets/custom_image_container.dart';
+import 'package:loci/presentation/widgets/file_picker.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../widgets/custom_imagepicker.dart';
 
@@ -19,13 +21,11 @@ class ClamMyBusiness extends StatefulWidget {
 }
 
 class _ClamMyBusinessState extends State<ClamMyBusiness> {
-  String? selectedCategory;
-  final List<String> categories = [
-    "Food & Beverage",
-    "Manufacturing",
-    "Retail",
-  ];
+  BusinessCategory? selectedCategory;
 
+  late final String phoneNumber;
+  late final String location;
+  late final String businessName;
   bool isFromManualClaim = false;
   File? _pickedImage;
 
@@ -35,25 +35,20 @@ class _ClamMyBusinessState extends State<ClamMyBusiness> {
   @override
   void initState() {
     super.initState();
-
-    // Receive arguments from previous page
-    final args = Get.arguments;
-    if (args != null && args is Map) {
-      isFromManualClaim = args['isFromManualClaim'] ?? false;
-    }
+    var args = Get.arguments as Map<String, dynamic>?;
+    phoneNumber = args?['phone'] ?? 'Phone not set';
+    location = args?['location'] ?? 'Location not set';
+    isFromManualClaim = args?['isFromManualClaim'] ?? false;
+    businessName = args?['name'] ?? 'New Business Listing';
   }
 
   //---- for picke file or attachment
-
   Future<void> _pickAttachment() async {
-    FilePickerResult? result = await FilePicker.platform.pickFiles(
-      type: FileType.custom,
-      allowedExtensions: ['jpg', 'jpeg', 'png', 'pdf'],
-    );
+    final file = await AppFilePicker.pickSingle();
 
-    if (result != null && result.files.single.path != null) {
+    if (file != null) {
       setState(() {
-        attachments.add(File(result.files.single.path!));
+        attachments.add(file);
       });
     }
   }
@@ -128,20 +123,17 @@ class _ClamMyBusinessState extends State<ClamMyBusiness> {
                             children: [
                               _buildContactRow(
                                 Icons.location_on_outlined,
-                                isFromManualClaim == true
-                                    ? "Location not set"
-                                    : "30 Frank Lloyd Wright Dr...",
+                                location, // Shows passed location
                                 colorScheme.onSurfaceVariant,
                               ),
                               const SizedBox(height: 6),
                               _buildContactRow(
                                 Icons.phone_outlined,
-                                isFromManualClaim == true
-                                    ? "Phone not set"
-                                    : "+1 800-216-3515",
+                                phoneNumber, // Shows passed phone
                                 brandColor,
                               ),
                               const SizedBox(height: 6),
+                              
                               // Hide reviews for manual claim as it's a new entry
                               if (isFromManualClaim != true)
                                 Row(
@@ -208,8 +200,13 @@ class _ClamMyBusinessState extends State<ClamMyBusiness> {
                   textColor: colorScheme.onSurface,
                   onChanged: (value) =>
                       setState(() => selectedCategory = value),
-                  items: categories
-                      .map((e) => DropdownMenuItem(value: e, child: Text(e)))
+                  items: BusinessCategory.values
+                      .map(
+                        (category) => DropdownMenuItem(
+                          value: category,
+                          child: Text(category.label),
+                        ),
+                      )
                       .toList(),
                 ),
               ),
@@ -240,11 +237,17 @@ class _ClamMyBusinessState extends State<ClamMyBusiness> {
                         ),
                         title: Row(
                           children: [
-                            Icon(Icons.info_outline, color: brandColor, size: 20),
+                            Icon(
+                              Icons.info_outline,
+                              color: brandColor,
+                              size: 20,
+                            ),
                             const SizedBox(width: 8),
                             Text(
                               "Proof of Ownership",
-                              style: AppTextStyle.textSm(weight: FontWeight.w600),
+                              style: AppTextStyle.textSm(
+                                weight: FontWeight.w600,
+                              ),
                             ),
                           ],
                         ),
@@ -297,13 +300,11 @@ class _ClamMyBusinessState extends State<ClamMyBusiness> {
                 );
               }).toList(),
 
-
-
             const SizedBox(height: 16),
 
             // --- Add Attachment Button ---
             InkWell(
-              onTap:_pickAttachment, // Add file picker logic here
+              onTap: _pickAttachment, // Add file picker logic here
               borderRadius: BorderRadius.circular(10),
               child: Container(
                 width: double.infinity,
@@ -378,11 +379,14 @@ class _ClamMyBusinessState extends State<ClamMyBusiness> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(file.path.split("/").last,
-                      style: AppTextStyle.textSm(weight: FontWeight.w500)),
                   Text(
-                      isImage ? "Image" : "PDF",
-                      style: AppTextStyle.textXs(color: scheme.onSurfaceVariant)),
+                    file.path.split("/").last,
+                    style: AppTextStyle.textSm(weight: FontWeight.w500),
+                  ),
+                  Text(
+                    isImage ? "Image" : "PDF",
+                    style: AppTextStyle.textXs(color: scheme.onSurfaceVariant),
+                  ),
                 ],
               ),
             ),
