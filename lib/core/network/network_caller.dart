@@ -382,7 +382,7 @@ class NetworkCaller {
 
 
 
-      _logMultipartRequest(url, fields, files, request.headers);
+      _logMultipartRequest(url, fields, files, multiFiles, request.headers);
 
       final streamed = await request.send()
           .timeout(const Duration(seconds: 120));
@@ -458,6 +458,7 @@ BODY    : $body
       String url,
       Map<String, String>? fields,
       Map<String, File>? files,
+      Map<String, List<File>>? multiFiles,
       Map<String, String>? headers,
       ) {
     _logger.i('''
@@ -465,8 +466,28 @@ BODY    : $body
 URL     : $url
 HEADERS : $headers
 FIELDS  : $fields
-FILES   : ${files?.keys.toList()}
 ====================================================''');
+
+    // SINGLE FILES (logo etc.)
+    if (files != null && files.isNotEmpty) {
+      _logger.i("SINGLE FILES:");
+      files.forEach((key, file) {
+        _logger.i(" - $key => ${file.path.split('/').last}");
+      });
+    }
+
+    // MULTI FILES (attachments etc.)
+    if (multiFiles != null && multiFiles.isNotEmpty) {
+      _logger.i("MULTI FILES:");
+      multiFiles.forEach((key, fileList) {
+        _logger.i(" - $key =>");
+        for (final file in fileList) {
+          _logger.i("    • ${file.path.split('/').last}");
+        }
+      });
+    }
+
+    _logger.i("====================================================");
   }
 
   void _logResponse(String url, Response response) {

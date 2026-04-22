@@ -4,6 +4,7 @@ import 'package:get/get_navigation/src/extension_navigation.dart';
 import 'package:intl_phone_field/intl_phone_field.dart';
 import 'package:loci/core/constants/app_text_style.dart';
 import 'package:loci/core/theme/theme_extention.dart';
+import 'package:loci/core/utils/show_snackbar.dart';
 import 'package:loci/presentation/widgets/custom_text_field.dart';
 
 import '../../../routes/app_routes.dart'; // Ensure path is correct
@@ -34,9 +35,7 @@ class _ManualClaimBusinessState extends State<ManualClaimBusiness> {
     super.dispose();
   }
 
-
-
-  void _submitFormHandler() {
+  void _submitFormHandler() async {
     if (!_forKey.currentState!.validate()) return;
 
     // Prepare the data to pass to the next screen
@@ -47,21 +46,23 @@ class _ManualClaimBusinessState extends State<ManualClaimBusiness> {
       "website": _websiteController.text.trim(),
       "description": _detailsController.text.trim(),
       "isFromManualClaim": true,
-
     };
 
-    Get.toNamed(
+    final result = await Get.toNamed(
       AppRoutes.clamBusinessProfile,
       arguments: businessData,
     );
+
+    if (result != null && result["success"] == true) {
+
+
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        SnackbarService.success("Business claimed successfully");
+      });
+
+       Get.back();
+    }
   }
-
-
-
-
-
-
-
 
   @override
   Widget build(BuildContext context) {
@@ -119,9 +120,12 @@ class _ManualClaimBusinessState extends State<ManualClaimBusiness> {
                               fontSize: 14,
                               controller: _nameController,
                               fillColor: Colors.transparent,
-                              validator: (v) => v == null || v.trim().isEmpty
-                                  ? "Required"
-                                  : null,
+                              validator: (v) {
+
+                                if(v==null || v.trim().isEmpty) return "Required";
+                                if ( v.length <2) return "Business name must be at least 2 characters";
+                                return null;
+                              },
                             ),
                             const SizedBox(height: 20),
                             CustomTextField(
@@ -137,27 +141,31 @@ class _ManualClaimBusinessState extends State<ManualClaimBusiness> {
                                   : null,
                             ),
                             const SizedBox(height: 20),
-                            IntlPhoneField(
+                            FormField<String>(
+                              validator: (value) {
+                                if (phoneNumber == null ||
+                                    phoneNumber!.isEmpty) {
+                                  return 'Phone number is required';
+                                }
 
-                              decoration: InputDecoration(
-                                labelText: 'Phone',
-                                border: OutlineInputBorder(
-                                  borderSide: BorderSide(
-                                    color: colorScheme.outline,
-                                  ),
-                                  borderRadius: BorderRadius.circular(10),
-                                ),
-                              ),
-                              initialCountryCode: 'BD',
-                              dropdownIconPosition: IconPosition.trailing,
-                              style: TextStyle(color: colorScheme.onSurface),
-                              validator: (phone) {
-                                if (phone == null || phone.number.isEmpty) return 'Phone number is required';
-                                if (!phone.isValidNumber()) return 'Enter a valid phone number';
                                 return null;
                               },
-                              onChanged: (phone) {
-                                phoneNumber = phone.completeNumber;
+                              builder: (state) {
+                                return IntlPhoneField(
+                                  decoration: InputDecoration(
+                                    labelText: 'Phone',
+                                    border: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
+                                    errorText: state.errorText,
+                                  ),
+                                  initialCountryCode: 'BD',
+                                  dropdownIconPosition: IconPosition.trailing,
+                                  onChanged: (phone) {
+                                    phoneNumber = phone.completeNumber;
+                                    state.didChange(phone.completeNumber);
+                                  },
+                                );
                               },
                             ),
                             const SizedBox(height: 20),
@@ -169,9 +177,6 @@ class _ManualClaimBusinessState extends State<ManualClaimBusiness> {
                               fontSize: 14,
                               controller: _websiteController,
                               fillColor: Colors.transparent,
-                              validator: (v) => v == null || v.trim().isEmpty
-                                  ? "Required"
-                                  : null,
                             ),
                             const SizedBox(height: 20),
                             CustomTextField(
@@ -184,10 +189,9 @@ class _ManualClaimBusinessState extends State<ManualClaimBusiness> {
                               controller: _detailsController,
                               fillColor: Colors.transparent,
                               validator: (v) {
-                                if (v == null || v.trim().isEmpty) {
-                                  return "Required";
-                                }
-                                if (v.length > 200) {
+
+                                if(v==null || v.trim().isEmpty) return "Required";
+                                if ( v.length > 200) {
                                   return "Limit: 200 char";
                                 }
                                 return null;
@@ -227,7 +231,7 @@ class _ManualClaimBusinessState extends State<ManualClaimBusiness> {
                     ),
                     elevation: 0,
                   ),
-                  onPressed:_submitFormHandler,
+                  onPressed: _submitFormHandler,
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [

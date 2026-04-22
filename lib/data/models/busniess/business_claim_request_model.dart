@@ -39,18 +39,26 @@ class BusinessClaimRequestModel {
 
   /// Returns a map of files.
   /// Handles the 'logo' and multiple 'attachments'.
-  Map<String, dynamic> toFiles() {
-    final Map<String, dynamic> fileMap = {};
+  Map<String, File> toFileMap() {
+    final map = <String, File>{};
 
     if (logo != null) {
-      fileMap['logo'] = logo!;
+      map['logo'] = logo!;
     }
+
+    return map;
+  }
+
+  Map<String, List<File>> toMultiFileMap() {
+    final map = <String, List<File>>{};
 
     if (attachments != null && attachments!.isNotEmpty) {
-      // Sending multiple files under the same key 'attachments'
-      fileMap['attachments'] = attachments!;
+      map['attachments'] = attachments!;
     }
 
-    return fileMap;
+    return map;
   }
+
+
+
 }

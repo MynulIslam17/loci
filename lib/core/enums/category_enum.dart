@@ -70,7 +70,7 @@ enum BusinessCategory {
       case BusinessCategory.adventure:
         return 'Adventure';
       case BusinessCategory.partyLikeALoci:
-        return 'Party Like raffles Loci';
+        return 'Party Like a Loci';
       case BusinessCategory.wellness:
         return 'Wellness';
       case BusinessCategory.homeAndRepair:
