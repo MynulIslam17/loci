@@ -2,11 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:loci/core/constants/app_text_style.dart';
 import 'package:loci/core/theme/theme_extention.dart';
+import 'package:loci/core/utils/date_parser.dart';
+import 'package:loci/data/models/raffles/raffles_model.dart';
+import 'package:loci/presentation/controllers/raffles/raffle_list_controller.dart';
 import 'package:loci/presentation/pages/raffles/raffles_details_screen.dart';
 import 'package:loci/presentation/widgets/custom_button.dart';
 import 'package:loci/presentation/widgets/custom_image_container.dart';
 import 'package:loci/presentation/widgets/custom_text_field.dart';
-
 
 class ActiveRafflesScreen extends StatelessWidget {
   const ActiveRafflesScreen({super.key});
@@ -16,13 +18,11 @@ class ActiveRafflesScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Navigator(
       key: navigatorKey,
-      onGenerateRoute: (_) => MaterialPageRoute(
-        builder: (_) => const ActiveRafflesPage(),
-      ),
+      onGenerateRoute: (_) =>
+          MaterialPageRoute(builder: (_) => const ActiveRafflesPage()),
     );
   }
 }
-
 
 class ActiveRafflesPage extends StatefulWidget {
   const ActiveRafflesPage({super.key});
@@ -32,38 +32,53 @@ class ActiveRafflesPage extends StatefulWidget {
 }
 
 class _ActiveRafflesPageState extends State<ActiveRafflesPage> {
+  final raffleListController = Get.find<RaffleListController>();
+
   final List<Map<String, dynamic>> raffleData = [
     {
       "title": "Coffee Lovers Bundle",
       "description":
-      "Check in to 3 or more local cafes to enter. Win raffles premium selection of artisanal coffee beans and raffles high-end French press.",
+          "Check in to 3 or more local cafes to enter. Win raffles premium selection of artisanal coffee beans and raffles high-end French press.",
       "prize": "Premium Coffee Kit (\$200 value)",
       "endDate": "Mar 15, 2026",
       "requiredCheckIns": 3,
-      "imageUrl": "https://images.unsplash.com/photo-1509042239860-f550ce710b93?q=80&w=1000&auto=format",
+      "imageUrl":
+          "https://images.unsplash.com/photo-1509042239860-f550ce710b93?q=80&w=1000&auto=format",
       "organizer": "Crawl Events Co.",
     },
     {
       "title": "Ultimate Pizza Night",
       "description":
-      "Visit 5 participating pizzerias this month. Win raffles voucher for raffles full family feast plus raffles custom-made pizza stone.",
+          "Visit 5 participating pizzerias this month. Win raffles voucher for raffles full family feast plus raffles custom-made pizza stone.",
       "prize": "Gourmet Pizza Feast (\$120 value)",
       "endDate": "Mar 20, 2026",
       "requiredCheckIns": 5,
-      "imageUrl": "https://images.unsplash.com/photo-1513104890138-7c749659a591?q=80&w=1000&auto=format",
+      "imageUrl":
+          "https://images.unsplash.com/photo-1513104890138-7c749659a591?q=80&w=1000&auto=format",
       "organizer": "Loci Foodie Network",
     },
     {
       "title": "Tech Explorer Giveaway",
       "description":
-      "Check in at any 2 technology hubs or co-working spaces. Win raffles pair of the latest noise-canceling wireless earbuds.",
+          "Check in at any 2 technology hubs or co-working spaces. Win raffles pair of the latest noise-canceling wireless earbuds.",
       "prize": "Wireless Earbuds (\$250 value)",
       "endDate": "Apr 05, 2026",
       "requiredCheckIns": 2,
-      "imageUrl": "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?q=80&w=1000&auto=format",
+      "imageUrl":
+          "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?q=80&w=1000&auto=format",
       "organizer": "Innovation District",
     },
   ];
+
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+
+    raffleListController.fetchRaffles(isRefresh: true);
+  }
+
+
 
   @override
   Widget build(BuildContext context) {
@@ -71,52 +86,130 @@ class _ActiveRafflesPageState extends State<ActiveRafflesPage> {
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16.0),
-      child: CustomScrollView(
-        slivers: [
-          SliverToBoxAdapter(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const SizedBox(height: 16),
-                CustomTextField(
-                  hintText: "Search Raffle",
-                  borderColor: colorScheme.outline,
-                  fontSize: 14,
-                  textColor: colorScheme.onSurface,
-                  hintTextColor: colorScheme.onSurfaceVariant,
-                  suffixIcon: Icon(
-                    Icons.search,
-                    color: colorScheme.onSurfaceVariant,
+      child: RefreshIndicator(
+        onRefresh: () async {
+          if (!raffleListController.isLoading) {
+            await raffleListController.refreshRaffles();
+          }
+        },
+        child: CustomScrollView(
+          physics: AlwaysScrollableScrollPhysics(),
+          slivers: [
+            SliverToBoxAdapter(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const SizedBox(height: 16),
+                  CustomTextField(
+                    hintText: "Search Raffle",
+                    borderColor: colorScheme.outline,
+                    fontSize: 14,
+                    textColor: colorScheme.onSurface,
+                    hintTextColor: colorScheme.onSurfaceVariant,
+                    suffixIcon: Icon(
+                      Icons.search,
+                      color: colorScheme.onSurfaceVariant,
+                    ),
                   ),
-                ),
-                const SizedBox(height: 24),
-                Text(
-                  "Active Raffles",
-                  style: AppTextStyle.textXl(weight: FontWeight.w600),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  "Check in to locations to enter and win prizes",
-                  style: AppTextStyle.textSm(
-                    color: colorScheme.onSurfaceVariant,
+                  const SizedBox(height: 24),
+                  Text(
+                    "Active Raffles",
+                    style: AppTextStyle.textXl(weight: FontWeight.w600),
                   ),
-                ),
-                const SizedBox(height: 20),
-              ],
+                  const SizedBox(height: 8),
+                  Text(
+                    "Check in to locations to enter and win prizes",
+                    style: AppTextStyle.textSm(
+                      color: colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                ],
+              ),
             ),
-          ),
-          SliverList(
-            delegate: SliverChildBuilderDelegate(
-                  (context, index) => _buildRaffleCard(raffleData[index]),
-              childCount: raffleData.length,
+
+            GetBuilder<RaffleListController>(
+              builder: (controller) {
+                // loading state
+                if (controller.isLoading) {
+                  return SliverFillRemaining(
+                    child: Center(child: CircularProgressIndicator()),
+                  );
+                }
+
+                // Error state
+                if (controller.errorMessage != null &&
+                    controller.raffleList.isEmpty) {
+                  return SliverFillRemaining(
+                    child: Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.error_outline,
+                            size: 48,
+                            color: context.colorScheme.error,
+                          ),
+                          const SizedBox(height: 12),
+                          Text(
+                            controller.errorMessage!,
+                            style: AppTextStyle.textSm(
+                              color: context.colorScheme.error,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                          const SizedBox(height: 16),
+                          TextButton(
+                            onPressed: () => controller.fetchRaffles(),
+                            child: const Text("Try Again"),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                }
+
+                // Empty state
+                if (controller.raffleList.isEmpty) {
+                  return SliverFillRemaining(
+                    child: Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.event_busy,
+                            size: 48,
+                            color: context.colorScheme.onSurfaceVariant,
+                          ),
+                          const SizedBox(height: 12),
+                          Text(
+                            "No active raffles",
+                            style: AppTextStyle.textSm(
+                              color: context.colorScheme.onSurfaceVariant,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                }
+
+                final raffleList=controller.raffleList;
+                return SliverList(
+                  delegate: SliverChildBuilderDelegate(
+                    (context, index) => _buildRaffleCard(raffleList[index]),
+                    childCount: raffleList.length
+                  ),
+                );
+              },
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
 
-  Widget _buildRaffleCard(Map<String, dynamic> data) {
+  Widget _buildRaffleCard(RaffleModel raffle) {
     final colorScheme = context.colorScheme;
     const accentColor = Color(0xFF66B9AD);
 
@@ -129,7 +222,7 @@ class _ActiveRafflesPageState extends State<ActiveRafflesPage> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           CustomCachedImage(
-            imageUrl: data['imageUrl'],
+            imageUrl: raffle.banner,
             height: 180,
             width: double.infinity,
             fit: BoxFit.cover,
@@ -144,12 +237,12 @@ class _ActiveRafflesPageState extends State<ActiveRafflesPage> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  data['title'],
+                  raffle.title,
                   style: AppTextStyle.textMd(weight: FontWeight.w600),
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  data['description'],
+                  raffle.description,
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                   style: AppTextStyle.textXs(
@@ -158,7 +251,7 @@ class _ActiveRafflesPageState extends State<ActiveRafflesPage> {
                 ),
                 const SizedBox(height: 16),
 
-                // Prize Badge
+                // bundle name
                 Container(
                   width: double.infinity,
                   padding: const EdgeInsets.symmetric(
@@ -170,7 +263,7 @@ class _ActiveRafflesPageState extends State<ActiveRafflesPage> {
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Text(
-                    data['prize'],
+                    raffle.bundleName,
                     style: AppTextStyle.textSm(
                       color: colorScheme.primary,
                       weight: FontWeight.w600,
@@ -189,13 +282,12 @@ class _ActiveRafflesPageState extends State<ActiveRafflesPage> {
                     ),
                     const SizedBox(width: 6),
                     Text(
-                      "Ends ${data['endDate']}",
+                      _dateRangeHelper(raffle.startDate, raffle.endDate),
                       style: AppTextStyle.textXs(weight: FontWeight.w500),
                     ),
                   ],
                 ),
                 const SizedBox(height: 16),
-
 
                 SizedBox(
                   width: double.infinity,
@@ -203,7 +295,9 @@ class _ActiveRafflesPageState extends State<ActiveRafflesPage> {
                   child: CustomButton(
                     backgroundColor: colorScheme.primary,
                     textColor: colorScheme.onPrimary,
-                    text: "Enter Raffle (${data['requiredCheckIns']} check-ins required)",
+                    text:
+                       // "Enter Raffle (${data['requiredCheckIns']} check-ins required)",
+                    "Enter Raffle",
                     textStyle: AppTextStyle.textSm(weight: FontWeight.w600),
                     onPressed: () {
                       Navigator.push(
@@ -218,7 +312,7 @@ class _ActiveRafflesPageState extends State<ActiveRafflesPage> {
                 const SizedBox(height: 12),
                 Center(
                   child: Text(
-                    "by ${data['organizer']}",
+                    "by ${raffle.organizerName}",
                     style: AppTextStyle.textXs(
                       color: colorScheme.onSurfaceVariant,
                     ),
@@ -231,5 +325,27 @@ class _ActiveRafflesPageState extends State<ActiveRafflesPage> {
       ),
     );
   }
-}
 
+
+
+
+
+
+
+  //---- date time helper
+
+  String _dateRangeHelper(String start, String end) {
+    final DateTime startDateTime = DateTime.parse(start).toLocal();
+    final DateTime endDateTime = DateTime.parse(end).toLocal();
+
+    final dateRange="${DateParserHelper.shortDate(startDateTime)}-${DateParserHelper.shortDate(endDateTime)}";
+    return dateRange;
+  }
+
+
+
+
+
+
+
+}

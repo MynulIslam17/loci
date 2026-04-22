@@ -67,22 +67,22 @@ class RaffleEditCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 16),
 
-                // Prize Value Badge -
+
                 Container(
                   width: double.infinity,
-                  padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
+                  padding: const EdgeInsets.symmetric(
+                    vertical: 12,
+                    horizontal: 16,
+                  ),
                   decoration: BoxDecoration(
-                    // Using a light teal for light mode, or surfaceVariant for dark mode
-                    color: Theme.of(context).brightness == Brightness.light
-                        ? const Color(0xFFE0F2F1)
-                        : colorScheme.primaryContainer.withOpacity(0.2),
-                    borderRadius: BorderRadius.circular(16),
+                    color: colorScheme.primary.withOpacity(0.2),
+                    borderRadius: BorderRadius.circular(12),
                   ),
                   child: Text(
                     prizeText,
-                    style: AppTextStyle.textMd(
-                      weight: FontWeight.w700,
-                      color: const Color(0xFF26A69A), // Brand Teal
+                    style: AppTextStyle.textSm(
+                      color: colorScheme.primary,
+                      weight: FontWeight.w600,
                     ),
                   ),
                 ),

@@ -53,11 +53,14 @@ class RaffleUpdateRequest {
 
     if (tasks != null && tasks!.isNotEmpty) {
       map['tasks'] = jsonEncode(
-        tasks!.map((e) => {
-          "activityId": e.activity?.id,
-          "type": e.isRouteTask ? "route" : "event",
+        tasks!
+            .where((e) => e.activity != null)
+            .map((e) => {
+          if (e.isRouteTask) "routeActivity": e.activity!.id,
+          if (e.isEventTask) "eventActivity": e.activity!.id,
           "order": e.order,
-        }).toList(),
+        })
+            .toList(),
       );
     }
 

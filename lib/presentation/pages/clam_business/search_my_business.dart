@@ -27,6 +27,21 @@ class _SearchMyBusinessState extends State<SearchMyBusiness> {
   BusinessCategory? selectedCategory;
   int? _expandedIndex;
 
+  //---view page handler
+
+  void _onViewPageHandler({
+    required String businessId,
+    required String businessName,
+  }) async {
+    final result = await Get.toNamed(
+      AppRoutes.myBusinessProfile,
+      arguments: {"businessId": businessId, "businessName": businessName},
+    );
+
+    // TODO : on success
+    if (result != null && result["success"] == true) {}
+  }
+
   @override
   Widget build(BuildContext context) {
     final colorScheme = context.colorScheme;
@@ -172,6 +187,9 @@ class _SearchMyBusinessState extends State<SearchMyBusiness> {
                           setState(() {
                             selectedCategory = value;
                           });
+                          myBusinessController.getMyBusinesses(
+                            category: value?.label,
+                          );
                         },
                         items: BusinessCategory.values
                             .map(
@@ -246,19 +264,10 @@ class _SearchMyBusinessState extends State<SearchMyBusiness> {
                     businessName: business.name ?? "",
                     imagePath: business.logo ?? "",
                     description: business.description ?? "",
-                    onViewPage: () async {
-                      final result = await Get.toNamed(
-                        AppRoutes.myBusinessProfile,
-                        arguments: {
-                          "businessId": business.id,
-                          "businessName": business.name,
-                        },
-                      );
-
-                      if (result != null && result["success"] == true) {
-
-                      }
-                    },
+                    onViewPage: () => _onViewPageHandler(
+                      businessId: business.id,
+                      businessName: business.name,
+                    ),
                   );
                 }, childCount: controller.businessList.length),
               );

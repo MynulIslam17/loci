@@ -33,6 +33,7 @@ import 'package:loci/presentation/pages/explore_routes/explore_routes_screen.dar
 import 'package:loci/presentation/pages/explore_routes/route_details_screen.dart';
 import 'package:loci/presentation/pages/message/chat_list_screen.dart';
 import 'package:loci/presentation/pages/message/message_screen.dart';
+import 'package:loci/presentation/pages/my_qr_code/my_qr_code_screen.dart';
 import 'package:loci/presentation/pages/network/connection_screen.dart';
 import 'package:loci/presentation/pages/network/meeting_invitation_screen.dart';
 import 'package:loci/presentation/pages/network/metting_screen.dart';
@@ -117,13 +118,15 @@ abstract class AppPages {
     ),
 
     // ----- CheckIn
-    GetPage(name: AppRoutes.checkIn, page: () => CheckInScreen()),
+    GetPage(name: AppRoutes.checkIn, page: () => CheckInScreen(),binding: BottomNavBinding()),
+    //----myQrcode
+    GetPage(name: AppRoutes.myQrCode, page: ()=>MyQrcodeScreen(),binding: BottomNavBinding()),
 
     //--explore routes
     GetPage(name: AppRoutes.exploreRoutes, page: () => ExploreRoutesPage(),binding: BottomNavBinding()),
     GetPage(name: AppRoutes.routeDetails, page: () => RouteDetailsScreen(),binding: BottomNavBinding()),
     //--raffles
-    GetPage(name: AppRoutes.activeRaffles, page: () => ActiveRafflesPage()),
+    GetPage(name: AppRoutes.activeRaffles, page: () => ActiveRafflesPage(),binding: BottomNavBinding()),
     GetPage(name: AppRoutes.rafflesDetails, page: () => RafflesDetailsScreen()),
 
     //---clam my business

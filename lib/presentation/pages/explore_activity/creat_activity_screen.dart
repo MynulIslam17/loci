@@ -308,21 +308,23 @@ class _CreateActivityScreenState extends State<CreateActivityScreen> {
     }
 
     /// RAFFLE payload
+    /// RAFFLE payload
     if (selectedCategory == ActivityType.raffles) {
-      // 1. Create the simplified task list
+      // Build task payload exactly as backend expects
       List<Map<String, dynamic>> tasksPayload = [];
+
       for (int i = 0; i < tasks.length; i++) {
         bool isRoute = tasks[i].activityType.toLowerCase().contains("route");
+
         tasksPayload.add({
           isRoute ? "routeActivity" : "eventActivity": tasks[i].id,
           "order": i + 1,
         });
       }
 
-      // 2. Add to body
       body.addAll({
-        "startDate": raffleRange!.start.toIso8601String(),
-        "endDate": raffleRange!.end.toIso8601String(),
+        "startDate": raffleRange!.start.toUtc().toIso8601String(),
+        "endDate": raffleRange!.end.toUtc().toIso8601String(),
         "maxSupply": maxSupplyController.text.trim(),
         "raffleBundleName": couponTitleController.text.trim(),
         "tasks": jsonEncode(tasksPayload),
@@ -337,7 +339,7 @@ class _CreateActivityScreenState extends State<CreateActivityScreen> {
         ? AppUrl.createEvent
         : selectedCategory == ActivityType.routes
         ? AppUrl.createRoute
-        : AppUrl.createRaffle;
+        : AppUrl.raffles;
 
     final success = await createActivityController.createActivity(
       url: url,

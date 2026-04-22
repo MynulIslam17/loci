@@ -42,7 +42,7 @@ class _MainBottomNavState extends State<MainBottomNav> {
   /// Drawer menu items
   /// Each item contains title + icon name
   final List<Map<String, dynamic>> _drawerMenuItems = [
-    {'title': 'QR Code', 'icon': 'qr_code'},
+    {'title': 'My QR-Code', 'icon': 'qr_code'},
     {'title': 'Explore Routes', 'icon': 'map'},
     {'title': 'Upcoming Events', 'icon': 'calander'},
     {'title': 'Active Raffles', 'icon': 'rafel'},
@@ -391,8 +391,8 @@ class _MainBottomNavState extends State<MainBottomNav> {
         );
         break;
 
-      case "QR Code":
-        Get.toNamed(AppRoutes.checkIn);
+      case "My QR-Code":
+        Get.toNamed(AppRoutes.myQrCode);
         break;
 
       case "Business Profiles":

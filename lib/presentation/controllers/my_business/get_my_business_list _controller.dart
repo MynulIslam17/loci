@@ -19,12 +19,16 @@ class GetMyBusinessController extends GetxController {
     update();
   }
 
-  Future<void> getMyBusinesses() async {
+  Future<void> getMyBusinesses({String? category}) async {
     _setLoading(true);
 
     try {
+      final url = category != null
+          ? "${AppUrl.myBusiness}?category=$category"
+          : AppUrl.myBusiness;
+
       final response = await _network.getRequest(
-        url: AppUrl.myBusiness,
+        url: url,
       );
 
       if (!response.isSuccess || response.body == null) {
@@ -38,7 +42,7 @@ class GetMyBusinessController extends GetxController {
 
       businessList = model.data;
     } catch (e) {
-      SnackbarService.error("Something went wrong");
+      SnackbarService.error(e.toString());
     } finally {
       _setLoading(false);
       update();

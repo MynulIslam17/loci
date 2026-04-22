@@ -42,7 +42,7 @@ enum ActivityType {
       case ActivityType.routes:
         return 'Routes';
       case ActivityType.raffles:
-        return 'Raffles';
+        return 'raffle';
     }
   }
 }

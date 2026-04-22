@@ -7,12 +7,8 @@ import '../../../data/models/event/event_model.dart';
 
 class EventListController extends GetxController {
   bool _isLoading = false;
-
-
   bool _isPaginationLoading = false;
-
   String? _errorMessage;
-
   List<EventModel> _eventList = [];
 
   ///  Current page number for pagination
@@ -22,7 +18,7 @@ class EventListController extends GetxController {
   bool _hasNextPage = true;
 
   // use to change the limit of events per page
-  final int _limit = 2;
+  final int _limit = 20;
 
   ///  Public getters
   bool get isLoading => _isLoading;

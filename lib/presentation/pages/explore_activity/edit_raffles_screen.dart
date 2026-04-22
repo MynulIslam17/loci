@@ -18,6 +18,7 @@ import '../../../data/models/explore_activity/raffle_update_request_model.dart';
 import '../../../data/models/task_model.dart';
 import '../../../gen/assets.gen.dart';
 import '../../controllers/explore_acitivity/raffle_edit_controller.dart';
+import '../../controllers/explore_acitivity/task_controller.dart';
 import '../../widgets/common/company_info_card.dart';
 import '../../widgets/custom_button.dart';
 import '../../widgets/custom_text_field.dart';
@@ -51,6 +52,7 @@ class EditRafflesScreen extends StatefulWidget {
 
 class _EditRafflesScreenState extends State<EditRafflesScreen> {
   final raffleDetailsController = Get.find<BusinessRaffleDetailsController>();
+  final taskController = Get.find<TaskController>();
   final editController = Get.find<RaffleEditController>();
 
   late final String raffleId;
@@ -75,8 +77,6 @@ class _EditRafflesScreenState extends State<EditRafflesScreen> {
     });
   }
 
-
-
   void _onUpdate() async {
     final ctr = editController;
 
@@ -87,7 +87,8 @@ class _EditRafflesScreenState extends State<EditRafflesScreen> {
     // -----------------------------
 
     // Banner validation
-    final hasBanner = ctr.bannerImage != null ||
+    final hasBanner =
+        ctr.bannerImage != null ||
         (ctr.initialRaffle?.banner.isNotEmpty ?? false);
 
     if (!hasBanner) {
@@ -96,7 +97,8 @@ class _EditRafflesScreenState extends State<EditRafflesScreen> {
     }
 
     // Coupon validation
-    final hasCoupon = ctr.couponFile != null ||
+    final hasCoupon =
+        ctr.couponFile != null ||
         (ctr.existingCouponUrl != null && ctr.removeCoupon == false);
 
     if (!hasCoupon) {
@@ -110,13 +112,10 @@ class _EditRafflesScreenState extends State<EditRafflesScreen> {
       return;
     }
 
-
-
     // -----------------------------
     // BUILD REQUEST
     // -----------------------------
     final request = ctr.buildRequest();
-
 
     // -----------------------------
     // API CALL
@@ -130,9 +129,6 @@ class _EditRafflesScreenState extends State<EditRafflesScreen> {
       SnackbarService.error(ctr.errorMessage ?? "Update failed");
     }
   }
-
-
-
 
   @override
   Widget build(BuildContext context) {
@@ -326,6 +322,7 @@ class _EditRafflesScreenState extends State<EditRafflesScreen> {
 
   /// Tasks Section
   Widget _buildTasksSection(ColorScheme colorScheme, RaffleEditController ctr) {
+
     return Card(
       elevation: 2,
       margin: EdgeInsets.zero,
@@ -358,7 +355,10 @@ class _EditRafflesScreenState extends State<EditRafflesScreen> {
             CustomButton(
               backgroundColor: colorScheme.surface,
               side: BorderSide(color: colorScheme.primary),
-              onPressed: () {}, // Implementation for search/add
+              onPressed: () {
+
+                _taskBottomSheet(raffleDetailsController.raffleDetails!);
+              },
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
@@ -437,8 +437,6 @@ class _EditRafflesScreenState extends State<EditRafflesScreen> {
       ],
     );
   }
-
-
 
   Future<void> _showDateRangePicker() async {
     final picked = await showDateRangePicker(
@@ -527,6 +525,175 @@ class _EditRafflesScreenState extends State<EditRafflesScreen> {
           ),
         ),
       ),
+    );
+  }
+
+  void _taskBottomSheet(RaffleDetailsModel raffleDetails) {
+    final colorScheme = context.colorScheme;
+
+    showModalBottomSheet(
+      backgroundColor: colorScheme.surface,
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) {
+        return Padding(
+          padding: EdgeInsets.only(
+            left: 20,
+            right: 20,
+            top: 20,
+            bottom: MediaQuery.of(context).viewInsets.bottom + 20,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    "Add Requirement",
+                    style: AppTextStyle.textLg(
+                      weight: FontWeight.w600,
+                      color: colorScheme.onSurface,
+                    ),
+                  ),
+                  IconButton(
+                    onPressed: () => Navigator.pop(context),
+                    icon: Icon(Icons.cancel, color: colorScheme.onSurface),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 20),
+
+              // --- SEARCH FIELD ---
+              CustomTextField(
+                hintText: "Search for raffles task...",
+                borderColor: colorScheme.outline,
+                fontSize: 14,
+                textColor: colorScheme.onSurface,
+                hintTextColor: colorScheme.onSurfaceVariant,
+                suffixIcon: Icon(
+                  Icons.search,
+                  color: colorScheme.onSurfaceVariant,
+                ),
+                // Use onChanged for real-time searching
+                onChanged: (value) {
+                  if (value.isNotEmpty) {
+                    taskController.fetchTasks(
+                      isRefresh: true,
+                      query: value,
+                      businessId: raffleDetails.sponsor.id
+
+                    );
+                  }
+                },
+              ),
+
+              const SizedBox(height: 10),
+
+              // --- SEARCH RESULTS ---
+              ConstrainedBox(
+                constraints: BoxConstraints(
+                  maxHeight: MediaQuery.of(context).size.height * 0.4,
+                ),
+                child: GetBuilder<TaskController>(
+                  builder: (controller) {
+                    if (controller.isLoading) {
+                      return const Center(
+                        child: Padding(
+                          padding: EdgeInsets.all(20.0),
+                          child: CircularProgressIndicator(),
+                        ),
+                      );
+                    }
+
+                    if (controller.taskList.isEmpty) {
+                      return const Center(
+                        child: Padding(
+                          padding: EdgeInsets.all(20.0),
+                          child: Text("Search for activities to add"),
+                        ),
+                      );
+                    }
+
+                    return NotificationListener<ScrollNotification>(
+                      onNotification: (ScrollNotification scrollNotify) {
+                        if (scrollNotify.metrics.pixels >=
+                            scrollNotify.metrics.maxScrollExtent - 200) {
+                          if (!controller.isPaginationLoading &&
+                              controller.hasMore) {
+                            controller.loadMoreTasks(
+                              businessId: raffleDetails.sponsor.id,
+                            );
+                          }
+                        }
+
+                        return false;
+                      },
+
+                      child: ListView.builder(
+                        shrinkWrap: true,
+                        itemCount: controller.taskList.length + 1,
+                        itemBuilder: (context, index) {
+                          //-------pagination loader on last index-------------
+
+                          if (index == controller.taskList.length) {
+                            //----loader
+                            if (controller.isPaginationLoading) {
+                              return Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 16,
+                                ),
+                                child: Center(
+                                  child: SizedBox(
+                                    width: 20,
+                                    height: 20,
+                                    child: CircularProgressIndicator(),
+                                  ),
+                                ),
+                              );
+                            }
+
+                            //--if  no more data
+                            if (!controller.hasMore) {
+                              return const Padding(
+                                padding: EdgeInsets.symmetric(vertical: 16),
+                                child: Center(child: Text("No more activity")),
+                              );
+                            }
+
+                            return const SizedBox.shrink(); // nothing to show
+                          }
+
+                          final item = controller.taskList[index];
+
+                          return ListTile(
+                            title: Text(item.title),
+                            subtitle: Text(item.activityType),
+                            trailing: Icon(
+                              Icons.add_circle,
+                              color: colorScheme.primary,
+                            ),
+                            onTap: () {
+
+                              editController.addTask(item);
+                              Navigator.pop(context);
+
+                            },
+                          );
+                        },
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 }

@@ -35,6 +35,7 @@ static const String meetingInvitation="/meetingInvitation";
 
 //---checkIn(barcode)
   static const String checkIn="/checkIn";
+  static const String myQrCode="/myQrcode";
 
   //---screens on drawer
   static const String exploreRoutes="/exploreRoutes";

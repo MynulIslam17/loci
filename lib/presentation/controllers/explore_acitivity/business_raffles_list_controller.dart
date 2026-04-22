@@ -37,7 +37,7 @@ class BusinessRafflesListController extends GetxController {
     update();
 
     try {
-      final url = '${AppUrl.createRaffle}?page=$_currentPage&limit=$_limit&businessId=$businessId';
+      final url = '${AppUrl.raffles}?page=$_currentPage&limit=$_limit&businessId=$businessId';
 
       final NetworkResponse response = await Get.find<NetworkCaller>().getRequest(url: url);
 
@@ -72,7 +72,7 @@ class BusinessRafflesListController extends GetxController {
     update();
 
     try {
-      final url = '${AppUrl.createRaffle}?page=$_currentPage&limit=$_limit&businessId=$businessId';
+      final url = '${AppUrl.raffles}?page=$_currentPage&limit=$_limit&businessId=$businessId';
 
       final NetworkResponse response = await Get.find<NetworkCaller>().getRequest(url: url);
 
