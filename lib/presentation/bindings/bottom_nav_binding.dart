@@ -4,6 +4,7 @@ import 'package:loci/presentation/controllers/common/manual_checkin.dart';
 import 'package:loci/presentation/controllers/event/rsvp_controller.dart';
 import 'package:loci/presentation/controllers/profile/profile_controller.dart';
 import 'package:loci/presentation/controllers/raffles/raffle_list_controller.dart';
+import 'package:loci/presentation/controllers/network_dash/connection_controller.dart';
 
 import '../controllers/event/event_list_controller.dart';
 import '../controllers/routes/route_details_controller.dart';
@@ -21,6 +22,9 @@ class BottomNavBinding extends Bindings{
     Get.lazyPut(() => CheckInController(),fenix: true);
     Get.lazyPut(() => ManualCheckInController(),fenix: true);
     Get.lazyPut(() => ProfileController());
+    Get.lazyPut(() => ConnectionController(),fenix: true);
+
+
 
   }
 }

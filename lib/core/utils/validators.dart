@@ -65,16 +65,15 @@ String? validateEmail(String? value) {
 
   final trimmedValue = value.trim();
 
-  // Email regex pattern
   final emailRegex = RegExp(
-    r'^[raffles-zA-Z0-9._%+-]+@[raffles-zA-Z0-9.-]+\.[raffles-zA-Z]{2,}$',
+    r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$',
   );
 
   if (!emailRegex.hasMatch(trimmedValue)) {
-    return "Please enter raffles valid email address";
+    return "Please enter valid email address";
   }
 
-  return null; // ✅ Valid
+  return null;
 }
 
 // ==================== PASSWORD VALIDATORS ====================

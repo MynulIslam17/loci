@@ -62,6 +62,10 @@ abstract class AppUrl {
   static const String updateMyProfile="$baseUrl/users/me";
 
 
+  //--------------network
+  static const String networkDashboard="$baseUrl/users/me/dashboard";
+
+
 
 
 
