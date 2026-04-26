@@ -1,9 +1,9 @@
 import 'package:get/get.dart';
 import 'package:loci/presentation/bindings/auth_bindings.dart';
 import 'package:loci/presentation/bindings/bottom_nav_binding.dart';
+import 'package:loci/presentation/bindings/drawer_bindings.dart';
 import 'package:loci/presentation/bindings/event_bindings.dart';
 import 'package:loci/presentation/bindings/my_business_bindings.dart';
-import 'package:loci/presentation/bindings/routes_bindings.dart';
 import 'package:loci/presentation/pages/auth/forget_pass_screen.dart';
 import 'package:loci/presentation/pages/auth/login_screen.dart';
 import 'package:loci/presentation/pages/auth/otp_screen.dart';
@@ -120,14 +120,14 @@ abstract class AppPages {
     // ----- CheckIn
     GetPage(name: AppRoutes.checkIn, page: () => CheckInScreen(),binding: BottomNavBinding()),
     //----myQrcode
-    GetPage(name: AppRoutes.myQrCode, page: ()=>MyQrcodeScreen(),binding: BottomNavBinding()),
+    GetPage(name: AppRoutes.myQrCode, page: ()=>MyQrcodeScreen(),binding: DrawerBindings()),
 
     //--explore routes
     GetPage(name: AppRoutes.exploreRoutes, page: () => ExploreRoutesPage(),binding: BottomNavBinding()),
     GetPage(name: AppRoutes.routeDetails, page: () => RouteDetailsScreen(),binding: BottomNavBinding()),
     //--raffles
     GetPage(name: AppRoutes.activeRaffles, page: () => ActiveRafflesPage(),binding: BottomNavBinding()),
-    GetPage(name: AppRoutes.rafflesDetails, page: () => RafflesDetailsScreen()),
+
 
     //---clam my business
     GetPage(name: AppRoutes.searchBusiness, page: () => SearchMyBusiness(),binding: MyBusinessBindings()),

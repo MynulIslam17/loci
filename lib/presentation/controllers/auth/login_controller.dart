@@ -3,7 +3,7 @@ import 'package:get/get.dart';
 import 'package:loci/core/constants/app_url.dart';
 import 'package:loci/core/network/network_caller.dart';
 import 'package:loci/core/network/network_response.dart';
-import 'package:loci/data/models/user_model.dart';
+import 'package:loci/data/models/user/user_model.dart';
 import 'package:loci/presentation/controllers/auth/auth_controller.dart';
 
 

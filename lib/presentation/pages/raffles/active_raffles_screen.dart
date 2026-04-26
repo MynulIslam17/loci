@@ -6,6 +6,7 @@ import 'package:loci/core/utils/date_parser.dart';
 import 'package:loci/data/models/raffles/raffles_model.dart';
 import 'package:loci/presentation/controllers/raffles/raffle_list_controller.dart';
 import 'package:loci/presentation/pages/raffles/raffles_details_screen.dart';
+import 'package:loci/presentation/pages/raffles/widgets/date_range_helper.dart';
 import 'package:loci/presentation/widgets/custom_button.dart';
 import 'package:loci/presentation/widgets/custom_image_container.dart';
 import 'package:loci/presentation/widgets/custom_text_field.dart';
@@ -34,41 +35,7 @@ class ActiveRafflesPage extends StatefulWidget {
 class _ActiveRafflesPageState extends State<ActiveRafflesPage> {
   final raffleListController = Get.find<RaffleListController>();
 
-  final List<Map<String, dynamic>> raffleData = [
-    {
-      "title": "Coffee Lovers Bundle",
-      "description":
-          "Check in to 3 or more local cafes to enter. Win raffles premium selection of artisanal coffee beans and raffles high-end French press.",
-      "prize": "Premium Coffee Kit (\$200 value)",
-      "endDate": "Mar 15, 2026",
-      "requiredCheckIns": 3,
-      "imageUrl":
-          "https://images.unsplash.com/photo-1509042239860-f550ce710b93?q=80&w=1000&auto=format",
-      "organizer": "Crawl Events Co.",
-    },
-    {
-      "title": "Ultimate Pizza Night",
-      "description":
-          "Visit 5 participating pizzerias this month. Win raffles voucher for raffles full family feast plus raffles custom-made pizza stone.",
-      "prize": "Gourmet Pizza Feast (\$120 value)",
-      "endDate": "Mar 20, 2026",
-      "requiredCheckIns": 5,
-      "imageUrl":
-          "https://images.unsplash.com/photo-1513104890138-7c749659a591?q=80&w=1000&auto=format",
-      "organizer": "Loci Foodie Network",
-    },
-    {
-      "title": "Tech Explorer Giveaway",
-      "description":
-          "Check in at any 2 technology hubs or co-working spaces. Win raffles pair of the latest noise-canceling wireless earbuds.",
-      "prize": "Wireless Earbuds (\$250 value)",
-      "endDate": "Apr 05, 2026",
-      "requiredCheckIns": 2,
-      "imageUrl":
-          "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?q=80&w=1000&auto=format",
-      "organizer": "Innovation District",
-    },
-  ];
+
 
   @override
   void initState() {
@@ -282,7 +249,7 @@ class _ActiveRafflesPageState extends State<ActiveRafflesPage> {
                     ),
                     const SizedBox(width: 6),
                     Text(
-                      _dateRangeHelper(raffle.startDate, raffle.endDate),
+                      dateRangeHelper(raffle.startDate, raffle.endDate),
                       style: AppTextStyle.textXs(weight: FontWeight.w500),
                     ),
                   ],
@@ -303,7 +270,9 @@ class _ActiveRafflesPageState extends State<ActiveRafflesPage> {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (_) => RafflesDetailsScreen(),
+                          builder: (_) => RafflesDetailsScreen(
+                            raffleId: raffle.id,
+                          ),
                         ),
                       );
                     },
@@ -330,17 +299,6 @@ class _ActiveRafflesPageState extends State<ActiveRafflesPage> {
 
 
 
-
-
-  //---- date time helper
-
-  String _dateRangeHelper(String start, String end) {
-    final DateTime startDateTime = DateTime.parse(start).toLocal();
-    final DateTime endDateTime = DateTime.parse(end).toLocal();
-
-    final dateRange="${DateParserHelper.shortDate(startDateTime)}-${DateParserHelper.shortDate(endDateTime)}";
-    return dateRange;
-  }
 
 
 

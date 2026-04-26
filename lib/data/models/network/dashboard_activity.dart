@@ -1,8 +1,9 @@
 // ─────────────────────────────────────────
 // dashboard_activity.dart
 // ─────────────────────────────────────────
-import '../../core/enums/network_type.dart';
-import '../models/common/paginatation_model.dart';
+
+import '../../../core/enums/network_type.dart';
+import '../common/paginatation_model.dart';
 import 'checkin_item.dart';
 import 'connection_item.dart';
 

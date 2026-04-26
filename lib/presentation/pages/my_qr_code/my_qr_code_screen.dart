@@ -1,4 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:get/get_core/src/get_main.dart';
+import 'package:get/get_instance/src/extension_instance.dart';
+import 'package:loci/presentation/controllers/qr_code/get_my_qr_controller.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 
@@ -10,20 +14,35 @@ class MyQrcodeScreen extends StatefulWidget {
 }
 
 class _MyQrcodeScreenState extends State<MyQrcodeScreen> {
+
+  final qrCodeController=Get.find<GetMyQrCodeController>();
+
   final MobileScannerController scannerController = MobileScannerController();
   final PageController _pageController = PageController();
 
+
+
+
   int _currentIndex = 0;
 
-  // Dummy QR Data
-  final String qrData =
-      "userId:12345|name:Mynul|type:user|timestamp:1712686400";
+
 
   @override
   void dispose() {
     scannerController.dispose();
     _pageController.dispose();
     super.dispose();
+  }
+
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+
+    WidgetsBinding.instance.addPostFrameCallback((_){
+      qrCodeController.getMyQrCode();
+    });
+
   }
 
   void _onPageChanged(int index) {
@@ -49,6 +68,8 @@ class _MyQrcodeScreenState extends State<MyQrcodeScreen> {
               children: [
                 _buildScannerTab(),
                 _buildMyQrTab(color),
+
+
               ],
             ),
           ),
@@ -113,23 +134,46 @@ class _MyQrcodeScreenState extends State<MyQrcodeScreen> {
           ),
           const SizedBox(height: 20),
 
-          Container(
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              color: color.surfaceContainerHigh,
-              borderRadius: BorderRadius.circular(20),
-            ),
-            child: QrImageView(
-              data: qrData,
-              size: 220,
-              backgroundColor: Colors.white,
-            ),
-          ),
+          GetBuilder<GetMyQrCodeController>(builder: (controller){
 
+            if(controller.isLoading){
+              return SizedBox(
+                height: 260,
+                child: Center(child: CircularProgressIndicator()),
+              );
+            }
+
+            if(controller.errorMessage!=null){
+              return Text(controller.errorMessage!);
+            }
+
+            if(controller.myQrCode==null){
+              return Text("No QR Code");
+            }
+
+
+
+            return Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: color.surfaceContainerHigh,
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: QrImageView(
+                data:controller.myQrCode!.myQrCode ,
+                size: 220,
+                backgroundColor: Colors.white,
+              ),
+            );
+
+
+
+
+          }),
           const SizedBox(height: 20),
 
           Text(
-            "Show this QR to check in",
+            "Let others scan to connect with you",
             style: TextStyle(
               color: color.onSurfaceVariant,
             ),

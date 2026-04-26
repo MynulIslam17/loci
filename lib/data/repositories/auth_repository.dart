@@ -2,7 +2,7 @@
 
 
 import '../datasources/local_storage_service.dart';
-import '../models/user_model.dart';
+import '../models/user/user_model.dart';
 
 class AuthRepository {
   final LocalStorageService _storage;

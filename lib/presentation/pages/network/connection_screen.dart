@@ -2,11 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:loci/core/constants/app_text_style.dart';
 import 'package:loci/core/theme/theme_extention.dart';
-import 'package:loci/data/network/connection_item.dart';
+
 import 'package:loci/presentation/widgets/custom_image_container.dart';
 import 'package:loci/presentation/widgets/custom_text_field.dart';
 
 import '../../../core/enums/network_type.dart';
+import '../../../data/models/network/connection_item.dart';
 import '../../controllers/network_dash/connection_controller.dart';
 
 class ConnectionScreen extends StatefulWidget {

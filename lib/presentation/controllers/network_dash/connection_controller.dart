@@ -4,11 +4,12 @@ import 'package:loci/core/network/network_caller.dart';
 import 'package:loci/core/network/network_response.dart';
 
 import '../../../core/enums/network_type.dart';
-import '../../../data/network/checkin_item.dart';
-import '../../../data/network/connection_item.dart';
-import '../../../data/network/dashboard_count.dart';
-import '../../../data/network/dashboard_response.dart';
-import '../../../data/network/dashboard_activity.dart';
+import '../../../data/models/network/checkin_item.dart';
+import '../../../data/models/network/connection_item.dart';
+import '../../../data/models/network/dashboard_activity.dart';
+import '../../../data/models/network/dashboard_count.dart';
+import '../../../data/models/network/dashboard_response.dart';
+
 
 class ConnectionController extends GetxController {
   bool isLoading = false;

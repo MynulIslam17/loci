@@ -61,9 +61,16 @@ abstract class AppUrl {
   static const String getMyProfile="$baseUrl/auth/me";
   static const String updateMyProfile="$baseUrl/users/me";
 
+  ///-----------my qr code
+  static const String myQrCode="$baseUrl/connections/my-qr";
+
+
+
 
   //--------------network
   static const String networkDashboard="$baseUrl/users/me/dashboard";
+
+
 
 
 
