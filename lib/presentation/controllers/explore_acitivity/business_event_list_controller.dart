@@ -42,7 +42,7 @@ class BusinessEventListController extends GetxController {
     if (isRefresh) {
       _currentPage = 1; // reset page
       _hasNextPage = true; // reset pagination
-      _eventList.clear(); // clear existing events
+
 
     }
 

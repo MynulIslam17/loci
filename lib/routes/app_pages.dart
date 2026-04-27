@@ -100,8 +100,8 @@ abstract class AppPages {
     ),
 
     // ----- Network
-    GetPage(name: AppRoutes.referral, page: () => ReferralsScreen()),
-    GetPage(name: AppRoutes.meeting, page: () => MeetingScreen()),
+    GetPage(name: AppRoutes.referral, page: () => ReferralsScreen(),binding: BottomNavBinding()),
+    GetPage(name: AppRoutes.meeting, page: () => MeetingScreen(),binding: BottomNavBinding()),
     GetPage(name: AppRoutes.connection, page: () => ConnectionScreen(),binding: BottomNavBinding()),
     GetPage(name: AppRoutes.sendReferral, page: () => SendNewReferralsScreen()),
     GetPage(

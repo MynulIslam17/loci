@@ -2,10 +2,14 @@
 // dashboard_activity.dart
 // ─────────────────────────────────────────
 
+import 'package:loci/data/models/network/raferral_item.dart';
+
 import '../../../core/enums/network_type.dart';
 import '../common/paginatation_model.dart';
 import 'checkin_item.dart';
 import 'connection_item.dart';
+import 'metting_item.dart';
+
 
 class DashboardActivity {
   final NetworkType type;
@@ -20,7 +24,6 @@ class DashboardActivity {
 
   factory DashboardActivity.fromJson(Map<String, dynamic> json) {
     final type = networkTypeFromString(json['type']);
-
     final rawList = json['data'] as List? ?? [];
 
     List<dynamic> parsedData = [];
@@ -35,6 +38,18 @@ class DashboardActivity {
       case NetworkType.connections:
         parsedData = rawList
             .map((e) => ConnectionModel.fromJson(e))
+            .toList();
+        break;
+
+      case NetworkType.meetings:
+        parsedData = rawList
+            .map((e) => MeetingModel.fromJson(e))
+            .toList();
+        break;
+
+      case NetworkType.referrals:
+        parsedData = rawList
+            .map((e) => ReferralModel.fromJson(e))
             .toList();
         break;
 

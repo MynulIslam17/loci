@@ -28,6 +28,7 @@ class BusinessRouteListController extends GetxController {
       _currentPage = 1;
       _hasNextPage = true;
 
+
     }
 
     _isLoading = true;

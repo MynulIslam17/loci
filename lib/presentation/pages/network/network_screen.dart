@@ -46,7 +46,7 @@ class _NetworkScreenState extends State<NetworkScreen> {
             return Center(child: Text(controller.errorMessage!));
           }
 
-          final checkins = controller.checkins;
+
           final count = controller.counts;
 
           return SingleChildScrollView(

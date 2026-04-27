@@ -4,7 +4,7 @@ import 'package:loci/core/theme/theme_extention.dart';
 import 'package:loci/core/utils/status.dart';
 
 class ReferralInvitationCard extends StatelessWidget {
-  final ReferralStatus status;
+  final ReferralStatusEnum status;
   final String fromName;
   final String fromCompany;
   final String toName;
@@ -121,7 +121,7 @@ class ReferralInvitationCard extends StatelessWidget {
             ),
 
             /// Action Buttons (only when pending)
-            if (status == ReferralStatus.pending) ...[
+            if (status == ReferralStatusEnum.pending) ...[
               const SizedBox(height: 16),
               Row(
                 children: [
@@ -183,28 +183,28 @@ class ReferralInvitationCard extends StatelessWidget {
     String text;
 
     switch (status) {
-      case ReferralStatus.sent:
+      case ReferralStatusEnum.sent:
         bgColor = Colors.blue.shade50;
         textColor = Colors.blue.shade700;
         icon = Icons.send;
         text = "Sent";
         break;
 
-      case ReferralStatus.pending:
+      case ReferralStatusEnum.pending:
         bgColor = Colors.amber.shade50;
         textColor = Colors.amber.shade700;
         icon = Icons.access_time_filled;
         text = "Pending";
         break;
 
-      case ReferralStatus.confirm:
+      case ReferralStatusEnum.confirm:
         bgColor = Colors.green.shade50;
         textColor = Colors.green.shade700;
         icon = Icons.check_circle;
         text = "Accepted";
         break;
 
-      case ReferralStatus.rejected:
+      case ReferralStatusEnum.rejected:
         bgColor = Colors.red.shade50;
         textColor = Colors.red.shade700;
         icon = Icons.cancel;

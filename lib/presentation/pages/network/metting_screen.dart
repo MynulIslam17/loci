@@ -1,14 +1,17 @@
 import 'package:flutter/material.dart';
-import 'package:get/get_core/src/get_main.dart';
-import 'package:get/get_navigation/src/extension_navigation.dart';
+import 'package:get/get.dart';
 import 'package:loci/core/constants/app_text_style.dart';
 import 'package:loci/core/theme/theme_extention.dart';
 import 'package:loci/core/utils/date_parser.dart';
+import 'package:loci/presentation/pages/network/widget/empty_meeting.dart';
 import 'package:loci/presentation/pages/network/widget/meeting_card.dart';
 import 'package:loci/presentation/widgets/custom_button.dart';
 import 'package:loci/routes/app_routes.dart';
 import 'package:table_calendar/table_calendar.dart';
-import '../../../core/utils/status.dart';
+
+import '../../../core/enums/network_type.dart';
+import '../../../data/models/network/metting_item.dart';
+import '../../controllers/network_dash/connection_controller.dart';
 
 class MeetingScreen extends StatefulWidget {
   const MeetingScreen({super.key});
@@ -18,95 +21,42 @@ class MeetingScreen extends StatefulWidget {
 }
 
 class _MeetingScreenState extends State<MeetingScreen> {
-  // --- Dummy meeting data ---
-  final List<Map<String, dynamic>> meetings = [
-    {
-      "status": ReferralStatus.confirm,
-      "fromName": "John Doe",
-      "fromCompany": "Google",
-      "toName": "Sarah Smith",
-      "toCompany": "Meta",
-      "location": "Dhaka",
-      "time": "10:30 AM",
-      "message": "Looking forward to meeting.",
-      "date": DateTime(2026, 2, 12),
-    },
-    {
-      "status": ReferralStatus.pending,
-      "fromName": "Alice Johnson",
-      "fromCompany": "Amazon",
-      "toName": "Bob Brown",
-      "toCompany": "Tesla",
-      "location": "New York",
-      "time": "2:00 PM",
-      "message": "Please review the agenda.",
-      "date": DateTime(2026, 2, 13),
-    },
-    {
-      "status": ReferralStatus.pending,
-      "fromName": "Alice Johnson",
-      "fromCompany": "Amazon",
-      "toName": "Bob Brown",
-      "toCompany": "Tesla",
-      "location": "New York",
-      "time": "2:00 PM",
-      "message": "Please review the agenda.",
-      "date": DateTime(2026, 2, 13),
-    },
-    {
-      "status": ReferralStatus.rejected,
-      "fromName": "David Lee",
-      "fromCompany": "Microsoft",
-      "toName": "Emma Watson",
-      "toCompany": "Apple",
-      "location": "San Francisco",
-      "time": "11:00 AM",
-      "message": "Rescheduling due to conflict.",
-      "date": DateTime(2026, 2, 14),
-    },
-  ];
+  final meetingController = Get.find<ConnectionController>();
 
-  // Selected and focused date initialized to today
   DateTime _selectedDate = DateTime.now();
   DateTime _focusedDate = DateTime.now();
-
-  // Map to track meetings per date
-  late final Map<DateTime, List<Map<String, dynamic>>> _events;
 
   @override
   void initState() {
     super.initState();
 
-    // Build _events map: group meetings by date (normalized to midnight)
-    _events = {};
-    for (var meeting in meetings) {
-      final date = DateTime(
-        meeting['date'].year,
-        meeting['date'].month,
-        meeting['date'].day,
-      );
-      if (_events[date] == null) {
-        _events[date] = [meeting];
-      } else {
-        _events[date]!.add(meeting);
-      }
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      meetingController.fetchDashboard(NetworkType.meetings);
+    });
+
+    _selectedDate = _normalize(DateTime.now());
+  }
+
+  // ================= NORMALIZE =================
+  DateTime _normalize(DateTime d) => DateTime(d.year, d.month, d.day);
+
+  // ================= EVENTS MAP(group) =================
+  Map<DateTime, List<MeetingModel>> get _events {
+    final Map<DateTime, List<MeetingModel>> map = {};
+
+    for (final m in meetingController.meetings) {
+      final key = _normalize(m.dateTime);
+
+      map.putIfAbsent(key, () => []);
+      map[key]!.add(m);
     }
 
-    // Initialize selected and focused date to today (normalized)
-    _selectedDate = DateTime(
-      DateTime.now().year,
-      DateTime.now().month,
-      DateTime.now().day,
-    );
-    _focusedDate = _selectedDate;
+    return map;
   }
 
-  // Helper to normalize any DateTime to midnight
-  DateTime _normalizeDate(DateTime date) {
-    return DateTime(date.year, date.month, date.day);
-  }
+  List<MeetingModel> get _selectedMeetings => _events[_selectedDate] ?? [];
 
-  @override
+  // ================= UI =================
   Widget build(BuildContext context) {
     final colorScheme = context.colorScheme;
 
@@ -118,98 +68,96 @@ class _MeetingScreenState extends State<MeetingScreen> {
           style: AppTextStyle.textXl(weight: FontWeight.w600),
         ),
       ),
-      body: SingleChildScrollView(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // --- Calendar Section ---
-            _buildTopCalendar(),
+      body: GetBuilder<ConnectionController>(
+        builder: (controller) {
+          return RefreshIndicator(
+            onRefresh: () async {
+              await meetingController.fetchDashboard(NetworkType.meetings);
+            },
+            child: ListView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              children: [
+                _buildCalendar(),
 
-            // --- Content Section ---
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const SizedBox(height: 20),
-                  _buildHeader(colorScheme),
-                  const SizedBox(height: 16),
-                  _buildActionButton(context),
-                  const SizedBox(height: 24),
-                  _buildMeetingList(),
-                  const SizedBox(height: 20),
-                ],
-              ),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: Column(
+                    children: [
+                      const SizedBox(height: 20),
+                      _buildHeader(colorScheme),
+                      const SizedBox(height: 16),
+                      _buildButton(context),
+                      const SizedBox(height: 24),
+                      _buildList(controller),
+                    ],
+                  ),
+                ),
+              ],
             ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  // --- Calendar ---
-  Widget _buildTopCalendar() {
-    return Container(
-      color: context.colorScheme.surface,
-      child: TableCalendar(
-        firstDay: DateTime(1940),
-        lastDay: DateTime(2050),
-        focusedDay: _focusedDate,
-        selectedDayPredicate: (day) => isSameDay(day, _selectedDate),
-        eventLoader: (day) {
-          final date = _normalizeDate(day);
-          return _events[date] ?? [];
-        },
-        calendarStyle: CalendarStyle(
-          todayDecoration: BoxDecoration(
-            color: Colors.blueAccent,
-            shape: BoxShape.circle,
-          ),
-          markerDecoration: BoxDecoration(
-            color: context.colorScheme.primary,
-            shape: BoxShape.circle,
-          ),
-        ),
-        onDaySelected: (selectedDay, focusedDay) {
-          setState(() {
-            _selectedDate = _normalizeDate(selectedDay); // normalize on select
-            _focusedDate = focusedDay;
-          });
+          );
         },
       ),
     );
   }
 
-  // --- Header showing selected date info ---
+  // ================= CALENDAR =================
+  Widget _buildCalendar() {
+    return TableCalendar(
+      firstDay: DateTime(1940),
+      lastDay: DateTime(2050),
+      focusedDay: _focusedDate,
+      selectedDayPredicate: (day) => isSameDay(day, _selectedDate),
+
+      eventLoader: (day) {
+        return _events[_normalize(day)] ?? [];
+      },
+
+      onDaySelected: (selected, focused) {
+        setState(() {
+          _selectedDate = _normalize(selected);
+          _focusedDate = focused;
+        });
+      },
+
+      calendarStyle: CalendarStyle(
+        todayDecoration: const BoxDecoration(
+          color: Colors.blueAccent,
+          shape: BoxShape.circle,
+        ),
+        markerDecoration: BoxDecoration(
+          color: context.colorScheme.primary,
+          shape: BoxShape.circle,
+        ),
+      ),
+    );
+  }
+
+  // ================= HEADER =================
   Widget _buildHeader(ColorScheme colorScheme) {
-    final meetingsForSelectedDay = _events[_selectedDate] ?? [];
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          "Meetings on ${_selectedDate.day}/${_selectedDate.month}/${_selectedDate.year}",
-          style: AppTextStyle.textMd(
-            color: colorScheme.onSurface,
-            weight: FontWeight.w600,
-          ),
+          DateParserHelper.toCalendarHeader(_selectedDate),
+          style: AppTextStyle.textMd(weight: FontWeight.w600),
         ),
         const SizedBox(height: 4),
         Text(
-          "${meetingsForSelectedDay.length} meetings scheduled",
+          "${_selectedMeetings.length} meetings",
           style: AppTextStyle.textXs(color: colorScheme.onSurfaceVariant),
         ),
       ],
     );
   }
 
-  // --- Action Button ---
-  Widget _buildActionButton(BuildContext context) {
+  // ================= BUTTON =================
+  Widget _buildButton(BuildContext context) {
     return CustomButton(
       backgroundColor: context.colorScheme.primary,
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.add, color: context.colorScheme.onPrimary, size: 20),
+          Icon(Icons.add, color: context.colorScheme.onPrimary),
           const SizedBox(width: 8),
           Text(
             "Schedule New",
@@ -226,44 +174,41 @@ class _MeetingScreenState extends State<MeetingScreen> {
     );
   }
 
-  // --- Meeting List for Selected Day ---
-  Widget _buildMeetingList() {
-    final meetingsForSelectedDay = _events[_selectedDate] ?? [];
-
-    if (meetingsForSelectedDay.isEmpty) {
-      return Padding(
-        padding: const EdgeInsets.symmetric(vertical: 16.0),
-        child: Center(
-          child: Text(
-            "No meetings scheduled.",
-            style: AppTextStyle.textSm(
-              color: context.colorScheme.onSurfaceVariant,
-              weight: FontWeight.w600,
-            ),
-          ),
-        ),
+  // ================= LIST =================
+  Widget _buildList(ConnectionController controller) {
+    if (controller.isLoading && controller.meetings.isEmpty) {
+      return const Padding(
+        padding: EdgeInsets.symmetric(vertical: 40),
+        child: Center(child: CircularProgressIndicator()),
       );
+    }
+
+    final meetings = _selectedMeetings;
+
+    if (meetings.isEmpty) {
+      return const EmptyMeetingWidget();
     }
 
     return ListView.separated(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
-      itemCount: meetingsForSelectedDay.length,
+      itemCount: meetings.length,
       itemBuilder: (context, index) {
-        final meeting = meetingsForSelectedDay[index];
+        final m = meetings[index];
+
         return MeetingCard(
-          status: meeting["status"],
-          fromName: meeting["fromName"],
-          fromCompany: meeting["fromCompany"],
-          toName: meeting["toName"],
-          toCompany: meeting["toCompany"],
-          location: meeting["location"],
-          time: meeting["time"],
-          message: meeting["message"],
-          date: DateParserHelper.toFriendlyDate(meeting["date"]),
+          status: m.status,
+          fromName: m.fromName,
+          fromCompany: m.fromCompany,
+          toName: m.toName,
+          toCompany: m.toCompany,
+          location: m.location,
+          time: m.formatedTime,
+          message: m.message,
+          date: DateParserHelper.eventDateTime(m.dateTime),
         );
       },
-      separatorBuilder: (context, index) => const SizedBox(height: 15),
+      separatorBuilder: (_, __) => const SizedBox(height: 12),
     );
   }
 }

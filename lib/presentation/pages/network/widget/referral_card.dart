@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:loci/core/constants/app_text_style.dart';
 import 'package:loci/core/theme/theme_extention.dart';
-import 'package:loci/core/utils/status.dart';
+import '../../../../core/enums/referral_enum.dart';
 
 class ReferralCard extends StatelessWidget {
   final ReferralStatus status;
@@ -39,16 +39,21 @@ class ReferralCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
 
-            /// Header (Status + Date)
+            /// ================= HEADER =================
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                _buildStatusBadge(context),
-                Text(
-                  date,
-                  style: AppTextStyle.textXs(
-                    color: colorScheme.onSurface,
-                    weight: FontWeight.w600,
+                Flexible(child: _buildStatusBadge(context)),
+                const SizedBox(width: 8),
+                Flexible(
+                  child: Text(
+                    date,
+                    textAlign: TextAlign.end,
+                    overflow: TextOverflow.ellipsis,
+                    style: AppTextStyle.textXs(
+                      color: colorScheme.onSurface,
+                      weight: FontWeight.w600,
+                    ),
                   ),
                 ),
               ],
@@ -56,31 +61,41 @@ class ReferralCard extends StatelessWidget {
 
             const SizedBox(height: 16),
 
-            /// Referral Flow
+            /// ================= REFERRAL FLOW =================
             Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Expanded(
-                  child: _buildPersonInfo(context, fromName, fromCompany),
+                  child: _buildPersonInfo(
+                    context,
+                    fromName,
+                    fromCompany,
+                  ),
                 ),
 
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
                   child: Icon(
                     Icons.arrow_forward,
                     color: colorScheme.onSurfaceVariant,
-                    size: 24,
+                    size: 20,
                   ),
                 ),
 
                 Expanded(
-                  child: _buildPersonInfo(context, toName, toCompany),
+                  child: _buildPersonInfo(
+                    context,
+                    toName,
+                    toCompany,
+                    alignRight: true,
+                  ),
                 ),
               ],
             ),
 
             const SizedBox(height: 16),
 
-            /// Message Bubble
+            /// ================= MESSAGE =================
             Container(
               width: double.infinity,
               padding: const EdgeInsets.all(12),
@@ -90,6 +105,8 @@ class ReferralCard extends StatelessWidget {
               ),
               child: Text(
                 '"$message"',
+                maxLines: 4,
+                overflow: TextOverflow.ellipsis,
                 style: AppTextStyle.textXs(
                   color: colorScheme.onSurfaceVariant,
                   weight: FontWeight.w500,
@@ -102,7 +119,7 @@ class ReferralCard extends StatelessWidget {
     );
   }
 
-  /// Status Badge
+  /// ================= STATUS BADGE =================
   Widget _buildStatusBadge(BuildContext context) {
     Color bgColor;
     Color textColor;
@@ -124,7 +141,7 @@ class ReferralCard extends StatelessWidget {
         text = "Pending";
         break;
 
-      case ReferralStatus.confirm:
+      case ReferralStatus.confirmed:
         bgColor = Colors.green.shade50;
         textColor = Colors.green.shade700;
         icon = Icons.check_circle;
@@ -150,11 +167,14 @@ class ReferralCard extends StatelessWidget {
         children: [
           Icon(icon, size: 14, color: textColor),
           const SizedBox(width: 6),
-          Text(
-            text,
-            style: AppTextStyle.textXs(
-              color: textColor,
-              weight: FontWeight.w700,
+          Flexible(
+            child: Text(
+              text,
+              overflow: TextOverflow.ellipsis,
+              style: AppTextStyle.textXs(
+                color: textColor,
+                weight: FontWeight.w700,
+              ),
             ),
           ),
         ],
@@ -162,24 +182,35 @@ class ReferralCard extends StatelessWidget {
     );
   }
 
-  /// Person Info
-  Widget _buildPersonInfo(BuildContext context, String name, String company) {
+  /// ================= PERSON INFO =================
+  Widget _buildPersonInfo(
+      BuildContext context,
+      String name,
+      String company, {
+        bool alignRight = false,
+      }) {
     final colorScheme = context.colorScheme;
 
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+      crossAxisAlignment:
+      alignRight ? CrossAxisAlignment.end : CrossAxisAlignment.start,
       children: [
         Text(
           name,
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
+          textAlign: alignRight ? TextAlign.end : TextAlign.start,
           style: AppTextStyle.textSm(
             weight: FontWeight.w700,
             color: colorScheme.onSurface,
           ),
         ),
+        const SizedBox(height: 2),
         Text(
           company,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          textAlign: alignRight ? TextAlign.end : TextAlign.start,
           style: AppTextStyle.textXs(
             color: colorScheme.onSurfaceVariant,
           ),

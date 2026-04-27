@@ -51,7 +51,7 @@ class _ReferralsInvitationScreenState extends State<ReferralsInvitationScreen> {
                 itemCount: 10,
                 itemBuilder: (context, index) {
                   return ReferralInvitationCard(
-                    status: ReferralStatus.pending,
+                    status: ReferralStatusEnum.pending,
                     fromName: "Sarah ",
                     fromCompany: "TechCorp",
                     toName: "Michael Chen",

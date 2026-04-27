@@ -1,4 +1,4 @@
-enum ReferralStatus { //-- for referralStatus
+enum ReferralStatusEnum { //-- for referralStatus
   sent,
   pending,
   rejected,
@@ -6,18 +6,18 @@ enum ReferralStatus { //-- for referralStatus
 }
 
 
-String getReferralStatus(ReferralStatus status) {
+String getReferralStatus(ReferralStatusEnum status) {
   switch (status) {
-    case ReferralStatus.sent:
+    case ReferralStatusEnum.sent:
       return "sent";
 
-    case ReferralStatus.pending:
+    case ReferralStatusEnum.pending:
       return "pending";
 
-    case ReferralStatus.rejected:
+    case ReferralStatusEnum.rejected:
       return "rejected";
 
-    case ReferralStatus.confirm:
+    case ReferralStatusEnum.confirm:
       return "confirm";
   }
 }

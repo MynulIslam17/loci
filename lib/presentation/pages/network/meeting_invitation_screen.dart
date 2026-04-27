@@ -58,7 +58,7 @@ class _MeetingInvitationScreenState extends State<MeetingInvitationScreen> {
                 itemCount: 5, // Example count
                 itemBuilder: (context, index) {
                   return MeetingInvitationCard(
-                    status: index % 3 == 0 ? ReferralStatus.pending : ReferralStatus.confirm,
+                    status: index % 3 == 0 ? ReferralStatusEnum.pending : ReferralStatusEnum.confirm,
                     fromName: "Alice Johnson",
                     fromCompany: "TechCorp",
                     toName: "Michael Chen",

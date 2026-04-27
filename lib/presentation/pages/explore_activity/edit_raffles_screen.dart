@@ -530,6 +530,8 @@ class _EditRafflesScreenState extends State<EditRafflesScreen> {
 
   void _taskBottomSheet(RaffleDetailsModel raffleDetails) {
     final colorScheme = context.colorScheme;
+    taskController.reset();
+
 
     showModalBottomSheet(
       backgroundColor: colorScheme.surface,
@@ -680,7 +682,7 @@ class _EditRafflesScreenState extends State<EditRafflesScreen> {
                             onTap: () {
 
                               editController.addTask(item);
-                              Navigator.pop(context);
+
 
                             },
                           );

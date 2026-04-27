@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:loci/core/utils/show_snackbar.dart';
 import 'package:loci/data/models/raffles/raffles_details_model.dart';
 import '../../../core/constants/app_url.dart';
 import '../../../core/network/network_caller.dart';
@@ -123,8 +124,11 @@ class RaffleEditController extends GetxController {
   }
 
   void addTask(TaskModel task) {
-    final alreadyAdded = tasks.any((e) => e.activity?.id == task.id);
-    if (alreadyAdded) return;
+    bool alreadyAdded = tasks.any((e) => e.activity?.id == task.id);
+    if (alreadyAdded) {
+      SnackbarService.warning("Task already added");
+      return;
+    }
 
     final raffleTask = RaffleTaskModel(
       routeActivity: task.activityType == "route"
@@ -148,6 +152,7 @@ class RaffleEditController extends GetxController {
     );
 
     tasks.add(raffleTask);
+    Get.back();
     update();
   }
 
