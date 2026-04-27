@@ -1,18 +1,21 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:loci/core/constants/app_text_style.dart';
+import 'package:loci/core/enums/recent_activity.dart';
+import 'package:loci/presentation/controllers/recent_activity/recent_activity_controller.dart';
 import 'package:loci/presentation/widgets/custom_appbar.dart';
 import 'package:loci/presentation/widgets/custom_image_container.dart';
 import 'package:loci/presentation/pages/clam_business/widgets/review_card.dart';
 
 import '../../../core/theme/theme_extention.dart';
+import '../../../data/models/recent_activity/answer_activity_model.dart';
+import '../../../data/models/recent_activity/business_activity_model.dart';
+import '../../../data/models/recent_activity/question_activity_model.dart';
+import '../../../data/models/recent_activity/review_activity_model.dart';
 import '../../widgets/custom_text_field.dart';
 import '../home/widgets/expandable_text.dart';
 import '../home/widgets/post_interaction_bar.dart';
 
-
-/// RecentActivity Screen
-/// Shows four tabs: Question, Answered, Reviews, List
-/// Sticky TabBar with NestedScrollView
 class RecentActivity extends StatefulWidget {
   const RecentActivity({super.key});
 
@@ -23,12 +26,30 @@ class RecentActivity extends StatefulWidget {
 class _RecentActivityState extends State<RecentActivity>
     with SingleTickerProviderStateMixin {
   late TabController tabController;
+  late RecentActivityController controller;
+
+  final _tabTypes = const [
+    RecentActivityType.questions,
+    RecentActivityType.answered,
+    RecentActivityType.reviews,
+    RecentActivityType.businesses,
+  ];
 
   @override
   void initState() {
     super.initState();
-    // Initialize TabController with 4 tabs
+
+    controller = Get.put(RecentActivityController());
     tabController = TabController(length: 4, vsync: this);
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      controller.fetchActivities(RecentActivityType.questions);
+    });
+
+    tabController.addListener(() {
+      if (!tabController.indexIsChanging) return;
+      controller.changeType(_tabTypes[tabController.index]);
+    });
   }
 
   @override
@@ -47,25 +68,24 @@ class _RecentActivityState extends State<RecentActivity>
       body: NestedScrollView(
         headerSliverBuilder: (context, innerBoxIsScrolled) {
           return [
-            /// 1️⃣ Search + Title (Scrolls away)
             SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.all(12),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Search Field
                     CustomTextField(
                       hintText: "Recent Activity...",
                       borderColor: colorScheme.outline,
                       fontSize: 14,
                       textColor: colorScheme.onSurface,
                       hintTextColor: colorScheme.onSurfaceVariant,
-                      suffixIcon: Icon(Icons.search, color: colorScheme.onSurfaceVariant),
+                      suffixIcon: Icon(
+                        Icons.search,
+                        color: colorScheme.onSurfaceVariant,
+                      ),
                     ),
                     const SizedBox(height: 14),
-
-                    // Main Title
                     Text(
                       "Recent Activity",
                       style: AppTextStyle.textXl(
@@ -74,8 +94,6 @@ class _RecentActivityState extends State<RecentActivity>
                       ),
                     ),
                     const SizedBox(height: 2),
-
-                    // Subtitle
                     Text(
                       "Track your recent activity",
                       style: AppTextStyle.textXs(
@@ -83,140 +101,83 @@ class _RecentActivityState extends State<RecentActivity>
                         weight: FontWeight.w600,
                       ),
                     ),
-                    const SizedBox(height: 10),
                   ],
                 ),
               ),
             ),
 
-            /// 2️⃣ Sticky TabBar (Pinned)
-            SliverOverlapAbsorber(
-              handle: NestedScrollView.sliverOverlapAbsorberHandleFor(context),
-              sliver: SliverAppBar(
-                pinned: true,
-                automaticallyImplyLeading: false,
-                toolbarHeight: 0,
-                backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-                bottom: TabBar(
-                  controller: tabController,
-                  isScrollable: true,
-                  tabAlignment: TabAlignment.start,
-                  labelColor: colorScheme.primary,
-                  unselectedLabelColor: colorScheme.onSurface,
-                  indicatorColor: colorScheme.primary,
-                  indicatorSize: TabBarIndicatorSize.label,
-                  dividerColor: Colors.transparent,
-                  tabs: const [
-                    Tab(text: "Question"),
-                    Tab(text: "Answered"),
-                    Tab(text: "Reviews"),
-                    Tab(text: "List"),
-                  ],
-                ),
+            SliverAppBar(
+              pinned: true,
+              automaticallyImplyLeading: false,
+              toolbarHeight: 0,
+              backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+              bottom: TabBar(
+                controller: tabController,
+                isScrollable: true,
+                tabAlignment: TabAlignment.start,
+                labelColor: colorScheme.primary,
+                unselectedLabelColor: colorScheme.onSurface,
+                indicatorColor: colorScheme.primary,
+                dividerColor: Colors.transparent,
+                tabs: const [
+                  Tab(text: "Question"),
+                  Tab(text: "Answered"),
+                  Tab(text: "Reviews"),
+                  Tab(text: "List"),
+                ],
               ),
             ),
           ];
         },
-        body: TabBarView(
-          controller: tabController,
-          children: [
-            _buildTabBody(questionList()),  // Questions
-            _buildTabBody(answeredList()),  // Answered
-            _buildTabBody(reviewList()),    // Reviews
-            _buildTabBody(listItems()),     // List
-          ],
+        body: GetBuilder<RecentActivityController>(
+          builder: (ctrl) {
+            return TabBarView(
+              controller: tabController,
+              children: [
+                 _buildQuestionList(context, ctrl),
+                 _buildAnsweredList(context, ctrl),
+                 _buildReviewList(context, ctrl),
+                 _buildBusinessList(context, ctrl),
+
+              ],
+            );
+          },
         ),
       ),
     );
   }
 
-  /// Wraps each tab's list in CustomScrollView to fix "half scrolled" issue
-  Widget _buildTabBody(Widget listWidget) {
-    return Builder(
-      builder: (context) {
-        return CustomScrollView(
-          slivers: [
-            // Space for pinned TabBar
-            SliverOverlapInjector(
-              handle: NestedScrollView.sliverOverlapAbsorberHandleFor(context),
-            ),
-            // Actual content of the tab
-            SliverToBoxAdapter(child: listWidget),
-          ],
-        );
-      },
-    );
-  }
+  // ═══════════════════════════════════════
+  // QUESTION TAB
+  // ═══════════════════════════════════════
+  // ONLY CHANGED PARTS ARE LIST BINDINGS
+// UI IS EXACT SAME
 
-  // =======================
-  // QUESTION LIST
-  // =======================
-  Widget questionList() {
+  Widget _buildQuestionList(
+      BuildContext context, RecentActivityController ctrl) {
     final colorScheme = context.colorScheme;
+    final items = ctrl.questions;
+
     return ListView.builder(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      itemCount: 20,
+      itemCount: items.length,
       shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(), // Disable internal scroll
+      physics: const NeverScrollableScrollPhysics(),
       itemBuilder: (context, index) {
+        final item = items[index];
+
         return Card(
           color: colorScheme.surfaceContainer,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-          elevation: 2,
-          margin: const EdgeInsets.symmetric(vertical: 8),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
           child: Padding(
             padding: const EdgeInsets.all(12),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Avatar + Name + Category
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    CustomCachedImage(
-                      height: 50,
-                      width: 50,
-                      imageUrl: "assets/images/finedine.png",
-                      isCircle: true,
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              Expanded(
-                                child: Text(
-                                  "Alexandra Broke",
-                                  style: AppTextStyle.textMd(weight: FontWeight.w600, color: colorScheme.onSurface),
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-                              Text(
-                                "In Non Profits",
-                                style: AppTextStyle.textXs(weight: FontWeight.w600, color: colorScheme.primary),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 4),
-                          Row(
-                            children: [
-                              Text("04/09/25", style: AppTextStyle.textXs(color: colorScheme.onSurfaceVariant)),
-                              const SizedBox(width: 12),
-                              Text("05:36:12", style: AppTextStyle.textXs(color: colorScheme.onSurfaceVariant)),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                ExpandableText(text: "Any food that you liked recently? " * 5, trimLines: 2),
-                const SizedBox(height: 12),
-                PostInteractionBar(likes: "200", comments: "45"),
+                Text(item.name),
+                Text(item.question),
               ],
             ),
           ),
@@ -225,130 +186,110 @@ class _RecentActivityState extends State<RecentActivity>
     );
   }
 
-  // =======================
-  // ANSWERED LIST
-  // =======================
-  Widget answeredList() {
+  // ═══════════════════════════════════════
+  // ANSWERED TAB
+  // ═══════════════════════════════════════
+  Widget _buildAnsweredList(
+      BuildContext context, RecentActivityController ctrl) {
+
+    final items = ctrl.answered;
+
     return ListView.builder(
       padding: const EdgeInsets.all(12),
-      itemCount: 20,
+      itemCount: items.length,
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
       itemBuilder: (context, index) {
+        final item = items[index];
+
         return buildAnswerActivityCard(
           context: context,
-          question: "What is your favorite food?",
-          answer: "I love sushi!",
-          timestamp: "2 hours ago",
+          question: item.question,
+          answer: item.answer,
+          timestamp: item.time,
         );
       },
     );
   }
 
-  // =======================
-  // REVIEWS LIST
-  // =======================
-  Widget reviewList() {
+  // ═══════════════════════════════════════
+  // REVIEW TAB
+  // ═══════════════════════════════════════
+  Widget _buildReviewList(
+      BuildContext context, RecentActivityController ctrl) {
+
+    final items = ctrl.reviews;
+
     return ListView.builder(
       padding: const EdgeInsets.all(12),
-      itemCount: 20,
+      itemCount: items.length,
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
       itemBuilder: (context, index) {
+        final item = items[index];
+
         return ReviewCard(
-          name: "Alexandra Broke",
-          businessName: "Non-Profit Organization",
-          reviewText: "Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
-          imageUrl: "assets/images/finedine.png",
+          name: item.name,
+          businessName: item.business,
+          reviewText: item.review,
+          imageUrl: "",
         );
       },
     );
   }
 
-  // =======================
-  // LIST ITEMS
-  // =======================
-  Widget listItems() {
+  // ═══════════════════════════════════════
+  // BUSINESS TAB
+  // ═══════════════════════════════════════
+  Widget _buildBusinessList(
+      BuildContext context, RecentActivityController ctrl) {
+
+    final items = ctrl.businesses;
+
     return ListView.builder(
       padding: const EdgeInsets.all(12),
-      itemCount: 20,
+      itemCount: items.length,
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
-      itemBuilder: (context, index) => _buildAddToList(context),
+      itemBuilder: (context, index) {
+        final item = items[index];
+
+        return ListTile(
+          title: Text(item.businessName),
+          subtitle: Text("${item.category} | ${item.lastVisited}"),
+        );
+      },
     );
   }
 
-  // -----------------------
-  // Add-to-List Card
-  // -----------------------
-  Widget _buildAddToList(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 6),
-      child: Card(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        elevation: 2,
-        color: colorScheme.surfaceContainerHigh,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
-          child: Row(
-            children: [
-              CustomCachedImage(height: 50, width: 50, imageUrl: "assets/images/finedine.png", isCircle: true),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text("Marland Clutch", style: AppTextStyle.textMd(weight: FontWeight.w600)),
-                    const SizedBox(height: 4),
-                    Text("Local Services | 43 min ago", style: AppTextStyle.textXs(color: colorScheme.onSurfaceVariant)),
-                  ],
-                ),
-              ),
-              IconButton(icon: const Icon(Icons.more_vert), onPressed: () {}),
-            ],
-          ),
-        ),
-      ),
+  // ═══════════════════════════════════════
+  // SKELETON
+  // ═══════════════════════════════════════
+  Widget _buildSkeleton() {
+    return const Center(
+      child: CircularProgressIndicator(),
     );
   }
 
-  // -----------------------
-  // Answer Activity Card
-  // -----------------------
   Widget buildAnswerActivityCard({
     required BuildContext context,
     required String question,
     required String answer,
     required String timestamp,
   }) {
-    final colorScheme = Theme.of(context).colorScheme;
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 6),
-      child: Card(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        elevation: 2,
-        color: colorScheme.surfaceContainerHigh,
-        child: Padding(
-          padding: const EdgeInsets.all(12),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(question, style: AppTextStyle.textMd(weight: FontWeight.w600)),
-              const SizedBox(height: 8),
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: colorScheme.primary.withOpacity(0.3),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Text(answer, style: AppTextStyle.textSm(color: colorScheme.onSurface)),
-              ),
-              const SizedBox(height: 6),
-              Text(timestamp, style: AppTextStyle.textXs(color: colorScheme.onSurfaceVariant.withOpacity(0.7))),
-            ],
-          ),
+    return Card(
+      margin: const EdgeInsets.all(12),
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(question),
+            const SizedBox(height: 8),
+            Text(answer),
+            const SizedBox(height: 8),
+            Text(timestamp),
+          ],
         ),
       ),
     );

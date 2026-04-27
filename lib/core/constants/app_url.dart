@@ -54,8 +54,6 @@ abstract class AppUrl {
 
 
 
-
-
   ///--------------- profile
 
   static const String getMyProfile="$baseUrl/auth/me";
@@ -70,6 +68,10 @@ abstract class AppUrl {
   //--------------network
   static const String networkDashboard="$baseUrl/users/me/dashboard";
 
+
+  //----recent activity
+
+  static const String recentActivity="$baseUrl/users/me/recent-activity";
 
 
 
