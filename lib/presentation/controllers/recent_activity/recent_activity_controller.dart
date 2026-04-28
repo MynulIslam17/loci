@@ -1,109 +1,160 @@
 import 'package:get/get.dart';
-
 import '../../../core/enums/recent_activity.dart';
 import '../../../core/network/network_caller.dart';
 import '../../../core/constants/app_url.dart';
-
 import '../../../data/models/common/paginatation_model.dart';
 import '../../../data/models/recent_activity/question_activity_model.dart';
 import '../../../data/models/recent_activity/answer_activity_model.dart';
-import '../../../data/models/recent_activity/recent_actvity_model.dart';
 import '../../../data/models/recent_activity/review_activity_model.dart';
 import '../../../data/models/recent_activity/business_activity_model.dart';
-
+import '../../../data/models/recent_activity/recent_actvity_model.dart';
 
 class RecentActivityController extends GetxController {
   final NetworkCaller _networkCaller = Get.find<NetworkCaller>();
 
-  bool isLoading = false;
+  final Map<RecentActivityType, bool> _loadingMap = {};
+  final Map<RecentActivityType, int> _pageMap = {
+    RecentActivityType.questions: 1,
+    RecentActivityType.answered: 1,
+    RecentActivityType.reviews: 1,
+    RecentActivityType.business: 1,
+  };
+
+  final Map<RecentActivityType, PaginationMeta?> _metaMap = {};
+
   String? errorMessage;
 
-  RecentActivityType currentType = RecentActivityType.questions;
-
-  PaginationMeta? meta;
-
-  // ─────────────────────────────
-  // SEPARATE TYPE SAFE LISTS
-  // ─────────────────────────────
   List<QuestionActivityModel> questions = [];
   List<AnsweredActivityModel> answered = [];
   List<ReviewActivityModel> reviews = [];
   List<BusinessActivityModel> businesses = [];
 
-  @override
-  void onInit() {
-    super.onInit();
-    fetchActivities(RecentActivityType.questions);
+  RecentActivityType currentType = RecentActivityType.questions;
+
+  // ─────────────────────────────
+  // HELPERS
+  // ─────────────────────────────
+  bool isLoadingType(RecentActivityType type) =>
+      _loadingMap[type] ?? false;
+
+  bool hasNextPage(RecentActivityType type) =>
+      _metaMap[type]?.hasNextPage ?? false;
+
+  // ─────────────────────────────
+  // CHANGE TAB (NO DUPLICATE CALL)
+  // ─────────────────────────────
+  void changeType(RecentActivityType type) {
+    currentType = type;
+
+    final hasData = switch (type) {
+      RecentActivityType.questions => questions.isNotEmpty,
+      RecentActivityType.answered => answered.isNotEmpty,
+      RecentActivityType.reviews => reviews.isNotEmpty,
+      RecentActivityType.business => businesses.isNotEmpty,
+    };
+
+    if (hasData) {
+      update();
+      return;
+    }
+
+    _pageMap[type] = 1;
+    fetchActivities(type);
   }
 
   // ─────────────────────────────
-  // FETCH API
+  // LOAD MORE
   // ─────────────────────────────
-  Future<void> fetchActivities(RecentActivityType type) async {
+  void loadMore(RecentActivityType type) {
+    if (!hasNextPage(type)) return;
+
+    fetchActivities(type, page: _pageMap[type]! + 1);
+  }
+
+  // ─────────────────────────────
+  // API CALL
+  // ─────────────────────────────
+  Future<void> fetchActivities(
+      RecentActivityType type, {
+        int page = 1,
+      }) async {
     try {
-      isLoading = true;
+      _loadingMap[type] = true;
       errorMessage = null;
-      currentType = type;
       update();
 
       final url =
-          "${AppUrl.recentActivity}?type=${type.toJson}";
+          "${AppUrl.recentActivity}?type=${type.toJson}&page=$page&limit=10";
 
       final response = await _networkCaller.getRequest(url: url);
 
       if (!response.isSuccess) {
-        errorMessage = response.errorMessage ?? "Something went wrong";
+        errorMessage =
+            response.errorMessage ?? "Something went wrong";
         return;
       }
 
       final json = response.body!;
+      _pageMap[type] = page;
 
       switch (type) {
         case RecentActivityType.questions:
-          final res = RecentActivityResponse<QuestionActivityModel>.fromJson(
+          final res =
+          RecentActivityResponse<QuestionActivityModel>.fromJson(
             json,
-                (e) => QuestionActivityModel.fromJson(e),
+            QuestionActivityModel.fromJson,
           );
-          questions = res.data;
-          meta = res.meta;
+
+          questions = page == 1
+              ? res.data
+              : [...questions, ...res.data];
+          _metaMap[type] = res.meta;
           break;
 
         case RecentActivityType.answered:
-          final res = RecentActivityResponse<AnsweredActivityModel>.fromJson(
+          final res =
+          RecentActivityResponse<AnsweredActivityModel>.fromJson(
             json,
-                (e) => AnsweredActivityModel.fromJson(e),
+            AnsweredActivityModel.fromJson,
           );
-          answered = res.data;
-          meta = res.meta;
+
+          answered = page == 1
+              ? res.data
+              : [...answered, ...res.data];
+          _metaMap[type] = res.meta;
           break;
 
         case RecentActivityType.reviews:
-          final res = RecentActivityResponse<ReviewActivityModel>.fromJson(
+          final res =
+          RecentActivityResponse<ReviewActivityModel>.fromJson(
             json,
-                (e) => ReviewActivityModel.fromJson(e),
+            ReviewActivityModel.fromJson,
           );
-          reviews = res.data;
-          meta = res.meta;
+
+          reviews = page == 1
+              ? res.data
+              : [...reviews, ...res.data];
+          _metaMap[type] = res.meta;
           break;
 
-        case RecentActivityType.businesses:
-          final res = RecentActivityResponse<BusinessActivityModel>.fromJson(
+        case RecentActivityType.business:
+          final res =
+          RecentActivityResponse<BusinessActivityModel>.fromJson(
             json,
-                (e) => BusinessActivityModel.fromJson(e),
+            BusinessActivityModel.fromJson,
           );
-          businesses = res.data;
-          meta = res.meta;
+
+          businesses = page == 1
+              ? res.data
+              : [...businesses, ...res.data];
+          _metaMap[type] = res.meta;
           break;
       }
     } catch (e) {
       errorMessage = e.toString();
     } finally {
-      isLoading = false;
+      _loadingMap[type] = false;
       update();
     }
-  }
-
-  void changeType(RecentActivityType type) {
-    fetchActivities(type);
   }
 }

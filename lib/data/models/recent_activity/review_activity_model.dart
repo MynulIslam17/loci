@@ -2,6 +2,7 @@ class ReviewActivityModel {
   final String name;
   final String business;
   final String review;
+  final String businessLogo;
   final int rating;
 
   ReviewActivityModel({
@@ -9,6 +10,7 @@ class ReviewActivityModel {
     required this.business,
     required this.review,
     required this.rating,
+    required this.businessLogo,
   });
 
   factory ReviewActivityModel.fromJson(Map<String, dynamic> json) {
@@ -17,6 +19,7 @@ class ReviewActivityModel {
       business: json['business'] ?? '',
       review: json['review'] ?? '',
       rating: json['rating'] ?? 0,
+      businessLogo: json['businessLogo'] ?? 0,
     );
   }
 }

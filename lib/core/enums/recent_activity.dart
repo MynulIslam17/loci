@@ -1,11 +1,10 @@
-// recent_activity_type.dart
-
 enum RecentActivityType {
   questions,
   answered,
   reviews,
-  businesses;
+  business;
 
+  /// FROM STRING (API → APP)
   static RecentActivityType fromString(String? value) {
     switch (value?.toLowerCase()) {
       case 'questions':
@@ -14,13 +13,15 @@ enum RecentActivityType {
         return RecentActivityType.answered;
       case 'reviews':
         return RecentActivityType.reviews;
+      case 'business':
       case 'businesses':
-        return RecentActivityType.businesses;
+        return RecentActivityType.business;
       default:
         return RecentActivityType.questions;
     }
   }
 
+  /// UI LABEL
   String get label {
     switch (this) {
       case RecentActivityType.questions:
@@ -29,11 +30,12 @@ enum RecentActivityType {
         return 'Answered';
       case RecentActivityType.reviews:
         return 'Reviews';
-      case RecentActivityType.businesses:
-        return 'Businesses';
+      case RecentActivityType.business:
+        return 'Business';
     }
   }
 
+  /// TO API
   String get toJson {
     switch (this) {
       case RecentActivityType.questions:
@@ -42,8 +44,8 @@ enum RecentActivityType {
         return 'answered';
       case RecentActivityType.reviews:
         return 'reviews';
-      case RecentActivityType.businesses:
-        return 'businesses';
+      case RecentActivityType.business:
+        return 'business';
     }
   }
 }

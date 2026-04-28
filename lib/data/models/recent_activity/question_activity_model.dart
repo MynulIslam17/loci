@@ -1,6 +1,7 @@
 class QuestionActivityModel {
   final String name;
   final String category;
+  final String avatar;
   final DateTime date;
   final String time;
   final String question;
@@ -11,6 +12,7 @@ class QuestionActivityModel {
     required this.name,
     required this.category,
     required this.date,
+    required this.avatar,
     required this.time,
     required this.question,
     required this.likes,
@@ -23,6 +25,7 @@ class QuestionActivityModel {
       category: json['category'] ?? '',
       date: DateTime.parse(json['date']),
       time: json['time'] ?? '',
+      avatar: json['avatar'] ?? '',
       question: json['question'] ?? '',
       likes: json['likes'] ?? 0,
       comments: json['comments'] ?? 0,

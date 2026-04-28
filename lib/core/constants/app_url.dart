@@ -73,6 +73,9 @@ abstract class AppUrl {
 
   static const String recentActivity="$baseUrl/users/me/recent-activity";
 
+  //------subscription
+  static const String subscriptionPlans="$baseUrl/subscriptions/plans";
+
 
 
 

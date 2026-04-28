@@ -69,7 +69,7 @@ class _NetworkScreenState extends State<NetworkScreen> {
 
                   // --- Stats Grid ---
                   controller.isLoading
-                      ? AppSkeletons.grid(context)
+                      ? AppSkeleton.list(context: context)
                       : GridView.count(
                     shrinkWrap: true,
                     physics: const NeverScrollableScrollPhysics(),
@@ -164,7 +164,7 @@ class _NetworkScreenState extends State<NetworkScreen> {
 
                   // --- Recent Check-In List ---
                   controller.isLoading
-                      ? AppSkeletons.list(context)
+                      ? AppSkeleton.list(context: context)
                       : _buildRecentList(context),
 
                   const SizedBox(height: 20),

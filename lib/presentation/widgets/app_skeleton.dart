@@ -1,10 +1,41 @@
 import 'package:flutter/material.dart';
 
-class AppSkeletons {
-  AppSkeletons._();
+class AppSkeleton {
+  AppSkeleton._();
+
+  /// ───────────────────────── LIST SKELETON ─────────────────────────
+  static Widget list({
+    required BuildContext context,
+    int itemCount = 3,
+  }) {
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return ListView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      itemCount: itemCount,
+      itemBuilder: (_, __) => Card(
+        elevation: 1,
+        color: colorScheme.surfaceContainerHigh,
+        margin: const EdgeInsets.only(bottom: 8),
+        child: ListTile(
+          leading: const SkeletonBox(width: 48, height: 48, radius: 24),
+          title: const SkeletonBox(width: 100, height: 14),
+          subtitle: const Padding(
+            padding: EdgeInsets.only(top: 8),
+            child: SkeletonBox(width: 60, height: 10),
+          ),
+          trailing: const SkeletonBox(width: 80, height: 24),
+        ),
+      ),
+    );
+  }
 
   /// ───────────────────────── GRID SKELETON ─────────────────────────
-  static Widget grid(BuildContext context) {
+  static Widget grid({
+    required BuildContext context,
+    int itemCount = 4,
+  }) {
     final colorScheme = Theme.of(context).colorScheme;
 
     return GridView.count(
@@ -15,23 +46,23 @@ class AppSkeletons {
       mainAxisSpacing: 12,
       childAspectRatio: 1.5,
       children: List.generate(
-        4,
+        itemCount,
             (_) => Card(
           elevation: 1,
           color: colorScheme.surfaceContainerHigh,
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
-            children: [
+            children: const [
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
-                children: const [
-                  _SkeletonBox(width: 24, height: 24, radius: 12),
+                children: [
+                  SkeletonBox(width: 24, height: 24, radius: 12),
                   SizedBox(width: 12),
-                  _SkeletonBox(width: 40, height: 22),
+                  SkeletonBox(width: 40, height: 22),
                 ],
               ),
-              const SizedBox(height: 8),
-              const _SkeletonBox(width: 90, height: 12),
+              SizedBox(height: 8),
+              SkeletonBox(width: 90, height: 12),
             ],
           ),
         ),
@@ -39,55 +70,47 @@ class AppSkeletons {
     );
   }
 
-  /// ───────────────────────── LIST SKELETON ─────────────────────────
-  static Widget list(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-
-    return ListView.builder(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      itemCount: 3,
-      itemBuilder: (_, __) => Card(
-        elevation: 1,
-        color: colorScheme.surfaceContainerHigh,
-        margin: const EdgeInsets.only(bottom: 8),
-        child: ListTile(
-          leading: const _SkeletonBox(width: 48, height: 48, radius: 24),
-          title: const _SkeletonBox(width: 100, height: 14),
-          subtitle: const Padding(
-            padding: EdgeInsets.only(top: 8),
-            child: _SkeletonBox(width: 60, height: 10),
-          ),
-          trailing: const _SkeletonBox(width: 80, height: 24),
-        ),
-      ),
+  /// ───────────────────────── SIMPLE BOX ─────────────────────────
+  static Widget box({
+    double width = double.infinity,
+    double height = 12,
+    double radius = 6,
+  }) {
+    return SkeletonBox(
+      width: width,
+      height: height,
+      radius: radius,
     );
   }
 }
 
-/// ───────────────────────── SHIMMER CORE (NO COLOR CHANGE) ─────────────────────────
-class _SkeletonBox extends StatefulWidget {
+
+
+
+class SkeletonBox extends StatefulWidget {
   final double width;
   final double height;
   final double radius;
 
-  const _SkeletonBox({
+  const SkeletonBox({
+    super.key,
     required this.width,
     required this.height,
     this.radius = 6,
   });
 
   @override
-  State<_SkeletonBox> createState() => _SkeletonBoxState();
+  State<SkeletonBox> createState() => _SkeletonBoxState();
 }
 
-class _SkeletonBoxState extends State<_SkeletonBox>
+class _SkeletonBoxState extends State<SkeletonBox>
     with SingleTickerProviderStateMixin {
   late AnimationController _controller;
 
   @override
   void initState() {
     super.initState();
+
     _controller = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 1200),
@@ -103,7 +126,6 @@ class _SkeletonBoxState extends State<_SkeletonBox>
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-
 
     final base = isDark
         ? Colors.grey.shade800

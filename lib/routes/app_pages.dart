@@ -23,7 +23,7 @@ import 'package:loci/presentation/pages/explore_activity/edit_event_screen.dart'
 import 'package:loci/presentation/pages/explore_activity/edit_raffles_screen.dart';
 import 'package:loci/presentation/pages/explore_activity/edit_routes_screen.dart';
 import 'package:loci/presentation/pages/explore_activity/explore_activity_screen.dart';
-import 'package:loci/presentation/pages/explore_activity/recent_activity.dart';
+import 'package:loci/presentation/pages/recent_activity/recent_activity.dart';
 import 'package:loci/presentation/pages/explore_activity/total_checkin_screen.dart';
 import 'package:loci/presentation/pages/explore_activity/total_rsvp_screen.dart';
 import 'package:loci/presentation/pages/explore_activity/view_event_screen.dart';
@@ -158,7 +158,7 @@ abstract class AppPages {
     GetPage(name: AppRoutes.viewTotalRSVP, page: () => TotalRsvpScreen()),
 
     //---create activity
-    GetPage(name: AppRoutes.recentActivity, page: () => RecentActivity()),
+    GetPage(name: AppRoutes.recentActivity, page: () => RecentActivity(),binding: DrawerBindings()),
 
     //---community
     GetPage(
@@ -182,6 +182,6 @@ abstract class AppPages {
     GetPage(name: AppRoutes.message, page: () => MessageScreen()),
     GetPage(name: AppRoutes.notification, page: () => NotificationScreen()),
 
-    GetPage(name: AppRoutes.subscription, page: () => SubscriptionScreen()),
+    GetPage(name: AppRoutes.subscription, page: () => SubscriptionScreen(),binding: DrawerBindings()),
   ];
 }

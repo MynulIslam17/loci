@@ -84,6 +84,7 @@ class ReviewCard extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(width: 4),
+                    if (onMenuTap != null)
                     IconButton(
                       onPressed: onMenuTap,
                       icon: Icon(
