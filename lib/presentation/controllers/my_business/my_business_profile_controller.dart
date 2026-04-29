@@ -11,7 +11,7 @@ class MyBusinessProfileController extends GetxController {
   bool isUpdating = false;
 
   String? _errorMessage;
-  BusinessModel? business;
+  BusinessProfileModel? business;
 
   String? get errorMessage => _errorMessage;
 
@@ -43,7 +43,7 @@ class MyBusinessProfileController extends GetxController {
       );
 
       if (response.isSuccess && response.body != null) {
-        business = BusinessModel.fromJson(response.body!['data']);
+        business = BusinessProfileModel.fromJson(response.body!['data']);
         return true;
       } else {
         _errorMessage =
@@ -71,7 +71,7 @@ class MyBusinessProfileController extends GetxController {
       );
 
       if (response.isSuccess && response.body != null) {
-        business = BusinessModel.fromJson(response.body!['data']);
+        business = BusinessProfileModel.fromJson(response.body!['data']);
         update();
       }
     } catch (_) {

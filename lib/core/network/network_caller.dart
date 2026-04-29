@@ -77,20 +77,37 @@ class NetworkCaller {
   // ===========================================================
   // GET REQUEST
   // ===========================================================
-  Future<NetworkResponse> getRequest({required String url}) async {
+// ===========================================================
+  // GET REQUEST
+  // ===========================================================
+  Future<NetworkResponse> getRequest({
+    required String url,
+    Map<String, dynamic>? queryParams,
+  }) async {
     try {
-      final uri = Uri.parse(url);
+      Uri uri = Uri.parse(url);
+
+      // Merge queryParams into the URI if provided
+      if (queryParams != null && queryParams.isNotEmpty) {
+        final existingParams = Map<String, String>.from(uri.queryParameters);
+        final newParams = queryParams.map(
+              (key, value) => MapEntry(key, value.toString()),
+        );
+        existingParams.addAll(newParams);
+        uri = uri.replace(queryParameters: existingParams);
+      }
+
       final headers = {
         'Authorization': 'Bearer ${accessToken()}',
         'Content-Type': 'application/json',
       };
 
-      _logRequest(url, null, headers);
+      _logRequest(uri.toString(), null, headers);
 
       final response = await get(uri, headers: headers)
           .timeout(const Duration(seconds: 30));
 
-      _logResponse(url, response);
+      _logResponse(uri.toString(), response);
 
       final decoded = jsonDecode(response.body) as Map<String, dynamic>?;
 

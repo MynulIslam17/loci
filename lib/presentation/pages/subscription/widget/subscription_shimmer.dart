@@ -1,10 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:loci/presentation/widgets/app_skeleton.dart';
 
-
-import 'package:flutter/material.dart';
-import 'package:loci/presentation/widgets/app_skeleton.dart';
-
 class SubscriptionShimmer extends StatelessWidget {
   const SubscriptionShimmer({super.key});
 

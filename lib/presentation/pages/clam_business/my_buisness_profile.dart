@@ -3,13 +3,10 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get/get_core/src/get_main.dart';
 import 'package:get/get_navigation/src/extension_navigation.dart';
-import 'package:get_storage/get_storage.dart';
-import 'package:image_picker/image_picker.dart';
 import 'package:loci/core/enums/category_enum.dart';
 import 'package:loci/core/theme/theme_extention.dart';
 import 'package:loci/data/models/busniess/update_business_request_model.dart';
 import 'package:loci/presentation/controllers/my_business/my_business_profile_controller.dart';
-import 'package:loci/presentation/controllers/profile/profile_controller.dart';
 import 'package:loci/presentation/widgets/custom_button.dart';
 import 'package:loci/presentation/pages/clam_business/widgets/review_card.dart';
 import 'package:loci/presentation/widgets/custom_dropdown.dart';
@@ -147,7 +144,7 @@ class _MyBusinessProfileState extends State<MyBusinessProfile> {
   Widget _buildBody(
     BuildContext context,
     MyBusinessProfileController controller,
-    BusinessModel business,
+    BusinessProfileModel business,
   ) {
     final colorScheme = context.colorScheme;
 
@@ -245,7 +242,7 @@ class _MyBusinessProfileState extends State<MyBusinessProfile> {
   }
 
   // ================= PROFILE HEADER =================
-  Widget _buildProfileHeader(BusinessModel business) {
+  Widget _buildProfileHeader(BusinessProfileModel business) {
     final colorScheme = context.colorScheme;
 
     final location = business.location;
@@ -437,7 +434,7 @@ class _MyBusinessProfileState extends State<MyBusinessProfile> {
   }
 
   // ================= DESCRIPTION CARD =================
-  Widget _buildDescriptionCard(BuildContext context, BusinessModel business) {
+  Widget _buildDescriptionCard(BuildContext context, BusinessProfileModel business) {
     final colorScheme = context.colorScheme;
 
     return SizedBox(
@@ -480,7 +477,7 @@ class _MyBusinessProfileState extends State<MyBusinessProfile> {
   }
 
   // ================= PHOTO GRID =================
-  Widget _buildPhotoGrid(BusinessModel business) {
+  Widget _buildPhotoGrid(BusinessProfileModel business) {
     final _apiPhotos = business.photos;
     final int totalImages = _apiPhotos.length + _photos.length;
 
@@ -806,7 +803,7 @@ class _MyBusinessProfileState extends State<MyBusinessProfile> {
 
   // ================= EDIT BUSINESS INFO BOTTOM SHEET =================
 
-  void _showEditBusinessBottomSheet(BusinessModel business) {
+  void _showEditBusinessBottomSheet(BusinessProfileModel business) {
     final colorScheme = context.colorScheme;
     final formKey = GlobalKey<FormState>();
 
@@ -901,7 +898,7 @@ class _MyBusinessProfileState extends State<MyBusinessProfile> {
     );
   }
 
-  void _showEditDescriptionBottomSheet(BusinessModel business) {
+  void _showEditDescriptionBottomSheet(BusinessProfileModel business) {
     final colorScheme = context.colorScheme;
     final formKey = GlobalKey<FormState>();
     final descriptionTEController = TextEditingController(

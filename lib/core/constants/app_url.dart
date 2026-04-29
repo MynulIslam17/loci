@@ -51,6 +51,8 @@ abstract class AppUrl {
   static const String createBusiness="$baseUrl/businesses";
   static  String businessProfile(String businessId)=>"$baseUrl/businesses/$businessId";
   static  String updateBusinessProfile(String businessId)=>"$baseUrl/businesses/$businessId";
+  static const String browseBusinesses = "$baseUrl/businesses";
+
 
 
 

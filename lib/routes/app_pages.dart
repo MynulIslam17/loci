@@ -1,6 +1,7 @@
 import 'package:get/get.dart';
 import 'package:loci/presentation/bindings/auth_bindings.dart';
 import 'package:loci/presentation/bindings/bottom_nav_binding.dart';
+import 'package:loci/presentation/bindings/browse_business_bindings.dart';
 import 'package:loci/presentation/bindings/drawer_bindings.dart';
 import 'package:loci/presentation/bindings/event_bindings.dart';
 import 'package:loci/presentation/bindings/my_business_bindings.dart';
@@ -93,7 +94,7 @@ abstract class AppPages {
     GetPage(name: AppRoutes.eventDetails, page: () => EventDetails(),binding: EventBindings()),
 
     // ----- browse business
-    GetPage(name: AppRoutes.browseBusiness, page: () => BrowseBusinesses()),
+    GetPage(name: AppRoutes.browseBusiness, page: () => BrowseBusinesses(),binding: BrowseBusinessBindings()),
     GetPage(
       name: AppRoutes.businessProfile,
       page: () => BusinessProfileScreen(),

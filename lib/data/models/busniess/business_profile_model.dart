@@ -1,4 +1,6 @@
-class BusinessModel {
+import 'owner_model.dart';
+
+class BusinessProfileModel {
   final String id;
   final String name;
   final String category;
@@ -19,7 +21,7 @@ class BusinessModel {
   final OwnerModel owner;
   final CommunityModel community;
 
-  BusinessModel({
+  BusinessProfileModel({
     required this.id,
     required this.name,
     required this.category,
@@ -37,8 +39,8 @@ class BusinessModel {
     required this.community,
   });
 
-  factory BusinessModel.fromJson(Map<String, dynamic> json) {
-    return BusinessModel(
+  factory BusinessProfileModel.fromJson(Map<String, dynamic> json) {
+    return BusinessProfileModel(
       id: json['_id'] ?? '',
       name: json['name'] ?? '',
       category: json['category'] ?? '',
@@ -63,7 +65,7 @@ class BusinessModel {
 
 
   ///===== for update the model any specific part
-  BusinessModel copyWith({
+  BusinessProfileModel copyWith({
     String? id,
     String? name,
     String? category,
@@ -80,7 +82,7 @@ class BusinessModel {
     OwnerModel? owner,
     CommunityModel? community,
   }) {
-    return BusinessModel(
+    return BusinessProfileModel(
       id: id ?? this.id,
       name: name ?? this.name,
       category: category ?? this.category,
@@ -101,34 +103,6 @@ class BusinessModel {
 }
 
 
-
-
-
-class OwnerModel {
-  final String id;
-  final String name;
-  final String email;
-  final String avatar;
-  final String? phone;
-
-  OwnerModel({
-    required this.id,
-    required this.name,
-    required this.email,
-    required this.avatar,
-    this.phone,
-  });
-
-  factory OwnerModel.fromJson(Map<String, dynamic> json) {
-    return OwnerModel(
-      id: json['id'] ?? json['_id'] ?? '',
-      name: json['name'] ?? '',
-      email: json['email'] ?? '',
-      avatar: json['avatar'] ?? '',
-      phone: json['phone'],
-    );
-  }
-}
 
 class CommunityModel {
   final String id;

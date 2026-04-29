@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:get/get_core/src/get_main.dart';
-import 'package:get/get_navigation/src/extension_navigation.dart';
-import 'package:loci/core/constants/app_text_style.dart';
+import 'package:get/get.dart';
+import 'package:loci/core/enums/category_enum.dart';
 import 'package:loci/core/theme/theme_extention.dart';
-import '../../../gen/assets.gen.dart';
+import 'package:loci/presentation/pages/browse/widgets/business_category_card.dart';
+import 'package:loci/presentation/pages/browse/widgets/business_category_ui_helper.dart';
+import '../../../core/constants/app_text_style.dart';
 import '../../../routes/app_routes.dart';
 
 class BrowseScreen extends StatefulWidget {
@@ -15,17 +16,6 @@ class BrowseScreen extends StatefulWidget {
 }
 
 class _BrowseScreenState extends State<BrowseScreen> {
-  final List<Map<String, dynamic>> placeCategory = [
-    {"Icon": Assets.icons.care, "title": "Boutiques & Beauty"},
-    {"Icon": Assets.icons.foodie, "title": "Foodie"},
-    {"Icon": Assets.icons.advanture, "title": "Adventure"},
-    {"Icon": Assets.icons.party, "title": "Party Like raffles Loci"},
-    {"Icon": Assets.icons.helth, "title": "Wellness"},
-    {"Icon": Assets.icons.repair, "title": "Home and Repair"},
-    {"Icon": Assets.icons.nonProfit, "title": "Non Profits"},
-    {"Icon": Assets.icons.local, "title": "Local Services"},
-  ];
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -52,6 +42,7 @@ class _BrowseScreenState extends State<BrowseScreen> {
                   ),
                 ),
                 const SizedBox(height: 16),
+
                 GridView.builder(
                   shrinkWrap: true,
                   physics: const NeverScrollableScrollPhysics(),
@@ -61,36 +52,13 @@ class _BrowseScreenState extends State<BrowseScreen> {
                     mainAxisSpacing: 8,
                     childAspectRatio: 1.1,
                   ),
-                  itemCount: placeCategory.length,
+                  itemCount: BusinessCategory.values.length,
                   itemBuilder: (context, index) {
-                    final item = placeCategory[index];
-                    return Card(
-                      clipBehavior: Clip.antiAlias,
-                      color: context.colorScheme.surfaceContainerHigh,
-                      child: InkWell(
-                        onTap: _placeHandler,
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            SvgPicture.asset(
-                              item["Icon"],
-                              height: 32,
-                              colorFilter: ColorFilter.mode(
-                                context.colorScheme.onSurface,
-                                BlendMode.srcIn,
-                              ),
-                            ),
-                            const SizedBox(height: 12),
-                            Text(
-                              item["title"],
-                              textAlign: TextAlign.center,
-                              style: AppTextStyle.textSm(
-                                color: context.colorScheme.onSurface,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
+                    final category = BusinessCategory.values[index];
+
+                    return BusinessCategoryCard(
+                      category: category,
+                      onTap: () => _placeHandler(category),
                     );
                   },
                 ),
@@ -102,9 +70,11 @@ class _BrowseScreenState extends State<BrowseScreen> {
     );
   }
 
-  void _placeHandler() {
-
-    Get.toNamed(AppRoutes.browseBusiness);
-
+  void _placeHandler(BusinessCategory category) {
+    Get.toNamed(
+      AppRoutes.browseBusiness,
+      arguments: category,
+    );
   }
+
 }
