@@ -161,15 +161,17 @@ class _BrowseBusinessesState extends State<BrowseBusinesses> {
             });
           },
           onAdd: _addToListHandler,
-          onView: _viewBusinessHandler,
+          onView: ()=>_viewBusinessHandler(item.id),
         );
       },
     );
   }
 
   // ================= ACTIONS =================
-  void _viewBusinessHandler() {
-    Get.toNamed(AppRoutes.businessProfile);
+  void _viewBusinessHandler(String businessId) {
+    Get.toNamed(AppRoutes.businessProfile,arguments: {
+      "businessId":businessId
+    });
   }
 
   void _addToListHandler() {}

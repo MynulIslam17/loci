@@ -1,12 +1,17 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_rating_bar/flutter_rating_bar.dart';
+import 'package:get/get.dart';
 import 'package:loci/core/constants/app_text_style.dart';
 import 'package:loci/core/theme/theme_extention.dart';
-import 'package:loci/presentation/widgets/custom_image_container.dart';
-import 'package:loci/presentation/widgets/custom_text_field.dart';
+import 'package:loci/presentation/controllers/browse_business/review_controller.dart';
+import 'package:loci/presentation/pages/browse/widgets/business_profile/business_header.dart';
+import 'package:loci/presentation/pages/browse/widgets/business_profile/business_logo.dart';
+import 'package:loci/presentation/pages/browse/widgets/business_profile/business_rating.dart';
+import 'package:loci/presentation/pages/browse/widgets/business_profile/photo_grid.dart';
+import 'package:loci/presentation/pages/browse/widgets/business_profile/review_box.dart';
+import 'package:loci/presentation/pages/browse/widgets/business_profile/review_list.dart';
 
-import '../../../gen/assets.gen.dart';
-import '../clam_business/widgets/review_card.dart';
+import '../../controllers/browse_business/business_profile_controller.dart';
+
 
 class BusinessProfileScreen extends StatefulWidget {
   const BusinessProfileScreen({super.key});
@@ -16,6 +21,22 @@ class BusinessProfileScreen extends StatefulWidget {
 }
 
 class _BusinessProfileScreenState extends State<BusinessProfileScreen> {
+  final profileController = Get.find<BusinessProfileController>();
+  final reviewController = Get.find<ReviewController>();
+  late final String businessId;
+
+  @override
+  void initState() {
+    super.initState();
+
+    final args = Get.arguments as Map<String, dynamic>?;
+    businessId = args?['businessId'] ?? '';
+
+    // CALL BOTH APIs
+    profileController.getBusinessProfile(businessId);
+    reviewController.fetchReviews(businessId: businessId);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -27,291 +48,145 @@ class _BusinessProfileScreenState extends State<BusinessProfileScreen> {
         ),
         centerTitle: true,
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
-        child: Column(
-          children: [
-            // --- 1. Circular Business Logo ---
-            Center(
-              child: Container(
-                height: 140,
-                width: 140,
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
+      body: GetBuilder<BusinessProfileController>(
+        builder: (controller) {
+          if (controller.isLoading) {
+            return const Center(child: CircularProgressIndicator());
+          }
 
-                  border: Border.all(
-                    color: context.colorScheme.primary,
-                    width: 1.5,
-                  ),
-                ),
-                child: CustomCachedImage(
-                  imageUrl: Assets.images.companyLogo.path,
-                  isCircle: true,
-                ),
-              ),
-            ),
-            const SizedBox(height: 24),
+          if (controller.errorMessage != null) {
+            return Center(child: Text(controller.errorMessage!));
+          }
 
-            // --- 2. Business Name ---
-            Text(
-              "Marland Clutch",
-              style: AppTextStyle.textXl(
-                weight: FontWeight.w700,
-                color: context.colorScheme.primary,
-              ),
-            ),
-            const SizedBox(height: 12),
+          final business = controller.business;
+          if (business == null) {
+            return const Center(child: Text("No data found"));
+          }
 
-            // --- 3. Contact Information ---
-            Text(
-              "23801 Hoover Rd, Warren, MI 48089",
-              style: AppTextStyle.textXs(
-                color: context.colorScheme.onSurfaceVariant,
-              ),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 4),
-            Text(
-              "+1 800-216-3515",
-              style: AppTextStyle.textXs(
-                color: context.colorScheme.onSurfaceVariant,
-                weight: FontWeight.w500,
-              ),
-            ),
-            const SizedBox(height: 8),
-
-            // --- 4. Tags/Categories ---
-            Text(
-              "Maintenance & Repair  |  Services & More",
-              style: AppTextStyle.textXs(
-                color: context.colorScheme.onSurfaceVariant,
-              ),
-            ),
-            const SizedBox(height: 12),
-
-            // --- 5. Ratings ---
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
+          return SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+            child: Column(
               children: [
-                Text(
-                  "2 Review ",
-                  style: AppTextStyle.textXs(color: Colors.grey[600]),
+                BusinessLogo(business.logo),
+                const SizedBox(height: 24),
+
+                BusinessHeaderSection(
+                  name: business.name,
+                  location: business.location,
+                  phone: business.phone,
+                  category: business.category,
                 ),
-                ...List.generate(
-                  5,
-                  (index) => const Icon(
-                    Icons.star,
-                    color: Colors.orangeAccent,
-                    size: 16,
-                  ),
+
+                const SizedBox(height: 12),
+
+                BusinessRating(
+                  rating: business.rating,
+                  reviewCount: business.reviewCount,
                 ),
-              ],
-            ),
-            const SizedBox(height: 24),
 
-            // --- 6. Add to List Button ---
-            SizedBox(
-              width: 180,
-              height: 45,
-              child: ElevatedButton.icon(
-                onPressed: () {},
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: context.colorScheme.primary,
-                  foregroundColor: context.colorScheme.onPrimary,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  elevation: 0,
-                ),
-                icon: const Icon(Icons.add, size: 20),
-                label: const Text("Add to List"),
-              ),
-            ),
-            const SizedBox(height: 32),
+                const SizedBox(height: 24),
 
-            // --- 7. Business Description Section ---
-            Card(
-              elevation: 2,
-              color: context.colorScheme.surfaceContainerHigh,
-              child: Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 12,
-                ),
-                child: Text(
-                  "Marland Clutch, founded in 1931, is raffles prominent global manufacturer specializing in heavy duty industrial backstopping and overrunning clutches. The company is currently raffles brand of Regal Rexnord Corporation.\n\n"
-                  "Marland Clutch, founded in 1931, is raffles prominent global manufacturer specializing in heavy duty industrial backstopping and overrunning clutches. The company is currently raffles brand of Regal Rexnord Corporation.",
-                  style: AppTextStyle.textXs(
-                    color: context.colorScheme.onSurfaceVariant,
-                  ),
-                  textAlign: TextAlign.start,
-                ),
-              ),
-            ),
-            const SizedBox(height: 32),
-            Align(
-              alignment: Alignment.topLeft,
-              child: Text(
-                "Photos",
-                style: AppTextStyle.textXl(
-                  weight: FontWeight.w700,
-                  color: context.colorScheme.primary,
-                ),
-              ),
-            ),
+                _addToListButton(context),
+                const SizedBox(height: 32),
 
-            const SizedBox(height: 6),
-            // --- 8. Business photos Section ---
-            GridView.builder(
-              shrinkWrap: true,
-              physics: NeverScrollableScrollPhysics(),
-              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 2,
-                mainAxisSpacing: 10,
-                crossAxisSpacing: 10,
-              ),
-              itemBuilder: (context, index) {
-                return Card(
-                  color: context.colorScheme.surfaceContainerHigh,
-                  child: Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: CustomCachedImage(
-                      imageUrl: "https://i.pravatar.cc/150?u=$index",
+                _description(context, business.description),
+                const SizedBox(height: 32),
 
+                _sectionTitle(context, "Photos"),
+                const SizedBox(height: 6),
 
-                    ),
-                  ),
-                );
-              },
-              itemCount: 7,
-            ),
+                PhotosGrid(business.photos),
 
-            const SizedBox(height: 32),
+                const SizedBox(height: 32),
 
-            // --- 9. Write Review Section ---
-            Card(
-              elevation: 2,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-              color: context.colorScheme.surfaceContainerHigh,
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // --- Header Row with Title and Rating ---
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          "Write your review",
-                          style: AppTextStyle.textSm(
-                            // Adjusted to Sm for better fit on card
-                            weight: FontWeight.w700,
-                            color: context.colorScheme.onSurface,
-                          ),
-                        ),
-                        // Interactive Rating Bar
-                        RatingBar.builder(
-                          initialRating: 0,
-                          minRating: 1,
-                          direction: Axis.horizontal,
-                          allowHalfRating: true,
-                          itemCount: 5,
-                          itemSize:
-                              18, // Slightly smaller to fit the row height
-                          unratedColor: context.colorScheme.outline.withOpacity(
-                            0.5,
-                          ),
-                          itemPadding: const EdgeInsets.symmetric(
-                            horizontal: 1.0,
-                          ),
-                          itemBuilder: (context, _) =>
-                              const Icon(Icons.star, color: Colors.amber),
-                          onRatingUpdate: (rating) {
-                            debugPrint("New Rating: $rating");
-                          },
-                        ),
-                      ],
-                    ),
+                const ReviewBox(),
+                const SizedBox(height: 32),
 
-                    const SizedBox(height: 12),
+                _reviewsHeader(context),
+                const SizedBox(height: 10),
 
-                    // --- Review Input Section ---
-                    CustomTextField(
-                      hintText: "Write your reviews within 100 words....",
-                      fontSize: 12,
-                      textColor: context.colorScheme.onSurface,
+                GetBuilder<ReviewController>(
+                  builder: (reviewCtrl) {
+                    if (reviewCtrl.isLoading) {
+                      return const Center(child: CircularProgressIndicator());
+                    }
 
-                      hintTextColor: context.colorScheme.onSurfaceVariant,
-                      borderColor: context.colorScheme.outline,
-                      maxLine: 4,
-                      suffixIcon: Padding(
-                        padding: const EdgeInsets.all(2),
-                        child: IconButton(
-                          onPressed: () {},
-                          icon: Icon(Icons.send),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
+                    if (reviewCtrl.errorMessage != null) {
+                      return Text(reviewCtrl.errorMessage!);
+                    }
 
-            const SizedBox(height: 32),
+                    if (reviewCtrl.reviews.isEmpty) {
+                      return const Text("No reviews yet");
+                    }
 
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-
-                Align(
-                  alignment: Alignment.topLeft,
-                  child: Text(
-                    "Reviews",
-                    style: AppTextStyle.textXl(
-                      weight: FontWeight.w700,
-                      color: context.colorScheme.primary,
-                    ),
-                  ),
-                ),
-                
-                Expanded(child: Align(
-                    alignment: Alignment.topRight,
-                    child: TextButton(onPressed: (){}, child: Text("View all",style: AppTextStyle.textXs(),))))
-
-
-
-              ],
-            ),
-
-            // --- 10. Review List ---
-            ListView.builder(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              itemCount: 2,
-              itemBuilder: (context, index) {
-                return ReviewCard(
-                  name: "Alexandra ssssBroke",
-                  businessName: "Barclay Pizza",
-                  rating: 5,
-                  reviewText: "This was one of the most epic experience...",
-                  imageUrl: "https://i.pravatar.cc/150?u=1",
-                  onMenuTap: () {
-
+                    return ReviewList(
+                      reviews: reviewCtrl.reviews,
+                    );
                   },
-                );
-              },
+                ),
+              ],
             ),
+          );
+        },
+      ),
+    );
+  }
 
+  // ================= METHODS (NO CLASSES) =================
 
+  Widget _addToListButton(BuildContext context) {
+    return SizedBox(
+      width: 180,
+      height: 45,
+      child: ElevatedButton.icon(
+        onPressed: () {},
+        icon: const Icon(Icons.add, size: 20),
+        label: const Text("Add to List"),
+      ),
+    );
+  }
 
-
-          ],
+  Widget _description(BuildContext context, String text) {
+    return Card(
+      color: context.colorScheme.surfaceContainerHigh,
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Text(
+          text,
+          style: AppTextStyle.textXs(
+            color: context.colorScheme.onSurfaceVariant,
+          ),
         ),
       ),
+    );
+  }
+
+  Widget _sectionTitle(BuildContext context, String title) {
+    return Align(
+      alignment: Alignment.topLeft,
+      child: Text(
+        title,
+        style: AppTextStyle.textXl(
+          weight: FontWeight.w700,
+          color: context.colorScheme.primary,
+        ),
+      ),
+    );
+  }
+
+  Widget _reviewsHeader(BuildContext context) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(
+          "Reviews",
+          style: AppTextStyle.textXl(),
+        ),
+        TextButton(
+          onPressed: () {},
+          child: const Text("View all"),
+        ),
+      ],
     );
   }
 }

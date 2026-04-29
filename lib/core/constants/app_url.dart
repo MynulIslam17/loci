@@ -78,6 +78,10 @@ abstract class AppUrl {
   //------subscription
   static const String subscriptionPlans="$baseUrl/subscriptions/plans";
 
+  //----reviews
+static String  businessReviews(String businessId)=>"$baseUrl/reviews/business/$businessId";
+
+
 
 
 

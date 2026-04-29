@@ -197,7 +197,7 @@ class _RecentActivityState extends State<RecentActivity>
                       businessName: item.business,
                       reviewText: item.review,
                       imageUrl: item.businessLogo,
-                      rating: item.rating,
+                      rating: item.rating.toDouble(),
                     );
                   },
                 ),

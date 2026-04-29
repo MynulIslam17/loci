@@ -98,6 +98,7 @@ abstract class AppPages {
     GetPage(
       name: AppRoutes.businessProfile,
       page: () => BusinessProfileScreen(),
+      binding: BrowseBusinessBindings()
     ),
 
     // ----- Network
