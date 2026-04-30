@@ -10,6 +10,7 @@ import 'package:loci/presentation/pages/auth/login_screen.dart';
 import 'package:loci/presentation/pages/auth/otp_screen.dart';
 import 'package:loci/presentation/pages/auth/reset_pass_sceen.dart';
 import 'package:loci/presentation/pages/auth/signup_screen.dart';
+import 'package:loci/presentation/pages/browse/all_review_screen.dart';
 import 'package:loci/presentation/pages/browse/business_profile_screen.dart';
 import 'package:loci/presentation/pages/checkin/check_in_screen.dart';
 import 'package:loci/presentation/pages/clam_business/clam_my_business.dart';
@@ -99,6 +100,12 @@ abstract class AppPages {
       name: AppRoutes.businessProfile,
       page: () => BusinessProfileScreen(),
       binding: BrowseBusinessBindings()
+    ),
+
+    GetPage(
+      name: AppRoutes.allReviewScreen,
+      page: () => const AllReviewsScreen(),
+      binding: BrowseBusinessBindings(),
     ),
 
     // ----- Network

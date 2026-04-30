@@ -22,6 +22,7 @@ abstract class AppRoutes {
   //--browse business
   static const String browseBusiness = '/browseBusiness';
   static const String businessProfile = '/businessProfile';
+  static const String allReviewScreen = '/allReviewScreen';
 
   //---network----
 static const String connection="/connection";

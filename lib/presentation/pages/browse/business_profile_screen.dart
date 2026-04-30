@@ -2,16 +2,17 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:loci/core/constants/app_text_style.dart';
 import 'package:loci/core/theme/theme_extention.dart';
-import 'package:loci/presentation/controllers/browse_business/review_controller.dart';
+import 'package:loci/presentation/controllers/browse_business/review_preview_controller.dart';
 import 'package:loci/presentation/pages/browse/widgets/business_profile/business_header.dart';
 import 'package:loci/presentation/pages/browse/widgets/business_profile/business_logo.dart';
+import 'package:loci/presentation/pages/browse/widgets/business_profile/business_profile_shimmer.dart';
 import 'package:loci/presentation/pages/browse/widgets/business_profile/business_rating.dart';
 import 'package:loci/presentation/pages/browse/widgets/business_profile/photo_grid.dart';
 import 'package:loci/presentation/pages/browse/widgets/business_profile/review_box.dart';
 import 'package:loci/presentation/pages/browse/widgets/business_profile/review_list.dart';
+import 'package:loci/routes/app_routes.dart';
 
 import '../../controllers/browse_business/business_profile_controller.dart';
-
 
 class BusinessProfileScreen extends StatefulWidget {
   const BusinessProfileScreen({super.key});
@@ -22,7 +23,7 @@ class BusinessProfileScreen extends StatefulWidget {
 
 class _BusinessProfileScreenState extends State<BusinessProfileScreen> {
   final profileController = Get.find<BusinessProfileController>();
-  final reviewController = Get.find<ReviewController>();
+  final reviewController = Get.find<ReviewPreviewController>();
   late final String businessId;
 
   @override
@@ -34,7 +35,7 @@ class _BusinessProfileScreenState extends State<BusinessProfileScreen> {
 
     // CALL BOTH APIs
     profileController.getBusinessProfile(businessId);
-    reviewController.fetchReviews(businessId: businessId);
+    reviewController.fetchReviews(businessId);
   }
 
   @override
@@ -51,7 +52,7 @@ class _BusinessProfileScreenState extends State<BusinessProfileScreen> {
       body: GetBuilder<BusinessProfileController>(
         builder: (controller) {
           if (controller.isLoading) {
-            return const Center(child: CircularProgressIndicator());
+            return BusinessProfileShimmer();
           }
 
           if (controller.errorMessage != null) {
@@ -105,23 +106,19 @@ class _BusinessProfileScreenState extends State<BusinessProfileScreen> {
                 _reviewsHeader(context),
                 const SizedBox(height: 10),
 
-                GetBuilder<ReviewController>(
+                GetBuilder<ReviewPreviewController>(
                   builder: (reviewCtrl) {
                     if (reviewCtrl.isLoading) {
                       return const Center(child: CircularProgressIndicator());
                     }
 
-                    if (reviewCtrl.errorMessage != null) {
-                      return Text(reviewCtrl.errorMessage!);
-                    }
+                    final reviews = reviewCtrl.getLimited(3);
 
-                    if (reviewCtrl.reviews.isEmpty) {
+                    if (reviews.isEmpty) {
                       return const Text("No reviews yet");
                     }
 
-                    return ReviewList(
-                      reviews: reviewCtrl.reviews,
-                    );
+                    return ReviewList(reviews: reviews);
                   },
                 ),
               ],
@@ -175,18 +172,28 @@ class _BusinessProfileScreenState extends State<BusinessProfileScreen> {
   }
 
   Widget _reviewsHeader(BuildContext context) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Text(
-          "Reviews",
-          style: AppTextStyle.textXl(),
-        ),
-        TextButton(
-          onPressed: () {},
-          child: const Text("View all"),
-        ),
-      ],
+    return GetBuilder<ReviewPreviewController>(
+      builder: (reviewCtrl) {
+        final hasMoreThanThree = reviewCtrl.reviews.length > 3;
+
+        return Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text("Reviews", style: AppTextStyle.textXl()),
+
+            if (hasMoreThanThree)
+              TextButton(
+                onPressed: () {
+                  Get.toNamed(
+                    AppRoutes.allReviewScreen,
+                    arguments: {"businessId": businessId},
+                  );
+                },
+                child: const Text("View all"),
+              ),
+          ],
+        );
+      },
     );
   }
 }
