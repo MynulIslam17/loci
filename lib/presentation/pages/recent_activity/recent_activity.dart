@@ -11,6 +11,7 @@ import 'package:loci/presentation/widgets/custom_appbar.dart';
 import 'package:loci/presentation/pages/clam_business/widgets/review_card.dart';
 import '../../../core/theme/theme_extention.dart';
 import '../../../core/utils/time_parser.dart';
+import '../../controllers/browse_business/remove_saved_business_controller.dart';
 import '../../widgets/app_skeleton.dart';
 import '../../widgets/custom_text_field.dart';
 
@@ -25,6 +26,7 @@ class _RecentActivityState extends State<RecentActivity>
     with SingleTickerProviderStateMixin {
   late TabController tabController;
   late RecentActivityController ctrl = Get.find<RecentActivityController>();
+  final removeCtrl = Get.find<RemoveSavedBusinessController>();
 
   int _activeTabIndex = 0;
 
@@ -133,6 +135,7 @@ class _RecentActivityState extends State<RecentActivity>
             return TabBarView(
               controller: tabController,
               children: [
+                ///---question
                 _buildTabWrapper(
                   type: RecentActivityType.questions,
                   isEmpty: ctrl.questions.isEmpty,
@@ -158,6 +161,7 @@ class _RecentActivityState extends State<RecentActivity>
                     );
                   },
                 ),
+                ///---answer
                 _buildTabWrapper(
                   type: RecentActivityType.answered,
                   isEmpty: ctrl.answered.isEmpty,
@@ -180,6 +184,8 @@ class _RecentActivityState extends State<RecentActivity>
                     );
                   },
                 ),
+
+                ///---reviews
                 _buildTabWrapper(
                   type: RecentActivityType.reviews,
                   isEmpty: ctrl.reviews.isEmpty,
@@ -201,30 +207,53 @@ class _RecentActivityState extends State<RecentActivity>
                     );
                   },
                 ),
-                _buildTabWrapper(
-                  type: RecentActivityType.business,
-                  isEmpty: ctrl.businesses.isEmpty,
-                  onRefresh: () =>
-                      ctrl.fetchActivities(RecentActivityType.business),
-                  onLoadMore: () =>
-                      ctrl.loadMore(RecentActivityType.business),
-                  itemCount: ctrl.businesses.length,
-                  hasNext: ctrl.hasNextPage(RecentActivityType.business),
-                  isLoading:
-                  ctrl.isLoadingType(RecentActivityType.business),
-                  itemBuilder: (index) {
-                    final item = ctrl.businesses[index];
-                    return buildBusinessActivityCard(
-                      context: context,
-                      businessName: item.businessName,
-                      category: item.category,
-                      imageUrl: item.businessLogo,
-                      lastVisited:
-                      DateParserHelper.toFriendlyDate(item.date),
-                      onMenuTap: () {},
+
+                ///---business save list
+                GetBuilder<RemoveSavedBusinessController>(
+                  builder: (deleteCtrl) {
+                    return _buildTabWrapper(
+                      type: RecentActivityType.business,
+                      isEmpty: ctrl.businesses.isEmpty,
+                      onRefresh: () =>
+                          ctrl.fetchActivities(RecentActivityType.business),
+                      onLoadMore: () =>
+                          ctrl.loadMore(RecentActivityType.business),
+                      itemCount: ctrl.businesses.length,
+                      hasNext: ctrl.hasNextPage(RecentActivityType.business),
+                      isLoading:
+                      ctrl.isLoadingType(RecentActivityType.business),
+
+                      itemBuilder: (index) {
+                        final item = ctrl.businesses[index];
+
+                        return buildBusinessActivityCard(
+                          context: context,
+
+
+                          id:"69f05a7a6e6fe1eec653e091",
+
+                          businessName: item.businessName,
+                          category: item.category,
+                          imageUrl: item.businessLogo,
+                          lastVisited:
+                          DateParserHelper.toFriendlyDate(item.date),
+
+                          isDeleting: deleteCtrl.isLoading("69f05a7a6e6fe1eec653e091"),
+
+                          ///DELETE LOGIC
+                          onDelete: () async {
+                            final success = await removeCtrl.removeBusiness("69f05a7a6e6fe1eec653e091");
+
+                            if (success) {
+                              // ctrl.businesses.removeWhere((e) => e."s" == item.id);
+                              ctrl.update();
+                            }
+                          },
+                        );
+                      },
                     );
                   },
-                ),
+                )
               ],
             );
           },
@@ -232,6 +261,8 @@ class _RecentActivityState extends State<RecentActivity>
       ),
     );
   }
+
+
 
   // ═══════════════════════════════════════
   // REUSABLE TAB WRAPPER (Updated with PageStorageKey)

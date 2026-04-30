@@ -4,7 +4,6 @@ import 'package:get/get.dart';
 import 'package:loci/core/enums/category_enum.dart';
 import 'package:loci/core/theme/theme_extention.dart';
 import 'package:loci/presentation/pages/browse/widgets/business_category_card.dart';
-import 'package:loci/presentation/pages/browse/widgets/business_category_ui_helper.dart';
 import '../../../core/constants/app_text_style.dart';
 import '../../../routes/app_routes.dart';
 

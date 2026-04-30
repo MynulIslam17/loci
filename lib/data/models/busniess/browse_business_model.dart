@@ -1,4 +1,4 @@
-import 'business_profile_model.dart';
+
 import 'owner_model.dart';
 
 class BrowseBusinessModel {

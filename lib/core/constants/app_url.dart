@@ -52,6 +52,8 @@ abstract class AppUrl {
   static  String businessProfile(String businessId)=>"$baseUrl/businesses/$businessId";
   static  String updateBusinessProfile(String businessId)=>"$baseUrl/businesses/$businessId";
   static const String browseBusinesses = "$baseUrl/businesses";
+  static const String addBusinessToSaveList = "$baseUrl/users/me/saved-businesses";
+  static  String removeSavedBusiness(String businessId) => "$baseUrl/users/me/saved-businesses/${businessId}";
 
 
 

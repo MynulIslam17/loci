@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:loci/core/constants/app_text_style.dart';
 import 'package:loci/core/theme/theme_extention.dart';
 import 'package:loci/presentation/controllers/browse_business/review_preview_controller.dart';
+import 'package:loci/presentation/controllers/browse_business/save_business_controller.dart';
 import 'package:loci/presentation/pages/browse/widgets/business_profile/business_header.dart';
 import 'package:loci/presentation/pages/browse/widgets/business_profile/business_logo.dart';
 import 'package:loci/presentation/pages/browse/widgets/business_profile/business_profile_shimmer.dart';
@@ -24,6 +25,7 @@ class BusinessProfileScreen extends StatefulWidget {
 class _BusinessProfileScreenState extends State<BusinessProfileScreen> {
   final profileController = Get.find<BusinessProfileController>();
   final reviewController = Get.find<ReviewPreviewController>();
+  final saveController = Get.find<SaveBusinessController>();
   late final String businessId;
 
   @override
@@ -130,16 +132,33 @@ class _BusinessProfileScreenState extends State<BusinessProfileScreen> {
   }
 
   // ================= METHODS (NO CLASSES) =================
-
   Widget _addToListButton(BuildContext context) {
-    return SizedBox(
-      width: 180,
-      height: 45,
-      child: ElevatedButton.icon(
-        onPressed: () {},
-        icon: const Icon(Icons.add, size: 20),
-        label: const Text("Add to List"),
-      ),
+    return GetBuilder<SaveBusinessController>(
+      builder: (controller) {
+        final loading = controller.isLoading(businessId);
+
+        return SizedBox(
+          width: 180,
+          height: 45,
+          child: ElevatedButton.icon(
+            onPressed: loading
+                ? null
+                : () => saveController.saveBusiness(businessId),
+
+            icon: loading
+                ? const SizedBox(
+              width: 16,
+              height: 16,
+              child: CircularProgressIndicator(strokeWidth: 2),
+            )
+                : const Icon(Icons.add, size: 20),
+
+            label: Text(
+              loading ? "Saving..." : "Add to List",
+            ),
+          ),
+        );
+      },
     );
   }
 

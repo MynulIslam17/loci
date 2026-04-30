@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:get/get_state_manager/src/simple/get_state.dart';
 import 'package:loci/core/constants/app_text_style.dart';
 import 'package:loci/data/models/busniess/browse_business_model.dart';
 
 import '../../../../core/theme/theme_extention.dart';
+import '../../../controllers/browse_business/save_business_controller.dart';
 import '../../../widgets/custom_image_container.dart';
 
 
@@ -188,15 +190,27 @@ class BrowseBusinessCard extends StatelessWidget {
                           ),
                           const SizedBox(height: 14),
 
+
                           Row(
                             children: [
-                              Expanded(
-                                child: OutlinedButton.icon(
-                                  onPressed: onAdd,
-                                  icon: const Icon(Icons.add_circle_outline,
-                                      size: 16),
-                                  label: const Text("Add to list"),
-                                ),
+
+                              //-----save business----
+                              GetBuilder<SaveBusinessController>(
+                                builder: (ctrl) {
+                                  final loading = ctrl.isLoading(item.id);
+
+                                  return OutlinedButton.icon(
+                                    onPressed: loading ? null : onAdd,
+                                    icon: loading
+                                        ? const SizedBox(
+                                      width: 14,
+                                      height: 14,
+                                      child: CircularProgressIndicator(strokeWidth: 2),
+                                    )
+                                        : const Icon(Icons.add),
+                                    label: Text(loading ? "Saving..." : "Add to list"),
+                                  );
+                                },
                               ),
                               const SizedBox(width: 10),
                               Expanded(

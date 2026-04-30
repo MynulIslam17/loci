@@ -1,4 +1,5 @@
 import 'package:get/get.dart';
+import 'package:loci/presentation/controllers/browse_business/remove_saved_business_controller.dart';
 import 'package:loci/presentation/controllers/common/post_contoller.dart';
 
 import '../../core/network/network_setup.dart';
@@ -18,6 +19,8 @@ class AppBindings extends Bindings {
     Get.put(AuthController(Get.find()), permanent: true);
     Get.put(NavController(), permanent: true);
     Get.put(setUpNetworkClient(), permanent: true);
+
+
 
 
 
