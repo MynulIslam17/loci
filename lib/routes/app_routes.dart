@@ -71,9 +71,11 @@ static const String meetingInvitation="/meetingInvitation";
 
 
 //---community
+  static const allCommunity = '/allCommunity';
   static const communityScreen = '/communityScreen';
   static const communityMemberScreen = '/communityMemberScreen';
   static const createAnnouncement = '/createAnnouncement';
+
 
 
 

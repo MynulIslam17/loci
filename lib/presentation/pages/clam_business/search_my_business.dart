@@ -13,6 +13,7 @@ import 'package:loci/routes/app_routes.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../controllers/my_business/get_my_business_list _controller.dart';
+import '../../widgets/error_state.dart';
 
 class SearchMyBusiness extends StatefulWidget {
   const SearchMyBusiness({super.key});
@@ -54,15 +55,16 @@ class _SearchMyBusinessState extends State<SearchMyBusiness> {
           style: AppTextStyle.textLg(weight: FontWeight.w600),
         ),
       ),
-      body: CustomScrollView(
+      body:CustomScrollView(
         slivers: [
+          /// ================= HEADER =================
           SliverToBoxAdapter(
             child: Padding(
               padding: const EdgeInsets.all(15),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // 🔎 --- Search Bar Row ---
+                  /// 🔎 SEARCH + ADD
                   Row(
                     children: [
                       Expanded(
@@ -100,9 +102,9 @@ class _SearchMyBusinessState extends State<SearchMyBusiness> {
                     ],
                   ),
 
-                  //  Manual Add Option ---
                   const SizedBox(height: 20),
 
+                  /// 📌 MANUAL ADD CARD
                   Container(
                     width: double.infinity,
                     padding: const EdgeInsets.all(12),
@@ -136,7 +138,7 @@ class _SearchMyBusinessState extends State<SearchMyBusiness> {
                                 ),
                               ),
                               Text(
-                                "Create raffles new listing manually",
+                                "Create new listing manually",
                                 style: AppTextStyle.textXs(
                                   color: colorScheme.onSurfaceVariant,
                                 ),
@@ -147,19 +149,10 @@ class _SearchMyBusinessState extends State<SearchMyBusiness> {
                         TextButton(
                           onPressed: () =>
                               Get.toNamed(AppRoutes.manualClaimBusiness),
-                          style: TextButton.styleFrom(
-                            foregroundColor: colorScheme.primary,
-                            padding: const EdgeInsets.symmetric(horizontal: 12),
-                          ),
-                          child: Row(
+                          child: const Row(
                             children: [
-                              Text(
-                                "Add Now",
-                                style: AppTextStyle.textSm(
-                                  weight: FontWeight.w600,
-                                ),
-                              ),
-                              const Icon(Icons.chevron_right, size: 18),
+                              Text("Add Now"),
+                              Icon(Icons.chevron_right, size: 18),
                             ],
                           ),
                         ),
@@ -169,7 +162,7 @@ class _SearchMyBusinessState extends State<SearchMyBusiness> {
 
                   const SizedBox(height: 24),
 
-                  // --- Category Dropdown ---
+                  /// 📂 CATEGORY DROPDOWN
                   SizedBox(
                     width: 200,
                     child: Card(
@@ -179,25 +172,24 @@ class _SearchMyBusinessState extends State<SearchMyBusiness> {
                         borderColor: colorScheme.outline,
                         hintColor: colorScheme.onSurfaceVariant,
                         textColor: colorScheme.onSurface,
-                        textFontSize: 14,
-                        hintFontSize: 14,
                         value: selectedCategory,
                         hintText: "Select Category",
-                        onChanged: (BusinessCategory? value) {
+                        onChanged: (value) {
                           setState(() {
                             selectedCategory = value;
                           });
+
                           myBusinessController.getMyBusinesses(
                             category: value?.label,
                           );
                         },
                         items: BusinessCategory.values
                             .map(
-                              (category) => DropdownMenuItem<BusinessCategory>(
-                                value: category,
-                                child: Text(category.label),
-                              ),
-                            )
+                              (category) => DropdownMenuItem(
+                            value: category,
+                            child: Text(category.label),
+                          ),
+                        )
                             .toList(),
                       ),
                     ),
@@ -209,72 +201,92 @@ class _SearchMyBusinessState extends State<SearchMyBusiness> {
             ),
           ),
 
-          /// ---------------- STATE HANDLING ----------------
+          /// ================= STATE HANDLING =================
           SliverToBoxAdapter(
             child: GetBuilder<GetMyBusinessController>(
               builder: (controller) {
-                ///  CASE 1: Not business owner
+                /// NOT OWNER
                 if (!controller.isBusinessOwner) {
-                  return const Padding(
-                    padding: EdgeInsets.only(top: 50),
-                    child: Center(
-                      child: Text("You are not raffles business owner"),
+                  return const Center(
+                    child: Padding(
+                      padding: EdgeInsets.only(top: 50),
+                      child: Text("You are not a business owner"),
                     ),
                   );
                 }
 
-                ///  CASE 2: Loading
+                /// LOADING
                 if (controller.isLoading) {
-                  return const Padding(
-                    padding: EdgeInsets.only(top: 50),
-                    child: Center(child: CircularProgressIndicator()),
+                  return const Center(
+                    child: Padding(
+                      padding: EdgeInsets.only(top: 50),
+                      child: CircularProgressIndicator(),
+                    ),
                   );
                 }
 
-                ///  CASE 3: Empty
+                /// ERROR
+                if (controller.errorMessage != null) {
+                  return ErrorStateWidget(
+                    message: controller.errorMessage!,
+                    onRetry: () => controller.getMyBusinesses(
+                      category: selectedCategory?.label,
+                    ),
+                  );
+                }
+
+                /// EMPTY
                 if (controller.businessList.isEmpty) {
-                  return const Padding(
-                    padding: EdgeInsets.only(top: 50),
-                    child: Center(child: Text("No business claimed yet")),
+                  return const Center(
+                    child: Padding(
+                      padding: EdgeInsets.only(top: 50),
+                      child: Text("No business claimed yet"),
+                    ),
                   );
                 }
 
-                /// CASE 4: Show list below
+                /// SUCCESS PLACEHOLDER (LIST BELOW)
                 return const SizedBox.shrink();
               },
             ),
           ),
 
-          // --- Business List ---
+          /// ================= BUSINESS LIST =================
           GetBuilder<GetMyBusinessController>(
             builder: (controller) {
-              ///  Hide list if not valid
-              if (controller.isLoading || controller.businessList.isEmpty) {
+              /// HIDE LIST IF NOT VALID
+              if (!controller.isBusinessOwner ||
+                  controller.isLoading ||
+                  controller.errorMessage != null ||
+                  controller.businessList.isEmpty) {
                 return const SliverToBoxAdapter(child: SizedBox());
               }
 
               return SliverList(
-                delegate: SliverChildBuilderDelegate((context, index) {
-                  final business = controller.businessList[index];
+                delegate: SliverChildBuilderDelegate(
+                      (context, index) {
+                    final business = controller.businessList[index];
 
-                  return _buildExpandableBusinessCard(
-                    colorScheme: context.colorScheme,
-                    index: index,
-                    isExpanded: _expandedIndex == index,
-                    businessName: business.name ?? "",
-                    imagePath: business.logo ?? "",
-                    description: business.description ?? "",
-                    onViewPage: () => _onViewPageHandler(
-                      businessId: business.id,
-                      businessName: business.name,
-                    ),
-                  );
-                }, childCount: controller.businessList.length),
+                    return _buildExpandableBusinessCard(
+                      colorScheme: context.colorScheme,
+                      index: index,
+                      isExpanded: _expandedIndex == index,
+                      businessName: business.name ?? "",
+                      imagePath: business.logo ?? "",
+                      description: business.description ?? "",
+                      onViewPage: () => _onViewPageHandler(
+                        businessId: business.id ?? "",
+                        businessName: business.name ?? "",
+                      ),
+                    );
+                  },
+                  childCount: controller.businessList.length,
+                ),
               );
             },
           ),
         ],
-      ),
+      )
     );
   }
 

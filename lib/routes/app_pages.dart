@@ -18,6 +18,7 @@ import 'package:loci/presentation/pages/clam_business/create_ad.dart';
 import 'package:loci/presentation/pages/clam_business/manual_claim_business.dart';
 import 'package:loci/presentation/pages/clam_business/my_buisness_profile.dart';
 import 'package:loci/presentation/pages/clam_business/search_my_business.dart';
+import 'package:loci/presentation/pages/communites/all_community_screen.dart';
 import 'package:loci/presentation/pages/communites/community_member_screen.dart';
 import 'package:loci/presentation/pages/communites/create_anouncement_screen.dart';
 import 'package:loci/presentation/pages/event/event_details.dart';
@@ -177,6 +178,12 @@ abstract class AppPages {
     GetPage(
       name: AppRoutes.createAnnouncement,
       page: () => CreateAnnouncementScreen(),
+    ),
+
+    GetPage(
+      name: AppRoutes.allCommunity,
+      page: () => AllCommunityScreen(),
+
     ),
 
     //----profile

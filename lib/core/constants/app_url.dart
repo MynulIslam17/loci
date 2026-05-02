@@ -83,6 +83,9 @@ abstract class AppUrl {
   //----reviews
 static String  businessReviews(String businessId)=>"$baseUrl/reviews/business/$businessId";
 
+//---community
+
+  static String  community="$baseUrl/communities/me";
 
 
 

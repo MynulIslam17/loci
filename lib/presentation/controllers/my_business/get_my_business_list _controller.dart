@@ -8,6 +8,7 @@ import '../auth/auth_controller.dart';
 
 class GetMyBusinessController extends GetxController {
   final NetworkCaller _network = Get.find<NetworkCaller>();
+   String ? _errorMessage;
 
   bool isBusinessOwner=false;
 
@@ -19,7 +20,10 @@ class GetMyBusinessController extends GetxController {
     update();
   }
 
+  String ?get errorMessage=>_errorMessage;
+
   Future<void> getMyBusinesses({String? category}) async {
+    _errorMessage = null;
     _setLoading(true);
 
     try {
@@ -32,9 +36,8 @@ class GetMyBusinessController extends GetxController {
       );
 
       if (!response.isSuccess || response.body == null) {
-        SnackbarService.error(
-          response.errorMessage ?? "Failed to load businesses",
-        );
+        _errorMessage = response.errorMessage ?? "Something went wrong";
+        businessList = [];
         return;
       }
 
@@ -42,7 +45,8 @@ class GetMyBusinessController extends GetxController {
 
       businessList = model.data;
     } catch (e) {
-      SnackbarService.error(e.toString());
+      _errorMessage = 'An error occurred: $e';
+      businessList = [];
     } finally {
       _setLoading(false);
       update();

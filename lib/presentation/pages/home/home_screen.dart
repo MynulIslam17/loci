@@ -6,57 +6,21 @@ import 'package:loci/core/constants/app_text_style.dart';
 import 'package:loci/core/theme/app_colors.dart';
 import 'package:loci/core/theme/theme_extention.dart';
 import 'package:loci/data/models/carousel_data.dart';
+import 'package:loci/presentation/pages/communites/all_community_screen.dart';
 import 'package:loci/presentation/pages/home/widgets/custom_carousel.dart';
 import 'package:loci/presentation/pages/home/widgets/post_input_filed.dart';
-import 'package:loci/presentation/pages/home/widgets/post_interaction_bar.dart';
-import 'package:loci/presentation/pages/home/widgets/post_poll_section.dart';
 import 'package:loci/presentation/pages/raffles/active_raffles_screen.dart';
-import 'package:loci/presentation/pages/home/widgets/expandable_text.dart';
 import 'package:percent_indicator/linear_percent_indicator.dart';
 import '../../../data/models/mock_data.dart';
-import '../../../data/models/poll.dart';
 import '../../../gen/assets.gen.dart';
 import '../../../routes/app_routes.dart';
 import '../../controllers/nav_controller.dart';
-import '../../widgets/common/post_comment_section.dart';
 import '../../widgets/custom_image_container.dart';
+import '../communites/create_anouncement_screen.dart';
 import '../communites/widgets/post_card.dart';
-import 'widgets/user_post_header.dart';
 import '../communites/community_screen.dart';
+import 'home navigator.dart';
 
-class HomeNavigator extends StatelessWidget {
-  static final GlobalKey<NavigatorState> navigatorKey =
-      GlobalKey<NavigatorState>();
-
-  const HomeNavigator({super.key});
-
-  static void push(String route, {Object? arguments}) {
-    navigatorKey.currentState?.pushNamed(route, arguments: arguments);
-  }
-
-  static void pop() {
-    navigatorKey.currentState?.pop();
-  }
-
-  static bool canPop() {
-    return navigatorKey.currentState?.canPop() ?? false;
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Navigator(
-      key: navigatorKey,
-      onGenerateRoute: (settings) {
-        switch (settings.name) {
-          case AppRoutes.communityScreen:
-            return MaterialPageRoute(builder: (_) => const CommunityScreen());
-          default:
-            return MaterialPageRoute(builder: (_) => const HomeScreen());
-        }
-      },
-    );
-  }
-}
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -138,7 +102,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           break;
 
                         case "Communities":
-                          HomeNavigator.push(AppRoutes.communityScreen);
+                          HomeNavigator.push(AppRoutes.allCommunity);
                           break;
 
                         case "Events":

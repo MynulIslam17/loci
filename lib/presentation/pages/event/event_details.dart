@@ -111,10 +111,8 @@ class _EventDetailsState extends State<EventDetails> {
           // --- Error state
           if (controller.errorMessage != null) {
             return ErrorStateWidget(
-              errorMessage: controller.errorMessage,
-              onRetry: () {
-                controller.fetchEventDetails(eventId);
-              },
+              message: controller.errorMessage!,
+              onRetry: () => controller.fetchEventDetails(eventId),
             );
           }
 

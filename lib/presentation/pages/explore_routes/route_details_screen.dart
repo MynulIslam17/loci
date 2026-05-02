@@ -82,7 +82,7 @@ class _RouteDetailsScreenState extends State<RouteDetailsScreen> {
           // --- Error state
           if (controller.errorMessage != null) {
             return ErrorStateWidget(
-              errorMessage: controller.errorMessage,
+              message: controller.errorMessage!,
               onRetry: () => controller.fetchRouteDetails(routeId),
             );
           }

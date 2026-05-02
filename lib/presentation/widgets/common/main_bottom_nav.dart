@@ -14,6 +14,7 @@ import 'package:loci/routes/app_routes.dart';
 import '../../../gen/assets.gen.dart';
 import '../../pages/browse/browse_screen.dart';
 import '../../pages/event/event_screen.dart';
+import '../../pages/home/home navigator.dart';
 import '../../pages/home/home_screen.dart';
 import '../../pages/network/network_screen.dart';
 import '../../pages/profile/profile_screen.dart';

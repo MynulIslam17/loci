@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:loci/presentation/pages/home/home_screen.dart';
+
+import '../pages/home/home navigator.dart';
 
 class NavController extends GetxController {
   int _currentIndex = 0;
@@ -9,6 +12,11 @@ class NavController extends GetxController {
   int get currentIndex => _currentIndex;
 
   void changeIndex(int index) {
+
+    if(index==0){
+      HomeNavigator.reset();
+    }
+
     drawerPage = null;
     drawerNavigatorKey = null;
     _currentIndex = index;
