@@ -38,8 +38,8 @@ final List<CommentData> mockComments = List.generate(
     userName: "Alexandra Broke",
     commentText: "This was one of the most epic experiences I got involved in!",
     userImage: Assets.images.user2.path,
-    likes: "200",
-    replies: "2",
+    likes: 200,
+    replies: 20,
   ),
 );
 

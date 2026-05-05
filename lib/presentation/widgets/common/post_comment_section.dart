@@ -13,11 +13,11 @@ import '../../pages/home/widgets/user_comment_card.dart';
 /// 1. Reply input field
 /// 2. Maximum 2 comments
 /// 3. "View all comments" button if more comments exist
-class PostCommentSection extends StatelessWidget {
+class FeedCommentSection extends StatelessWidget {
   final String currentUserImage;
   final List<CommentData> comments;
 
-  const PostCommentSection({
+  const FeedCommentSection({
     super.key,
     required this.currentUserImage,
     required this.comments,
@@ -80,8 +80,8 @@ class PostCommentSection extends StatelessWidget {
               userName: comment.userName,
               commentText: comment.commentText,
               userImage: comment.userImage,
-              likeCount: comment.likes,
-              replyCount: comment.replies,
+              likeCount: comment.likes.toString(),
+              replyCount: comment.replies.toString(),
             );
           },
         ),
@@ -175,8 +175,8 @@ class PostCommentSection extends StatelessWidget {
                           userName: comment.userName,
                           commentText: comment.commentText,
                           userImage: comment.userImage,
-                          likeCount: comment.likes,
-                          replyCount: comment.replies,
+                          likeCount: comment.likes.toString(),
+                          replyCount: comment.replies.toString(),
                         );
                       },
                     ),

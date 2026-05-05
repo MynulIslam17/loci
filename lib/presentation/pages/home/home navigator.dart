@@ -1,8 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get_instance/src/bindings_interface.dart';
-import 'package:loci/presentation/bindings/bottom_nav_binding.dart';
-
 import '../../../routes/app_routes.dart';
 import '../../bindings/community_binding.dart';
 import '../communites/all_community_screen.dart';
@@ -50,14 +48,21 @@ class HomeNavigator extends StatelessWidget {
           case AppRoutes.allCommunity:
             CommunityBinding().dependencies();
             return MaterialPageRoute(
-              builder: (_) => const AllCommunityScreen(),
+              builder: (_) =>  AllCommunityScreen(),
             );
 
           case AppRoutes.communityScreen:
-         //   CommunityBinding().dependencies();
+            final args = settings.arguments;
+
+            final role = (args is Map<String, dynamic>)
+                ? args['communityRole']
+                : null;
+
             return MaterialPageRoute(
               settings: settings,
-              builder: (_) => const CommunityScreen(),
+              builder: (_) => CommunityScreen(
+                role: role,
+              ),
             );
 
           case AppRoutes.createAnnouncement:
@@ -66,7 +71,7 @@ class HomeNavigator extends StatelessWidget {
               builder: (_) => const CreateAnnouncementScreen(),
             );
 
-        // ✅ default এ HomeScreen — initialRoute এর বদলে
+
           default:
             return MaterialPageRoute(
               builder: (_) => const HomeScreen(),

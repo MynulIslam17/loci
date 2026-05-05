@@ -182,7 +182,7 @@ class _PostCardWidgetState extends State<PostCardWidget> {
                     ).colorScheme.onSurface.withOpacity(0.3),
                   ),
                   const SizedBox(height: 20),
-                  PostCommentSection(
+                  FeedCommentSection(
                     currentUserImage: 'assets/images/user3.png',
                     comments: widget.comments!,
                   ),

@@ -16,7 +16,7 @@ class AllCommunityController extends GetxController {
   List<CommunityModel> _available = [];
 
   int _currentPage = 1;
-  final int _limit = 20;
+  final int _limit = 4;
   bool _hasNextPage = true;
 
   // ---------------- GETTERS ----------------
@@ -34,11 +34,12 @@ class AllCommunityController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    // Add listener to detect when user reaches the bottom
     scrollController.addListener(_scrollListener);
+    fetchCommunities();
   }
-
   void _scrollListener() {
+    if(_isLoading && _isPaginationLoading)return;
+    if (!_hasNextPage) return;
     // Check if user is near the bottom (within 200 pixels)
     if (scrollController.position.pixels >= scrollController.position.maxScrollExtent - 200) {
       loadMoreCommunities();
@@ -62,6 +63,8 @@ class AllCommunityController extends GetxController {
       _currentPage = 1;
       _hasNextPage = true;
       _available.clear();
+      _joined.clear();
+
     }
 
     _isLoading = true;

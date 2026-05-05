@@ -2,6 +2,7 @@ import 'package:get/get.dart';
 import 'package:loci/presentation/bindings/auth_bindings.dart';
 import 'package:loci/presentation/bindings/bottom_nav_binding.dart';
 import 'package:loci/presentation/bindings/browse_business_bindings.dart';
+import 'package:loci/presentation/bindings/community_binding.dart';
 import 'package:loci/presentation/bindings/drawer_bindings.dart';
 import 'package:loci/presentation/bindings/event_bindings.dart';
 import 'package:loci/presentation/bindings/my_business_bindings.dart';
@@ -20,6 +21,7 @@ import 'package:loci/presentation/pages/clam_business/my_buisness_profile.dart';
 import 'package:loci/presentation/pages/clam_business/search_my_business.dart';
 import 'package:loci/presentation/pages/communites/all_community_screen.dart';
 import 'package:loci/presentation/pages/communites/community_member_screen.dart';
+import 'package:loci/presentation/pages/communites/community_screen.dart';
 import 'package:loci/presentation/pages/communites/create_anouncement_screen.dart';
 import 'package:loci/presentation/pages/event/event_details.dart';
 import 'package:loci/presentation/pages/explore_activity/edit_event_screen.dart';
@@ -181,8 +183,15 @@ abstract class AppPages {
     ),
 
     GetPage(
+      name: AppRoutes.communityScreen,
+      page: () => CommunityScreen(),
+    ),
+
+
+    GetPage(
       name: AppRoutes.allCommunity,
       page: () => AllCommunityScreen(),
+      binding:CommunityBinding()
 
     ),
 

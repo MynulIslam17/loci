@@ -29,6 +29,7 @@ class SnackbarService {
     VoidCallback? onTap,
     TextButton? mainButton,
   }) {
+    if (Get.isSnackbarOpen) return;
     if (!_canShow()) return;
 
     Get.snackbar(

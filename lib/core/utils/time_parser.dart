@@ -86,3 +86,26 @@ String formatUtcToLocalTime(String utcString) {
 
   return "$hour:$minute $ampm";
 }
+
+
+
+/// Returns human-readable relative time
+/// Example Outputs:
+/// "Just now"        → if within a few seconds
+/// "5m ago"          → if minutes ago
+/// "3h ago"          → if hours ago
+/// "2d ago"          → if days ago
+/// "20 Apr 2026"     → if older than 7 days
+
+String formatRelativeTime(String utcString) {
+  final time = DateTime.parse(utcString).toLocal();
+  final now = DateTime.now();
+  final diff = now.difference(time);
+
+  if (diff.inSeconds < 60) return "Just now";
+  if (diff.inMinutes < 60) return "${diff.inMinutes}m ago";
+  if (diff.inHours < 24) return "${diff.inHours}h ago";
+  if (diff.inDays < 7) return "${diff.inDays}d ago";
+
+  return DateFormat("d MMM yyyy").format(time);
+}
