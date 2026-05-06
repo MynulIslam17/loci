@@ -75,6 +75,8 @@ class AllCommunityScreen extends StatelessWidget {
                               AppRoutes.communityScreen,
                               arguments: {
                                 "communityRole": joinedCommunity.role,
+                                "communityId": joinedCommunity.id,
+
                               },
                             );
                           },

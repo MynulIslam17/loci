@@ -9,16 +9,11 @@ import '../../../../core/theme/theme_extention.dart';
 class CommunityActivityCard extends StatelessWidget {
   final String profileImage;
   final String businessName;
-  final String date;
-  final String time;
+  final String dateTime;
   final String description;
   final String likes;
   final String comments;
-
-  /// Widget representing the activity (RouteCard, PostCard, etc.)
-  final Widget activityContent;
-
-  /// Callbacks for like/comment taps
+  final Widget? activityContent;
   final VoidCallback? onLikeTap;
   final VoidCallback? onCommentTap;
 
@@ -26,12 +21,11 @@ class CommunityActivityCard extends StatelessWidget {
     super.key,
     required this.profileImage,
     required this.businessName,
-    required this.date,
-    required this.time,
+    required this.dateTime,
     required this.description,
     required this.likes,
     required this.comments,
-    required this.activityContent,
+    this.activityContent,
     this.onLikeTap,
     this.onCommentTap,
   });
@@ -50,7 +44,7 @@ class CommunityActivityCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Header: Profile + Name + Timestamp
+            // Header
             Row(
               children: [
                 CircleAvatar(
@@ -66,7 +60,7 @@ class CommunityActivityCard extends StatelessWidget {
                       style: AppTextStyle.textSm(weight: FontWeight.bold),
                     ),
                     Text(
-                      "$date  $time",
+                      dateTime,
                       style: AppTextStyle.textXs(
                         color: colorScheme.onSurfaceVariant.withOpacity(0.7),
                       ),
@@ -77,18 +71,18 @@ class CommunityActivityCard extends StatelessWidget {
             ),
             const SizedBox(height: 12),
 
-            // Description text
-            ExpandableText(
-              text: description,
-              trimLines: 2,
-            ),
-            const SizedBox(height: 16),
+            // Description
+            ExpandableText(text: description, trimLines: 2),
 
-            // Activity content (RouteCard, PostCard, etc.)
-            activityContent,
+
+            if (activityContent != null) ...[
+              const SizedBox(height: 16),
+              activityContent!,
+            ],
+
             const SizedBox(height: 18),
 
-            // Like / Comment interaction
+            // Interaction bar
             PostInteractionBar(
               likes: likes,
               comments: comments,

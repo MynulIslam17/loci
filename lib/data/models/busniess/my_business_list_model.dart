@@ -25,35 +25,25 @@ class MyBusinessResponseModel {
 class BusinessModel {
   final String id;
   final String name;
-  final String category;
-  final String description;
-  final String logo;
+  final String? category;
+  final String? description;
+  final String? logo;
 
   BusinessModel({
     required this.id,
     required this.name,
-    required this.category,
-    required this.description,
-    required this.logo,
+    this.category,
+    this.description,
+    this.logo,
   });
 
   factory BusinessModel.fromJson(Map<String, dynamic> json) {
     return BusinessModel(
       id: json['_id'] ?? '',
       name: json['name'] ?? '',
-      category: json['category'] ?? '',
-      description: json['description'] ?? '',
-      logo: json['logo'] ?? '',
+      category: json['category'], // nullable
+      description: json['description'], // nullable
+      logo: json['logo'], // nullable
     );
-  }
-
-  Map<String, dynamic> toJson() {
-    return {
-      '_id': id,
-      'name': name,
-      'category': category,
-      'description': description,
-      'logo': logo,
-    };
   }
 }

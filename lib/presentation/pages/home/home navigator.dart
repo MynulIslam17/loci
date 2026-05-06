@@ -52,16 +52,16 @@ class HomeNavigator extends StatelessWidget {
             );
 
           case AppRoutes.communityScreen:
-            final args = settings.arguments;
+            final args = settings.arguments as Map<String, dynamic>?;
 
-            final role = (args is Map<String, dynamic>)
-                ? args['communityRole']
-                : null;
+            final role = args?['communityRole'];
+            final communityId = args?['communityId'];
 
             return MaterialPageRoute(
               settings: settings,
               builder: (_) => CommunityScreen(
                 role: role,
+                communityId: communityId
               ),
             );
 

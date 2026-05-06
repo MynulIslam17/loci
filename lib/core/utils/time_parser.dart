@@ -109,3 +109,11 @@ String formatRelativeTime(String utcString) {
 
   return DateFormat("d MMM yyyy").format(time);
 }
+
+//5 May 2026 • 04:30 PM
+// 12 Jan 2025 • 09:15 AM
+
+String formatDateTime(String utcString) {
+  final time = DateTime.parse(utcString).toLocal();
+  return DateFormat("d MMM yyyy • hh:mm a").format(time);
+}

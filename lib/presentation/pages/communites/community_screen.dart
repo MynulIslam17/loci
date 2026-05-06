@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:get/get_core/src/get_main.dart';
 import 'package:loci/core/constants/app_text_style.dart';
 import 'package:loci/core/enums/community_role.dart';
-import 'package:loci/core/theme/app_colors.dart';
 import 'package:loci/presentation/controllers/auth/auth_controller.dart';
 import 'package:loci/presentation/pages/communites/widgets/activity_card.dart';
 import 'package:loci/presentation/pages/communites/widgets/community_member_header.dart';
@@ -12,29 +10,32 @@ import 'package:loci/presentation/pages/communites/widgets/notice_card.dart';
 import 'package:loci/presentation/pages/communites/widgets/offer_card.dart';
 import 'package:loci/presentation/pages/communites/widgets/post_card.dart';
 import 'package:loci/presentation/pages/communites/widgets/post_comment_section.dart';
+import 'package:loci/presentation/pages/event/widgets/event_card.dart';
 import 'package:loci/presentation/pages/explore_routes/widgets/route_card.dart';
 import 'package:loci/presentation/pages/home/widgets/post_input_filed.dart';
-import 'package:loci/presentation/widgets/custom_button.dart';
-import 'package:loci/presentation/widgets/custom_image_container.dart';
 import 'package:loci/presentation/pages/clam_business/widgets/review_card.dart';
-import 'package:loci/routes/app_routes.dart';
-import '../../../core/theme/theme_extention.dart';
-import '../../../data/models/mock_data.dart';
-import '../../../data/models/poll.dart';
-import '../../../gen/assets.gen.dart';
-import '../../controllers/comment/announcements_comment_controller.dart';
-import '../../widgets/common/post_comment_section.dart';
-import '../../widgets/custom_text_field.dart';
-import '../home/widgets/expandable_text.dart';
-import '../home/widgets/post_interaction_bar.dart';
-import '../home/widgets/post_poll_section.dart';
-import '../home/widgets/user_post_header.dart';
+import 'package:loci/core/enums/announcement_type.dart';
+import 'package:loci/core/theme/theme_extention.dart';
+import 'package:loci/core/utils/time_parser.dart';
+import 'package:loci/data/models/mock_data.dart';
+import 'package:loci/data/models/poll.dart';
+import 'package:loci/gen/assets.gen.dart';
+import 'package:loci/presentation/controllers/comment/announcement_controller.dart';
+import 'package:loci/presentation/controllers/comment/announcements_comment_controller.dart';
+import 'package:loci/presentation/pages/raffles/widgets/raffle_card.dart';
+import 'package:loci/presentation/widgets/common/post_comment_section.dart';
+import 'package:loci/presentation/widgets/custom_text_field.dart';
+import 'package:loci/presentation/widgets/pagination_loading.dart';
+import 'package:loci/data/community/announcement_model.dart';
 
-/// Community screen showing business community content
-/// with raffles collapsible header and tabbed lists.
+import '../../../core/enums/acitivty_ref_type.dart';
+import '../../../core/enums/activity_type.dart';
+
 class CommunityScreen extends StatefulWidget {
   final CommunityRole? role;
-  const CommunityScreen({super.key, this.role});
+  final String? communityId;
+
+  const CommunityScreen({super.key, this.role, this.communityId});
 
   @override
   State<CommunityScreen> createState() => _CommunityScreenState();
@@ -42,53 +43,92 @@ class CommunityScreen extends StatefulWidget {
 
 class _CommunityScreenState extends State<CommunityScreen>
     with SingleTickerProviderStateMixin {
-  final offerTEController = TextEditingController();
-  final noticeTEController = TextEditingController();
-  final activityTEController = TextEditingController();
+
+  // -------------------------------------------------
+  // CONTROLLERS
+  // -------------------------------------------------
+  late TabController tabController;
+  final TextEditingController searchController = TextEditingController();
+
+  final authController = Get.find<AuthController>();
+  final announcementController = Get.find<AnnouncementController>();
 
   // Comment section expansion with postId
   String? _expandedPostId;
 
-  late TabController tabController;
-
-  final authController = Get.find<AuthController>();
-
+  // -------------------------------------------------
+  // LIFECYCLE
+  // -------------------------------------------------
   @override
   void initState() {
     super.initState();
 
-    /// Controls TabBar and TabBarView
     tabController = TabController(length: 4, vsync: this);
+
+    final communityId = widget.communityId;
+    if (communityId != null && communityId.isNotEmpty) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        announcementController.init(communityId);
+      });
+    }
+
+    _tabSwitch();
   }
 
+  @override
+  void dispose() {
+    tabController.dispose();
+    searchController.dispose();
+    super.dispose();
+  }
+
+  void _tabSwitch() {
+    tabController.addListener(() {
+      if (tabController.indexIsChanging) return;
+
+      switch (tabController.index) {
+        case 0:
+          announcementController.changeType(AnnouncementType.activity);
+          break;
+        case 1:
+          announcementController.changeType(AnnouncementType.offer);
+          break;
+        case 2:
+          announcementController.changeType(AnnouncementType.notice);
+          break;
+        case 3:
+          announcementController.changeType(AnnouncementType.activity);
+          break;
+        default:
+          announcementController.changeType(AnnouncementType.activity);
+      }
+    });
+  }
+
+  // -------------------------------------------------
+  // BUILD
+  // -------------------------------------------------
   @override
   Widget build(BuildContext context) {
     final colorScheme = context.colorScheme;
 
     return Scaffold(
       backgroundColor: colorScheme.surface,
-
-      /// NestedScrollView allows the header + tab lists
-      /// to scroll together properly
       body: NestedScrollView(
         headerSliverBuilder: (context, innerBoxIsScrolled) {
           return [
-            /// ---------------- HEADER SECTION ----------------
-            /// Static community information (title, address, map)
+            // ---------------- HEADER ----------------
             SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.all(12),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    /// Community title
                     Text(
-                      "Marland Clutch’s Community",
+                      "Marland Clutch's Community",
                       style: AppTextStyle.textMd(weight: FontWeight.w600),
                     ),
                     const SizedBox(height: 4),
-
-                    /// Location row
                     Row(
                       children: [
                         Icon(
@@ -103,12 +143,7 @@ class _CommunityScreenState extends State<CommunityScreen>
                         ),
                       ],
                     ),
-
                     const SizedBox(height: 20),
-
-                    // Display a widget whose design depends on the type of community.
-                    // Pass `true` if the  user owns the Business Community,
-                    // or `false` for a General/Others Community.
                     if (widget.role == CommunityRole.owner)
                       const CommunityOwnerHeader()
                     else
@@ -118,18 +153,13 @@ class _CommunityScreenState extends State<CommunityScreen>
               ),
             ),
 
-            /// ---------------- TAB BAR SECTION ----------------
-            /// SliverOverlapAbsorber connects header scrolling
-            /// with the inner tab lists.
+            // ---------------- TAB BAR ----------------
             SliverOverlapAbsorber(
               handle: NestedScrollView.sliverOverlapAbsorberHandleFor(context),
-
               sliver: SliverAppBar(
                 pinned: true,
                 toolbarHeight: 0,
                 backgroundColor: colorScheme.surface,
-
-                /// Tab navigation
                 bottom: TabBar(
                   controller: tabController,
                   isScrollable: true,
@@ -139,7 +169,6 @@ class _CommunityScreenState extends State<CommunityScreen>
                   unselectedLabelColor: colorScheme.onSurface,
                   indicatorColor: colorScheme.primary,
                   dividerColor: Colors.transparent,
-
                   tabs: const [
                     Tab(text: "Feed"),
                     Tab(text: "Offers"),
@@ -152,16 +181,16 @@ class _CommunityScreenState extends State<CommunityScreen>
           ];
         },
 
-        /// ---------------- TAB CONTENT ----------------
+        // ---------------- TAB CONTENT ----------------
         body: Padding(
           padding: const EdgeInsets.all(12),
           child: TabBarView(
             controller: tabController,
             children: [
-              _buildTabBody(feedList()),
-              _buildTabBody(offerList()),
-              _buildTabBody(noticesList()),
-              _buildTabBody(activityList()),
+              _buildTabBody(() => feedList()),
+              _buildTabBody(() => offerList()),
+              _buildTabBody(() => noticesList()),
+              _buildTabBody(() => activityList()),
             ],
           ),
         ),
@@ -169,21 +198,61 @@ class _CommunityScreenState extends State<CommunityScreen>
     );
   }
 
-  /// Wraps each tab list with raffles CustomScrollView
-  /// so it works correctly with NestedScrollView
-  Widget _buildTabBody(Widget listWidget) {
+  // -------------------------------------------------
+  // TAB BODY WRAPPER
+  // -------------------------------------------------
+  Widget _buildTabBody(Widget Function() builder) {
     return Builder(
       builder: (context) {
-        return CustomScrollView(
-          slivers: [
-            /// Injects the overlap space from the header
-            SliverOverlapInjector(
-              handle: NestedScrollView.sliverOverlapAbsorberHandleFor(context),
-            ),
+        return GetBuilder<AnnouncementController>(
+          builder: (controller) {
+            return RefreshIndicator(
+              onRefresh: () => controller.refreshAnnouncements(),
+              child: NotificationListener<ScrollNotification>(
+                onNotification: (notification) {
+                  if (notification is ScrollEndNotification) {
+                    final metrics = notification.metrics;
+                    final isBottom =
+                        metrics.pixels >= metrics.maxScrollExtent - 200;
 
-            /// Actual list content
-            SliverToBoxAdapter(child: listWidget),
-          ],
+                    if (isBottom &&
+                        controller.hasMore &&
+                        !controller.isPaginationLoading) {
+                      controller.fetchMoreAnnouncements();
+                    }
+                  }
+                  return false;
+                },
+                child: CustomScrollView(
+                  slivers: [
+                    SliverOverlapInjector(
+                      handle:
+                      NestedScrollView.sliverOverlapAbsorberHandleFor(context),
+                    ),
+
+                    // First load loader
+                    if (controller.isLoading)
+                      const SliverFillRemaining(
+                        child: Center(child: CircularProgressIndicator()),
+                      )
+                    else ...[
+                      // Actual content
+                      SliverToBoxAdapter(child: builder()),
+
+                      // Pagination loader
+                      if (controller.isPaginationLoading)
+                        const SliverToBoxAdapter(
+                          child: PaginationLoader(
+                            size: 18,
+                            padding: 10,
+                          ),
+                        ),
+                    ],
+                  ],
+                ),
+              ),
+            );
+          },
         );
       },
     );
@@ -192,29 +261,25 @@ class _CommunityScreenState extends State<CommunityScreen>
   // -------------------------------------------------
   // FEED LIST
   // -------------------------------------------------
-
   Widget feedList() {
     return Column(
       children: [
-        //-- input field for post
         PostInputField(
           categories: const ['Food', 'Drinks', 'Restaurant', 'Entertainment'],
           initialCategory: "Food",
           onSubmit: (text, category) {
             print("Posting: $text in $category");
           },
-          hintText: 'Post raffles question...',
+          hintText: 'Post a question...',
         ),
         const SizedBox(height: 16),
 
-        // --- posted posts ---
         ListView.builder(
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
           itemCount: mockPosts.length,
           itemBuilder: (context, index) {
             final post = mockPosts[index];
-
             return PostCardWidget(
               post: post,
               polls: mockPolls,
@@ -222,17 +287,12 @@ class _CommunityScreenState extends State<CommunityScreen>
               expandedPostId: _expandedPostId,
               onExpandToggle: (postId) {
                 setState(() {
-                  _expandedPostId = _expandedPostId == postId ? null : postId;
+                  _expandedPostId =
+                  _expandedPostId == postId ? null : postId;
                 });
               },
-              onLikeTap: (postId) {
-                print("Like tapped on $postId");
-                // Your like logic here
-              },
-              onCommentTap: (postId) {
-                print("Comment tapped on $postId");
-                // Your comment logic here
-              },
+              onLikeTap: (postId) {},
+              onCommentTap: (postId) {},
             );
           },
         ),
@@ -243,78 +303,32 @@ class _CommunityScreenState extends State<CommunityScreen>
   // -------------------------------------------------
   // OFFERS LIST
   // -------------------------------------------------
-
   Widget offerList() {
-    final colorScheme = context.colorScheme;
     return Column(
       children: [
-        // Search Bar Row
-        Row(
-          children: [
-            Expanded(
-              child: CustomTextField(
-                hintText: "Claim your Business",
-                borderColor: colorScheme.outline,
-                fontSize: 14,
-                textColor: colorScheme.onSurface,
-                hintTextColor: colorScheme.onSurfaceVariant,
-                suffixIcon: Icon(
-                  size: 20,
-                  Icons.search,
-                  color: colorScheme.onSurfaceVariant,
-                ),
-              ),
-            ),
-            const SizedBox(width: 12),
-            // Filter Button
-            Container(
-              height: 50,
-              width: 50,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                  color: context.colorScheme.outline,
-                  width: 2,
-                ),
-              ),
-              child: IconButton(
-                onPressed: () {
-                  print("Tapped!");
-                },
-                icon: const Icon(Icons.tune),
-                color: context.colorScheme.onSurface,
-                iconSize: 28,
-
-                padding: EdgeInsets.zero,
-              ),
-            ),
-          ],
+        _buildSearchBar(
+          hintText: "Search offers",
+          onFilterTap: () {},
         ),
         const SizedBox(height: 20),
 
-        // Offers List
         ListView.builder(
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
-          itemCount: 3,
+          itemCount: announcementController.announcements.length,
           itemBuilder: (context, index) {
+            final offer = announcementController.announcements[index];
+            final business = offer.business;
             return CommunityOfferCard(
-              profileImage: Assets.images.user1.path,
-              businessName: "Marland Clutch",
-              date: "04/09/25",
-              time: "05:36:12",
-              description:
-                  "Black Friday Discount (\$200 value) limited coupon available, take it before it's get stock out...",
-              couponImageUrl: Assets.images.finedine.path,
-              likes: "200",
-
-              comments: "0",
-              onDownloadTap: () {
-                print("Downloading coupon...");
-              },
-              onCommentTap: () {
-                _showCommentSheet("69f8685085056ff29e53906c");
-              },
+              profileImage: business?.logo ?? "",
+              businessName: business?.name ?? "",
+              dateTime: formatDateTime(offer.createdAt),
+              description: offer.details,
+              couponImageUrl: offer.image ?? "",
+              likes: offer.likeCount.toString(),
+              comments: offer.commentCount.toString(),
+              onDownloadTap: () {},
+              onCommentTap: () => _showCommentSheet(offer.id),
               onLikeTap: () {},
             );
           },
@@ -326,36 +340,31 @@ class _CommunityScreenState extends State<CommunityScreen>
   // -------------------------------------------------
   // NOTICES LIST
   // -------------------------------------------------
-
   Widget noticesList() {
     return Column(
       children: [
-        //reusable search bar at the top
         _buildSearchBar(
           hintText: "Search notices",
-          controller: noticeTEController,
-          onFilterTap: () {
-            // Add your filter logic here
-          },
+          onFilterTap: () {},
         ),
-
         const SizedBox(height: 20),
 
-        //---  The List of Notice Cards
         ListView.builder(
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
-          itemCount: 4,
+          itemCount: announcementController.announcements.length,
           itemBuilder: (context, index) {
+            final notice = announcementController.announcements[index];
+            final business = notice.business;
             return CommunityNoticeCard(
-              profileImage: Assets.images.user1.path,
-              businessName: "Marland Clutch",
-              date: "04/09/25",
-              time: "05:36:12",
-              noticeText:
-                  "We are going to create raffles event for our business gathering...",
-              likes: "200",
-              comments: "0",
+              profileImage: business?.logo ?? "",
+              businessName: business?.name ?? "",
+              dateTime: formatDateTime(notice.createdAt),
+              noticeText: notice.details,
+              likes: notice.likeCount.toString(),
+              comments: notice.commentCount.toString(),
+              onCommentTap: () => _showCommentSheet(notice.id),
+              onLikeTap: () {},
             );
           },
         ),
@@ -366,61 +375,33 @@ class _CommunityScreenState extends State<CommunityScreen>
   // -------------------------------------------------
   // ACTIVITY LIST
   // -------------------------------------------------
-
   Widget activityList() {
     return Column(
       children: [
-        //reusable search bar at the top
         _buildSearchBar(
           hintText: "Search activity",
-          controller: activityTEController,
-          onFilterTap: () {
-            // Add your filter logic here
-          },
+          onFilterTap: () {},
         ),
         const SizedBox(height: 20),
 
-        //  The List of Notice Cards
         ListView.builder(
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
-          itemCount: 4,
+          itemCount: announcementController.announcements.length,
           itemBuilder: (context, index) {
+            final activity = announcementController.announcements[index];
+            final business = activity.business;
             return CommunityActivityCard(
-              profileImage: 'assets/images/user1.png',
-              businessName: 'Marland Clutch',
-              date: '12-03-26',
-              time: '10:00 AM',
-              description: 'Completed raffles new hiking route today!',
-              likes: '120',
-              comments: '15',
-              // this activity content can be change according to the type of activity
-              activityContent: index == 0
-                  ? RouteCard(
-                      title: "Spring Pub Crawl Festival",
-                      description:
-                          "Join us for the biggest pub crawl of the season! Visit 8 amazing bars in downtown and enjoy the night of your life, also there are special guest will participate too",
-                      location: "",
-                      openingTime: "222",
-                      availabilityType: "easy",
-                      imageUrl: "assets/images/finedine.png",
-                    )
-                  : CommunityNoticeCard(
-                      profileImage: Assets.images.user1.path,
-                      businessName: "Marland Clutch",
-                      date: "04/09/25",
-                      time: "05:36:12",
-                      noticeText:
-                          "We are going to create raffles event for our business gathering...",
-                      likes: "200",
-                      comments: "0",
-                    ),
-              onLikeTap: () {
-                print('Liked activity!');
-              },
-              onCommentTap: () {
-                print('Comment tapped!');
-              },
+              profileImage: business?.logo ?? "",
+              businessName: business?.name ?? "",
+              description: activity.details,
+              likes: activity.likeCount.toString(),
+              comments: activity.commentCount.toString(),
+              activityContent: _buildActivityContent(activity),
+              onLikeTap: () {},
+              onCommentTap: () => _showCommentSheet(activity.id),
+              dateTime: formatDateTime(activity.createdAt),
+
             );
           },
         ),
@@ -428,15 +409,60 @@ class _CommunityScreenState extends State<CommunityScreen>
     );
   }
 
-  // -------------------------------------------------
-  // search bar
-  // -------------------------------------------------
+  Widget? _buildActivityContent(AnnouncementModel activity) {
+    // 1. Check the enum type from your new ActivityRefType
+    switch (activity.activityRefType) {
 
+    // CASE: EVENT
+      case ActivityRefType.event:
+        final event = activity.event;
+        if (event == null) return null;
+        return EventCard(
+          imageUrl: event.coverImage,
+          title: event.title,
+          description: event.description,
+          date: event.date,
+          location: event.location,
+          attendance:"${event.goingCount}/${event.maxAttendees}",
+          organizer: event.organizerName,
+          onRSVP: () {},
+          rsvpButtonText: "RSVP",
+        );
+
+    // CASE: ROUTE
+      case ActivityRefType.route:
+        final route = activity.route;
+        if (route == null) return null;
+        return RouteCard(
+          title: route.title,
+          description: route.details,
+          location: route.location,
+          openingTime: route.openingTime,
+          availabilityType: route.availabilityType,
+          imageUrl: route.banner,
+        );
+
+    // CASE: RAFFLE
+      case ActivityRefType.raffle:
+        final raffle=activity.raffle;
+        if (raffle == null) return null;
+
+        return RaffleCard(raffle: raffle, onTap: (){
+
+
+        });
+
+      default:
+        return null;
+    }
+  }
+
+  // -------------------------------------------------
+  // COMMON SEARCH BAR
+  // -------------------------------------------------
   Widget _buildSearchBar({
     required String hintText,
-    required TextEditingController controller,
     VoidCallback? onFilterTap,
-    Function(String)? onChanged,
   }) {
     final colorScheme = context.colorScheme;
 
@@ -444,7 +470,9 @@ class _CommunityScreenState extends State<CommunityScreen>
       children: [
         Expanded(
           child: CustomTextField(
-            hintText: "Claim your Business",
+
+            controller: searchController,
+            hintText: hintText,
             borderColor: colorScheme.outline,
             fontSize: 14,
             textColor: colorScheme.onSurface,
@@ -457,7 +485,6 @@ class _CommunityScreenState extends State<CommunityScreen>
           ),
         ),
         const SizedBox(width: 12),
-        // Reusable Filter Button
         InkWell(
           onTap: onFilterTap,
           borderRadius: BorderRadius.circular(12),
@@ -477,11 +504,11 @@ class _CommunityScreenState extends State<CommunityScreen>
     );
   }
 
-  //------comment bottom_sheet-----------------------
-
+  // -------------------------------------------------
+  // COMMENT BOTTOM SHEET
+  // -------------------------------------------------
   void _showCommentSheet(String announcementId) {
     final controller = Get.find<CommentController>();
-
     controller.fetchComments(postId: announcementId);
 
     showModalBottomSheet(
@@ -489,7 +516,6 @@ class _CommunityScreenState extends State<CommunityScreen>
       isScrollControlled: true,
       builder: (builder) {
         final inputController = TextEditingController();
-
         return GetBuilder<CommentController>(
           builder: (controller) {
             return PostCommentSection(
@@ -502,9 +528,7 @@ class _CommunityScreenState extends State<CommunityScreen>
               isSending: controller.isSending,
               onSendTap: (text) {
                 controller.sendComment(
-                  postId: announcementId,
-                  content: text,
-                );
+                    postId: announcementId, content: text);
               },
             );
           },

@@ -10,15 +10,13 @@ import '../../home/widgets/post_interaction_bar.dart';
 class CommunityOfferCard extends StatelessWidget {
   final String profileImage;
   final String businessName;
-  final String date;
-  final String time;
+  final String dateTime;
   final String description;
   final String couponImageUrl;
   final String likes;
   final String comments;
+
   final VoidCallback? onDownloadTap;
-
-
   final VoidCallback? onLikeTap;
   final VoidCallback? onCommentTap;
 
@@ -26,8 +24,7 @@ class CommunityOfferCard extends StatelessWidget {
     super.key,
     required this.profileImage,
     required this.businessName,
-    required this.date,
-    required this.time,
+    required this.dateTime,
     required this.description,
     required this.couponImageUrl,
     required this.likes,
@@ -41,84 +38,122 @@ class CommunityOfferCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final colorScheme = context.colorScheme;
 
-    return Card(
-      elevation: 1,
-      color: colorScheme.surfaceContainer,
+    return Container(
+      margin: const EdgeInsets.only(bottom: 14),
+      decoration: BoxDecoration(
+        color: colorScheme.surfaceContainer,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.03),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          )
+        ],
+      ),
       child: Padding(
-        padding: const EdgeInsets.all(12),
+        padding: const EdgeInsets.all(14),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Header Section
+            // ---------------- HEADER ----------------
             Row(
               children: [
-                CircleAvatar(
-                  radius: 22,
-                  backgroundImage: AssetImage(profileImage),
-                  backgroundColor: colorScheme.surfaceVariant,
+                CustomCachedImage(
+                  width: 42,
+                  height: 42,
+                  imageUrl: profileImage,
+                  isCircle: true,
                 ),
-                const SizedBox(width: 12),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      businessName,
-                      style: AppTextStyle.textMd(
-                        weight: FontWeight.w700,
-                        color: colorScheme.onSurface,
+                const SizedBox(width: 10),
+
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        businessName,
+                        style: AppTextStyle.textMd(
+                          weight: FontWeight.w600,
+                          color: colorScheme.onSurface,
+                        ),
                       ),
-                    ),
-                    Text(
-                      "$date  $time",
-                      style: AppTextStyle.textXs(color: colorScheme.onSurfaceVariant),
-                    ),
-                  ],
+                      const SizedBox(height: 2),
+                      Text(
+                        dateTime,
+                        style: AppTextStyle.textXs(
+                          color: colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+                // Optional menu icon (production feel)
+                Icon(
+                  Icons.more_vert,
+                  size: 18,
+                  color: colorScheme.onSurfaceVariant,
                 ),
               ],
             ),
-            const SizedBox(height: 16),
 
-            // Description
-            ExpandableText(
-              text: description,
-              trimLines: 1,
-            ),
             const SizedBox(height: 12),
 
-            // Coupon Container
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: colorScheme.onSurface),
-              ),
-              child: Row(
+            // ---------------- DESCRIPTION ----------------
+            ExpandableText(
+              text: description,
+              trimLines: 2,
+            ),
+
+            const SizedBox(height: 12),
+
+            // ---------------- IMAGE ----------------
+            ClipRRect(
+              borderRadius: BorderRadius.circular(14),
+              child: Stack(
                 children: [
-                  Expanded(
+                  AspectRatio(
+                    aspectRatio: 16 / 9,
                     child: CustomCachedImage(
                       imageUrl: couponImageUrl,
                     ),
                   ),
-                  const SizedBox(width: 8),
-                  IconButton(
-                    onPressed: onDownloadTap,
-                    icon: Icon(Icons.file_download_outlined, color: colorScheme.onSurfaceVariant),
+
+                  // Download button overlay
+                  Positioned(
+                    right: 10,
+                    bottom: 10,
+                    child: InkWell(
+                      onTap: onDownloadTap,
+                      borderRadius: BorderRadius.circular(30),
+                      child: Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: Colors.black.withOpacity(0.5),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(
+                          Icons.download_rounded,
+                          size: 20,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
                   ),
                 ],
               ),
             ),
-            const SizedBox(height: 18),
 
-            // Footer Interaction (react / comment)
+            const SizedBox(height: 14),
+
+            // ---------------- INTERACTION ----------------
             PostInteractionBar(
               likes: likes,
               comments: comments,
               onLikeTap: onLikeTap,
               onCommentTap: onCommentTap,
             ),
-
-
-
           ],
         ),
       ),

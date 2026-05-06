@@ -24,6 +24,8 @@ class CommunityOwnerHeader extends StatelessWidget {
           clipBehavior: Clip.antiAlias,
           child: Stack(
             children: [
+
+
               Image.asset(
                 "assets/images/location.png",
                 width: double.infinity,
