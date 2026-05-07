@@ -11,6 +11,7 @@ import 'package:loci/presentation/pages/communites/widgets/community_owner_heade
 import 'package:loci/presentation/pages/communites/widgets/notice_card.dart';
 import 'package:loci/presentation/pages/communites/widgets/offer_card.dart';
 import 'package:loci/presentation/pages/communites/widgets/post_card.dart';
+import 'package:loci/presentation/pages/communites/widgets/post_card_view_model.dart';
 import 'package:loci/presentation/pages/communites/widgets/post_comment_section.dart';
 import 'package:loci/presentation/pages/event/widgets/event_card.dart';
 import 'package:loci/presentation/pages/explore_routes/widgets/route_card.dart';
@@ -18,7 +19,6 @@ import 'package:loci/presentation/pages/home/widgets/post_input_filed.dart';
 import 'package:loci/core/enums/announcement_type.dart';
 import 'package:loci/core/theme/theme_extention.dart';
 import 'package:loci/core/utils/time_parser.dart';
-import 'package:loci/data/models/mock_data.dart';
 import 'package:loci/presentation/controllers/comment/announcement_controller.dart';
 import 'package:loci/presentation/controllers/comment/announcements_comment_controller.dart';
 import 'package:loci/presentation/pages/raffles/widgets/raffle_card.dart';
@@ -55,9 +55,6 @@ class _CommunityScreenState extends State<CommunityScreen>
   final myCommunityController = Get.find<MyCommunityController>();
 
 
-  // Comment section expansion with postId
-  String? _expandedPostId;
-
   // -------------------------------------------------
   // LIFECYCLE
   // -------------------------------------------------
@@ -93,7 +90,7 @@ class _CommunityScreenState extends State<CommunityScreen>
 
       switch (tabController.index) {
         case 0:
-          announcementController.changeType(AnnouncementType.activity);
+          announcementController.changeType(AnnouncementType.question);
           break;
         case 1:
           announcementController.changeType(AnnouncementType.offer);
@@ -289,9 +286,7 @@ class _CommunityScreenState extends State<CommunityScreen>
         PostInputField(
           categories: const ['Food', 'Drinks', 'Restaurant', 'Entertainment'],
           initialCategory: "Food",
-          onSubmit: (text, category) {
-            print("Posting: $text in $category");
-          },
+          onSubmit: (text, category) {},
           hintText: 'Post a question...',
         ),
         const SizedBox(height: 16),
@@ -301,19 +296,14 @@ class _CommunityScreenState extends State<CommunityScreen>
           physics: const NeverScrollableScrollPhysics(),
           itemCount: announcementController.announcements.length,
           itemBuilder: (context, index) {
-            final offer = announcementController.announcements[index];
-            final business = offer.business;
-            return CommunityOfferCard(
-              profileImage: business?.logo ?? "",
-              businessName: business?.name ?? "",
-              dateTime: formatDateTime(offer.createdAt),
-              description: offer.details,
-              couponImageUrl: offer.image ?? "",
-              likes: offer.likeCount.toString(),
-              comments: offer.commentCount.toString(),
-              onDownloadTap: () {},
-              onCommentTap: () => _showCommentSheet(offer.id),
-              onLikeTap: () {},
+            final announcement = announcementController.announcements[index];
+            return PostCardWidget(
+              viewModel: PostCardViewModel.from(announcement),
+              onLikeTap: (postId) {},
+              onCommentTap: (postId) => _showCommentSheet(postId),
+              onClickPoll: (postId) {},
+              onSubmit: (postId, text) {},
+              onChanged: (postId, value) {},
             );
           },
         ),

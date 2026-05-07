@@ -20,7 +20,7 @@ class AnnouncementController extends GetxController {
   PaginationMeta? _meta;
 
   int _currentPage = 1;
-  AnnouncementType _currentType = AnnouncementType.activity;
+  AnnouncementType _currentType = AnnouncementType.question;
   String? _communityId;
 
   // -------------------------------------------------

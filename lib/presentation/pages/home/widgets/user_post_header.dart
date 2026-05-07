@@ -26,8 +26,10 @@ class UserPostHeader extends StatelessWidget {
       children: [
         CircleAvatar(
           radius: 22,
-          backgroundImage: AssetImage(imagePath),
           backgroundColor: AppColors.base200,
+          backgroundImage: imagePath.startsWith('http')
+              ? NetworkImage(imagePath) as ImageProvider
+              : AssetImage(imagePath),
         ),
         const SizedBox(width: 12),
         Expanded(

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:loci/presentation/widgets/custom_image_container.dart';
 import 'package:percent_indicator/linear_percent_indicator.dart';
 import 'package:loci/core/theme/app_colors.dart';
 import 'package:loci/core/constants/app_text_style.dart';
@@ -25,10 +26,11 @@ class PollBar extends StatelessWidget {
     return Row(
       children: [
         // 1. Voter/Option Image
-        CircleAvatar(
-          radius: 21,
-          backgroundImage: AssetImage(imagePath),
-          backgroundColor: AppColors.base200,
+        CustomCachedImage(
+          width: 40,
+          height: 40,
+          isCircle: true,
+          imageUrl: imagePath,
         ),
 
         const SizedBox(width: 10),

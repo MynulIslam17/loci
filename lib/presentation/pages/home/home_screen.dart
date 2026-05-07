@@ -6,7 +6,6 @@ import 'package:loci/core/constants/app_text_style.dart';
 import 'package:loci/core/theme/app_colors.dart';
 import 'package:loci/core/theme/theme_extention.dart';
 import 'package:loci/data/models/carousel_data.dart';
-import 'package:loci/presentation/pages/communites/all_community_screen.dart';
 import 'package:loci/presentation/pages/home/widgets/custom_carousel.dart';
 import 'package:loci/presentation/pages/home/widgets/post_input_filed.dart';
 import 'package:loci/presentation/pages/raffles/active_raffles_screen.dart';
@@ -16,9 +15,9 @@ import '../../../gen/assets.gen.dart';
 import '../../../routes/app_routes.dart';
 import '../../controllers/nav_controller.dart';
 import '../../widgets/custom_image_container.dart';
-import '../communites/create_anouncement_screen.dart';
+
 import '../communites/widgets/post_card.dart';
-import '../communites/community_screen.dart';
+
 import 'home navigator.dart';
 
 
@@ -148,47 +147,47 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
 
             // --- 4️⃣ Post Card ---
-            ListView.builder(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              itemCount: mockPosts.length,
-              itemBuilder: (context, index) {
-                final post = mockPosts[index];
-
-                return PostCardWidget(
-                  post: post,
-                  polls: mockPolls,
-                  comments: mockComments,
-                  expandedPostId: _expandedPostId,
-                  onExpandToggle: (postId) {
-                    setState(() {
-                      _expandedPostId = _expandedPostId == postId
-                          ? null
-                          : postId;
-                    });
-                  },
-                  onLikeTap: (postId) {
-                    print("Like tapped on $postId");
-                    // Your like logic here
-                  },
-                  onCommentTap: (postId) {
-                    print("Comment tapped on $postId");
-                    // Your comment logic here
-                  },
-                  onClickPoll: (postId) {
-                    //TODO : click on the poll section
-                    _showAllPolls();
-                  },
-
-                  onSubmit: (postId, text) {
-                    print("User typed '$text' for post $postId");
-                  },
-                  onChanged: (postId, value) {
-                    print("User typing in post $postId: $value");
-                  },
-                );
-              },
-            ),
+            // ListView.builder(
+            //   shrinkWrap: true,
+            //   physics: const NeverScrollableScrollPhysics(),
+            //   itemCount: mockPosts.length,
+            //   itemBuilder: (context, index) {
+            //     final post = mockPosts[index];
+            //
+            //     return PostCardWidget(
+            //       post: post,
+            //       polls: mockPolls,
+            //       comments: mockComments,
+            //       expandedPostId: _expandedPostId,
+            //       onExpandToggle: (postId) {
+            //         setState(() {
+            //           _expandedPostId = _expandedPostId == postId
+            //               ? null
+            //               : postId;
+            //         });
+            //       },
+            //       onLikeTap: (postId) {
+            //         print("Like tapped on $postId");
+            //         // Your like logic here
+            //       },
+            //       onCommentTap: (postId) {
+            //         print("Comment tapped on $postId");
+            //         // Your comment logic here
+            //       },
+            //       onClickPoll: (postId) {
+            //         //TODO : click on the poll section
+            //         _showAllPolls();
+            //       },
+            //
+            //       onSubmit: (postId, text) {
+            //         print("User typed '$text' for post $postId");
+            //       },
+            //       onChanged: (postId, value) {
+            //         print("User typing in post $postId: $value");
+            //       },
+            //     );
+            //   },
+            // ),
 
             const SizedBox(height: 20),
           ],
