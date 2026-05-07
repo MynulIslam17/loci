@@ -299,22 +299,21 @@ class _CommunityScreenState extends State<CommunityScreen>
         ListView.builder(
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
-          itemCount: mockPosts.length,
+          itemCount: announcementController.announcements.length,
           itemBuilder: (context, index) {
-            final post = mockPosts[index];
-            return PostCardWidget(
-              post: post,
-              polls: mockPolls,
-              comments: mockComments,
-              expandedPostId: _expandedPostId,
-              onExpandToggle: (postId) {
-                setState(() {
-                  _expandedPostId =
-                  _expandedPostId == postId ? null : postId;
-                });
-              },
-              onLikeTap: (postId) {},
-              onCommentTap: (postId) {},
+            final offer = announcementController.announcements[index];
+            final business = offer.business;
+            return CommunityOfferCard(
+              profileImage: business?.logo ?? "",
+              businessName: business?.name ?? "",
+              dateTime: formatDateTime(offer.createdAt),
+              description: offer.details,
+              couponImageUrl: offer.image ?? "",
+              likes: offer.likeCount.toString(),
+              comments: offer.commentCount.toString(),
+              onDownloadTap: () {},
+              onCommentTap: () => _showCommentSheet(offer.id),
+              onLikeTap: () {},
             );
           },
         ),
