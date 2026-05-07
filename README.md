@@ -1,5 +1,5 @@
 # loci
-
+![Project Banner](assets/images/project_banner.png)
 A new Flutter project.
 
 ## Getting Started
