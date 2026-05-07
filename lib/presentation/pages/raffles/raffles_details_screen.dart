@@ -4,6 +4,7 @@ import 'package:loci/core/constants/app_text_style.dart';
 import 'package:loci/core/theme/theme_extention.dart';
 import 'package:loci/presentation/controllers/raffles/raffle_details_controller.dart';
 import 'package:loci/presentation/pages/raffles/widgets/date_range_helper.dart';
+import 'package:loci/presentation/widgets/custom_appbar.dart';
 import 'package:loci/routes/app_routes.dart';
 import 'package:percent_indicator/linear_percent_indicator.dart';
 
@@ -12,9 +13,10 @@ import '../../../data/models/raffles/raffles_details_model.dart';
 import '../../widgets/custom_image_container.dart';
 
 class RafflesDetailsScreen extends StatefulWidget {
-  final String raffleId;
+  final String ? raffleId;
+  final bool showAppBar;
 
-  const RafflesDetailsScreen({super.key, required this.raffleId});
+  const RafflesDetailsScreen({super.key,  this.raffleId,  this.showAppBar=false});
 
   @override
   State<RafflesDetailsScreen> createState() => _RafflesDetailsScreenState();
@@ -23,15 +25,27 @@ class RafflesDetailsScreen extends StatefulWidget {
 class _RafflesDetailsScreenState extends State<RafflesDetailsScreen> {
   final rafflesDetailsController = Get.put(RaffleDetailsController());
 
+  late final String activeRaffleId;
+  late final bool showAppBar;
+
   @override
   void initState() {
     super.initState();
+
+    final args = Get.arguments;
+
+    if (args is Map<String, dynamic>) {
+      activeRaffleId = args["raffleId"];
+      showAppBar = args["showAppBar"] ?? true;
+    } else {
+      activeRaffleId = widget.raffleId!;
+      showAppBar = widget.showAppBar;
+    }
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      rafflesDetailsController.fetchRaffleDetails(widget.raffleId);
+      rafflesDetailsController.fetchRaffleDetails(activeRaffleId);
     });
   }
-
-
 
 
   void _taskHandler(RaffleTaskModel task) async {
@@ -55,7 +69,7 @@ class _RafflesDetailsScreenState extends State<RafflesDetailsScreen> {
     );
 
     // AFTER COMING BACK → refresh raffle
-    rafflesDetailsController.fetchRaffleDetails(widget.raffleId,);
+    rafflesDetailsController.fetchRaffleDetails(activeRaffleId);
   }
 
 
@@ -71,6 +85,8 @@ class _RafflesDetailsScreenState extends State<RafflesDetailsScreen> {
 
     return Scaffold(
       backgroundColor: colorScheme.surface,
+      appBar:showAppBar ? CustomAppbar(title: "Raffles Details")
+      : null,
       body: GetBuilder<RaffleDetailsController>(
         builder: (controller) {
           if (controller.isLoading) {

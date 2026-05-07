@@ -56,12 +56,14 @@ class HomeNavigator extends StatelessWidget {
 
             final role = args?['communityRole'];
             final communityId = args?['communityId'];
+            final communityName = args?['communityName'];
 
             return MaterialPageRoute(
               settings: settings,
               builder: (_) => CommunityScreen(
                 role: role,
-                communityId: communityId
+                communityId: communityId,
+                communityName: communityName,
               ),
             );
 

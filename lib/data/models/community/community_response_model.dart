@@ -1,5 +1,6 @@
+import '../common/paginatation_model.dart';
 import '../community/community_model.dart';
-import '../models/common/paginatation_model.dart';
+
 
 class CommunityResponseModel {
   final List<CommunityModel> joined;

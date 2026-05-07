@@ -3,8 +3,9 @@ import 'package:get/get.dart';
 import 'package:loci/core/constants/app_url.dart';
 import 'package:loci/core/network/network_caller.dart';
 
-import '../../../data/community/community_model.dart';
-import '../../../data/community/community_response_model.dart';
+import '../../../data/models/community/community_model.dart';
+import '../../../data/models/community/community_response_model.dart';
+
 
 class AllCommunityController extends GetxController {
   final ScrollController scrollController = ScrollController();
@@ -38,10 +39,10 @@ class AllCommunityController extends GetxController {
     fetchCommunities();
   }
   void _scrollListener() {
-    if(_isLoading && _isPaginationLoading)return;
+    if (_isLoading || _isPaginationLoading) return;
     if (!_hasNextPage) return;
-    // Check if user is near the bottom (within 200 pixels)
-    if (scrollController.position.pixels >= scrollController.position.maxScrollExtent - 200) {
+    if (scrollController.position.pixels >=
+        scrollController.position.maxScrollExtent - 200) {
       loadMoreCommunities();
     }
   }

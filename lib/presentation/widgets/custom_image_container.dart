@@ -23,49 +23,62 @@ class CustomCachedImage extends StatelessWidget {
     this.borderRadius = 12.0,
     this.isCircle = false,
     this.fit = BoxFit.cover,
-    this.customBorderRadius, // Initialize it here
+    this.customBorderRadius,
   });
 
   @override
   Widget build(BuildContext context) {
-    // Logic to determine which radius to use
     final effectiveRadius = customBorderRadius ??
         BorderRadius.circular(isCircle ? 1000 : borderRadius);
 
-    /// check if upload file
+    // 1. FILE
     if (imageFile != null) {
       return ClipRRect(
-        borderRadius: effectiveRadius, // Updated
+        borderRadius: effectiveRadius,
         child: Image.file(
           imageFile!,
           height: height,
           width: width,
           fit: fit,
-          errorBuilder: (context, error, stackTrace) => _buildErrorWidget(),
+          errorBuilder: (_, __, ___) => _buildErrorWidget(),
         ),
       );
     }
 
-    /// Handle asset or network
-    final bool isAsset = imageUrl?.startsWith('assets/') == true;
+    // 2. EMPTY URL
+    if (imageUrl == null || imageUrl!.isEmpty) {
+      return ClipRRect(
+        borderRadius: effectiveRadius,
+        child: _buildErrorWidget(),
+      );
+    }
 
+    final url = imageUrl!;
+
+    // 3. NETWORK
+    if (url.startsWith('http')) {
+      return ClipRRect(
+        borderRadius: effectiveRadius,
+        child: CachedNetworkImage(
+          imageUrl: url,
+          height: height,
+          width: width,
+          fit: fit,
+          placeholder: (_, __) => _buildPlaceholder(),
+          errorWidget: (_, __, ___) => _buildErrorWidget(),
+        ),
+      );
+    }
+
+    // 4. ASSET (fallback)
     return ClipRRect(
-      borderRadius: effectiveRadius, // Updated
-      child: isAsset
-          ? Image.asset(
-        imageUrl!,
+      borderRadius: effectiveRadius,
+      child: Image.asset(
+        url,
         height: height,
         width: width,
         fit: fit,
-        errorBuilder: (context, error, stackTrace) => _buildErrorWidget(),
-      )
-          : CachedNetworkImage(
-        imageUrl: imageUrl ?? '',
-        height: height,
-        width: width,
-        fit: fit,
-        placeholder: (context, url) => _buildPlaceholder(),
-        errorWidget: (context, url, error) => _buildErrorWidget(),
+        errorBuilder: (_, __, ___) => _buildErrorWidget(),
       ),
     );
   }

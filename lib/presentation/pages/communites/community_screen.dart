@@ -3,6 +3,8 @@ import 'package:get/get.dart';
 import 'package:loci/core/constants/app_text_style.dart';
 import 'package:loci/core/enums/community_role.dart';
 import 'package:loci/presentation/controllers/auth/auth_controller.dart';
+import 'package:loci/presentation/controllers/community/my_community_controlle.dart';
+import 'package:loci/presentation/controllers/event/rsvp_controller.dart';
 import 'package:loci/presentation/pages/communites/widgets/activity_card.dart';
 import 'package:loci/presentation/pages/communites/widgets/community_member_header.dart';
 import 'package:loci/presentation/pages/communites/widgets/community_owner_header.dart';
@@ -13,29 +15,27 @@ import 'package:loci/presentation/pages/communites/widgets/post_comment_section.
 import 'package:loci/presentation/pages/event/widgets/event_card.dart';
 import 'package:loci/presentation/pages/explore_routes/widgets/route_card.dart';
 import 'package:loci/presentation/pages/home/widgets/post_input_filed.dart';
-import 'package:loci/presentation/pages/clam_business/widgets/review_card.dart';
 import 'package:loci/core/enums/announcement_type.dart';
 import 'package:loci/core/theme/theme_extention.dart';
 import 'package:loci/core/utils/time_parser.dart';
 import 'package:loci/data/models/mock_data.dart';
-import 'package:loci/data/models/poll.dart';
-import 'package:loci/gen/assets.gen.dart';
 import 'package:loci/presentation/controllers/comment/announcement_controller.dart';
 import 'package:loci/presentation/controllers/comment/announcements_comment_controller.dart';
 import 'package:loci/presentation/pages/raffles/widgets/raffle_card.dart';
-import 'package:loci/presentation/widgets/common/post_comment_section.dart';
 import 'package:loci/presentation/widgets/custom_text_field.dart';
 import 'package:loci/presentation/widgets/pagination_loading.dart';
-import 'package:loci/data/community/announcement_model.dart';
-
+import 'package:loci/routes/app_routes.dart';
 import '../../../core/enums/acitivty_ref_type.dart';
-import '../../../core/enums/activity_type.dart';
+import '../../../core/enums/rsvp_status.dart';
+import '../../../core/utils/show_snackbar.dart';
+import '../../../data/models/community/announcement_model.dart';
 
 class CommunityScreen extends StatefulWidget {
   final CommunityRole? role;
   final String? communityId;
+  final String? communityName;
 
-  const CommunityScreen({super.key, this.role, this.communityId});
+  const CommunityScreen({super.key, this.role, this.communityId, this.communityName});
 
   @override
   State<CommunityScreen> createState() => _CommunityScreenState();
@@ -52,6 +52,8 @@ class _CommunityScreenState extends State<CommunityScreen>
 
   final authController = Get.find<AuthController>();
   final announcementController = Get.find<AnnouncementController>();
+  final myCommunityController = Get.find<MyCommunityController>();
+
 
   // Comment section expansion with postId
   String? _expandedPostId;
@@ -67,9 +69,12 @@ class _CommunityScreenState extends State<CommunityScreen>
 
     final communityId = widget.communityId;
     if (communityId != null && communityId.isNotEmpty) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        announcementController.init(communityId);
-      });
+      announcementController.init(communityId);
+
+      //  ONLY OWNER → load community details
+      if (widget.role == CommunityRole.owner) {
+        myCommunityController.fetchCommunity(communityId);
+      }
     }
 
     _tabSwitch();
@@ -105,6 +110,23 @@ class _CommunityScreenState extends State<CommunityScreen>
     });
   }
 
+
+
+  void _rsvpHandler(String eventId, RSVPController rsvpController) async {
+    bool success = await rsvpController.sendRSVP(
+      eventId: eventId,
+      status: RsvpStatus.going.toJson,
+    );
+
+    if (success) {
+      announcementController.updateEventRsvpStatus(eventId, RsvpStatus.going);
+      SnackbarService.success(rsvpController.successMessage!);
+    } else {
+      SnackbarService.error(rsvpController.errorMessage!);
+    }
+  }
+
+
   // -------------------------------------------------
   // BUILD
   // -------------------------------------------------
@@ -125,7 +147,7 @@ class _CommunityScreenState extends State<CommunityScreen>
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      "Marland Clutch's Community",
+                      widget.communityName ?? "",
                       style: AppTextStyle.textMd(weight: FontWeight.w600),
                     ),
                     const SizedBox(height: 4),
@@ -145,7 +167,7 @@ class _CommunityScreenState extends State<CommunityScreen>
                     ),
                     const SizedBox(height: 20),
                     if (widget.role == CommunityRole.owner)
-                      const CommunityOwnerHeader()
+                       CommunityOwnerHeader()
                     else
                       const CommunityMemberHeader(),
                   ],
@@ -417,18 +439,39 @@ class _CommunityScreenState extends State<CommunityScreen>
       case ActivityRefType.event:
         final event = activity.event;
         if (event == null) return null;
-        return EventCard(
-          imageUrl: event.coverImage,
-          title: event.title,
-          description: event.description,
-          date: event.date,
-          location: event.location,
-          attendance:"${event.goingCount}/${event.maxAttendees}",
-          organizer: event.organizerName,
-          onRSVP: () {},
-          rsvpButtonText: "RSVP",
-        );
 
+        return GetBuilder<RSVPController>(
+          builder: (rsvpController) {
+
+            bool isLoading = rsvpController.isLoading &&
+                rsvpController.loadingEventId == event.id;
+
+            return EventCard(
+              imageUrl: event.coverImage,
+              title: event.title,
+              description: event.description,
+              date: event.date,
+              location: event.location,
+              attendance: "${event.goingCount}/${event.maxAttendees}",
+              organizer: event.organizerName,
+
+              onTapCard: () {
+                Get.toNamed(AppRoutes.eventDetails, arguments: {
+                  'eventId': event.id,
+                  "eventTitle": event.title,
+                });
+              },
+
+              onRSVP: () => _rsvpHandler(
+                event.id,
+                rsvpController,
+              ),
+
+              isLoading: isLoading,
+              rsvpButtonText: event.myRsvpStatus.label,
+            );
+          },
+        );
     // CASE: ROUTE
       case ActivityRefType.route:
         final route = activity.route;
@@ -440,6 +483,16 @@ class _CommunityScreenState extends State<CommunityScreen>
           openingTime: route.openingTime,
           availabilityType: route.availabilityType,
           imageUrl: route.banner,
+          onTap: (){
+            Get.toNamed(
+                AppRoutes.routeDetails,
+                arguments: {
+                  "routeId": route.routeId,
+                  "routeName":route.title,
+                  "showAppBar": true,
+                }
+            );
+          },
         );
 
     // CASE: RAFFLE
@@ -447,7 +500,12 @@ class _CommunityScreenState extends State<CommunityScreen>
         final raffle=activity.raffle;
         if (raffle == null) return null;
 
-        return RaffleCard(raffle: raffle, onTap: (){
+        return RaffleCard(raffle: raffle, onTap: ()async{
+
+          Get.toNamed(AppRoutes.rafflesDetails,arguments: {
+            "raffleId":raffle.id,
+            "showAppBar": true,
+          });
 
 
         });

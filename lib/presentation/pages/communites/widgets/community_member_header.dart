@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:loci/routes/app_routes.dart';
 import '../../../../core/constants/app_text_style.dart';
 import '../../../../core/theme/theme_extention.dart';
+import '../../../widgets/custom_image_container.dart';
 
 class CommunityMemberHeader extends StatelessWidget {
   const CommunityMemberHeader({super.key});
@@ -13,103 +14,58 @@ class CommunityMemberHeader extends StatelessWidget {
 
     return Column(
       children: [
-        Row(
-          children: [
-            // ---- Member Card ----
-            Expanded(
-              child: Card(
-                elevation: 1,
-                color: colorScheme.surfaceContainerHigh,
-                child: InkWell(
-                  borderRadius: BorderRadius.circular(12),
-                  onTap: () {
-                    Get.toNamed(AppRoutes.communityMemberScreen);
-                  },
-                  child: Padding(
-                    padding: const EdgeInsets.all(12),
-                    child: Column(
-                      children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Container(
-                              width: 40,
-                              height: 40,
-                              decoration: BoxDecoration(
-                                color: colorScheme.surfaceContainer,
-                                shape: BoxShape.circle,
-                              ),
-                              child: Icon(
-                                Icons.group,
-                                color: colorScheme.onSurface,
-                              ),
-                            ),
-                            const SizedBox(width: 10),
-                            Text(
-                              "480K",
-                              style: AppTextStyle.textSm(
-                                weight: FontWeight.w600,
-                                color: colorScheme.onSurface,
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 10),
-                        Text(
-                          "Member",
-                          style: AppTextStyle.textMd(
-                            weight: FontWeight.w600,
-                            color: colorScheme.onSurface,
-                          ),
+        // ---- Top Image Card ----
+        Container(
+          width: double.infinity,
+          height: 100,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          clipBehavior: Clip.antiAlias,
+          child: Stack(
+            children: [
+
+
+              CustomCachedImage(
+                imageUrl: "assets/images/location.png",
+                width: double.infinity,
+                fit: BoxFit.cover,
+              ),
+
+              Positioned(
+                top: 10,
+                left: 10,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 4,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withOpacity(0.3),
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: Text(
+                    "Marland Clutch Centre",
+                    style: AppTextStyle.textSm(
+                      weight: FontWeight.bold,
+                      color: Colors.white,
+                    ).copyWith(
+                      shadows: [
+                        Shadow(
+                          color: Colors.black.withOpacity(0.8),
+                          offset: const Offset(1, 1),
+                          blurRadius: 4,
                         ),
                       ],
                     ),
                   ),
                 ),
               ),
-            ),
-
-            const SizedBox(width: 20),
-
-            // ---- QR Card ----
-            Expanded(
-              child: Card(
-                elevation: 1,
-                color: colorScheme.surfaceContainerHigh,
-                child: InkWell(
-                  onTap: () {},
-                  child: Padding(
-                    padding: const EdgeInsets.all(12),
-                    child: Column(
-                      children: [
-                        Container(
-                          width: 40,
-                          height: 40,
-                          decoration: BoxDecoration(
-                            color: colorScheme.surfaceContainer,
-                            shape: BoxShape.circle,
-                          ),
-                          child: Icon(
-                            Icons.qr_code,
-                            color: colorScheme.onSurface,
-                          ),
-                        ),
-                        const SizedBox(height: 10),
-                        Text(
-                          "Join QR code",
-                          style: AppTextStyle.textSm(
-                            weight: FontWeight.w600,
-                            color: colorScheme.onSurface,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ],
+            ],
+          ),
         ),
+
+        const SizedBox(height: 16),
       ],
     );
   }

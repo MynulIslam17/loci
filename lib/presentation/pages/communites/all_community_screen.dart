@@ -76,6 +76,7 @@ class AllCommunityScreen extends StatelessWidget {
                               arguments: {
                                 "communityRole": joinedCommunity.role,
                                 "communityId": joinedCommunity.id,
+                                "communityName": joinedCommunity.name,
 
                               },
                             );

@@ -1,6 +1,8 @@
 import 'package:loci/core/enums/category_enum.dart';
 import 'package:loci/core/enums/community_role.dart';
-import '../../core/utils/member_parse.dart';
+
+import '../../../core/utils/member_parse.dart';
+
 
 class CommunityModel {
   final String id;

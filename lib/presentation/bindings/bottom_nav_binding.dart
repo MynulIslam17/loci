@@ -22,7 +22,7 @@ class BottomNavBinding extends Bindings {
     Get.lazyPut(()=>RaffleDetailsController());
 
 
-    Get.lazyPut(() => RSVPController(), fenix: true);
+
     Get.lazyPut(() => CheckInController(), fenix: true);
     Get.lazyPut(() => ManualCheckInController(), fenix: true);
     Get.lazyPut(() => ProfileController());

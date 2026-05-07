@@ -139,6 +139,7 @@ abstract class AppPages {
     GetPage(name: AppRoutes.routeDetails, page: () => RouteDetailsScreen(),binding: BottomNavBinding()),
     //--raffles
     GetPage(name: AppRoutes.activeRaffles, page: () => ActiveRafflesPage(),binding: BottomNavBinding()),
+    GetPage(name: AppRoutes.rafflesDetails, page: () => RafflesDetailsScreen(),binding: BottomNavBinding()),
 
 
     //---clam my business

@@ -86,6 +86,7 @@ static String  businessReviews(String businessId)=>"$baseUrl/reviews/business/$b
 //---community
 
   static const String  community="$baseUrl/communities/me";
+  static String  singleCommunity(String communityId)=>"$baseUrl/communities/$communityId";
   static const String  joinCommunity="$baseUrl/communities/join";
   static const String  announcementList="$baseUrl/community-announcements";
 

@@ -6,8 +6,9 @@ import 'package:loci/core/network/network_caller.dart';
 import 'package:loci/data/models/common/paginatation_model.dart';
 
 import '../../../core/enums/announcement_type.dart';
-import '../../../data/community/announcement_model.dart';
-import '../../../data/community/announcement_response.dart';
+import '../../../core/enums/rsvp_status.dart';
+import '../../../data/models/community/announcement_model.dart';
+import '../../../data/models/community/announcement_response.dart';
 
 class AnnouncementController extends GetxController {
 
@@ -107,7 +108,7 @@ class AnnouncementController extends GetxController {
   // PAGINATION
   // -------------------------------------------------
   Future<void> fetchMoreAnnouncements() async {
-    if (!hasMore || _isPaginationLoading || _communityId == null) return;
+    if (!hasMore || _isPaginationLoading || _isLoading) return;
 
     try {
       _isPaginationLoading = true;
@@ -142,6 +143,24 @@ class AnnouncementController extends GetxController {
       _isPaginationLoading = false;
       update();
     }
+  }
+
+
+
+  // update event rsvp from AnnouncementController locally
+  void updateEventRsvpStatus(String eventId, RsvpStatus status) {
+    for (int i = 0; i < _announcements.length; i++) {
+      if (_announcements[i].event?.id == eventId) {
+        final updatedEvent = _announcements[i].event!.copyWith(
+          myRsvpStatus: status,
+          goingCount: status == RsvpStatus.going
+              ? _announcements[i].event!.goingCount + 1
+              : _announcements[i].event!.goingCount,
+        );
+        _announcements[i] = _announcements[i].copyWith(event: updatedEvent);
+      }
+    }
+    update();
   }
 
   // -------------------------------------------------
