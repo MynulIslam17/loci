@@ -1,16 +1,32 @@
-# loci
+# Loci – Social Media Platform for Businesses
+
 ![Project Banner](assets/images/project_banner.png)
-A new Flutter project.
 
-## Getting Started
+## Overview
 
-This project is a starting point for a Flutter application.
+Loci is a dynamic social media ecosystem designed specifically for businesses to connect with their community. It allows business owners to create profiles, promote exclusive events, generate engaging raffles, and handle real-time networking—all within a seamless mobile experience.
 
-A few resources to get you started if this is your first Flutter project:
+## Key Features
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+- Business Profiles: Dedicated spaces for businesses to showcase their brand, location, and services.
+- Event Management: Create, promote, and manage exclusive community events.
+- Interactive Raffles: Generate engagement through digital raffles and promotional activities.
+- Real-time Communication: Instant messaging between businesses and users powered by WebSockets.
+- Live Map Integration: Discover local businesses and events through an interactive map interface.
+- Networking Dashboard: Overview of contacts, referrals, and upcoming meetings.
+- Secure Authentication: Robust user and business verification using JWT.
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+## Technology Stack
+
+### Frontend
+- Dart
+- Flutter
+- GetX (State Management)
+- GetStorage (Local Storage)
+
+### Backend
+- Node.js
+- Express.js
+- MongoDB
+- Socket.io
+- JSON Web Tokens (JWT)
