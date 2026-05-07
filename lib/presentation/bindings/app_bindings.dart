@@ -6,6 +6,7 @@ import '../../core/network/network_setup.dart';
 import '../../data/datasources/local_storage_service.dart';
 import '../../data/repositories/auth_repository.dart';
 import '../controllers/auth/auth_controller.dart';
+import '../controllers/community/vote_controller.dart';
 import '../controllers/event/rsvp_controller.dart';
 import '../controllers/nav_controller.dart';
 
@@ -22,6 +23,7 @@ class AppBindings extends Bindings {
     Get.put(setUpNetworkClient(), permanent: true);
 
     Get.put(RSVPController(), permanent: true);
+    Get.put(VoteController(), permanent: true);
 
 
 

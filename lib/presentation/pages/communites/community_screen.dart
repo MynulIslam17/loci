@@ -15,6 +15,8 @@ import 'package:loci/presentation/pages/communites/widgets/post_card_view_model.
 import 'package:loci/presentation/pages/communites/widgets/post_comment_section.dart';
 import 'package:loci/presentation/pages/event/widgets/event_card.dart';
 import 'package:loci/presentation/pages/explore_routes/widgets/route_card.dart';
+import 'package:loci/presentation/controllers/community/vote_controller.dart';
+import 'package:loci/presentation/pages/communites/widgets/poll_bottom_sheet.dart';
 import 'package:loci/presentation/pages/home/widgets/post_input_filed.dart';
 import 'package:loci/core/enums/announcement_type.dart';
 import 'package:loci/core/theme/theme_extention.dart';
@@ -53,6 +55,7 @@ class _CommunityScreenState extends State<CommunityScreen>
   final authController = Get.find<AuthController>();
   final announcementController = Get.find<AnnouncementController>();
   final myCommunityController = Get.find<MyCommunityController>();
+  final voteController = Get.find<VoteController>();
 
 
   // -------------------------------------------------
@@ -301,7 +304,11 @@ class _CommunityScreenState extends State<CommunityScreen>
               viewModel: PostCardViewModel.from(announcement),
               onLikeTap: (postId) {},
               onCommentTap: (postId) => _showCommentSheet(postId),
-              onClickPoll: (postId) {},
+              onClickPoll: (postId) => PollBottomSheet.show(
+                context,
+                announcement,
+                onVote: (optionId) => _onVote(announcement.id, optionId),
+              ),
               onSubmit: (postId, text) {},
               onChanged: (postId, value) {},
             );
@@ -549,6 +556,27 @@ class _CommunityScreenState extends State<CommunityScreen>
         ),
       ],
     );
+  }
+
+
+
+  // -------------------------------------------------
+  // VOTE
+  // -------------------------------------------------
+  void _onVote(String announcementId, String optionId) async {
+    if (announcementController.myVotedOptionId(announcementId) == optionId) return;
+
+    final success = await voteController.submitVote(
+      announcementId: announcementId,
+      optionId: optionId,
+    );
+
+    if (success) {
+      announcementController.updatePollVote(announcementId, optionId);
+      SnackbarService.success(voteController.successMessage!);
+    } else {
+      SnackbarService.error(voteController.errorMessage!);
+    }
   }
 
   // -------------------------------------------------

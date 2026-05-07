@@ -23,6 +23,9 @@ class AnnouncementController extends GetxController {
   AnnouncementType _currentType = AnnouncementType.question;
   String? _communityId;
 
+  // tracks the user's voted optionId per announcementId for this session
+  final Map<String, String> _myVotes = {};
+
   // -------------------------------------------------
   // GETTERS
   // -------------------------------------------------
@@ -36,6 +39,8 @@ class AnnouncementController extends GetxController {
   bool get hasMore => _meta?.hasNextPage ?? false;
 
   AnnouncementType get currentType => _currentType;
+
+  String? myVotedOptionId(String announcementId) => _myVotes[announcementId];
 
 
 
@@ -71,6 +76,7 @@ class AnnouncementController extends GetxController {
       if (isRefresh) {
         _currentPage = 1;
         _announcements = [];
+        _myVotes.clear();
       }
 
       update();
@@ -146,6 +152,41 @@ class AnnouncementController extends GetxController {
   }
 
 
+
+  // update poll vote counts locally after successful vote
+  void updatePollVote(String announcementId, String optionId) {
+    final previousOptionId = _myVotes[announcementId];
+    final isChangingVote = previousOptionId != null && previousOptionId != optionId;
+
+    for (int i = 0; i < _announcements.length; i++) {
+      if (_announcements[i].id == announcementId) {
+        final options = _announcements[i].pollOptions;
+        if (options == null) break;
+
+        final updatedOptions = options.map((opt) {
+          if (opt.id == optionId) {
+            return opt.copyWith(voteCount: opt.voteCount + 1);
+          }
+          if (isChangingVote && opt.id == previousOptionId) {
+            return opt.copyWith(voteCount: (opt.voteCount - 1).clamp(0, opt.voteCount));
+          }
+          return opt;
+        }).toList();
+
+        _announcements[i] = _announcements[i].copyWith(
+          pollOptions: updatedOptions,
+          // total only grows on first vote; changing vote keeps total the same
+          totalVotes: isChangingVote
+              ? _announcements[i].totalVotes
+              : (_announcements[i].totalVotes ?? 0) + 1,
+        );
+
+        _myVotes[announcementId] = optionId;
+        break;
+      }
+    }
+    update();
+  }
 
   // update event rsvp from AnnouncementController locally
   void updateEventRsvpStatus(String eventId, RsvpStatus status) {

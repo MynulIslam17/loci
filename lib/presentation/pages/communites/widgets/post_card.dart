@@ -76,24 +76,35 @@ class _PostCardWidgetState extends State<PostCardWidget> {
               const SizedBox(height: 20),
               InkWell(
                 onTap: () => widget.onClickPoll?.call(vm.postId),
-                child: ListView.separated(
-                  clipBehavior: Clip.antiAlias,
-                  physics: const NeverScrollableScrollPhysics(),
-                  shrinkWrap: true,
-                  padding: EdgeInsets.zero,
-                  itemCount: vm.pollOptions!.length,
-                  separatorBuilder: (_, __) => const SizedBox(height: 10),
-                  itemBuilder: (context, index) {
-                    final opt = vm.pollOptions![index];
-                    final percent =
-                        vm.totalVotes > 0 ? opt.voteCount / vm.totalVotes : 0.0;
-                    return PollBar(
-                      title: opt.text,
-                      percent: percent,
-                      imagePath: opt.image ?? '',
-                      trailingText: '${opt.voteCount} votes',
-                    );
-                  },
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    ...vm.pollOptions!.take(2).map((opt) {
+                      final percent = vm.totalVotes > 0
+                          ? opt.voteCount / vm.totalVotes
+                          : 0.0;
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: 10),
+                        child: PollBar(
+                          title: opt.text,
+                          percent: percent,
+                          imagePath: opt.image ?? '',
+                          trailingText: '${opt.voteCount} votes',
+                        ),
+                      );
+                    }),
+                    if (vm.pollOptions!.length > 2)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 4),
+                        child: Text(
+                          'See all ${vm.pollOptions!.length} options',
+                          style: AppTextStyle.textSm(
+                            color: Theme.of(context).colorScheme.primary,
+                            weight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                  ],
                 ),
               ),
             ],

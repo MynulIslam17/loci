@@ -91,6 +91,9 @@ static String  businessReviews(String businessId)=>"$baseUrl/reviews/business/$b
   static const String  announcementList="$baseUrl/community-announcements";
 
   static String  announcementsComments(String announcementId)=>"$baseUrl/community-announcements/$announcementId/comments";
+  static String  voteOnAnnouncementPoll(String announcementId)=>"$baseUrl/community-announcements/$announcementId/vote";
+
+
 
 
   ///--------comment

@@ -248,41 +248,41 @@ class _HomeScreenState extends State<HomeScreen> {
                       const SizedBox(height: 20),
 
                       // --- Poll options list ---
-                      Expanded(
-                        child: ListView.separated(
-                          controller: scrollController,
-                          itemCount: mockPolls.length,
-                          separatorBuilder: (_, __) =>
-                              const SizedBox(height: 20),
-                          itemBuilder: (context, index) {
-                            final poll = mockPolls[index];
-                            final isSelected = selectedIndex == index;
-
-                            return _buildPollResultRow(
-                              colorScheme: colorScheme,
-                              isSelected: isSelected,
-                              percent: poll.percent,
-                              optionName: poll.title,
-                              voteCount: poll.voteCount,
-                              avatarUrl: poll.imagePath,
-                              // Pass the callback to update selectedIndex when circle is tapped
-                              onSelect: () {
-                                setState(() {
-                                  // remove vote from previous selection
-                                  if (selectedIndex != null) {
-                                    mockPolls[selectedIndex!].voteCount--;
-                                  }
-                                  // set new selection
-                                  selectedIndex = index;
-
-                                  // increment vote for selected option
-                                  mockPolls[index].voteCount++;
-                                });
-                              },
-                            );
-                          },
-                        ),
-                      ),
+                      // Expanded(
+                      //   child: ListView.separated(
+                      //     controller: scrollController,
+                      //     itemCount: mockPolls.length,
+                      //     separatorBuilder: (_, __) =>
+                      //         const SizedBox(height: 20),
+                      //     itemBuilder: (context, index) {
+                      //       final poll = mockPolls[index];
+                      //       final isSelected = selectedIndex == index;
+                      //
+                      //       return _buildPollResultRow(
+                      //         colorScheme: colorScheme,
+                      //         isSelected: isSelected,
+                      //         percent: poll.percent,
+                      //         optionName: poll.title,
+                      //         voteCount: poll.voteCount,
+                      //         avatarUrl: poll.imagePath,
+                      //         // Pass the callback to update selectedIndex when circle is tapped
+                      //         onSelect: () {
+                      //           setState(() {
+                      //             // remove vote from previous selection
+                      //             if (selectedIndex != null) {
+                      //               mockPolls[selectedIndex!].voteCount--;
+                      //             }
+                      //             // set new selection
+                      //             selectedIndex = index;
+                      //
+                      //             // increment vote for selected option
+                      //             mockPolls[index].voteCount++;
+                      //           });
+                      //         },
+                      //       );
+                      //     },
+                      //   ),
+                      // ),
                     ],
                   ),
                 );

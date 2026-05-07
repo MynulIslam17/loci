@@ -1,3 +1,4 @@
+import 'package:loci/data/models/community/announcement_model.dart';
 import 'package:loci/data/models/poll.dart';
 import 'package:loci/data/models/post_model.dart';
 
@@ -8,40 +9,36 @@ import '../../../presentation/widgets/common/post_comment_section.dart';
 /// Polls
 final List<PollOption> mockPolls = [
   PollOption(
-    title: "Pizzaburg",
-    percent: 0.8,
-    imagePath: Assets.images.user2.path,
-    trailingText: "80%",
-      voteCount: 400
-
+    id: '1',
+    text: "Pizzaburg",
+    image: Assets.images.user2.path,
+    voteCount: 400,
   ),
   PollOption(
-    title: "Chillox",
-    percent: 0.4,
-    imagePath: Assets.images.user1.path,
-    trailingText: "40%",
-      voteCount: 200
+    id: '2',
+    text: "Chillox",
+    image: Assets.images.user1.path,
+    voteCount: 200,
   ),
   PollOption(
-    title: "aaaa",
-    percent: 0.4,
-    imagePath: Assets.images.user1.path,
-    trailingText: "40%",
-      voteCount: 44
+    id: '3',
+    text: "aaaa",
+    image: Assets.images.user1.path,
+    voteCount: 44,
   ),
 ];
 
 /// Comments
-final List<CommentData> mockComments = List.generate(
-  12,
-      (index) => CommentData(
-    userName: "Alexandra Broke",
-    commentText: "This was one of the most epic experiences I got involved in!",
-    userImage: Assets.images.user2.path,
-    likes: 200,
-    replies: 20,
-  ),
-);
+// final List<CommentData> mockComments = List.generate(
+//   12,
+//       (index) => CommentData(
+//     userName: "Alexandra Broke",
+//     commentText: "This was one of the most epic experiences I got involved in!",
+//     userImage: Assets.images.user2.path,
+//     likes: 200,
+//     replies: 20,
+//   ),
+// );
 
 
 
