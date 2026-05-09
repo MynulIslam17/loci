@@ -1,6 +1,7 @@
 import 'package:get/get.dart';
 import 'package:loci/core/constants/app_url.dart';
 import 'package:loci/core/network/network_caller.dart';
+import 'package:loci/core/utils/show_snackbar.dart';
 import 'package:loci/presentation/controllers/comment/announcement_controller.dart';
 
 class AnnouncementLikeController extends GetxController {
@@ -19,11 +20,7 @@ class AnnouncementLikeController extends GetxController {
       if (!response.isSuccess) {
         // Revert on failure
         announcementCtrl.toggleLikeLocally(announcementId);
-        Get.snackbar(
-          'Error',
-          response.body?['message'] ?? 'Failed to like',
-          snackPosition: SnackPosition.BOTTOM,
-        );
+       SnackbarService.error(response.body?['message'] ?? 'Something went wrong');
       }
     } catch (e) {
       // Revert on error

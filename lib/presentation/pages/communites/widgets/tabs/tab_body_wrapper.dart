@@ -1,12 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:loci/presentation/controllers/comment/announcement_controller.dart';
+import 'package:loci/presentation/widgets/app_skeleton.dart';
 import 'package:loci/presentation/widgets/pagination_loading.dart';
 
 class TabBodyWrapper extends StatelessWidget {
   final Widget Function() builder;
+  final Widget Function(BuildContext context)? shimmerBuilder;
 
-  const TabBodyWrapper({super.key, required this.builder});
+  const TabBodyWrapper({
+    super.key,
+    required this.builder,
+    this.shimmerBuilder,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -32,8 +38,10 @@ class TabBodyWrapper extends StatelessWidget {
                   handle: NestedScrollView.sliverOverlapAbsorberHandleFor(context),
                 ),
                 if (controller.isLoading)
-                  const SliverFillRemaining(
-                    child: Center(child: CircularProgressIndicator()),
+                  SliverToBoxAdapter(
+                    child: shimmerBuilder != null
+                        ? shimmerBuilder!(context)
+                        : AppSkeleton.list(context: context, itemCount: 4),
                   )
                 else ...[
                   SliverToBoxAdapter(child: builder()),

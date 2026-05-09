@@ -2,6 +2,7 @@ import 'package:get/get.dart';
 import 'package:loci/core/constants/app_url.dart';
 import 'package:loci/core/network/network_caller.dart';
 import 'package:loci/data/models/common/paginatation_model.dart';
+import 'package:loci/presentation/controllers/auth/auth_controller.dart';
 import '../../../core/enums/announcement_type.dart';
 import '../../../core/enums/rsvp_status.dart';
 import '../../../data/models/community/announcement_model.dart';
@@ -14,6 +15,7 @@ class AnnouncementController extends GetxController {
   // -------------------------------------------------
   final Map<String, AnnouncementModel> _announcementMap = {};
   final List<String> _announcementIds = [];
+  final Map<String, String> _votedOptionIds = {};
 
 
   // -------------------------------------------------
@@ -150,6 +152,46 @@ class AnnouncementController extends GetxController {
   bool isLiked(String announcementId) =>
       _announcementMap[announcementId]?.isLiked ?? false;
 
+  String? votedOptionId(String announcementId) => _votedOptionIds[announcementId];
+
+  void updatePollVote(
+    String announcementId,
+    String newOptionId, {
+    required String userId,
+    required String userName,
+    required String userAvatar,
+  }) {
+    final post = _announcementMap[announcementId];
+    if (post == null) return;
+
+    final previousOptionId = _votedOptionIds[announcementId];
+    final isChangingVote = previousOptionId != null && previousOptionId != newOptionId;
+    final newVoter = Voter(userId: userId, name: userName, avatar: userAvatar);
+
+    final updatedOptions = post.pollOptions?.map((opt) {
+      if (opt.id == newOptionId) {
+        return opt.copyWith(
+          voteCount: opt.voteCount + 1,
+          voters: [...opt.voters, newVoter],
+        );
+      }
+      if (isChangingVote && opt.id == previousOptionId) {
+        return opt.copyWith(
+          voteCount: (opt.voteCount - 1).clamp(0, opt.voteCount),
+          voters: opt.voters.where((v) => v.userId != userId).toList(),
+        );
+      }
+      return opt;
+    }).toList();
+
+    _announcementMap[announcementId] = post.copyWith(
+      pollOptions: updatedOptions,
+      totalVotes: isChangingVote ? post.totalVotes : (post.totalVotes ?? 0) + 1,
+    );
+    _votedOptionIds[announcementId] = newOptionId;
+    update();
+  }
+
   void toggleLikeLocally(String announcementId) {
     final post = _announcementMap[announcementId];
     if (post == null) return;
@@ -211,10 +253,21 @@ class AnnouncementController extends GetxController {
   // PRIVATE HELPERS
   // -------------------------------------------------
   void _appendAnnouncements(List<AnnouncementModel> items) {
+    String? currentUserId;
+    try { currentUserId = Get.find<AuthController>().userModel?.id; } catch (_) {}
+
     for (final item in items) {
       _announcementMap[item.id] = item;
-      if (!_announcementIds.contains(item.id)) {
-        _announcementIds.add(item.id);
+      if (!_announcementIds.contains(item.id)) _announcementIds.add(item.id);
+
+      // Seed which option the current user already voted on
+      if (currentUserId != null && !_votedOptionIds.containsKey(item.id)) {
+        for (final opt in item.pollOptions ?? []) {
+          if (opt.voters.any((v) => v.userId == currentUserId)) {
+            _votedOptionIds[item.id] = opt.id;
+            break;
+          }
+        }
       }
     }
   }

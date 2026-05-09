@@ -3,6 +3,7 @@ import 'package:loci/core/constants/app_text_style.dart';
 import 'package:loci/core/theme/app_colors.dart';
 import 'package:loci/core/theme/theme_extention.dart';
 import 'package:loci/data/models/community/announcement_model.dart';
+import 'package:loci/presentation/pages/home/widgets/poll_bar.dart';
 import 'package:loci/presentation/widgets/custom_image_container.dart';
 import 'package:percent_indicator/linear_percent_indicator.dart';
 
@@ -10,6 +11,7 @@ class PollBottomSheet extends StatefulWidget {
   final String? pollQuestion;
   final int totalVotes;
   final List<PollOption> options;
+  final String? currentUserId;
   final void Function(String optionId)? onVote;
 
   const PollBottomSheet({
@@ -17,12 +19,14 @@ class PollBottomSheet extends StatefulWidget {
     required this.pollQuestion,
     required this.totalVotes,
     required this.options,
+    this.currentUserId,
     this.onVote,
   });
 
   static void show(
     BuildContext context,
     AnnouncementModel announcement, {
+    String? currentUserId,
     void Function(String optionId)? onVote,
   }) {
     final options = announcement.pollOptions;
@@ -38,6 +42,7 @@ class PollBottomSheet extends StatefulWidget {
         pollQuestion: announcement.pollQuestion,
         totalVotes: announcement.totalVotes ?? 0,
         options: options,
+        currentUserId: currentUserId,
         onVote: onVote,
       ),
     );
@@ -49,6 +54,20 @@ class PollBottomSheet extends StatefulWidget {
 
 class _PollBottomSheetState extends State<PollBottomSheet> {
   String? _selectedId;
+  String? _myVotedOptionId;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.currentUserId != null && widget.currentUserId!.isNotEmpty) {
+      _myVotedOptionId = widget.options
+          .where((opt) =>
+              opt.voters.any((v) => v.userId == widget.currentUserId))
+          .map((opt) => opt.id)
+          .firstOrNull;
+    }
+    _selectedId = _myVotedOptionId;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -92,7 +111,7 @@ class _PollBottomSheetState extends State<PollBottomSheet> {
               final opt = widget.options[index];
               final isSelected = _selectedId == opt.id;
               final percent = widget.totalVotes > 0
-                  ? opt.voteCount / widget.totalVotes
+                  ? (opt.voteCount / widget.totalVotes).clamp(0.0, 1.0)
                   : 0.0;
 
               return GestureDetector(
@@ -114,16 +133,19 @@ class _PollBottomSheetState extends State<PollBottomSheet> {
                     ),
                   ),
                   child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      // Option image on the left
                       if (opt.image != null && opt.image!.isNotEmpty) ...[
                         CustomCachedImage(
-                          width: 40,
-                          height: 40,
+                          width: 44,
+                          height: 44,
                           isCircle: true,
                           imageUrl: opt.image,
                         ),
                         const SizedBox(width: 12),
                       ],
+
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -140,24 +162,40 @@ class _PollBottomSheetState extends State<PollBottomSheet> {
                               ),
                             ),
                             const SizedBox(height: 8),
-                            LinearPercentIndicator(
-                              lineHeight: 8,
-                              percent: percent,
-                              backgroundColor: AppColors.base200,
-                              progressColor: isSelected
-                                  ? context.colorScheme.primary
-                                  : AppColors.primaryG500,
-                              barRadius: const Radius.circular(10),
-                              animation: true,
-                              animationDuration: 600,
-                              padding: EdgeInsets.zero,
-                              trailing: Text(
-                                '${opt.voteCount}',
-                                style: AppTextStyle.textXs(
-                                  color: context.colorScheme.onSurfaceVariant,
+                            // Progress bar + percentage
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: LinearPercentIndicator(
+                                    lineHeight: 8,
+                                    percent: percent,
+                                    backgroundColor: AppColors.base200,
+                                    progressColor: isSelected
+                                        ? context.colorScheme.primary
+                                        : AppColors.primaryG500,
+                                    barRadius: const Radius.circular(10),
+                                    animation: true,
+                                    animationDuration: 600,
+                                    padding: EdgeInsets.zero,
+                                  ),
                                 ),
-                              ),
+                                const SizedBox(width: 8),
+                                Text(
+                                  '${opt.percentage.toStringAsFixed(0)}%',
+                                  style: AppTextStyle.textXs(
+                                    weight: FontWeight.w600,
+                                    color: isSelected
+                                        ? context.colorScheme.primary
+                                        : context.colorScheme.onSurfaceVariant,
+                                  ),
+                                ),
+                              ],
                             ),
+                            // Voter stack
+                            if (opt.voters.isNotEmpty) ...[
+                              const SizedBox(height: 8),
+                              VoterStack(voters: opt.voters, size: 26),
+                            ],
                           ],
                         ),
                       ),
@@ -173,13 +211,19 @@ class _PollBottomSheetState extends State<PollBottomSheet> {
           SizedBox(
             width: double.infinity,
             child: FilledButton(
-              onPressed: _selectedId == null
+              onPressed: _selectedId == null || _selectedId == _myVotedOptionId
                   ? null
                   : () {
                       widget.onVote?.call(_selectedId!);
                       Navigator.pop(context);
                     },
-              child: const Text('Vote'),
+              child: Text(
+                _selectedId == _myVotedOptionId && _myVotedOptionId != null
+                    ? 'Already Voted'
+                    : _myVotedOptionId != null
+                        ? 'Change Vote'
+                        : 'Vote',
+              ),
             ),
           ),
         ],

@@ -93,11 +93,11 @@ class AnnouncementModel {
       image: json['image'],
       likeCount: json['likeCount'],
       commentCount: json['commentCount'],
-      pollQuestion: json['pollQuestion'],
-      pollOptions: json['pollOptions'] != null
-          ? (json['pollOptions'] as List<dynamic>)
-          .map((e) => PollOption.fromJson(e))
-          .toList()
+      pollQuestion: json['question'],
+      pollOptions: json['options'] != null
+          ? (json['options'] as List<dynamic>)
+              .map((e) => PollOption.fromJson(e))
+              .toList()
           : null,
       maxVotesPerUser: json['maxVotesPerUser'],
       endsAt: json['endsAt'],
@@ -164,20 +164,29 @@ class PollOption {
   final String text;
   final String? image;
   final int voteCount;
+  final double percentage;
+  final List<Voter> voters;
 
   PollOption({
     required this.id,
     required this.text,
     this.image,
     required this.voteCount,
+    this.percentage = 0,
+    this.voters = const [],
   });
 
   factory PollOption.fromJson(Map<String, dynamic> json) {
     return PollOption(
-      id: json['_id'] ?? '',
+      id: json['optionId'] ?? '',
       text: json['text'] ?? '',
       image: json['image'],
       voteCount: json['voteCount'] ?? 0,
+      percentage: (json['percentage'] ?? 0).toDouble(),
+      voters: (json['voters'] as List<dynamic>?)
+              ?.map((v) => Voter.fromJson(v))
+              .toList() ??
+          [],
     );
   }
 
@@ -186,14 +195,35 @@ class PollOption {
     String? text,
     String? image,
     int? voteCount,
+    double? percentage,
+    List<Voter>? voters,
   }) {
     return PollOption(
       id: id ?? this.id,
       text: text ?? this.text,
       image: image ?? this.image,
       voteCount: voteCount ?? this.voteCount,
+      percentage: percentage ?? this.percentage,
+      voters: voters ?? this.voters,
     );
   }
+}
+
+// -------------------------------------------------
+// VOTER MODEL
+// -------------------------------------------------
+class Voter {
+  final String userId;
+  final String name;
+  final String avatar;
+
+  Voter({required this.userId, required this.name, required this.avatar});
+
+  factory Voter.fromJson(Map<String, dynamic> json) => Voter(
+        userId: json['userId'] ?? '',
+        name: json['name'] ?? '',
+        avatar: json['avatar'] ?? '',
+      );
 }
 
 // -------------------------------------------------

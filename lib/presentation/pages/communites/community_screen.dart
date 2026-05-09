@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:loci/core/constants/app_text_style.dart';
+import 'package:loci/presentation/widgets/app_skeleton.dart';
 import 'package:loci/core/enums/announcement_type.dart';
 import 'package:loci/core/enums/community_role.dart';
 import 'package:loci/core/enums/rsvp_status.dart';
@@ -93,16 +94,21 @@ class _CommunityScreenState extends State<CommunityScreen>
   // HANDLERS
   // -------------------------------------------------
   void _onVote(String announcementId, String optionId) async {
-
-
     final success = await voteController.submitVote(
       announcementId: announcementId,
       optionId: optionId,
     );
 
     if (success) {
-     // announcementController.updatePollVote(announcementId, optionId);
-      SnackbarService.success(voteController.successMessage!);
+      final user = authController.userModel;
+      announcementController.updatePollVote(
+        announcementId,
+        optionId,
+        userId: user?.id ?? '',
+        userName: user?.name ?? '',
+        userAvatar: user?.avatar ?? '',
+      );
+
     } else {
       SnackbarService.error(voteController.errorMessage!);
     }
@@ -163,6 +169,7 @@ class _CommunityScreenState extends State<CommunityScreen>
     PollBottomSheet.show(
       context,
       announcement,
+      currentUserId: authController.userModel?.id,
       onVote: (optionId) => _onVote(announcement.id, optionId),
     );
   }
@@ -192,11 +199,14 @@ class _CommunityScreenState extends State<CommunityScreen>
           child: TabBarView(
             controller: tabController,
             children: [
-              TabBodyWrapper(builder: () => FeedTab(
-                onCommentTap: _showCommentSheet,
-                onPollTap: _showPollSheet,
-                onLikeTap: _onLike,
-              )),
+              TabBodyWrapper(
+                shimmerBuilder: (ctx) => _FeedShimmer(),
+                builder: () => FeedTab(
+                  onCommentTap: _showCommentSheet,
+                  onPollTap: _showPollSheet,
+                  onLikeTap: _onLike,
+                ),
+              ),
               TabBodyWrapper(builder: () => OffersTab(
                 searchController: searchController,
                 onCommentTap: _showCommentSheet,
@@ -295,6 +305,70 @@ class _CommunityTabBar extends StatelessWidget {
             Tab(text: "Offers"),
             Tab(text: "Notices"),
             Tab(text: "Activity"),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// -------------------------------------------------
+// FEED SHIMMER
+// -------------------------------------------------
+class _FeedShimmer extends StatelessWidget {
+  const _FeedShimmer();
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: List.generate(3, (_) => _PostCardSkeleton()),
+    );
+  }
+}
+
+class _PostCardSkeleton extends StatelessWidget {
+  const _PostCardSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      color: Theme.of(context).colorScheme.surfaceContainer,
+      elevation: 1,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      margin: const EdgeInsets.only(bottom: 12),
+      child: Padding(
+        padding: const EdgeInsets.all(14),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                const SkeletonBox(width: 44, height: 44, radius: 22),
+                const SizedBox(width: 12),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: const [
+                    SkeletonBox(width: 120, height: 13),
+                    SizedBox(height: 6),
+                    SkeletonBox(width: 80, height: 10),
+                  ],
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            const SkeletonBox(width: double.infinity, height: 12),
+            const SizedBox(height: 8),
+            const SkeletonBox(width: double.infinity, height: 12),
+            const SizedBox(height: 8),
+            const SkeletonBox(width: 200, height: 12),
+            const SizedBox(height: 20),
+            Row(
+              children: const [
+                SkeletonBox(width: 64, height: 28, radius: 8),
+                SizedBox(width: 12),
+                SkeletonBox(width: 64, height: 28, radius: 8),
+              ],
+            ),
           ],
         ),
       ),

@@ -88,8 +88,9 @@ class _PostCardWidgetState extends State<PostCardWidget> {
                         child: PollBar(
                           title: opt.text,
                           percent: percent,
-                          imagePath: opt.image ?? '',
-                          trailingText: '${opt.voteCount} votes',
+                          percentage: opt.percentage,
+                          imagePath: opt.image,
+                          voters: opt.voters,
                         ),
                       );
                     }),
