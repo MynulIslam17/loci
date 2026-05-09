@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:loci/core/constants/app_url.dart';
 import 'package:loci/core/network/network_response.dart';
 import 'package:loci/data/models/common/paginatation_model.dart';
+import 'package:loci/presentation/controllers/comment/announcement_controller.dart';
 import '../../../core/network/network_caller.dart';
 import '../../../data/models/comment/comment_model.dart';
 
@@ -10,7 +11,7 @@ class CommentController extends GetxController {
   final ScrollController scrollController = ScrollController();
 
   bool _isLoading = false;
-  bool _isSending = false;
+  bool _isPosting = false;
   bool _isPaginationLoading = false;
   String? _errorMessage;
 
@@ -21,7 +22,7 @@ class CommentController extends GetxController {
   String? _currentPostId;
 
   bool get isLoading => _isLoading;
-  bool get isSending => _isSending;
+  bool get isPosting => _isPosting;
   bool get isPaginationLoading => _isPaginationLoading;
   String? get errorMessage => _errorMessage;
   List<CommentModel> get comments => _comments;
@@ -121,8 +122,7 @@ class CommentController extends GetxController {
         _meta = result.meta;
       } else {
         _currentPage--; // rollback
-        _errorMessage =
-            response.body?['message'] ?? "Failed to load more";
+        _errorMessage = response.body?['message'] ?? "Failed to load more";
       }
     } catch (e) {
       _currentPage--;
@@ -136,38 +136,35 @@ class CommentController extends GetxController {
   // -------------------------------------------------
   // SEND COMMENT
   // -------------------------------------------------
-  Future<bool> sendComment({
-    required String postId,
+  Future<CommentModel?> postComment({
     required String content,
+    required String postId,
   }) async {
     try {
-      _isSending = true;
+      _isPosting = true;
       _errorMessage = null;
       update();
 
-      final NetworkResponse response =
-      await Get.find<NetworkCaller>().postRequest(
+      final response = await Get.find<NetworkCaller>().postRequest(
         url: AppUrl.announcementsComments(postId),
         body: {"content": content},
       );
 
-      if (response.isSuccess && response.body != null) {
-        final newComment =
-        CommentModel.fromJson(response.body!['data']);
-
-        _comments.insert(0, newComment);
-        update();
-        return true;
+      if (response.isSuccess) {
+        Get.find<AnnouncementController>().incrementCommentCount(postId);
+          final newComment=CommentModel.fromJson(response.body?["data"]);
+          _comments.insert(0, newComment);
+          update();
+        return null;
       } else {
-        _errorMessage =
-            response.body?['message'] ?? "Failed to send comment";
-        return false;
+        _errorMessage = response.body?['message'] ?? "Failed to post comment";
+        return null;
       }
     } catch (e) {
       _errorMessage = e.toString();
-      return false;
+      return null;
     } finally {
-      _isSending = false;
+      _isPosting = false;
       update();
     }
   }

@@ -17,7 +17,7 @@ class CommentModel {
     id: json["_id"],
     content: json["content"],
     createdAt: json["createdAt"],
-    author: CommentAuthor.fromJson(json["author"]),
+    author: CommentAuthor.fromJson(json["user"]),
   );
 }
 

@@ -8,6 +8,7 @@ import '../../../../core/theme/theme_extention.dart';
 class PostInteractionBar extends StatelessWidget {
   final String likes;
   final String comments;
+  final bool isLiked;
 
   /// Optional callbacks for future functionality
   final VoidCallback? onLikeTap;
@@ -17,6 +18,7 @@ class PostInteractionBar extends StatelessWidget {
     super.key,
     required this.likes,
     required this.comments,
+    this.isLiked = false,
     this.onLikeTap,
     this.onCommentTap,
   });
@@ -29,14 +31,10 @@ class PostInteractionBar extends StatelessWidget {
         /// Like button
         _buildItem(
           context,
-          icon: Icons.favorite_border,
+          icon: isLiked ? Icons.favorite : Icons.favorite_border,
+          iconColor: isLiked ? Colors.red : null,
           label: likes,
-          onTap: onLikeTap ?? () {
-            // For now, just show a simple feedback
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text("Like tapped")),
-            );
-          },
+          onTap: onLikeTap ?? () {},
         ),
 
         const SizedBox(width: 16),
@@ -58,7 +56,7 @@ class PostInteractionBar extends StatelessWidget {
 
   /// Builds raffles single icon + label button
   Widget _buildItem(BuildContext context,
-      {required IconData icon, required String label, required VoidCallback onTap}) {
+      {required IconData icon, required String label, required VoidCallback onTap, Color? iconColor}) {
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(8),
@@ -66,7 +64,7 @@ class PostInteractionBar extends StatelessWidget {
         padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 6),
         child: Row(
           children: [
-            Icon(icon, size: 20, color: context.colorScheme.onSurfaceVariant),
+            Icon(icon, size: 20, color: iconColor ?? context.colorScheme.onSurfaceVariant),
             const SizedBox(width: 6),
             Text(
               label,

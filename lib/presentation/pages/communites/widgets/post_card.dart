@@ -166,6 +166,7 @@ class _PostCardWidgetState extends State<PostCardWidget> {
             PostInteractionBar(
               likes: vm.likes,
               comments: vm.comments,
+              isLiked: vm.isLiked,
               onLikeTap: () => widget.onLikeTap?.call(vm.postId),
               onCommentTap: () => widget.onCommentTap?.call(vm.postId),
             ),

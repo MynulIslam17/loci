@@ -87,7 +87,7 @@ class PostCommentSection extends StatelessWidget {
                 itemCount: comments.length + (paginationLoading ? 1 : 0),
                 itemBuilder: (_, index) {
 
-                  /// ✅ pagination loader at bottom
+                  ///  pagination loader at bottom
                   if (index == comments.length) {
                     return const Padding(
                       padding: EdgeInsets.symmetric(vertical: 16),

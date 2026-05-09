@@ -10,6 +10,7 @@ class PostCardViewModel {
   final String text;
   final String likes;
   final String comments;
+  final bool isLiked;
   final int totalVotes;
   final List<PollOption>? pollOptions;
 
@@ -22,6 +23,7 @@ class PostCardViewModel {
     required this.text,
     required this.likes,
     required this.comments,
+    required this.isLiked,
     required this.totalVotes,
     this.pollOptions,
   });
@@ -36,6 +38,7 @@ class PostCardViewModel {
       text: ann.pollQuestion ?? ann.details,
       likes: (ann.likeCount ?? 0).toString(),
       comments: (ann.commentCount ?? 0).toString(),
+      isLiked: ann.isLiked,
       totalVotes: ann.totalVotes ?? 0,
       pollOptions: ann.pollOptions,
     );

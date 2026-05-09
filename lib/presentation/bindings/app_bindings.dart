@@ -1,5 +1,6 @@
 import 'package:get/get.dart';
 import 'package:loci/presentation/controllers/browse_business/remove_saved_business_controller.dart';
+import 'package:loci/presentation/controllers/comment/announcements_comment_controller.dart';
 import 'package:loci/presentation/controllers/common/post_contoller.dart';
 
 import '../../core/network/network_setup.dart';
@@ -24,6 +25,7 @@ class AppBindings extends Bindings {
 
     Get.put(RSVPController(), permanent: true);
     Get.put(VoteController(), permanent: true);
+
 
 
 

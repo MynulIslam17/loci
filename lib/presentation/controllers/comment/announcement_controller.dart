@@ -1,10 +1,7 @@
-import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:loci/core/constants/app_url.dart';
-import 'package:loci/core/network/network_response.dart';
 import 'package:loci/core/network/network_caller.dart';
 import 'package:loci/data/models/common/paginatation_model.dart';
-
 import '../../../core/enums/announcement_type.dart';
 import '../../../core/enums/rsvp_status.dart';
 import '../../../data/models/community/announcement_model.dart';
@@ -12,19 +9,24 @@ import '../../../data/models/community/announcement_response.dart';
 
 class AnnouncementController extends GetxController {
 
+  // -------------------------------------------------
+  // NORMALIZED STATE
+  // -------------------------------------------------
+  final Map<String, AnnouncementModel> _announcementMap = {};
+  final List<String> _announcementIds = [];
+
+
+  // -------------------------------------------------
+  // OTHER STATE
+  // -------------------------------------------------
   bool _isLoading = false;
   bool _isPaginationLoading = false;
   String? _errorMessage;
-
-  List<AnnouncementModel> _announcements = [];
   PaginationMeta? _meta;
 
   int _currentPage = 1;
   AnnouncementType _currentType = AnnouncementType.question;
   String? _communityId;
-
-  // tracks the user's voted optionId per announcementId for this session
-  final Map<String, String> _myVotes = {};
 
   // -------------------------------------------------
   // GETTERS
@@ -32,21 +34,18 @@ class AnnouncementController extends GetxController {
   bool get isLoading => _isLoading;
   bool get isPaginationLoading => _isPaginationLoading;
   String? get errorMessage => _errorMessage;
-
-  List<AnnouncementModel> get announcements => _announcements;
   PaginationMeta? get meta => _meta;
-
   bool get hasMore => _meta?.hasNextPage ?? false;
-
   AnnouncementType get currentType => _currentType;
 
-  String? myVotedOptionId(String announcementId) => _myVotes[announcementId];
-
-
-
+  List<AnnouncementModel> get announcements =>
+      _announcementIds
+          .map((id) => _announcementMap[id])
+          .whereType<AnnouncementModel>()
+          .toList();
 
   // -------------------------------------------------
-  // SET COMMUNITY INIT
+  // INIT
   // -------------------------------------------------
   Future<void> init(String communityId) async {
     _communityId = communityId;
@@ -58,7 +57,6 @@ class AnnouncementController extends GetxController {
   // -------------------------------------------------
   void changeType(AnnouncementType type) {
     if (_currentType == type) return;
-
     _currentType = type;
     fetchAnnouncements(isRefresh: true);
   }
@@ -75,14 +73,12 @@ class AnnouncementController extends GetxController {
 
       if (isRefresh) {
         _currentPage = 1;
-        _announcements = [];
-        _myVotes.clear();
+        _resetList();
       }
 
       update();
 
-      final response =
-      await Get.find<NetworkCaller>().getRequest(
+      final response = await Get.find<NetworkCaller>().getRequest(
         url: AppUrl.announcementList,
         queryParams: {
           "communityId": _communityId,
@@ -93,10 +89,8 @@ class AnnouncementController extends GetxController {
       );
 
       if (response.isSuccess && response.body != null) {
-        final result =
-        AnnouncementResponse.fromJson(response.body!);
-
-        _announcements = result.data;
+        final result = AnnouncementResponse.fromJson(response.body!);
+        _appendAnnouncements(result.data);
         _meta = result.meta;
       } else {
         _errorMessage =
@@ -122,8 +116,7 @@ class AnnouncementController extends GetxController {
 
       _currentPage++;
 
-      final response =
-      await Get.find<NetworkCaller>().getRequest(
+      final response = await Get.find<NetworkCaller>().getRequest(
         url: AppUrl.announcementList,
         queryParams: {
           "communityId": _communityId,
@@ -134,13 +127,13 @@ class AnnouncementController extends GetxController {
       );
 
       if (response.isSuccess && response.body != null) {
-        final result =
-        AnnouncementResponse.fromJson(response.body!);
-
-        _announcements.addAll(result.data);
+        final result = AnnouncementResponse.fromJson(response.body!);
+        _appendAnnouncements(result.data);
         _meta = result.meta;
       } else {
         _currentPage--; // rollback
+        _errorMessage =
+            response.body?['message'] ?? "Failed to load more";
       }
     } catch (e) {
       _currentPage--;
@@ -151,56 +144,59 @@ class AnnouncementController extends GetxController {
     }
   }
 
+  // -------------------------------------------------
+  // UPDATE HELPERS — all O(1)
+  // -------------------------------------------------
+  bool isLiked(String announcementId) =>
+      _announcementMap[announcementId]?.isLiked ?? false;
 
-
-  // update poll vote counts locally after successful vote
-  void updatePollVote(String announcementId, String optionId) {
-    final previousOptionId = _myVotes[announcementId];
-    final isChangingVote = previousOptionId != null && previousOptionId != optionId;
-
-    for (int i = 0; i < _announcements.length; i++) {
-      if (_announcements[i].id == announcementId) {
-        final options = _announcements[i].pollOptions;
-        if (options == null) break;
-
-        final updatedOptions = options.map((opt) {
-          if (opt.id == optionId) {
-            return opt.copyWith(voteCount: opt.voteCount + 1);
-          }
-          if (isChangingVote && opt.id == previousOptionId) {
-            return opt.copyWith(voteCount: (opt.voteCount - 1).clamp(0, opt.voteCount));
-          }
-          return opt;
-        }).toList();
-
-        _announcements[i] = _announcements[i].copyWith(
-          pollOptions: updatedOptions,
-          // total only grows on first vote; changing vote keeps total the same
-          totalVotes: isChangingVote
-              ? _announcements[i].totalVotes
-              : (_announcements[i].totalVotes ?? 0) + 1,
-        );
-
-        _myVotes[announcementId] = optionId;
-        break;
-      }
-    }
+  void toggleLikeLocally(String announcementId) {
+    final post = _announcementMap[announcementId];
+    if (post == null) return;
+    _announcementMap[announcementId] = post.copyWith(
+      isLiked: !post.isLiked,
+      likeCount: post.isLiked
+          ? ((post.likeCount ?? 1) - 1).clamp(0, post.likeCount ?? 0)
+          : (post.likeCount ?? 0) + 1,
+    );
     update();
   }
 
-  // update event rsvp from AnnouncementController locally
+  void incrementCommentCount(String announcementId) {
+    final post = _announcementMap[announcementId];
+    if (post == null) return;
+    _announcementMap[announcementId] = post.copyWith(
+      commentCount: (post.commentCount ?? 0) + 1,
+    );
+    update();
+  }
+
+  void decrementCommentCount(String announcementId) {
+    final post = _announcementMap[announcementId];
+    if (post == null) return;
+    _announcementMap[announcementId] = post.copyWith(
+      commentCount: ((post.commentCount ?? 1) - 1).clamp(0, double.maxFinite).toInt(),
+    );
+    update();
+  }
+
   void updateEventRsvpStatus(String eventId, RsvpStatus status) {
-    for (int i = 0; i < _announcements.length; i++) {
-      if (_announcements[i].event?.id == eventId) {
-        final updatedEvent = _announcements[i].event!.copyWith(
-          myRsvpStatus: status,
-          goingCount: status == RsvpStatus.going
-              ? _announcements[i].event!.goingCount + 1
-              : _announcements[i].event!.goingCount,
-        );
-        _announcements[i] = _announcements[i].copyWith(event: updatedEvent);
-      }
-    }
+    // find announcement that contains this event
+    final announcementId = _announcementIds.firstWhere(
+          (id) => _announcementMap[id]?.event?.id == eventId,
+      orElse: () => '',
+    );
+    if (announcementId.isEmpty) return;
+
+    final post = _announcementMap[announcementId]!;
+    final updatedEvent = post.event!.copyWith(
+      myRsvpStatus: status,
+      goingCount: status == RsvpStatus.going
+          ? post.event!.goingCount + 1
+          : post.event!.goingCount,
+    );
+
+    _announcementMap[announcementId] = post.copyWith(event: updatedEvent);
     update();
   }
 
@@ -209,5 +205,22 @@ class AnnouncementController extends GetxController {
   // -------------------------------------------------
   Future<void> refreshAnnouncements() async {
     await fetchAnnouncements(isRefresh: true);
+  }
+
+  // -------------------------------------------------
+  // PRIVATE HELPERS
+  // -------------------------------------------------
+  void _appendAnnouncements(List<AnnouncementModel> items) {
+    for (final item in items) {
+      _announcementMap[item.id] = item;
+      if (!_announcementIds.contains(item.id)) {
+        _announcementIds.add(item.id);
+      }
+    }
+  }
+
+  void _resetList() {
+    _announcementIds.clear();
+    _announcementMap.clear();
   }
 }

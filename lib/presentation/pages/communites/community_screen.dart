@@ -1,36 +1,28 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:loci/core/constants/app_text_style.dart';
-import 'package:loci/core/enums/community_role.dart';
-import 'package:loci/presentation/controllers/auth/auth_controller.dart';
-import 'package:loci/presentation/controllers/community/my_community_controlle.dart';
-import 'package:loci/presentation/controllers/event/rsvp_controller.dart';
-import 'package:loci/presentation/pages/communites/widgets/activity_card.dart';
-import 'package:loci/presentation/pages/communites/widgets/community_member_header.dart';
-import 'package:loci/presentation/pages/communites/widgets/community_owner_header.dart';
-import 'package:loci/presentation/pages/communites/widgets/notice_card.dart';
-import 'package:loci/presentation/pages/communites/widgets/offer_card.dart';
-import 'package:loci/presentation/pages/communites/widgets/post_card.dart';
-import 'package:loci/presentation/pages/communites/widgets/post_card_view_model.dart';
-import 'package:loci/presentation/pages/communites/widgets/post_comment_section.dart';
-import 'package:loci/presentation/pages/event/widgets/event_card.dart';
-import 'package:loci/presentation/pages/explore_routes/widgets/route_card.dart';
-import 'package:loci/presentation/controllers/community/vote_controller.dart';
-import 'package:loci/presentation/pages/communites/widgets/poll_bottom_sheet.dart';
-import 'package:loci/presentation/pages/home/widgets/post_input_filed.dart';
 import 'package:loci/core/enums/announcement_type.dart';
+import 'package:loci/core/enums/community_role.dart';
+import 'package:loci/core/enums/rsvp_status.dart';
 import 'package:loci/core/theme/theme_extention.dart';
-import 'package:loci/core/utils/time_parser.dart';
+import 'package:loci/core/utils/show_snackbar.dart';
+import 'package:loci/presentation/controllers/auth/auth_controller.dart';
 import 'package:loci/presentation/controllers/comment/announcement_controller.dart';
 import 'package:loci/presentation/controllers/comment/announcements_comment_controller.dart';
-import 'package:loci/presentation/pages/raffles/widgets/raffle_card.dart';
-import 'package:loci/presentation/widgets/custom_text_field.dart';
-import 'package:loci/presentation/widgets/pagination_loading.dart';
-import 'package:loci/routes/app_routes.dart';
-import '../../../core/enums/acitivty_ref_type.dart';
-import '../../../core/enums/rsvp_status.dart';
-import '../../../core/utils/show_snackbar.dart';
+import 'package:loci/presentation/controllers/community/my_community_controlle.dart';
+import 'package:loci/presentation/controllers/community/vote_controller.dart';
+import 'package:loci/presentation/controllers/event/rsvp_controller.dart';
+import 'package:loci/presentation/pages/communites/widgets/tabs/activity_tab.dart';
+import 'package:loci/presentation/pages/communites/widgets/community_member_header.dart';
+import 'package:loci/presentation/pages/communites/widgets/community_owner_header.dart';
+import 'package:loci/presentation/pages/communites/widgets/tabs/feed_tab.dart';
+import 'package:loci/presentation/pages/communites/widgets/tabs/notices_tab.dart';
+import 'package:loci/presentation/pages/communites/widgets/tabs/offers_tab.dart';
+import 'package:loci/presentation/pages/communites/widgets/poll_bottom_sheet.dart';
+import 'package:loci/presentation/pages/communites/widgets/post_comment_section.dart';
+import 'package:loci/presentation/pages/communites/widgets/tabs/tab_body_wrapper.dart';
 import '../../../data/models/community/announcement_model.dart';
+import '../../controllers/community/announcement_like_controller.dart';
 
 class CommunityScreen extends StatefulWidget {
   final CommunityRole? role;
@@ -46,17 +38,14 @@ class CommunityScreen extends StatefulWidget {
 class _CommunityScreenState extends State<CommunityScreen>
     with SingleTickerProviderStateMixin {
 
-  // -------------------------------------------------
-  // CONTROLLERS
-  // -------------------------------------------------
   late TabController tabController;
   final TextEditingController searchController = TextEditingController();
+  final likeController = Get.find<AnnouncementLikeController>();
 
   final authController = Get.find<AuthController>();
   final announcementController = Get.find<AnnouncementController>();
   final myCommunityController = Get.find<MyCommunityController>();
   final voteController = Get.find<VoteController>();
-
 
   // -------------------------------------------------
   // LIFECYCLE
@@ -64,20 +53,17 @@ class _CommunityScreenState extends State<CommunityScreen>
   @override
   void initState() {
     super.initState();
-
     tabController = TabController(length: 4, vsync: this);
 
     final communityId = widget.communityId;
     if (communityId != null && communityId.isNotEmpty) {
       announcementController.init(communityId);
-
-      //  ONLY OWNER → load community details
       if (widget.role == CommunityRole.owner) {
         myCommunityController.fetchCommunity(communityId);
       }
     }
 
-    _tabSwitch();
+    _listenToTabChanges();
   }
 
   @override
@@ -87,33 +73,50 @@ class _CommunityScreenState extends State<CommunityScreen>
     super.dispose();
   }
 
-  void _tabSwitch() {
+  // -------------------------------------------------
+  // TAB LISTENER
+  // -------------------------------------------------
+  void _listenToTabChanges() {
     tabController.addListener(() {
       if (tabController.indexIsChanging) return;
-
       switch (tabController.index) {
-        case 0:
-          announcementController.changeType(AnnouncementType.question);
-          break;
-        case 1:
-          announcementController.changeType(AnnouncementType.offer);
-          break;
-        case 2:
-          announcementController.changeType(AnnouncementType.notice);
-          break;
-        case 3:
-          announcementController.changeType(AnnouncementType.activity);
-          break;
-        default:
-          announcementController.changeType(AnnouncementType.activity);
+        case 0: announcementController.changeType(AnnouncementType.question); break;
+        case 1: announcementController.changeType(AnnouncementType.offer); break;
+        case 2: announcementController.changeType(AnnouncementType.notice); break;
+        case 3: announcementController.changeType(AnnouncementType.activity); break;
+        default: announcementController.changeType(AnnouncementType.activity);
       }
     });
   }
 
+  // -------------------------------------------------
+  // HANDLERS
+  // -------------------------------------------------
+  void _onVote(String announcementId, String optionId) async {
 
 
-  void _rsvpHandler(String eventId, RSVPController rsvpController) async {
-    bool success = await rsvpController.sendRSVP(
+    final success = await voteController.submitVote(
+      announcementId: announcementId,
+      optionId: optionId,
+    );
+
+    if (success) {
+     // announcementController.updatePollVote(announcementId, optionId);
+      SnackbarService.success(voteController.successMessage!);
+    } else {
+      SnackbarService.error(voteController.errorMessage!);
+    }
+  }
+
+
+  void _onLike(String postId) async {
+
+   likeController.toggleLike(postId);
+
+  }
+
+  void _onRsvp(String eventId, RSVPController rsvpController) async {
+    final success = await rsvpController.sendRSVP(
       eventId: eventId,
       status: RsvpStatus.going.toJson,
     );
@@ -126,6 +129,43 @@ class _CommunityScreenState extends State<CommunityScreen>
     }
   }
 
+  void _showCommentSheet(String announcementId) {
+    final inputController = TextEditingController();
+    final commentController = Get.find<CommentController>();
+   
+    commentController.fetchComments(postId: announcementId);
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      builder: (context) {
+
+        return GetBuilder<CommentController>(
+          builder: (controller) => PostCommentSection(
+            comments: controller.comments,
+            controller: inputController,
+            scrollController: controller.scrollController,
+            paginationLoading: controller.isPaginationLoading,
+            currentUserImage: authController.userModel?.avatar ?? "",
+            isLoading: controller.isLoading,
+            isSending: controller.isPosting,
+            onSendTap: (text) => controller.postComment(
+              content: text,
+              postId: announcementId,
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  void _showPollSheet(AnnouncementModel announcement) {
+    PollBottomSheet.show(
+      context,
+      announcement,
+      onVote: (optionId) => _onVote(announcement.id, optionId),
+    );
+  }
 
   // -------------------------------------------------
   // BUILD
@@ -137,478 +177,127 @@ class _CommunityScreenState extends State<CommunityScreen>
     return Scaffold(
       backgroundColor: colorScheme.surface,
       body: NestedScrollView(
-        headerSliverBuilder: (context, innerBoxIsScrolled) {
-          return [
-            // ---------------- HEADER ----------------
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.all(12),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      widget.communityName ?? "",
-                      style: AppTextStyle.textMd(weight: FontWeight.w600),
-                    ),
-                    const SizedBox(height: 4),
-                    Row(
-                      children: [
-                        Icon(
-                          Icons.location_on_outlined,
-                          size: 16,
-                          color: colorScheme.onSurfaceVariant,
-                        ),
-                        const SizedBox(width: 4),
-                        Text(
-                          "23601 Hoover Rd, Warren, MI 48089",
-                          style: AppTextStyle.textXs(),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 20),
-                    if (widget.role == CommunityRole.owner)
-                       CommunityOwnerHeader()
-                    else
-                      const CommunityMemberHeader(),
-                  ],
-                ),
-              ),
-            ),
-
-            // ---------------- TAB BAR ----------------
-            SliverOverlapAbsorber(
-              handle: NestedScrollView.sliverOverlapAbsorberHandleFor(context),
-              sliver: SliverAppBar(
-                pinned: true,
-                toolbarHeight: 0,
-                backgroundColor: colorScheme.surface,
-                bottom: TabBar(
-                  controller: tabController,
-                  isScrollable: true,
-                  tabAlignment: TabAlignment.start,
-                  indicatorSize: TabBarIndicatorSize.label,
-                  labelColor: colorScheme.primary,
-                  unselectedLabelColor: colorScheme.onSurface,
-                  indicatorColor: colorScheme.primary,
-                  dividerColor: Colors.transparent,
-                  tabs: const [
-                    Tab(text: "Feed"),
-                    Tab(text: "Offers"),
-                    Tab(text: "Notices"),
-                    Tab(text: "Activity"),
-                  ],
-                ),
-              ),
-            ),
-          ];
-        },
-
-        // ---------------- TAB CONTENT ----------------
+        headerSliverBuilder: (context, _) => [
+          _CommunityHeader(
+            communityName: widget.communityName,
+            role: widget.role,
+          ),
+          _CommunityTabBar(
+            controller: tabController,
+            colorScheme: colorScheme,
+          ),
+        ],
         body: Padding(
           padding: const EdgeInsets.all(12),
           child: TabBarView(
             controller: tabController,
             children: [
-              _buildTabBody(() => feedList()),
-              _buildTabBody(() => offerList()),
-              _buildTabBody(() => noticesList()),
-              _buildTabBody(() => activityList()),
+              TabBodyWrapper(builder: () => FeedTab(
+                onCommentTap: _showCommentSheet,
+                onPollTap: _showPollSheet,
+                onLikeTap: _onLike,
+              )),
+              TabBodyWrapper(builder: () => OffersTab(
+                searchController: searchController,
+                onCommentTap: _showCommentSheet,
+                onLikeTap: _onLike,
+              )),
+              TabBodyWrapper(builder: () => NoticesTab(
+                searchController: searchController,
+                onCommentTap: _showCommentSheet,
+                onLikeTap: _onLike,
+              )),
+              TabBodyWrapper(builder: () => ActivityTab(
+                searchController: searchController,
+                onCommentTap: _showCommentSheet,
+                onLikeTap: _onLike,
+                onRsvp: _onRsvp,
+              )),
             ],
           ),
         ),
       ),
     );
   }
+}
 
-  // -------------------------------------------------
-  // TAB BODY WRAPPER
-  // -------------------------------------------------
-  Widget _buildTabBody(Widget Function() builder) {
-    return Builder(
-      builder: (context) {
-        return GetBuilder<AnnouncementController>(
-          builder: (controller) {
-            return RefreshIndicator(
-              onRefresh: () => controller.refreshAnnouncements(),
-              child: NotificationListener<ScrollNotification>(
-                onNotification: (notification) {
-                  if (notification is ScrollEndNotification) {
-                    final metrics = notification.metrics;
-                    final isBottom =
-                        metrics.pixels >= metrics.maxScrollExtent - 200;
+// -------------------------------------------------
+// HEADER SLIVER
+// -------------------------------------------------
+class _CommunityHeader extends StatelessWidget {
+  final String? communityName;
+  final CommunityRole? role;
 
-                    if (isBottom &&
-                        controller.hasMore &&
-                        !controller.isPaginationLoading) {
-                      controller.fetchMoreAnnouncements();
-                    }
-                  }
-                  return false;
-                },
-                child: CustomScrollView(
-                  slivers: [
-                    SliverOverlapInjector(
-                      handle:
-                      NestedScrollView.sliverOverlapAbsorberHandleFor(context),
-                    ),
+  const _CommunityHeader({this.communityName, this.role});
 
-                    // First load loader
-                    if (controller.isLoading)
-                      const SliverFillRemaining(
-                        child: Center(child: CircularProgressIndicator()),
-                      )
-                    else ...[
-                      // Actual content
-                      SliverToBoxAdapter(child: builder()),
-
-                      // Pagination loader
-                      if (controller.isPaginationLoading)
-                        const SliverToBoxAdapter(
-                          child: PaginationLoader(
-                            size: 18,
-                            padding: 10,
-                          ),
-                        ),
-                    ],
-                  ],
-                ),
-              ),
-            );
-          },
-        );
-      },
-    );
-  }
-
-  // -------------------------------------------------
-  // FEED LIST
-  // -------------------------------------------------
-  Widget feedList() {
-    return Column(
-      children: [
-        PostInputField(
-          categories: const ['Food', 'Drinks', 'Restaurant', 'Entertainment'],
-          initialCategory: "Food",
-          onSubmit: (text, category) {},
-          hintText: 'Post a question...',
-        ),
-        const SizedBox(height: 16),
-
-        ListView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          itemCount: announcementController.announcements.length,
-          itemBuilder: (context, index) {
-            final announcement = announcementController.announcements[index];
-            return PostCardWidget(
-              viewModel: PostCardViewModel.from(announcement),
-              onLikeTap: (postId) {},
-              onCommentTap: (postId) => _showCommentSheet(postId),
-              onClickPoll: (postId) => PollBottomSheet.show(
-                context,
-                announcement,
-                onVote: (optionId) => _onVote(announcement.id, optionId),
-              ),
-              onSubmit: (postId, text) {},
-              onChanged: (postId, value) {},
-            );
-          },
-        ),
-      ],
-    );
-  }
-
-  // -------------------------------------------------
-  // OFFERS LIST
-  // -------------------------------------------------
-  Widget offerList() {
-    return Column(
-      children: [
-        _buildSearchBar(
-          hintText: "Search offers",
-          onFilterTap: () {},
-        ),
-        const SizedBox(height: 20),
-
-        ListView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          itemCount: announcementController.announcements.length,
-          itemBuilder: (context, index) {
-            final offer = announcementController.announcements[index];
-            final business = offer.business;
-            return CommunityOfferCard(
-              profileImage: business?.logo ?? "",
-              businessName: business?.name ?? "",
-              dateTime: formatDateTime(offer.createdAt),
-              description: offer.details,
-              couponImageUrl: offer.image ?? "",
-              likes: offer.likeCount.toString(),
-              comments: offer.commentCount.toString(),
-              onDownloadTap: () {},
-              onCommentTap: () => _showCommentSheet(offer.id),
-              onLikeTap: () {},
-            );
-          },
-        ),
-      ],
-    );
-  }
-
-  // -------------------------------------------------
-  // NOTICES LIST
-  // -------------------------------------------------
-  Widget noticesList() {
-    return Column(
-      children: [
-        _buildSearchBar(
-          hintText: "Search notices",
-          onFilterTap: () {},
-        ),
-        const SizedBox(height: 20),
-
-        ListView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          itemCount: announcementController.announcements.length,
-          itemBuilder: (context, index) {
-            final notice = announcementController.announcements[index];
-            final business = notice.business;
-            return CommunityNoticeCard(
-              profileImage: business?.logo ?? "",
-              businessName: business?.name ?? "",
-              dateTime: formatDateTime(notice.createdAt),
-              noticeText: notice.details,
-              likes: notice.likeCount.toString(),
-              comments: notice.commentCount.toString(),
-              onCommentTap: () => _showCommentSheet(notice.id),
-              onLikeTap: () {},
-            );
-          },
-        ),
-      ],
-    );
-  }
-
-  // -------------------------------------------------
-  // ACTIVITY LIST
-  // -------------------------------------------------
-  Widget activityList() {
-    return Column(
-      children: [
-        _buildSearchBar(
-          hintText: "Search activity",
-          onFilterTap: () {},
-        ),
-        const SizedBox(height: 20),
-
-        ListView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          itemCount: announcementController.announcements.length,
-          itemBuilder: (context, index) {
-            final activity = announcementController.announcements[index];
-            final business = activity.business;
-            return CommunityActivityCard(
-              profileImage: business?.logo ?? "",
-              businessName: business?.name ?? "",
-              description: activity.details,
-              likes: activity.likeCount.toString(),
-              comments: activity.commentCount.toString(),
-              activityContent: _buildActivityContent(activity),
-              onLikeTap: () {},
-              onCommentTap: () => _showCommentSheet(activity.id),
-              dateTime: formatDateTime(activity.createdAt),
-
-            );
-          },
-        ),
-      ],
-    );
-  }
-
-  Widget? _buildActivityContent(AnnouncementModel activity) {
-    // 1. Check the enum type from your new ActivityRefType
-    switch (activity.activityRefType) {
-
-    // CASE: EVENT
-      case ActivityRefType.event:
-        final event = activity.event;
-        if (event == null) return null;
-
-        return GetBuilder<RSVPController>(
-          builder: (rsvpController) {
-
-            bool isLoading = rsvpController.isLoading &&
-                rsvpController.loadingEventId == event.id;
-
-            return EventCard(
-              imageUrl: event.coverImage,
-              title: event.title,
-              description: event.description,
-              date: event.date,
-              location: event.location,
-              attendance: "${event.goingCount}/${event.maxAttendees}",
-              organizer: event.organizerName,
-
-              onTapCard: () {
-                Get.toNamed(AppRoutes.eventDetails, arguments: {
-                  'eventId': event.id,
-                  "eventTitle": event.title,
-                });
-              },
-
-              onRSVP: () => _rsvpHandler(
-                event.id,
-                rsvpController,
-              ),
-
-              isLoading: isLoading,
-              rsvpButtonText: event.myRsvpStatus.label,
-            );
-          },
-        );
-    // CASE: ROUTE
-      case ActivityRefType.route:
-        final route = activity.route;
-        if (route == null) return null;
-        return RouteCard(
-          title: route.title,
-          description: route.details,
-          location: route.location,
-          openingTime: route.openingTime,
-          availabilityType: route.availabilityType,
-          imageUrl: route.banner,
-          onTap: (){
-            Get.toNamed(
-                AppRoutes.routeDetails,
-                arguments: {
-                  "routeId": route.routeId,
-                  "routeName":route.title,
-                  "showAppBar": true,
-                }
-            );
-          },
-        );
-
-    // CASE: RAFFLE
-      case ActivityRefType.raffle:
-        final raffle=activity.raffle;
-        if (raffle == null) return null;
-
-        return RaffleCard(raffle: raffle, onTap: ()async{
-
-          Get.toNamed(AppRoutes.rafflesDetails,arguments: {
-            "raffleId":raffle.id,
-            "showAppBar": true,
-          });
-
-
-        });
-
-      default:
-        return null;
-    }
-  }
-
-  // -------------------------------------------------
-  // COMMON SEARCH BAR
-  // -------------------------------------------------
-  Widget _buildSearchBar({
-    required String hintText,
-    VoidCallback? onFilterTap,
-  }) {
+  @override
+  Widget build(BuildContext context) {
     final colorScheme = context.colorScheme;
 
-    return Row(
-      children: [
-        Expanded(
-          child: CustomTextField(
-
-            controller: searchController,
-            hintText: hintText,
-            borderColor: colorScheme.outline,
-            fontSize: 14,
-            textColor: colorScheme.onSurface,
-            hintTextColor: colorScheme.onSurfaceVariant,
-            suffixIcon: Icon(
-              size: 20,
-              Icons.search,
-              color: colorScheme.onSurfaceVariant,
+    return SliverToBoxAdapter(
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              communityName ?? "",
+              style: AppTextStyle.textMd(weight: FontWeight.w600),
             ),
-          ),
-        ),
-        const SizedBox(width: 12),
-        InkWell(
-          onTap: onFilterTap,
-          borderRadius: BorderRadius.circular(12),
-          child: Container(
-            height: 50,
-            width: 50,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color: colorScheme.outlineVariant.withOpacity(0.5),
-              ),
+            const SizedBox(height: 4),
+            Row(
+              children: [
+                Icon(Icons.location_on_outlined, size: 16, color: colorScheme.onSurfaceVariant),
+                const SizedBox(width: 4),
+                Text("23601 Hoover Rd, Warren, MI 48089", style: AppTextStyle.textXs()),
+              ],
             ),
-            child: Icon(Icons.tune, color: colorScheme.onSurface),
-          ),
+            const SizedBox(height: 20),
+            if (role == CommunityRole.owner)
+              CommunityOwnerHeader()
+            else
+              const CommunityMemberHeader(),
+          ],
         ),
-      ],
+      ),
     );
   }
+}
 
+// -------------------------------------------------
+// TAB BAR SLIVER
+// -------------------------------------------------
+class _CommunityTabBar extends StatelessWidget {
+  final TabController controller;
+  final ColorScheme colorScheme;
 
+  const _CommunityTabBar({required this.controller, required this.colorScheme});
 
-  // -------------------------------------------------
-  // VOTE
-  // -------------------------------------------------
-  void _onVote(String announcementId, String optionId) async {
-    if (announcementController.myVotedOptionId(announcementId) == optionId) return;
-
-    final success = await voteController.submitVote(
-      announcementId: announcementId,
-      optionId: optionId,
-    );
-
-    if (success) {
-      announcementController.updatePollVote(announcementId, optionId);
-      SnackbarService.success(voteController.successMessage!);
-    } else {
-      SnackbarService.error(voteController.errorMessage!);
-    }
-  }
-
-  // -------------------------------------------------
-  // COMMENT BOTTOM SHEET
-  // -------------------------------------------------
-  void _showCommentSheet(String announcementId) {
-    final controller = Get.find<CommentController>();
-    controller.fetchComments(postId: announcementId);
-
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      builder: (builder) {
-        final inputController = TextEditingController();
-        return GetBuilder<CommentController>(
-          builder: (controller) {
-            return PostCommentSection(
-              comments: controller.comments,
-              controller: inputController,
-              scrollController: controller.scrollController,
-              paginationLoading: controller.isPaginationLoading,
-              currentUserImage: authController.userModel?.avatar ?? "",
-              isLoading: controller.isLoading,
-              isSending: controller.isSending,
-              onSendTap: (text) {
-                controller.sendComment(
-                    postId: announcementId, content: text);
-              },
-            );
-          },
-        );
-      },
+  @override
+  Widget build(BuildContext context) {
+    return SliverOverlapAbsorber(
+      handle: NestedScrollView.sliverOverlapAbsorberHandleFor(context),
+      sliver: SliverAppBar(
+        pinned: true,
+        toolbarHeight: 0,
+        backgroundColor: colorScheme.surface,
+        bottom: TabBar(
+          controller: controller,
+          isScrollable: true,
+          tabAlignment: TabAlignment.start,
+          indicatorSize: TabBarIndicatorSize.label,
+          labelColor: colorScheme.primary,
+          unselectedLabelColor: colorScheme.onSurface,
+          indicatorColor: colorScheme.primary,
+          dividerColor: Colors.transparent,
+          tabs: const [
+            Tab(text: "Feed"),
+            Tab(text: "Offers"),
+            Tab(text: "Notices"),
+            Tab(text: "Activity"),
+          ],
+        ),
+      ),
     );
   }
 }

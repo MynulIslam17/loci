@@ -92,6 +92,8 @@ static String  businessReviews(String businessId)=>"$baseUrl/reviews/business/$b
 
   static String  announcementsComments(String announcementId)=>"$baseUrl/community-announcements/$announcementId/comments";
   static String  voteOnAnnouncementPoll(String announcementId)=>"$baseUrl/community-announcements/$announcementId/vote";
+  static String  announcementComment(String announcementId)=>"$baseUrl/community-announcements/$announcementId/comments";
+  static String  announcementLike(String announcementId)=>"$baseUrl/community-announcements/$announcementId/like";
 
 
 

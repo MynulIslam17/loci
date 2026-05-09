@@ -15,6 +15,7 @@ class CommunityOfferCard extends StatelessWidget {
   final String couponImageUrl;
   final String likes;
   final String comments;
+  final bool isLiked;
 
   final VoidCallback? onDownloadTap;
   final VoidCallback? onLikeTap;
@@ -29,6 +30,7 @@ class CommunityOfferCard extends StatelessWidget {
     required this.couponImageUrl,
     required this.likes,
     required this.comments,
+    this.isLiked = false,
     this.onDownloadTap,
     this.onLikeTap,
     this.onCommentTap,
@@ -151,6 +153,7 @@ class CommunityOfferCard extends StatelessWidget {
             PostInteractionBar(
               likes: likes,
               comments: comments,
+              isLiked: isLiked,
               onLikeTap: onLikeTap,
               onCommentTap: onCommentTap,
             ),

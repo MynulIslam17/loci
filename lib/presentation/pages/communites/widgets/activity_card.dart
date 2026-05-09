@@ -13,6 +13,7 @@ class CommunityActivityCard extends StatelessWidget {
   final String description;
   final String likes;
   final String comments;
+  final bool isLiked;
   final Widget? activityContent;
   final VoidCallback? onLikeTap;
   final VoidCallback? onCommentTap;
@@ -25,6 +26,7 @@ class CommunityActivityCard extends StatelessWidget {
     required this.description,
     required this.likes,
     required this.comments,
+    this.isLiked = false,
     this.activityContent,
     this.onLikeTap,
     this.onCommentTap,
@@ -86,6 +88,7 @@ class CommunityActivityCard extends StatelessWidget {
             PostInteractionBar(
               likes: likes,
               comments: comments,
+              isLiked: isLiked,
               onLikeTap: onLikeTap,
               onCommentTap: onCommentTap,
             ),

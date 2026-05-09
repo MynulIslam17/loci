@@ -34,12 +34,10 @@ class VoteController extends GetxController {
       );
 
       if (response.isSuccess && response.body != null) {
-        _successMessage =
-            response.body?['message'] ?? "Vote submitted successfully";
+        _successMessage = response.body?['message'] ?? "Vote submitted successfully";
         return true;
       } else {
-        _errorMessage =
-            response.body?['message'] ?? "Failed to submit vote";
+        _errorMessage = response.body?['message'] ?? "Failed to submit vote";
         return false;
       }
     } catch (e) {
