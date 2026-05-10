@@ -8,7 +8,7 @@ import 'package:loci/core/enums/rsvp_status.dart';
 import 'package:loci/core/theme/theme_extention.dart';
 import 'package:loci/core/utils/show_snackbar.dart';
 import 'package:loci/presentation/controllers/auth/auth_controller.dart';
-import 'package:loci/presentation/controllers/comment/announcement_controller.dart';
+import 'package:loci/presentation/controllers/community/announcement_controller.dart';
 import 'package:loci/presentation/controllers/comment/announcements_comment_controller.dart';
 import 'package:loci/presentation/controllers/community/my_community_controlle.dart';
 import 'package:loci/presentation/controllers/community/vote_controller.dart';
@@ -200,29 +200,35 @@ class _CommunityScreenState extends State<CommunityScreen>
             controller: tabController,
             children: [
               TabBodyWrapper(
-                shimmerBuilder: (ctx) => _FeedShimmer(),
+                shimmerBuilder: (ctx) => const _FeedShimmer(),
                 builder: () => FeedTab(
                   onCommentTap: _showCommentSheet,
                   onPollTap: _showPollSheet,
                   onLikeTap: _onLike,
                 ),
               ),
-              TabBodyWrapper(builder: () => OffersTab(
-                searchController: searchController,
-                onCommentTap: _showCommentSheet,
-                onLikeTap: _onLike,
-              )),
-              TabBodyWrapper(builder: () => NoticesTab(
-                searchController: searchController,
-                onCommentTap: _showCommentSheet,
-                onLikeTap: _onLike,
-              )),
-              TabBodyWrapper(builder: () => ActivityTab(
-                searchController: searchController,
-                onCommentTap: _showCommentSheet,
-                onLikeTap: _onLike,
-                onRsvp: _onRsvp,
-              )),
+              TabBodyWrapper(
+                builder: () => OffersTab(
+                  searchController: searchController,
+                  onCommentTap: _showCommentSheet,
+                  onLikeTap: _onLike,
+                ),
+              ),
+              TabBodyWrapper(
+                builder: () => NoticesTab(
+                  searchController: searchController,
+                  onCommentTap: _showCommentSheet,
+                  onLikeTap: _onLike,
+                ),
+              ),
+              TabBodyWrapper(
+                builder: () => ActivityTab(
+                  searchController: searchController,
+                  onCommentTap: _showCommentSheet,
+                  onLikeTap: _onLike,
+                  onRsvp: _onRsvp,
+                ),
+              ),
             ],
           ),
         ),

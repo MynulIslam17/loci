@@ -181,6 +181,7 @@ abstract class AppPages {
     GetPage(
       name: AppRoutes.createAnnouncement,
       page: () => CreateAnnouncementScreen(),
+      binding: CommunityBinding()
     ),
 
     GetPage(

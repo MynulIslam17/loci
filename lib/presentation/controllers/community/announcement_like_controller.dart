@@ -2,7 +2,7 @@ import 'package:get/get.dart';
 import 'package:loci/core/constants/app_url.dart';
 import 'package:loci/core/network/network_caller.dart';
 import 'package:loci/core/utils/show_snackbar.dart';
-import 'package:loci/presentation/controllers/comment/announcement_controller.dart';
+import 'package:loci/presentation/controllers/community/announcement_controller.dart';
 
 class AnnouncementLikeController extends GetxController {
   Future<void> toggleLike(String announcementId) async {

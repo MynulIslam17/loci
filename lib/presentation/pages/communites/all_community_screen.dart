@@ -29,6 +29,7 @@ class AllCommunityScreen extends StatelessWidget {
             onRefresh: controller.refreshCommunities,
             child: SingleChildScrollView(
               controller: controller.scrollController,
+              physics: const AlwaysScrollableScrollPhysics(),
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,

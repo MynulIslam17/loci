@@ -3,7 +3,7 @@ import 'package:get/get.dart';
 import 'package:loci/core/constants/app_url.dart';
 import 'package:loci/core/network/network_response.dart';
 import 'package:loci/data/models/common/paginatation_model.dart';
-import 'package:loci/presentation/controllers/comment/announcement_controller.dart';
+import 'package:loci/presentation/controllers/community/announcement_controller.dart';
 import '../../../core/network/network_caller.dart';
 import '../../../data/models/comment/comment_model.dart';
 

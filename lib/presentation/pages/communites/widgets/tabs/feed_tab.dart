@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:loci/data/models/community/announcement_model.dart';
-import 'package:loci/presentation/controllers/comment/announcement_controller.dart';
+import 'package:loci/presentation/controllers/community/announcement_controller.dart';
 import 'package:loci/presentation/pages/communites/widgets/post_card.dart';
 import 'package:loci/presentation/pages/communites/widgets/post_card_view_model.dart';
 import 'package:loci/presentation/pages/home/widgets/post_input_filed.dart';

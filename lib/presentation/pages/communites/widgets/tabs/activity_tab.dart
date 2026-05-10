@@ -3,7 +3,7 @@ import 'package:get/get.dart';
 import 'package:loci/core/enums/acitivty_ref_type.dart';
 import 'package:loci/core/utils/time_parser.dart';
 import 'package:loci/data/models/community/announcement_model.dart';
-import 'package:loci/presentation/controllers/comment/announcement_controller.dart';
+import 'package:loci/presentation/controllers/community/announcement_controller.dart';
 import 'package:loci/presentation/controllers/event/rsvp_controller.dart';
 import 'package:loci/presentation/pages/communites/widgets/activity_card.dart';
 import 'package:loci/presentation/pages/communites/widgets/community_search_bar.dart';
@@ -32,7 +32,7 @@ class ActivityTab extends StatelessWidget {
       builder: (ctrl) => Column(
         children: [
           CommunitySearchBar(controller: searchController, hintText: "Search activity"),
-          const SizedBox(height: 20),
+          const SizedBox(height: 16),
           ListView.builder(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),

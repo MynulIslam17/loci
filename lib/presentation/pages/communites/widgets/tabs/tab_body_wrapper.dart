@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:loci/presentation/controllers/comment/announcement_controller.dart';
+import 'package:loci/presentation/controllers/community/announcement_controller.dart';
 import 'package:loci/presentation/widgets/app_skeleton.dart';
 import 'package:loci/presentation/widgets/pagination_loading.dart';
 
@@ -33,6 +33,7 @@ class TabBodyWrapper extends StatelessWidget {
               return false;
             },
             child: CustomScrollView(
+              physics: const AlwaysScrollableScrollPhysics(),
               slivers: [
                 SliverOverlapInjector(
                   handle: NestedScrollView.sliverOverlapAbsorberHandleFor(context),

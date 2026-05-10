@@ -136,7 +136,9 @@ class CommunityOwnerHeader extends StatelessWidget {
 
             CustomButton(
               onPressed: () {
-                Get.toNamed(AppRoutes.createAnnouncement);
+                Get.toNamed(AppRoutes.createAnnouncement,arguments: {
+                  "communityId": community?.id
+                });
               },
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
