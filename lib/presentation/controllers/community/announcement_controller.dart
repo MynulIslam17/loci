@@ -168,25 +168,36 @@ class AnnouncementController extends GetxController {
     final isChangingVote = previousOptionId != null && previousOptionId != newOptionId;
     final newVoter = Voter(userId: userId, name: userName, avatar: userAvatar);
 
+    final newTotalVotes = isChangingVote
+        ? (post.totalVotes ?? 0)
+        : (post.totalVotes ?? 0) + 1;
+
     final updatedOptions = post.pollOptions?.map((opt) {
+      int newVoteCount = opt.voteCount;
+      List<Voter> newVoters = opt.voters;
+
       if (opt.id == newOptionId) {
-        return opt.copyWith(
-          voteCount: opt.voteCount + 1,
-          voters: [...opt.voters, newVoter],
-        );
+        newVoteCount = opt.voteCount + 1;
+        newVoters = [...opt.voters, newVoter];
+      } else if (isChangingVote && opt.id == previousOptionId) {
+        newVoteCount = (opt.voteCount - 1).clamp(0, opt.voteCount);
+        newVoters = opt.voters.where((v) => v.userId != userId).toList();
       }
-      if (isChangingVote && opt.id == previousOptionId) {
-        return opt.copyWith(
-          voteCount: (opt.voteCount - 1).clamp(0, opt.voteCount),
-          voters: opt.voters.where((v) => v.userId != userId).toList(),
-        );
-      }
-      return opt;
+
+      final newPercentage = newTotalVotes > 0
+          ? (newVoteCount / newTotalVotes) * 100
+          : 0.0;
+
+      return opt.copyWith(
+        voteCount: newVoteCount,
+        voters: newVoters,
+        percentage: newPercentage,
+      );
     }).toList();
 
     _announcementMap[announcementId] = post.copyWith(
       pollOptions: updatedOptions,
-      totalVotes: isChangingVote ? post.totalVotes : (post.totalVotes ?? 0) + 1,
+      totalVotes: newTotalVotes,
     );
     _votedOptionIds[announcementId] = newOptionId;
     update();
