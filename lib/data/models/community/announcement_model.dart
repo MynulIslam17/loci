@@ -78,7 +78,9 @@ class AnnouncementModel {
           : null,
       createdAt: json['createdAt'] ?? '',
       updatedAt: json['updatedAt'] ?? '',
-      details: json['details'] ?? '',
+      details: AnnouncementType.fromString(json['type']) == AnnouncementType.activity
+          ? json['description'] ?? ''
+          : json['details'] ?? '',
       activityRefType: ActivityRefType.fromString(json['activityRefType']),
       activityId: json['activityId'],
       event: json['event'] != null

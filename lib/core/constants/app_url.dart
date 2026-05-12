@@ -96,6 +96,7 @@ static String  businessReviews(String businessId)=>"$baseUrl/reviews/business/$b
   static String  announcementLike(String announcementId)=>"$baseUrl/community-announcements/$announcementId/like";
   static String  communityMember(String businessId)=>"$baseUrl/community-members/$businessId";
   static const String  crateAnnouncement="$baseUrl/community-announcements";
+  static  String  searchActivity(String communityId)=>"$baseUrl/community-announcements/all-activity?communityId={{communityId}}";
 
 
 

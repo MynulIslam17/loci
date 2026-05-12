@@ -8,10 +8,12 @@ import 'package:loci/core/enums/announcement_type.dart';
 import 'package:loci/core/theme/app_colors.dart';
 import 'package:loci/core/theme/theme_extention.dart';
 import 'package:loci/presentation/controllers/community/create_announcement_controller.dart';
+import 'package:loci/presentation/controllers/community/search_activity_controller.dart';
 import 'package:loci/presentation/widgets/custom_appbar.dart';
 import 'package:loci/presentation/widgets/custom_button.dart';
 import 'package:loci/presentation/widgets/custom_dropdown.dart';
 import 'package:loci/presentation/widgets/custom_text_field.dart';
+import 'package:loci/presentation/widgets/pagination_loading.dart';
 
 class CreateAnnouncementScreen extends StatefulWidget {
 
@@ -25,6 +27,11 @@ class CreateAnnouncementScreen extends StatefulWidget {
 class _CreateAnnouncementScreenState extends State<CreateAnnouncementScreen> {
   AnnouncementType _type = AnnouncementType.notice;
   ActivityRefType _activityRefType = ActivityRefType.event;
+   final _formKey=GlobalKey<FormState>();
+
+
+  bool _showSuggestions = false;
+  String? _selectedActivityId;
 
   // Single file for offer (image or pdf)
   File? _attachment;
@@ -38,12 +45,14 @@ class _CreateAnnouncementScreenState extends State<CreateAnnouncementScreen> {
   void initState() {
     super.initState();
     communityId = (Get.arguments as Map)['communityId'] as String;
+    Get.put(SearchActivityController()).setup(communityId, _activityRefType);
   }
 
   @override
   void dispose() {
     _detailsController.dispose();
     _activityIdController.dispose();
+    Get.delete<SearchActivityController>();
     super.dispose();
   }
 
@@ -58,6 +67,7 @@ class _CreateAnnouncementScreenState extends State<CreateAnnouncementScreen> {
   }
 
   Future<void> _publish() async {
+    if(!_formKey.currentState!.validate())return;
     final ctrl = Get.find<CreateAnnouncementController>();
 
     final fields = <String, String>{
@@ -72,7 +82,8 @@ class _CreateAnnouncementScreenState extends State<CreateAnnouncementScreen> {
         fields['details'] = _detailsController.text.trim();
       case AnnouncementType.activity:
         fields['activityRefType'] = _activityRefType.name;
-        fields['activityId'] = _activityIdController.text.trim();
+        fields['activityId'] = _selectedActivityId ?? '';
+        fields['description'] = _detailsController.text.trim();
     }
 
     final success = await ctrl.createAnnouncement(
@@ -95,15 +106,18 @@ class _CreateAnnouncementScreenState extends State<CreateAnnouncementScreen> {
           Expanded(
             child: SingleChildScrollView(
               padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _header(colors),
-                  const SizedBox(height: 20),
-                  _typeDropdown(colors),
-                  const SizedBox(height: 20),
-                  _buildForm(colors),
-                ],
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _header(colors),
+                    const SizedBox(height: 20),
+                    _typeDropdown(colors),
+                    const SizedBox(height: 20),
+                    _buildForm(colors),
+                  ],
+                ),
               ),
             ),
           ),
@@ -153,7 +167,7 @@ class _CreateAnnouncementScreenState extends State<CreateAnnouncementScreen> {
       hintColor: colors.onSurfaceVariant,
       textColor: colors.onSurface,
       value: _type.label,
-      items: AnnouncementType.values
+      items: [AnnouncementType.activity, AnnouncementType.offer, AnnouncementType.notice]
           .map((t) => DropdownMenuItem(value: t.label, child: Text(t.label)))
           .toList(),
       onChanged: (value) {
@@ -185,6 +199,7 @@ class _CreateAnnouncementScreenState extends State<CreateAnnouncementScreen> {
     final refTypes = [ActivityRefType.event, ActivityRefType.route, ActivityRefType.raffle];
 
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         CustomDropdown(
           title: "Activity Type",
@@ -200,19 +215,112 @@ class _CreateAnnouncementScreenState extends State<CreateAnnouncementScreen> {
               .map((t) => DropdownMenuItem(value: t.name, child: Text(t.name.capitalize!)))
               .toList(),
           onChanged: (value) {
-            setState(() => _activityRefType = ActivityRefType.fromString(value));
+            final type = ActivityRefType.fromString(value);
+            setState(() {
+              _activityRefType = type;
+              _selectedActivityId = null;
+              _showSuggestions = false;
+              _activityIdController.clear();
+            });
+            Get.find<SearchActivityController>().changeType(type);
           },
         ),
         const SizedBox(height: 20),
+
         CustomTextField(
           controller: _activityIdController,
-          title: "Activity ID",
-          hintText: "Enter activity ID",
+          title: "Activity",
+          hintText: "Search activity...",
           borderColor: colors.outline,
           fontSize: 14,
+          validator: (_) => (_selectedActivityId == null || _selectedActivityId!.isEmpty)
+              ? "Please select an activity"
+              : null,
           textColor: colors.onSurface,
           hintTextColor: colors.onSurfaceVariant,
+          onChanged: (value) {
+            setState(() {
+              _selectedActivityId = null;
+              _showSuggestions = value.trim().isNotEmpty;
+            });
+            Get.find<SearchActivityController>().onSearchChanged(value);
+          },
         ),
+
+        if (_showSuggestions) ...[
+          const SizedBox(height: 4),
+          GetBuilder<SearchActivityController>(
+            builder: (ctrl) => Container(
+              decoration: BoxDecoration(
+                color: colors.surfaceContainerHigh,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: colors.outline),
+              ),
+              child: ctrl.isLoading
+                  ? const Padding(
+                      padding: EdgeInsets.all(12),
+                      child: Center(child: SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+
+                            strokeWidth: 2),
+                      )),
+                    )
+                  : ctrl.activities.isEmpty
+                      ? Padding(
+                          padding: const EdgeInsets.all(12),
+                          child: Text(
+                            "No activities found",
+                            style: AppTextStyle.textSm(color: colors.onSurfaceVariant),
+                          ),
+                        )
+                      : Column(
+                          children: [
+                            NotificationListener<ScrollNotification>(
+                              onNotification: (n) {
+                                if (n is ScrollEndNotification && n.metrics.extentAfter < 50) {
+                                  ctrl.fetchMore();
+                                }
+                                return false;
+                              },
+                              child: ConstrainedBox(
+                                constraints: const BoxConstraints(maxHeight: 200),
+                                child: ListView.separated(
+                                  shrinkWrap: true,
+                                  physics: const ClampingScrollPhysics(),
+                                  itemCount: ctrl.activities.length,
+                                  separatorBuilder: (_, __) => Divider(height: 1, color: colors.outline),
+                                  itemBuilder: (context, index) {
+                                    final activity = ctrl.activities[index];
+                                    return ListTile(
+                                      dense: true,
+                                      title: Text(
+                                        activity.title,
+                                        style: AppTextStyle.textSm(color: colors.onSurface),
+                                      ),
+                                      onTap: () {
+                                        setState(() {
+                                          _activityIdController.text = activity.title;
+                                          _selectedActivityId = activity.id;
+                                          _showSuggestions = false;
+                                        });
+                                      },
+                                    );
+                                  },
+                                ),
+                              ),
+                            ),
+                            if (ctrl.isPaginationLoading)
+                              const PaginationLoader(size: 2,)
+                          ],
+                        ),
+            ),
+          ),
+        ],
+
+        const SizedBox(height: 20),
+        _detailsField(colors),
       ],
     );
   }
@@ -237,12 +345,13 @@ class _CreateAnnouncementScreenState extends State<CreateAnnouncementScreen> {
           maxLine: 4,
           borderColor: colors.outline,
           textColor: colors.onSurface,
+          validator: (v)=>v!.isNotEmpty ? null : "Please enter details",
         ),
         const SizedBox(height: 4),
         Align(
           alignment: Alignment.centerRight,
           child: Text(
-            "Limit: 200 char",
+            "Limit: 2000 char",
             style: AppTextStyle.textXs(color: colors.onSurfaceVariant),
           ),
         ),
