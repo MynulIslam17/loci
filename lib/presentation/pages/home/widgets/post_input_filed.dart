@@ -5,7 +5,7 @@ import 'package:loci/core/theme/theme_extention.dart';
 
 
 class PostInputField extends StatefulWidget {
-  final void Function(String text, String category)? onSubmit;
+  final Future<void> Function(String text, String category)? onSubmit;
   final List<String> categories;
   final String initialCategory;
   final String hintText;
@@ -13,7 +13,7 @@ class PostInputField extends StatefulWidget {
   const PostInputField({
     super.key,
     this.onSubmit,
-    this.categories = const ['Foodie', 'Drinks', 'Restu'],
+    required this.categories ,
     this.initialCategory = 'Foodie',
     this.hintText = 'Ask anything',
   });
@@ -27,6 +27,7 @@ class _PostInputFieldState extends State<PostInputField> {
   late FocusNode _focusNode;
   bool _showDropdown = false;
   bool _isPopupOpen = false;
+  bool _isSubmitting = false;
   late String _selectedCategory;
 
   @override
@@ -44,15 +45,16 @@ class _PostInputFieldState extends State<PostInputField> {
     super.dispose();
   }
 
-  void _handleSubmit() {
-    if (_controller.text.isNotEmpty) {
-      widget.onSubmit?.call(_controller.text, _selectedCategory);
+  Future<void> _handleSubmit() async {
+    if (_controller.text.isEmpty || _isSubmitting) return;
+    setState(() => _isSubmitting = true);
+    try {
+      await widget.onSubmit?.call(_controller.text, _selectedCategory);
       _controller.clear();
       _focusNode.unfocus();
-      setState(() {
-        _showDropdown = false;
-        _isPopupOpen = false;
-      });
+      if (mounted) setState(() { _showDropdown = false; _isPopupOpen = false; });
+    } finally {
+      if (mounted) setState(() => _isSubmitting = false);
     }
   }
 
@@ -168,12 +170,19 @@ class _PostInputFieldState extends State<PostInputField> {
           // --- Send Button ---
           if (_showDropdown) ...[
             const SizedBox(width: 4),
-            IconButton(
-              padding: EdgeInsets.zero,
-              constraints: const BoxConstraints(),
-              onPressed: _handleSubmit,
-              icon:Icon(Icons.send,size: 20,color: context.colorScheme.primary,),
-            ),
+            if (_isSubmitting)
+              const SizedBox(
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              )
+            else
+              IconButton(
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(),
+                onPressed: _handleSubmit,
+                icon: Icon(Icons.send, size: 20, color: context.colorScheme.primary),
+              ),
           ],
         ],
       ),

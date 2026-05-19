@@ -651,14 +651,14 @@ class _MyBusinessProfileState extends State<MyBusinessProfile> {
               ),
             ),
             const SizedBox(height: 10),
-            PostInputField(
-              categories: ['Foodie', 'Drinks', 'Restu'],
-              initialCategory: 'Foodie',
-              hintText: 'Ask anything',
-              onSubmit: (text, category) {
-                print("Posting: $text in $category");
-              },
-            ),
+            // PostInputField(
+            //   categories: ['Foodie', 'Drinks', 'Restu'],
+            //   initialCategory: 'Foodie',
+            //   hintText: 'Ask anything',
+            //   onSubmit: (text, category) {
+            //     print("Posting: $text in $category");
+            //   },
+            // ),
           ],
         ),
       ),

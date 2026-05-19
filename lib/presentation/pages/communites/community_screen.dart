@@ -1,36 +1,43 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:loci/core/constants/app_text_style.dart';
-import 'package:loci/presentation/widgets/app_skeleton.dart';
 import 'package:loci/core/enums/announcement_type.dart';
 import 'package:loci/core/enums/community_role.dart';
 import 'package:loci/core/enums/rsvp_status.dart';
 import 'package:loci/core/theme/theme_extention.dart';
 import 'package:loci/core/utils/show_snackbar.dart';
+import 'package:loci/data/models/community/announcement_model.dart';
 import 'package:loci/presentation/controllers/auth/auth_controller.dart';
-import 'package:loci/presentation/controllers/community/announcement_controller.dart';
 import 'package:loci/presentation/controllers/comment/announcements_comment_controller.dart';
+import 'package:loci/presentation/controllers/community/announcement_controller.dart';
+import 'package:loci/presentation/controllers/community/announcement_like_controller.dart';
 import 'package:loci/presentation/controllers/community/my_community_controlle.dart';
+import 'package:loci/presentation/controllers/community/poll_question_controller.dart';
+import 'package:loci/presentation/controllers/community/post_poll_option_controller.dart';
 import 'package:loci/presentation/controllers/community/vote_controller.dart';
 import 'package:loci/presentation/controllers/event/rsvp_controller.dart';
-import 'package:loci/presentation/pages/communites/widgets/tabs/activity_tab.dart';
 import 'package:loci/presentation/pages/communites/widgets/community_member_header.dart';
 import 'package:loci/presentation/pages/communites/widgets/community_owner_header.dart';
+import 'package:loci/presentation/pages/communites/widgets/poll_bottom_sheet.dart';
+import 'package:loci/presentation/pages/communites/widgets/post_comment_section.dart';
+import 'package:loci/presentation/pages/communites/widgets/tabs/activity_tab.dart';
 import 'package:loci/presentation/pages/communites/widgets/tabs/feed_tab.dart';
 import 'package:loci/presentation/pages/communites/widgets/tabs/notices_tab.dart';
 import 'package:loci/presentation/pages/communites/widgets/tabs/offers_tab.dart';
-import 'package:loci/presentation/pages/communites/widgets/poll_bottom_sheet.dart';
-import 'package:loci/presentation/pages/communites/widgets/post_comment_section.dart';
 import 'package:loci/presentation/pages/communites/widgets/tabs/tab_body_wrapper.dart';
-import '../../../data/models/community/announcement_model.dart';
-import '../../controllers/community/announcement_like_controller.dart';
+import 'package:loci/presentation/widgets/app_skeleton.dart';
 
 class CommunityScreen extends StatefulWidget {
   final CommunityRole? role;
   final String? communityId;
   final String? communityName;
 
-  const CommunityScreen({super.key, this.role, this.communityId, this.communityName});
+  const CommunityScreen({
+    super.key,
+    this.role,
+    this.communityId,
+    this.communityName,
+  });
 
   @override
   State<CommunityScreen> createState() => _CommunityScreenState();
@@ -38,19 +45,20 @@ class CommunityScreen extends StatefulWidget {
 
 class _CommunityScreenState extends State<CommunityScreen>
     with SingleTickerProviderStateMixin {
-
+  // ── Controllers ──────────────────────────────────────────────────────────
   late TabController tabController;
   final TextEditingController searchController = TextEditingController();
-  final likeController = Get.find<AnnouncementLikeController>();
 
   final authController = Get.find<AuthController>();
   final announcementController = Get.find<AnnouncementController>();
+  final likeController = Get.find<AnnouncementLikeController>();
   final myCommunityController = Get.find<MyCommunityController>();
   final voteController = Get.find<VoteController>();
+  final questionController = Get.find<PollQuestionController>();
+  final pollOptionController = Get.find<PostPollOptionController>();
 
-  // -------------------------------------------------
-  // LIFECYCLE
-  // -------------------------------------------------
+  // ── Lifecycle ─────────────────────────────────────────────────────────────
+
   @override
   void initState() {
     super.initState();
@@ -74,25 +82,69 @@ class _CommunityScreenState extends State<CommunityScreen>
     super.dispose();
   }
 
-  // -------------------------------------------------
-  // TAB LISTENER
-  // -------------------------------------------------
+  // ── Tab listener ──────────────────────────────────────────────────────────
+
   void _listenToTabChanges() {
     tabController.addListener(() {
       if (tabController.indexIsChanging) return;
       switch (tabController.index) {
-        case 0: announcementController.changeType(AnnouncementType.question); break;
-        case 1: announcementController.changeType(AnnouncementType.offer); break;
-        case 2: announcementController.changeType(AnnouncementType.notice); break;
-        case 3: announcementController.changeType(AnnouncementType.activity); break;
-        default: announcementController.changeType(AnnouncementType.activity);
+        case 0:
+          announcementController.changeType(AnnouncementType.question);
+          break;
+        case 1:
+          announcementController.changeType(AnnouncementType.offer);
+          break;
+        case 2:
+          announcementController.changeType(AnnouncementType.notice);
+          break;
+        case 3:
+          announcementController.changeType(AnnouncementType.activity);
+          break;
       }
     });
   }
 
-  // -------------------------------------------------
-  // HANDLERS
-  // -------------------------------------------------
+  // ── Handlers ──────────────────────────────────────────────────────────────
+
+  /// Called when user submits a new question from PostInputField
+  Future<void> _onPostQuestion(String text, String category) async {
+    final communityId = widget.communityId;
+    if (communityId == null) return;
+
+    final success = await questionController.createPollQuestion(
+      communityId: communityId,
+      pollQuestion: text,
+      pollCategory: category,
+    );
+
+    if (success) {
+      announcementController.fetchAnnouncements(isRefresh: true);
+    } else {
+      SnackbarService.error(
+          questionController.errorMessage ?? "Something went wrong");
+    }
+  }
+
+  /// Called when user types a business name and submits (mention field)
+  Future<void> _onMentionSubmit(String announcementId, String text) async {
+    final success = await pollOptionController.addPollOption(
+      announcementId: announcementId,
+      text: text,
+    );
+
+    if (success) {
+      // Refresh so new poll option appears immediately
+      announcementController.fetchAnnouncements(isRefresh: true);
+    } else {
+      SnackbarService.error(
+          pollOptionController.errorMessage ?? "Failed to add option");
+    }
+  }
+
+  void _onLike(String postId) {
+    likeController.toggleLike(postId);
+  }
+
   void _onVote(String announcementId, String optionId) async {
     final success = await voteController.submitVote(
       announcementId: announcementId,
@@ -108,17 +160,9 @@ class _CommunityScreenState extends State<CommunityScreen>
         userName: user?.name ?? '',
         userAvatar: user?.avatar ?? '',
       );
-
     } else {
-      SnackbarService.error(voteController.errorMessage!);
+      SnackbarService.error(voteController.errorMessage ?? "Vote failed");
     }
-  }
-
-
-  void _onLike(String postId) async {
-
-   likeController.toggleLike(postId);
-
   }
 
   void _onRsvp(String eventId, RSVPController rsvpController) async {
@@ -129,39 +173,35 @@ class _CommunityScreenState extends State<CommunityScreen>
 
     if (success) {
       announcementController.updateEventRsvpStatus(eventId, RsvpStatus.going);
-      SnackbarService.success(rsvpController.successMessage!);
+      SnackbarService.success(rsvpController.successMessage ?? "RSVP sent");
     } else {
-      SnackbarService.error(rsvpController.errorMessage!);
+      SnackbarService.error(rsvpController.errorMessage ?? "RSVP failed");
     }
   }
 
   void _showCommentSheet(String announcementId) {
     final inputController = TextEditingController();
     final commentController = Get.find<CommentController>();
-   
     commentController.fetchComments(postId: announcementId);
 
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      builder: (context) {
-
-        return GetBuilder<CommentController>(
-          builder: (controller) => PostCommentSection(
-            comments: controller.comments,
-            controller: inputController,
-            scrollController: controller.scrollController,
-            paginationLoading: controller.isPaginationLoading,
-            currentUserImage: authController.userModel?.avatar ?? "",
-            isLoading: controller.isLoading,
-            isSending: controller.isPosting,
-            onSendTap: (text) => controller.postComment(
-              content: text,
-              postId: announcementId,
-            ),
+      builder: (context) => GetBuilder<CommentController>(
+        builder: (controller) => PostCommentSection(
+          comments: controller.comments,
+          controller: inputController,
+          scrollController: controller.scrollController,
+          paginationLoading: controller.isPaginationLoading,
+          currentUserImage: authController.userModel?.avatar ?? "",
+          isLoading: controller.isLoading,
+          isSending: controller.isPosting,
+          onSendTap: (text) => controller.postComment(
+            content: text,
+            postId: announcementId,
           ),
-        );
-      },
+        ),
+      ),
     );
   }
 
@@ -174,9 +214,8 @@ class _CommunityScreenState extends State<CommunityScreen>
     );
   }
 
-  // -------------------------------------------------
-  // BUILD
-  // -------------------------------------------------
+  // ── Build ─────────────────────────────────────────────────────────────────
+
   @override
   Widget build(BuildContext context) {
     final colorScheme = context.colorScheme;
@@ -205,6 +244,8 @@ class _CommunityScreenState extends State<CommunityScreen>
                   onCommentTap: _showCommentSheet,
                   onPollTap: _showPollSheet,
                   onLikeTap: _onLike,
+                  onSubmit: _onPostQuestion,
+                  onMentionSubmit: _onMentionSubmit,
                 ),
               ),
               TabBodyWrapper(
@@ -237,9 +278,8 @@ class _CommunityScreenState extends State<CommunityScreen>
   }
 }
 
-// -------------------------------------------------
-// HEADER SLIVER
-// -------------------------------------------------
+// ── Header sliver ─────────────────────────────────────────────────────────────
+
 class _CommunityHeader extends StatelessWidget {
   final String? communityName;
   final CommunityRole? role;
@@ -263,9 +303,13 @@ class _CommunityHeader extends StatelessWidget {
             const SizedBox(height: 4),
             Row(
               children: [
-                Icon(Icons.location_on_outlined, size: 16, color: colorScheme.onSurfaceVariant),
+                Icon(Icons.location_on_outlined,
+                    size: 16, color: colorScheme.onSurfaceVariant),
                 const SizedBox(width: 4),
-                Text("23601 Hoover Rd, Warren, MI 48089", style: AppTextStyle.textXs()),
+                Text(
+                  "23601 Hoover Rd, Warren, MI 48089",
+                  style: AppTextStyle.textXs(),
+                ),
               ],
             ),
             const SizedBox(height: 20),
@@ -280,14 +324,14 @@ class _CommunityHeader extends StatelessWidget {
   }
 }
 
-// -------------------------------------------------
-// TAB BAR SLIVER
-// -------------------------------------------------
+// ── Tab bar sliver ────────────────────────────────────────────────────────────
+
 class _CommunityTabBar extends StatelessWidget {
   final TabController controller;
   final ColorScheme colorScheme;
 
-  const _CommunityTabBar({required this.controller, required this.colorScheme});
+  const _CommunityTabBar(
+      {required this.controller, required this.colorScheme});
 
   @override
   Widget build(BuildContext context) {
@@ -318,16 +362,15 @@ class _CommunityTabBar extends StatelessWidget {
   }
 }
 
-// -------------------------------------------------
-// FEED SHIMMER
-// -------------------------------------------------
+// ── Feed shimmer ──────────────────────────────────────────────────────────────
+
 class _FeedShimmer extends StatelessWidget {
   const _FeedShimmer();
 
   @override
   Widget build(BuildContext context) {
     return Column(
-      children: List.generate(3, (_) => _PostCardSkeleton()),
+      children: List.generate(3, (_) => const _PostCardSkeleton()),
     );
   }
 }
@@ -348,12 +391,12 @@ class _PostCardSkeleton extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
-              children: [
-                const SkeletonBox(width: 44, height: 44, radius: 22),
-                const SizedBox(width: 12),
+              children: const [
+                SkeletonBox(width: 44, height: 44, radius: 22),
+                SizedBox(width: 12),
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
-                  children: const [
+                  children: [
                     SkeletonBox(width: 120, height: 13),
                     SizedBox(height: 6),
                     SkeletonBox(width: 80, height: 10),

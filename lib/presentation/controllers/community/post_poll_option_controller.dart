@@ -3,49 +3,50 @@ import 'package:get/get.dart';
 import 'package:loci/core/constants/app_url.dart';
 import 'package:loci/core/network/network_caller.dart';
 
-/// Reusable controller for all 4 announcement types:
-///
-///   notice   — fields: type, communityId, details
-///   activity — fields: type, communityId, activityRefType, activityId
-///   offer    — fields: type, communityId, details  +  image file
-///
-/// Automatically uses multipart when [image] is supplied, JSON otherwise.
-class CreateAnnouncementController extends GetxController {
+class PostPollOptionController extends GetxController {
   bool _isLoading = false;
   String? _errorMessage;
 
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
 
-  Future<bool> createAnnouncement({
-    required Map<String, String> fields,
+  /// Posts a poll option to an announcement.
+  /// [text] must be non-empty (business name selected from search).
+  /// [image] is optional.
+  /// Returns false without calling the API if [text] is blank.
+  Future<bool> addPollOption({
+    required String announcementId,
+    required String text,
     File? image,
   }) async {
+    if (text.trim().isEmpty) return false;
+
     _isLoading = true;
     _errorMessage = null;
     update();
 
     try {
       final caller = Get.find<NetworkCaller>();
+      final fields = {'text': text.trim()};
 
       if (image != null) {
         final response = await caller.multipartRequest(
-          url: AppUrl.crateAnnouncement,
+          url: AppUrl.addPollOption(announcementId),
           method: 'POST',
           fields: fields,
           files: {'image': image},
         );
         if (!response.isSuccess) {
-          _errorMessage = response.errorMessage ?? 'Failed to create announcement';
+          _errorMessage = response.errorMessage ?? 'Failed to add poll option';
           return false;
         }
       } else {
         final response = await caller.postRequest(
-          url: AppUrl.crateAnnouncement,
+          url: AppUrl.addPollOption(announcementId),
           body: fields,
         );
         if (!response.isSuccess) {
-          _errorMessage = response.errorMessage ?? 'Failed to create announcement';
+          _errorMessage = response.errorMessage ?? 'Failed to add poll option';
           return false;
         }
       }

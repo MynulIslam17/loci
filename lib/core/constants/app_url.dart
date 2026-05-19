@@ -97,6 +97,8 @@ static String  businessReviews(String businessId)=>"$baseUrl/reviews/business/$b
   static String  communityMember(String businessId)=>"$baseUrl/community-members/$businessId";
   static const String  crateAnnouncement="$baseUrl/community-announcements";
   static  String  searchActivity(String communityId)=>"$baseUrl/community-announcements/all-activity?communityId={{communityId}}";
+  static String searchBusinesses(String search) => "$baseUrl/businesses?search=$search";
+  static String addPollOption(String announcementId) => "$baseUrl/community-announcements/$announcementId/poll-options";
 
 
 

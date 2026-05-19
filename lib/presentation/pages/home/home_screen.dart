@@ -133,18 +133,18 @@ class _HomeScreenState extends State<HomeScreen> {
             const SizedBox(height: 20),
 
             // --- 3️⃣ Post Input Field with Category Dropdown ---
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 12),
-              child: PostInputField(
-                categories: ['Foodie', 'Drinks', 'Restaurant'],
-                initialCategory: 'Foodie',
-                hintText: 'Ask anything',
-                onSubmit: (text, category) {
-                  print("Posting: $text in $category");
-                  // Handle post submission
-                },
-              ),
-            ),
+            // Padding(
+            //   padding: const EdgeInsets.symmetric(horizontal: 12),
+            //   child: PostInputField(
+            //     categories: ['Foodie', 'Drinks', 'Restaurant'],
+            //     initialCategory: 'Foodie',
+            //     hintText: 'Ask anything',
+            //     onSubmit: (text, category) {
+            //       print("Posting: $text in $category");
+            //       // Handle post submission
+            //     },
+            //   ),
+            // ),
 
             // --- 4️⃣ Post Card ---
             // ListView.builder(

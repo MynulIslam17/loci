@@ -16,44 +16,88 @@ import 'package:loci/presentation/widgets/custom_text_field.dart';
 import 'package:loci/presentation/widgets/pagination_loading.dart';
 
 class CreateAnnouncementScreen extends StatefulWidget {
-
-
-  const CreateAnnouncementScreen({super.key,});
+  const CreateAnnouncementScreen({super.key});
 
   @override
   State<CreateAnnouncementScreen> createState() => _CreateAnnouncementScreenState();
 }
 
 class _CreateAnnouncementScreenState extends State<CreateAnnouncementScreen> {
-  AnnouncementType _type = AnnouncementType.notice;
+  // ── Form ──────────────────────────────────────────────────────────────────
+  final _formKey = GlobalKey<FormState>();
+  final _detailsController = TextEditingController();
+  final _activitySearchController = TextEditingController();
+
+  // ── Controllers ───────────────────────────────────────────────────────────
+
+  final _createCtrl = Get.put(CreateAnnouncementController());
+  late final SearchActivityController _searchCtrl;
+
+  // ── State ─────────────────────────────────────────────────────────────────
+  late final String _communityId;
+  AnnouncementType _announcementType = AnnouncementType.notice;
   ActivityRefType _activityRefType = ActivityRefType.event;
-   final _formKey=GlobalKey<FormState>();
-
-
-  bool _showSuggestions = false;
   String? _selectedActivityId;
-
-  // Single file for offer (image or pdf)
+  bool _showSuggestions = false;
   File? _attachment;
 
-  final _detailsController = TextEditingController();
-  final _activityIdController = TextEditingController();
-
-  late final String communityId;
-
+  // ── Lifecycle ─────────────────────────────────────────────────────────────
   @override
   void initState() {
     super.initState();
-    communityId = (Get.arguments as Map)['communityId'] as String;
-    Get.put(SearchActivityController()).setup(communityId, _activityRefType);
+    _communityId = (Get.arguments as Map)['communityId'] as String;
+
+    // SearchActivityController needs communityId + activityRefType at setup,
+
+    _searchCtrl = Get.find<SearchActivityController>()
+      ..setup(_communityId, _activityRefType);
   }
 
   @override
   void dispose() {
     _detailsController.dispose();
-    _activityIdController.dispose();
+    _activitySearchController.dispose();
     Get.delete<SearchActivityController>();
     super.dispose();
+  }
+
+  // ── Actions ───────────────────────────────────────────────────────────────
+  void _onAnnouncementTypeChanged(String? label) {
+    final picked = AnnouncementType.values.firstWhere(
+          (t) => t.label == label,
+      orElse: () => AnnouncementType.notice,
+    );
+    setState(() {
+      _announcementType = picked;
+      _attachment = null;
+    });
+  }
+
+  void _onActivityTypeChanged(String? value) {
+    final type = ActivityRefType.fromString(value);
+    setState(() {
+      _activityRefType = type;
+      _selectedActivityId = null;
+      _showSuggestions = false;
+      _activitySearchController.clear();
+    });
+    _searchCtrl.changeType(type);
+  }
+
+  void _onActivitySearchChanged(String value) {
+    setState(() {
+      _selectedActivityId = null;
+      _showSuggestions = value.trim().isNotEmpty;
+    });
+    _searchCtrl.onSearchChanged(value);
+  }
+
+  void _onActivitySelected(String id, String title) {
+    setState(() {
+      _activitySearchController.text = title;
+      _selectedActivityId = id;
+      _showSuggestions = false;
+    });
   }
 
   Future<void> _pickFile() async {
@@ -67,15 +111,14 @@ class _CreateAnnouncementScreenState extends State<CreateAnnouncementScreen> {
   }
 
   Future<void> _publish() async {
-    if(!_formKey.currentState!.validate())return;
-    final ctrl = Get.find<CreateAnnouncementController>();
+    if (!_formKey.currentState!.validate()) return;
 
     final fields = <String, String>{
-      'type': _type.toJson,
-      'communityId': communityId,
+      'type': _announcementType.toJson,
+      'communityId': _communityId,
     };
 
-    switch (_type) {
+    switch (_announcementType) {
       case AnnouncementType.notice:
       case AnnouncementType.question:
       case AnnouncementType.offer:
@@ -86,14 +129,15 @@ class _CreateAnnouncementScreenState extends State<CreateAnnouncementScreen> {
         fields['description'] = _detailsController.text.trim();
     }
 
-    final success = await ctrl.createAnnouncement(
+    final success = await _createCtrl.createAnnouncement(
       fields: fields,
-      image: _type == AnnouncementType.offer ? _attachment : null,
+      image: _announcementType == AnnouncementType.offer ? _attachment : null,
     );
 
     if (success && mounted) Get.back();
   }
 
+  // ── Build ─────────────────────────────────────────────────────────────────
   @override
   Widget build(BuildContext context) {
     final colors = context.colorScheme;
@@ -111,35 +155,25 @@ class _CreateAnnouncementScreenState extends State<CreateAnnouncementScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _header(colors),
+                    _buildHeader(colors),
                     const SizedBox(height: 20),
-                    _typeDropdown(colors),
+                    _buildTypeDropdown(colors),
                     const SizedBox(height: 20),
-                    _buildForm(colors),
+                    _buildFormForType(colors),
                   ],
                 ),
               ),
             ),
           ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
-            child: GetBuilder<CreateAnnouncementController>(
-              builder: (ctrl) => SizedBox(
-                width: double.infinity,
-                height: 50,
-                child: CustomButton(
-                  onPressed: ctrl.isLoading ? null : _publish,
-                  text: ctrl.isLoading ? "Publishing..." : "Publish",
-                ),
-              ),
-            ),
-          ),
+          _buildPublishButton(),
         ],
       ),
     );
   }
 
-  Widget _header(ColorScheme colors) {
+  // ── UI Builders ───────────────────────────────────────────────────────────
+
+  Widget _buildHeader(ColorScheme colors) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -156,7 +190,7 @@ class _CreateAnnouncementScreenState extends State<CreateAnnouncementScreen> {
     );
   }
 
-  Widget _typeDropdown(ColorScheme colors) {
+  Widget _buildTypeDropdown(ColorScheme colors) {
     return CustomDropdown(
       title: "Announcement type",
       dropdownColor: colors.surfaceContainerHigh,
@@ -166,176 +200,23 @@ class _CreateAnnouncementScreenState extends State<CreateAnnouncementScreen> {
       hintFontSize: 14,
       hintColor: colors.onSurfaceVariant,
       textColor: colors.onSurface,
-      value: _type.label,
+      value: _announcementType.label,
       items: [AnnouncementType.activity, AnnouncementType.offer, AnnouncementType.notice]
           .map((t) => DropdownMenuItem(value: t.label, child: Text(t.label)))
           .toList(),
-      onChanged: (value) {
-        final picked = AnnouncementType.values.firstWhere(
-          (t) => t.label == value,
-          orElse: () => AnnouncementType.notice,
-        );
-        setState(() {
-          _type = picked;
-          _attachment = null;
-        });
-      },
+      onChanged: _onAnnouncementTypeChanged,
     );
   }
 
-  Widget _buildForm(ColorScheme colors) {
-    switch (_type) {
-      case AnnouncementType.activity:
-        return _activityForm(colors);
-      case AnnouncementType.offer:
-        return _offerForm(colors);
-      case AnnouncementType.notice:
-      case AnnouncementType.question:
-        return _detailsField(colors);
-    }
+  Widget _buildFormForType(ColorScheme colors) {
+    return switch (_announcementType) {
+      AnnouncementType.activity => _buildActivityForm(colors),
+      AnnouncementType.offer    => _buildOfferForm(colors),
+      _                         => _buildDetailsField(colors),
+    };
   }
 
-  Widget _activityForm(ColorScheme colors) {
-    final refTypes = [ActivityRefType.event, ActivityRefType.route, ActivityRefType.raffle];
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        CustomDropdown(
-          title: "Activity Type",
-          dropdownColor: colors.surfaceContainerHigh,
-          borderColor: colors.outline,
-          hintText: "Select activity type",
-          textFontSize: 14,
-          hintFontSize: 14,
-          hintColor: colors.onSurfaceVariant,
-          textColor: colors.onSurface,
-          value: _activityRefType.name,
-          items: refTypes
-              .map((t) => DropdownMenuItem(value: t.name, child: Text(t.name.capitalize!)))
-              .toList(),
-          onChanged: (value) {
-            final type = ActivityRefType.fromString(value);
-            setState(() {
-              _activityRefType = type;
-              _selectedActivityId = null;
-              _showSuggestions = false;
-              _activityIdController.clear();
-            });
-            Get.find<SearchActivityController>().changeType(type);
-          },
-        ),
-        const SizedBox(height: 20),
-
-        CustomTextField(
-          controller: _activityIdController,
-          title: "Activity",
-          hintText: "Search activity...",
-          borderColor: colors.outline,
-          fontSize: 14,
-          validator: (_) => (_selectedActivityId == null || _selectedActivityId!.isEmpty)
-              ? "Please select an activity"
-              : null,
-          textColor: colors.onSurface,
-          hintTextColor: colors.onSurfaceVariant,
-          onChanged: (value) {
-            setState(() {
-              _selectedActivityId = null;
-              _showSuggestions = value.trim().isNotEmpty;
-            });
-            Get.find<SearchActivityController>().onSearchChanged(value);
-          },
-        ),
-
-        if (_showSuggestions) ...[
-          const SizedBox(height: 4),
-          GetBuilder<SearchActivityController>(
-            builder: (ctrl) => Container(
-              decoration: BoxDecoration(
-                color: colors.surfaceContainerHigh,
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: colors.outline),
-              ),
-              child: ctrl.isLoading
-                  ? const Padding(
-                      padding: EdgeInsets.all(12),
-                      child: Center(child: SizedBox(
-                        width: 20,
-                        height: 20,
-                        child: CircularProgressIndicator(
-
-                            strokeWidth: 2),
-                      )),
-                    )
-                  : ctrl.activities.isEmpty
-                      ? Padding(
-                          padding: const EdgeInsets.all(12),
-                          child: Text(
-                            "No activities found",
-                            style: AppTextStyle.textSm(color: colors.onSurfaceVariant),
-                          ),
-                        )
-                      : Column(
-                          children: [
-                            NotificationListener<ScrollNotification>(
-                              onNotification: (n) {
-                                if (n is ScrollEndNotification && n.metrics.extentAfter < 50) {
-                                  ctrl.fetchMore();
-                                }
-                                return false;
-                              },
-                              child: ConstrainedBox(
-                                constraints: const BoxConstraints(maxHeight: 200),
-                                child: ListView.separated(
-                                  shrinkWrap: true,
-                                  physics: const ClampingScrollPhysics(),
-                                  itemCount: ctrl.activities.length,
-                                  separatorBuilder: (_, __) => Divider(height: 1, color: colors.outline),
-                                  itemBuilder: (context, index) {
-                                    final activity = ctrl.activities[index];
-                                    return ListTile(
-                                      dense: true,
-                                      title: Text(
-                                        activity.title,
-                                        style: AppTextStyle.textSm(color: colors.onSurface),
-                                      ),
-                                      onTap: () {
-                                        setState(() {
-                                          _activityIdController.text = activity.title;
-                                          _selectedActivityId = activity.id;
-                                          _showSuggestions = false;
-                                        });
-                                      },
-                                    );
-                                  },
-                                ),
-                              ),
-                            ),
-                            if (ctrl.isPaginationLoading)
-                              const PaginationLoader(size: 2,)
-                          ],
-                        ),
-            ),
-          ),
-        ],
-
-        const SizedBox(height: 20),
-        _detailsField(colors),
-      ],
-    );
-  }
-
-  Widget _offerForm(ColorScheme colors) {
-    return Column(
-      children: [
-        _detailsField(colors),
-        const SizedBox(height: 20),
-        _attachmentPicker(colors),
-      ],
-    );
-  }
-
-  Widget _detailsField(ColorScheme colors) {
+  Widget _buildDetailsField(ColorScheme colors) {
     return Column(
       children: [
         CustomTextField(
@@ -345,7 +226,7 @@ class _CreateAnnouncementScreenState extends State<CreateAnnouncementScreen> {
           maxLine: 4,
           borderColor: colors.outline,
           textColor: colors.onSurface,
-          validator: (v)=>v!.isNotEmpty ? null : "Please enter details",
+          validator: (v) => v!.isNotEmpty ? null : "Please enter details",
         ),
         const SizedBox(height: 4),
         Align(
@@ -359,7 +240,17 @@ class _CreateAnnouncementScreenState extends State<CreateAnnouncementScreen> {
     );
   }
 
-  Widget _attachmentPicker(ColorScheme colors) {
+  Widget _buildOfferForm(ColorScheme colors) {
+    return Column(
+      children: [
+        _buildDetailsField(colors),
+        const SizedBox(height: 20),
+        _buildAttachmentPicker(colors),
+      ],
+    );
+  }
+
+  Widget _buildAttachmentPicker(ColorScheme colors) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -368,20 +259,17 @@ class _CreateAnnouncementScreenState extends State<CreateAnnouncementScreen> {
           style: AppTextStyle.textMd(color: colors.onSurface, weight: FontWeight.w600),
         ),
         const SizedBox(height: 12),
-
-        // Show the selected file preview, or the pick button — never both
         if (_attachment != null)
-          _filePreview(colors)
+          _buildFilePreview(colors)
         else
-          _pickButton(colors),
+          _buildPickFileButton(colors),
       ],
     );
   }
 
-  Widget _filePreview(ColorScheme colors) {
-    final file = _attachment!;
-    final isPdf = file.path.toLowerCase().endsWith('.pdf');
-    final fileName = file.path.split('/').last;
+  Widget _buildFilePreview(ColorScheme colors) {
+    final isPdf = _attachment!.path.toLowerCase().endsWith('.pdf');
+    final fileName = _attachment!.path.split('/').last;
 
     return Card(
       color: colors.surfaceContainerHigh,
@@ -422,7 +310,7 @@ class _CreateAnnouncementScreenState extends State<CreateAnnouncementScreen> {
     );
   }
 
-  Widget _pickButton(ColorScheme colors) {
+  Widget _buildPickFileButton(ColorScheme colors) {
     return InkWell(
       onTap: _pickFile,
       borderRadius: BorderRadius.circular(8),
@@ -444,6 +332,129 @@ class _CreateAnnouncementScreenState extends State<CreateAnnouncementScreen> {
               style: AppTextStyle.textSm(weight: FontWeight.w600, color: colors.onSurface),
             ),
           ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildActivityForm(ColorScheme colors) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        CustomDropdown(
+          title: "Activity Type",
+          dropdownColor: colors.surfaceContainerHigh,
+          borderColor: colors.outline,
+          hintText: "Select activity type",
+          textFontSize: 14,
+          hintFontSize: 14,
+          hintColor: colors.onSurfaceVariant,
+          textColor: colors.onSurface,
+          value: _activityRefType.name,
+          items: [ActivityRefType.event, ActivityRefType.route, ActivityRefType.raffle]
+              .map((t) => DropdownMenuItem(value: t.name, child: Text(t.name.capitalize!)))
+              .toList(),
+          onChanged: _onActivityTypeChanged,
+        ),
+        const SizedBox(height: 20),
+        CustomTextField(
+          controller: _activitySearchController,
+          title: "Activity",
+          hintText: "Search activity...",
+          borderColor: colors.outline,
+          fontSize: 14,
+          textColor: colors.onSurface,
+          hintTextColor: colors.onSurfaceVariant,
+          validator: (_) => (_selectedActivityId?.isEmpty ?? true)
+              ? "Please select an activity"
+              : null,
+          onChanged: _onActivitySearchChanged,
+        ),
+        if (_showSuggestions) ...[
+          const SizedBox(height: 4),
+          _buildActivitySuggestions(colors),
+        ],
+        const SizedBox(height: 20),
+        _buildDetailsField(colors),
+      ],
+    );
+  }
+
+  Widget _buildActivitySuggestions(ColorScheme colors) {
+    return GetBuilder<SearchActivityController>(
+      builder: (ctrl) => Container(
+        decoration: BoxDecoration(
+          color: colors.surfaceContainerHigh,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: colors.outline),
+        ),
+        child: ctrl.isLoading
+            ? const Padding(
+          padding: EdgeInsets.all(12),
+          child: Center(
+            child: SizedBox(
+              width: 20,
+              height: 20,
+              child: CircularProgressIndicator(strokeWidth: 2),
+            ),
+          ),
+        )
+            : ctrl.activities.isEmpty
+            ? Padding(
+          padding: const EdgeInsets.all(12),
+          child: Text(
+            "No activities found",
+            style: AppTextStyle.textSm(color: colors.onSurfaceVariant),
+          ),
+        )
+            : Column(
+          children: [
+            NotificationListener<ScrollNotification>(
+              onNotification: (n) {
+                if (n is ScrollEndNotification && n.metrics.extentAfter < 50) {
+                  ctrl.fetchMore();
+                }
+                return false;
+              },
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxHeight: 200),
+                child: ListView.separated(
+                  shrinkWrap: true,
+                  physics: const ClampingScrollPhysics(),
+                  itemCount: ctrl.activities.length,
+                  separatorBuilder: (_, __) => Divider(height: 1, color: colors.outline),
+                  itemBuilder: (context, index) {
+                    final activity = ctrl.activities[index];
+                    return ListTile(
+                      dense: true,
+                      title: Text(
+                        activity.title,
+                        style: AppTextStyle.textSm(color: colors.onSurface),
+                      ),
+                      onTap: () => _onActivitySelected(activity.id, activity.title),
+                    );
+                  },
+                ),
+              ),
+            ),
+            if (ctrl.isPaginationLoading) const PaginationLoader(size: 2),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPublishButton() {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+      child: GetBuilder<CreateAnnouncementController>(
+        builder: (ctrl) => SizedBox(
+          width: double.infinity,
+          height: 50,
+          child: CustomButton(
+            onPressed: ctrl.isLoading ? null : _publish,
+            text: ctrl.isLoading ? "Publishing..." : "Publish",
+          ),
         ),
       ),
     );
