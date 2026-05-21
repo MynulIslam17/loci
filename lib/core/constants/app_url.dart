@@ -94,7 +94,8 @@ static String  businessReviews(String businessId)=>"$baseUrl/reviews/business/$b
   static String  voteOnAnnouncementPoll(String announcementId)=>"$baseUrl/community-announcements/$announcementId/vote";
   static String  announcementComment(String announcementId)=>"$baseUrl/community-announcements/$announcementId/comments";
   static String  announcementLike(String announcementId)=>"$baseUrl/community-announcements/$announcementId/like";
-  static String  communityMember(String businessId)=>"$baseUrl/community-members/$businessId";
+  static String  communityMember(String communityId)=>"$baseUrl/community-members/$communityId";
+  static String  removeCommunityMember(String communityId,String memberId)=>"$baseUrl/community-members/$communityId/$memberId";
   static const String  crateAnnouncement="$baseUrl/community-announcements";
   static  String  searchActivity(String communityId)=>"$baseUrl/community-announcements/all-activity?communityId={{communityId}}";
   static String searchBusinesses(String search) => "$baseUrl/businesses?search=$search";

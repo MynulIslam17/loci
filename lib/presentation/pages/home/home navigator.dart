@@ -67,11 +67,6 @@ class HomeNavigator extends StatelessWidget {
               ),
             );
 
-          case AppRoutes.createAnnouncement:
-          //  CreateAnnouncementBinding().dependencies();
-            return MaterialPageRoute(
-              builder: (_) => const CreateAnnouncementScreen(),
-            );
 
 
           default:

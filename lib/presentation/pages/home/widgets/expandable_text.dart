@@ -16,34 +16,59 @@ class ExpandableText extends StatefulWidget {
 }
 
 class _ExpandableTextState extends State<ExpandableText> {
-  bool _isExpanded = false;
+  bool isExpanded = false;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context).colorScheme;
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          widget.text,
-          // If expanded, maxLines is null (infinite). Otherwise, use trimLines.
-          maxLines: _isExpanded ? null : widget.trimLines,
-          overflow: _isExpanded ? TextOverflow.visible : TextOverflow.ellipsis,
-          style: AppTextStyle.textSm(color: theme.primary),
-        ),
-        const SizedBox(height: 4),
-        GestureDetector(
-          onTap: () => setState(() => _isExpanded = !_isExpanded),
-          child: Text(
-            _isExpanded ? "See less" : "See more",
-            style: AppTextStyle.textSm(
-              weight: FontWeight.w700,
-              color: theme.onSurface,
-            ),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final textPainter = TextPainter(
+          text: TextSpan(
+            text: widget.text,
+            style: AppTextStyle.textSm(color: theme.primary),
           ),
-        ),
-      ],
+          maxLines: widget.trimLines,
+          textDirection: TextDirection.ltr,
+        );
+
+        textPainter.layout(maxWidth: constraints.maxWidth);
+
+        final isLongText = textPainter.didExceedMaxLines;
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              widget.text,
+              maxLines: isExpanded ? null : widget.trimLines,
+              overflow:
+              isExpanded ? TextOverflow.visible : TextOverflow.ellipsis,
+              style: AppTextStyle.textSm(color: theme.primary),
+            ),
+
+            if (isLongText)
+              GestureDetector(
+                onTap: () {
+                  setState(() {
+                    isExpanded = !isExpanded;
+                  });
+                },
+                child: Padding(
+                  padding: const EdgeInsets.only(top: 4),
+                  child: Text(
+                    isExpanded ? "See less" : "See more",
+                    style: AppTextStyle.textSm(
+                      weight: FontWeight.w700,
+                      color: theme.onSurface,
+                    ),
+                  ),
+                ),
+              ),
+          ],
+        );
+      },
     );
   }
 }

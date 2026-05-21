@@ -79,6 +79,7 @@ class AllCommunityScreen extends StatelessWidget {
                                 "communityId": joinedCommunity.id,
                                 "communityName": joinedCommunity.name,
 
+
                               },
                             );
                           },

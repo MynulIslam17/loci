@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:loci/core/constants/app_text_style.dart';
 import 'package:loci/core/enums/announcement_type.dart';
+import 'package:loci/core/enums/category_enum.dart';
 import 'package:loci/core/enums/community_role.dart';
 import 'package:loci/core/enums/rsvp_status.dart';
 import 'package:loci/core/theme/theme_extention.dart';
@@ -25,6 +26,7 @@ import 'package:loci/presentation/pages/communites/widgets/tabs/feed_tab.dart';
 import 'package:loci/presentation/pages/communites/widgets/tabs/notices_tab.dart';
 import 'package:loci/presentation/pages/communites/widgets/tabs/offers_tab.dart';
 import 'package:loci/presentation/pages/communites/widgets/tabs/tab_body_wrapper.dart';
+import 'package:loci/presentation/pages/home/widgets/post_input_filed.dart';
 import 'package:loci/presentation/widgets/app_skeleton.dart';
 
 class CommunityScreen extends StatefulWidget {
@@ -55,7 +57,7 @@ class _CommunityScreenState extends State<CommunityScreen>
   final myCommunityController = Get.find<MyCommunityController>();
   final voteController = Get.find<VoteController>();
   final questionController = Get.find<PollQuestionController>();
-  final pollOptionController = Get.find<PostPollOptionController>();
+  final postPollController = Get.find<PostPollOptionController>();
 
   // ── Lifecycle ─────────────────────────────────────────────────────────────
 
@@ -86,7 +88,6 @@ class _CommunityScreenState extends State<CommunityScreen>
 
   void _listenToTabChanges() {
     tabController.addListener(() {
-      if (tabController.indexIsChanging) return;
       switch (tabController.index) {
         case 0:
           announcementController.changeType(AnnouncementType.question);
@@ -126,18 +127,18 @@ class _CommunityScreenState extends State<CommunityScreen>
   }
 
   /// Called when user types a business name and submits (mention field)
-  Future<void> _onMentionSubmit(String announcementId, String text) async {
-    final success = await pollOptionController.addPollOption(
+  Future<void> _onMentionSubmit(String announcementId, String text, String image) async {
+    final success = await postPollController.addPollOption(
       announcementId: announcementId,
       text: text,
+      imageUrl: image.isNotEmpty ? image : null,
     );
 
     if (success) {
-      // Refresh so new poll option appears immediately
       announcementController.fetchAnnouncements(isRefresh: true);
     } else {
       SnackbarService.error(
-          pollOptionController.errorMessage ?? "Failed to add option");
+          postPollController.errorMessage ?? "Failed to add option");
     }
   }
 
@@ -240,11 +241,19 @@ class _CommunityScreenState extends State<CommunityScreen>
             children: [
               TabBodyWrapper(
                 shimmerBuilder: (ctx) => const _FeedShimmer(),
+                stickyHeader: Padding(
+                  padding: const EdgeInsets.only(bottom: 16),
+                  child: PostInputField(
+                    categories: BusinessCategory.values.map((e) => e.label).toList(),
+                    initialCategory: BusinessCategory.foodie.label,
+                    onSubmit: _onPostQuestion,
+                    hintText: 'Post a question...',
+                  ),
+                ),
                 builder: () => FeedTab(
                   onCommentTap: _showCommentSheet,
                   onPollTap: _showPollSheet,
                   onLikeTap: _onLike,
-                  onSubmit: _onPostQuestion,
                   onMentionSubmit: _onMentionSubmit,
                 ),
               ),
@@ -301,17 +310,6 @@ class _CommunityHeader extends StatelessWidget {
               style: AppTextStyle.textMd(weight: FontWeight.w600),
             ),
             const SizedBox(height: 4),
-            Row(
-              children: [
-                Icon(Icons.location_on_outlined,
-                    size: 16, color: colorScheme.onSurfaceVariant),
-                const SizedBox(width: 4),
-                Text(
-                  "23601 Hoover Rd, Warren, MI 48089",
-                  style: AppTextStyle.textXs(),
-                ),
-              ],
-            ),
             const SizedBox(height: 20),
             if (role == CommunityRole.owner)
               CommunityOwnerHeader()

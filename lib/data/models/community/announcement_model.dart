@@ -21,6 +21,7 @@ class AnnouncementModel {
   final String createdAt;
   final String updatedAt;
   final String details;
+  final String? pollCategory;
 
   final ActivityRefType? activityRefType;
   final String? activityId;
@@ -46,6 +47,7 @@ class AnnouncementModel {
     required this.communityId,
     this.business,
     this.createdBy,
+    this.pollCategory,
     required this.createdAt,
     required this.updatedAt,
     required this.details,
@@ -70,6 +72,7 @@ class AnnouncementModel {
       isLiked: json["isLiked"] ?? false,
       announcementType: AnnouncementType.fromString(json['type']),
       communityId: json['communityId'] ?? '',
+      pollCategory: json['pollCategory'],
       business: json['business'] != null
           ? BusinessModel.fromJson(json['business'])
           : null,
@@ -116,6 +119,7 @@ class AnnouncementModel {
     String? createdAt,
     String? updatedAt,
     String? details,
+    String? pollCategory,
     ActivityRefType? activityRefType,
     String? activityId,
     EventModel? event,
@@ -138,6 +142,7 @@ class AnnouncementModel {
       business: business ?? this.business,
       createdBy: createdBy ?? this.createdBy,
       createdAt: createdAt ?? this.createdAt,
+      pollCategory: pollCategory ?? this.pollCategory,
       updatedAt: updatedAt ?? this.updatedAt,
       details: details ?? this.details,
       activityRefType: activityRefType ?? this.activityRefType,

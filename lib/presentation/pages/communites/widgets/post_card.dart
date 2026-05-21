@@ -9,7 +9,6 @@ import '../../home/widgets/poll_bar.dart';
 import '../../home/widgets/post_interaction_bar.dart';
 import '../../home/widgets/user_post_header.dart';
 
-
 /// Every action is bubbled up via callbacks.
 class PostCardWidget extends StatefulWidget {
   final PostCardViewModel viewModel;
@@ -21,7 +20,7 @@ class PostCardWidget extends StatefulWidget {
 
   // Mention field — text changes & submit
   final void Function(String postId, String query)? onMentionChanged;
-  final Future<void> Function(String postId, String text)? onMentionSubmit;
+  final Future<void> Function(String postId, String text, String image)? onMentionSubmit;
   final void Function(String postId, BrowseBusinessModel business)? onMentionBusinessSelected;
 
   // Mention suggestions — fully controlled by parent
@@ -47,6 +46,7 @@ class PostCardWidget extends StatefulWidget {
 
 class _PostCardWidgetState extends State<PostCardWidget> {
   final TextEditingController _mentionController = TextEditingController();
+  BrowseBusinessModel? _selectedBusiness; // ← tracks which business was picked
   bool _isSubmitting = false;
 
   @override
@@ -56,11 +56,16 @@ class _PostCardWidgetState extends State<PostCardWidget> {
   }
 
   void _onTextChanged(String value) {
+    // Clear the selected business if the user edits the text manually
+    if (_selectedBusiness != null && value != _selectedBusiness!.name) {
+      _selectedBusiness = null;
+    }
     widget.onMentionChanged?.call(widget.viewModel.postId, value);
   }
 
   void _onBusinessTapped(BrowseBusinessModel business) {
     _mentionController.text = business.name;
+    _selectedBusiness = business; // ← store it
     widget.onMentionBusinessSelected?.call(widget.viewModel.postId, business);
   }
 
@@ -69,8 +74,13 @@ class _PostCardWidgetState extends State<PostCardWidget> {
     if (text.isEmpty || _isSubmitting) return;
     setState(() => _isSubmitting = true);
     try {
-      await widget.onMentionSubmit?.call(widget.viewModel.postId, text);
+      await widget.onMentionSubmit?.call(
+        widget.viewModel.postId,
+        text,
+        _selectedBusiness?.logo ?? '',
+      );
       _mentionController.clear();
+      _selectedBusiness = null;
     } finally {
       if (mounted) setState(() => _isSubmitting = false);
     }
@@ -161,7 +171,7 @@ class _PostCardWidgetState extends State<PostCardWidget> {
                     controller: _mentionController,
                     onChanged: _onTextChanged,
                     textInputAction: TextInputAction.done,
-                    onSubmitted: (_) { _submit(); },
+                    onSubmitted: (_) => _submit(),
                     decoration: InputDecoration(
                       hintText: 'Mention the business...',
                       hintStyle: AppTextStyle.textXs(
@@ -174,17 +184,17 @@ class _PostCardWidgetState extends State<PostCardWidget> {
                       contentPadding: const EdgeInsets.symmetric(vertical: 8),
                       suffixIcon: _isSubmitting
                           ? const Padding(
-                              padding: EdgeInsets.all(12),
-                              child: SizedBox(
-                                width: 20,
-                                height: 20,
-                                child: CircularProgressIndicator(strokeWidth: 2),
-                              ),
-                            )
+                        padding: EdgeInsets.all(12),
+                        child: SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        ),
+                      )
                           : IconButton(
-                              icon: const Icon(Icons.send),
-                              onPressed: _submit,
-                            ),
+                        icon: const Icon(Icons.send),
+                        onPressed: _submit,
+                      ),
                     ),
                   ),
                 ),
@@ -259,8 +269,7 @@ class _SuggestionDropdown extends StatelessWidget {
         padding: const EdgeInsets.all(12),
         child: Text(
           'No businesses found',
-          style: AppTextStyle.textSm(
-              color: colors.onSurfaceVariant),
+          style: AppTextStyle.textSm(color: colors.onSurfaceVariant),
         ),
       )
           : ConstrainedBox(
@@ -294,13 +303,12 @@ class _SuggestionDropdown extends StatelessWidget {
               ),
               title: Text(
                 business.name,
-                style: AppTextStyle.textSm(
-                    color: colors.onSurface),
+                style: AppTextStyle.textSm(color: colors.onSurface),
               ),
               subtitle: Text(
                 business.category,
-                style: AppTextStyle.textXs(
-                    color: colors.onSurfaceVariant),
+                style:
+                AppTextStyle.textXs(color: colors.onSurfaceVariant),
               ),
               onTap: () => onTap(business),
             );

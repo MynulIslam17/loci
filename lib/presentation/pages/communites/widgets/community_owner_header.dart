@@ -6,6 +6,7 @@ import '../../../../core/constants/app_text_style.dart';
 import '../../../../core/theme/theme_extention.dart';
 import '../../../../routes/app_routes.dart';
 import '../../../widgets/custom_button.dart';
+import '../../../widgets/qrcode_maker.dart';
 
 class CommunityOwnerHeader extends StatelessWidget {
   CommunityOwnerHeader({super.key});
@@ -40,7 +41,10 @@ class CommunityOwnerHeader extends StatelessWidget {
                     child: InkWell(
                       borderRadius: BorderRadius.circular(12),
                       onTap: () {
-                        Get.toNamed(AppRoutes.communityMemberScreen);
+                        Get.toNamed(
+                          AppRoutes.communityMemberScreen,
+                          arguments: {'communityId': community?.id},
+                        );
                       },
                       child: Padding(
                         padding: const EdgeInsets.all(12),
@@ -98,6 +102,13 @@ class CommunityOwnerHeader extends StatelessWidget {
                     child: InkWell(
                       onTap: () {
                         // TODO: show QR
+                        CustomQrCode.show(
+                          context,
+                          data: community?.qrCode ?? "",
+                          title: community?.name ?? "",
+                          subtitle: "Scan this QR code to join ${community?.name ?? 'this community'}",
+                          appName: "Loci",
+                        );
                       },
                       child: Padding(
                         padding: const EdgeInsets.all(12),

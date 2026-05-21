@@ -34,7 +34,7 @@ class PostCardViewModel {
       userName: ann.business?.name ?? ann.createdBy?.name ?? '',
       userImage: ann.business?.logo ?? ann.createdBy?.avatar ?? '',
       date: formatDateTime(ann.createdAt),
-      category: ann.announcementType.label,
+      category: ann.pollCategory ?? "",
       text: ann.pollQuestion ?? ann.details,
       likes: (ann.likeCount ?? 0).toString(),
       comments: (ann.commentCount ?? 0).toString(),

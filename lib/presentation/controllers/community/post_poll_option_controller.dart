@@ -12,12 +12,12 @@ class PostPollOptionController extends GetxController {
 
   /// Posts a poll option to an announcement.
   /// [text] must be non-empty (business name selected from search).
-  /// [image] is optional.
+  /// [imageUrl] is an optional remote URL (e.g. business logo from search).
   /// Returns false without calling the API if [text] is blank.
   Future<bool> addPollOption({
     required String announcementId,
     required String text,
-    File? image,
+    String? imageUrl,
   }) async {
     if (text.trim().isEmpty) return false;
 
@@ -29,26 +29,16 @@ class PostPollOptionController extends GetxController {
       final caller = Get.find<NetworkCaller>();
       final fields = {'text': text.trim()};
 
-      if (image != null) {
-        final response = await caller.multipartRequest(
-          url: AppUrl.addPollOption(announcementId),
-          method: 'POST',
-          fields: fields,
-          files: {'image': image},
-        );
-        if (!response.isSuccess) {
-          _errorMessage = response.errorMessage ?? 'Failed to add poll option';
-          return false;
-        }
-      } else {
-        final response = await caller.postRequest(
-          url: AppUrl.addPollOption(announcementId),
-          body: fields,
-        );
-        if (!response.isSuccess) {
-          _errorMessage = response.errorMessage ?? 'Failed to add poll option';
-          return false;
-        }
+      if (imageUrl != null && imageUrl.isNotEmpty) {
+        fields['image'] = imageUrl;
+      }
+      final response = await caller.postRequest(
+        url: AppUrl.addPollOption(announcementId),
+        body: fields,
+      );
+      if (!response.isSuccess) {
+        _errorMessage = response.errorMessage ?? 'Failed to add poll option';
+        return false;
       }
 
       return true;

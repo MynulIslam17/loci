@@ -1,5 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:loci/presentation/widgets/custom_image_container.dart';
 
 import '../../../../core/constants/app_text_style.dart';
 import '../../../../core/theme/app_colors.dart';
@@ -24,13 +25,12 @@ class UserPostHeader extends StatelessWidget {
 
     return Row(
       children: [
-        CircleAvatar(
-          radius: 22,
-          backgroundColor: AppColors.base200,
-          backgroundImage: imagePath.startsWith('http')
-              ? NetworkImage(imagePath) as ImageProvider
-              : AssetImage(imagePath),
-        ),
+       CustomCachedImage(
+         imageUrl: imagePath,
+         width: 40,
+         height: 40,
+         isCircle: true,
+       ),
         const SizedBox(width: 12),
         Expanded(
           child: Column(

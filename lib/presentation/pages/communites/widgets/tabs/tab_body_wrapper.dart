@@ -7,11 +7,13 @@ import 'package:loci/presentation/widgets/pagination_loading.dart';
 class TabBodyWrapper extends StatelessWidget {
   final Widget Function() builder;
   final Widget Function(BuildContext context)? shimmerBuilder;
+  final Widget? stickyHeader;
 
   const TabBodyWrapper({
     super.key,
     required this.builder,
     this.shimmerBuilder,
+    this.stickyHeader,
   });
 
   @override
@@ -38,6 +40,8 @@ class TabBodyWrapper extends StatelessWidget {
                 SliverOverlapInjector(
                   handle: NestedScrollView.sliverOverlapAbsorberHandleFor(context),
                 ),
+                if (stickyHeader != null)
+                  SliverToBoxAdapter(child: stickyHeader!),
                 if (controller.isLoading)
                   SliverToBoxAdapter(
                     child: shimmerBuilder != null
