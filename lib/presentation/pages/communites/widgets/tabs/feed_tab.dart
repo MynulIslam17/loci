@@ -95,8 +95,8 @@ class _FeedTabState extends State<FeedTab> {
                   // Only the active card gets live suggestions
                   mentionSuggestions:
                   isActive ? searchCtrl.businesses : const [],
-                  isMentionLoading:
-                  isActive && searchCtrl.isLoading,
+                  isMentionLoading: isActive && searchCtrl.isLoading,
+                  mentionSearchDone: isActive && searchCtrl.searchDone,
                 );
               },
             ),

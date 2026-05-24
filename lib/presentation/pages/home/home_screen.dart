@@ -1,23 +1,24 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:get/get_core/src/get_main.dart';
-import 'package:get/get_instance/src/extension_instance.dart';
+import 'package:get/get.dart';
 import 'package:loci/core/constants/app_text_style.dart';
+import 'package:loci/core/enums/category_enum.dart';
 import 'package:loci/core/theme/app_colors.dart';
 import 'package:loci/core/theme/theme_extention.dart';
+import 'package:loci/core/utils/show_snackbar.dart';
 import 'package:loci/data/models/carousel_data.dart';
 import 'package:loci/presentation/pages/home/widgets/custom_carousel.dart';
 import 'package:loci/presentation/pages/home/widgets/post_input_filed.dart';
 import 'package:loci/presentation/pages/raffles/active_raffles_screen.dart';
 import 'package:percent_indicator/linear_percent_indicator.dart';
-import '../../../data/models/mock_data.dart';
 import '../../../gen/assets.gen.dart';
 import '../../../routes/app_routes.dart';
+import '../../controllers/home/post_question_controller.dart';
+import '../../controllers/home/question_list_controller.dart';
 import '../../controllers/nav_controller.dart';
 import '../../widgets/custom_image_container.dart';
-
 import '../communites/widgets/post_card.dart';
-
+import '../communites/widgets/post_card_view_model.dart';
 import 'home navigator.dart';
 
 
@@ -30,8 +31,9 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   final navController = Get.find<NavController>();
+  final postQuestionController = Get.find<PostQuestionController>();
+  final questionListController = Get.find<QuestionListController>();
 
-  // Comment section expansion with postId
   String? _expandedPostId;
 
   // --- Search bar controls ---
@@ -61,6 +63,12 @@ class _HomeScreenState extends State<HomeScreen> {
     {"name": "Events", "icon": Assets.icons.event1},
     {"name": "Raffles", "icon": Assets.icons.ticket},
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    questionListController.fetchQuestions();
+  }
 
   @override
   void dispose() {
@@ -133,62 +141,67 @@ class _HomeScreenState extends State<HomeScreen> {
             const SizedBox(height: 20),
 
             // --- 3️⃣ Post Input Field with Category Dropdown ---
-            // Padding(
-            //   padding: const EdgeInsets.symmetric(horizontal: 12),
-            //   child: PostInputField(
-            //     categories: ['Foodie', 'Drinks', 'Restaurant'],
-            //     initialCategory: 'Foodie',
-            //     hintText: 'Ask anything',
-            //     onSubmit: (text, category) {
-            //       print("Posting: $text in $category");
-            //       // Handle post submission
-            //     },
-            //   ),
-            // ),
 
-            // --- 4️⃣ Post Card ---
-            // ListView.builder(
-            //   shrinkWrap: true,
-            //   physics: const NeverScrollableScrollPhysics(),
-            //   itemCount: mockPosts.length,
-            //   itemBuilder: (context, index) {
-            //     final post = mockPosts[index];
-            //
-            //     return PostCardWidget(
-            //       post: post,
-            //       polls: mockPolls,
-            //       comments: mockComments,
-            //       expandedPostId: _expandedPostId,
-            //       onExpandToggle: (postId) {
-            //         setState(() {
-            //           _expandedPostId = _expandedPostId == postId
-            //               ? null
-            //               : postId;
-            //         });
-            //       },
-            //       onLikeTap: (postId) {
-            //         print("Like tapped on $postId");
-            //         // Your like logic here
-            //       },
-            //       onCommentTap: (postId) {
-            //         print("Comment tapped on $postId");
-            //         // Your comment logic here
-            //       },
-            //       onClickPoll: (postId) {
-            //         //TODO : click on the poll section
-            //         _showAllPolls();
-            //       },
-            //
-            //       onSubmit: (postId, text) {
-            //         print("User typed '$text' for post $postId");
-            //       },
-            //       onChanged: (postId, value) {
-            //         print("User typing in post $postId: $value");
-            //       },
-            //     );
-            //   },
-            // ),
+            Padding(
+              padding: const EdgeInsets.all(12),
+              child: PostInputField(
+                categories: BusinessCategory.values.map((e) => e.label).toList(),
+                onSubmit: (text, category, type) async {
+                  final success = await postQuestionController.postQuestion(
+                    content: text,
+                    category: category,
+                    type: type.toJson,
+                  );
 
+                  if(success){
+                    questionListController.fetchQuestions(isRefresh: true);
+                  }else{
+                    SnackbarService.error(postQuestionController.errorMessage ?? "Something went wrong");
+                  }
+
+
+                },
+              ),
+            ),
+
+            GetBuilder<QuestionListController>(
+              builder: (controller) {
+
+                if (controller.isLoading) {
+                  return const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 32),
+                    child: Center(child: CircularProgressIndicator()),
+                  );
+                }
+                if (controller.questions.isEmpty) {
+                  return const SizedBox.shrink();
+                }
+                return ListView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  itemCount: controller.questions.length +
+                      (controller.isPaginationLoading ? 1 : 0),
+                  itemBuilder: (context, index) {
+                    if (index == controller.questions.length) {
+                      return const Padding(
+                        padding: EdgeInsets.symmetric(vertical: 16),
+                        child: Center(child: CircularProgressIndicator()),
+                      );
+                    }
+                    final viewModel = PostCardViewModel.fromQuestion(
+                      controller.questions[index],
+                    );
+                    return PostCardWidget(
+                      viewModel: viewModel,
+                      onLikeTap: (_) {},
+                      onCommentTap: (_) {},
+                      onClickPoll: (_) => _showAllPolls(),
+                    );
+                  },
+                );
+              },
+            ),
             const SizedBox(height: 20),
           ],
         ),

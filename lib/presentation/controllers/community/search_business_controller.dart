@@ -7,11 +7,13 @@ import 'package:loci/data/models/busniess/browse_business_response_model.dart';
 
 class SearchBusinessController extends GetxController {
   bool _isLoading = false;
+  bool _searchDone = false;
   String? _errorMessage;
   List<BrowseBusinessModel> _businesses = [];
   Timer? _debounce;
 
   bool get isLoading => _isLoading;
+  bool get searchDone => _searchDone;
   String? get errorMessage => _errorMessage;
   List<BrowseBusinessModel> get businesses => _businesses;
 
@@ -20,6 +22,7 @@ class SearchBusinessController extends GetxController {
     if (query.trim().isEmpty) {
       _businesses = [];
       _errorMessage = null;
+      _searchDone = false;
       update();
       return;
     }
@@ -53,6 +56,7 @@ class SearchBusinessController extends GetxController {
       _businesses = [];
     } finally {
       _isLoading = false;
+      _searchDone = true;
       update();
     }
   }
@@ -61,6 +65,7 @@ class SearchBusinessController extends GetxController {
     _debounce?.cancel();
     _businesses = [];
     _isLoading = false;
+    _searchDone = false;
     _errorMessage = null;
     update();
   }

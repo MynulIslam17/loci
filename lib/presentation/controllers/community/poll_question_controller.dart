@@ -13,6 +13,7 @@ class PollQuestionController extends GetxController {
     required String communityId,
     required String pollQuestion,
     required String pollCategory,
+    required String qType,
   }) async {
     _isLoading = true;
     _errorMessage = null;
@@ -26,6 +27,7 @@ class PollQuestionController extends GetxController {
           'communityId': communityId,
           'pollQuestion': pollQuestion,
           'pollCategory': pollCategory,
+          'qtype': qType,
         },
       );
 

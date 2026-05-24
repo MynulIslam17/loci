@@ -2,6 +2,8 @@ import 'package:get/get.dart';
 import 'package:loci/presentation/controllers/browse_business/remove_saved_business_controller.dart';
 import 'package:loci/presentation/controllers/comment/announcements_comment_controller.dart';
 import 'package:loci/presentation/controllers/common/post_contoller.dart';
+import 'package:loci/presentation/controllers/home/post_question_controller.dart';
+import 'package:loci/presentation/controllers/home/question_list_controller.dart';
 
 import '../../core/network/network_setup.dart';
 import '../../data/datasources/local_storage_service.dart';
@@ -25,6 +27,8 @@ class AppBindings extends Bindings {
 
     Get.put(RSVPController(), permanent: true);
     Get.put(VoteController(), permanent: true);
+    Get.put(PostQuestionController(), permanent: true);
+   
 
 
 

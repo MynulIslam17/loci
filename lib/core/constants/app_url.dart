@@ -105,8 +105,10 @@ static String  businessReviews(String businessId)=>"$baseUrl/reviews/business/$b
 
 
 
-  ///--------comment
+  ///--------home
 
+  static const String  postQuestionHome="$baseUrl/questions";
+  static const String  questionList="$baseUrl/questions";
 
 
 

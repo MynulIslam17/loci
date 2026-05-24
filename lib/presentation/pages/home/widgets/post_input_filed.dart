@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:loci/core/constants/app_text_style.dart';
+import 'package:loci/core/enums/question_type.dart';
 import 'package:loci/core/theme/theme_extention.dart';
 
 class PostInputField extends StatefulWidget {
-  final Future<void> Function(String text, String category)? onSubmit;
+  final Future<void> Function(String text, String category, QuestionType type)? onSubmit;
   final List<String> categories;
   final String initialCategory;
   final String hintText;
@@ -13,136 +14,327 @@ class PostInputField extends StatefulWidget {
     this.onSubmit,
     required this.categories,
     this.initialCategory = 'Foodie',
-    this.hintText = 'Ask anything',
+    this.hintText = 'Ask anything…',
   });
 
   @override
   State<PostInputField> createState() => _PostInputFieldState();
 }
 
-class _PostInputFieldState extends State<PostInputField> {
+class _PostInputFieldState extends State<PostInputField>
+    with SingleTickerProviderStateMixin {
   late final TextEditingController _controller;
   late final FocusNode _focusNode;
-  bool _showDropdown = false;
+  late final AnimationController _expandAnim;
+  late final Animation<double> _fadeAnim;
+
+  bool _isExpanded = false;
   bool _isPopupOpen = false;
   bool _isSubmitting = false;
   late String _selectedCategory;
+  QuestionType _selectedType = QuestionType.question;
+
+  static const _purple = Color(0xFF7F77DD);
+  static const int _maxChars = 280;
 
   @override
   void initState() {
     super.initState();
-    _controller = TextEditingController();
-    _focusNode = FocusNode();
+    _controller = TextEditingController()..addListener(() => setState(() {}));
+    _focusNode = FocusNode()..addListener(_onFocusChange);
     _selectedCategory = widget.initialCategory;
+    _expandAnim = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 200),
+    );
+    _fadeAnim = CurvedAnimation(parent: _expandAnim, curve: Curves.easeOut);
   }
 
-  @override
-  void dispose() {
-    _controller.dispose();
-    _focusNode.dispose();
-    super.dispose();
+  void _onFocusChange() {
+    if (_focusNode.hasFocus && !_isExpanded) {
+      setState(() => _isExpanded = true);
+      _expandAnim.forward();
+    }
+  }
+
+  void _collapse() {
+    if (_controller.text.isEmpty && !_isPopupOpen) {
+      _expandAnim.reverse().then((_) {
+        if (mounted) setState(() => _isExpanded = false);
+      });
+    }
   }
 
   Future<void> _handleSubmit() async {
     final text = _controller.text.trim();
-    if (text.isEmpty || _isSubmitting) return;
+    if (text.isEmpty || _isSubmitting || text.length > _maxChars) return;
     setState(() => _isSubmitting = true);
     try {
-      await widget.onSubmit?.call(text, _selectedCategory);
+      await widget.onSubmit?.call(text, _selectedCategory, _selectedType);
       _controller.clear();
       _focusNode.unfocus();
-      if (mounted) setState(() => _showDropdown = false);
+      _expandAnim.reverse().then((_) {
+        if (mounted) setState(() => _isExpanded = false);
+      });
     } finally {
       if (mounted) setState(() => _isSubmitting = false);
     }
   }
 
   @override
+  void dispose() {
+    _controller.dispose();
+    _focusNode.dispose();
+    _expandAnim.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final colors = context.colorScheme;
+    final charCount = _controller.text.length;
+    final overLimit = charCount > _maxChars;
 
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      decoration: BoxDecoration(
-        color: colors.surface,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: _showDropdown ? colors.primary : colors.outline,
-        ),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.end,
-        children: [
-          Expanded(
-            child: TextField(
-              minLines: 1,
-              maxLines: 3,
-              controller: _controller,
-              focusNode: _focusNode,
-              onTap: () => setState(() => _showDropdown = true),
-              onTapOutside: (_) {
-                FocusScope.of(context).unfocus();
-                Future.delayed(const Duration(milliseconds: 200), () {
-                  if (_controller.text.isEmpty && !_focusNode.hasFocus && !_isPopupOpen) {
-                    if (mounted) setState(() => _showDropdown = false);
-                  }
-                });
-              },
-              style: AppTextStyle.textSm(color: colors.onSurface),
-              decoration: InputDecoration(
-                hintText: widget.hintText,
-                border: InputBorder.none,
-                isCollapsed: true,
-                contentPadding: const EdgeInsets.symmetric(vertical: 10),
-                hintStyle: AppTextStyle.textSm(color: colors.onSurfaceVariant),
-              ),
-            ),
+    return TapRegion(
+      onTapOutside: (_) {
+        FocusScope.of(context).unfocus();
+        Future.delayed(const Duration(milliseconds: 150), _collapse);
+      },
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        curve: Curves.easeOut,
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+        decoration: BoxDecoration(
+          color: colors.surface,
+          borderRadius: BorderRadius.circular(_isExpanded ? 20 : 24),
+          border: Border.all(
+            color: _isExpanded ? _purple : colors.outline,
+            width: _isExpanded ? 1.5 : 1,
           ),
-
-          if (_showDropdown) ...[
-            PopupMenuButton<String>(
-              padding: EdgeInsets.zero,
-              offset: const Offset(0, 40),
-              onOpened: () => setState(() => _isPopupOpen = true),
-              onCanceled: () => setState(() => _isPopupOpen = false),
-              onSelected: (value) => setState(() {
-                _selectedCategory = value;
-                _isPopupOpen = false;
-              }),
-              itemBuilder: (_) => widget.categories
-                  .map((c) => PopupMenuItem(value: c, child: Text(c)))
-                  .toList(),
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                margin: const EdgeInsets.only(left: 8, bottom: 6),
-                decoration: BoxDecoration(
-                  color: colors.primary.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      _selectedCategory,
-                      style: AppTextStyle.textSm(color: colors.primary),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            // ── Text field row ──────────────────────────────────────────
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                if (!_isExpanded)
+                  Padding(
+                    padding: const EdgeInsets.only(right: 10),
+                    child: Icon(Icons.edit_outlined,
+                        size: 18, color: colors.onSurfaceVariant),
+                  ),
+                Expanded(
+                  child: TextField(
+                    controller: _controller,
+                    focusNode: _focusNode,
+                    minLines: 1,
+                    maxLines: 4,
+                    style: AppTextStyle.textSm(color: colors.onSurface),
+                    decoration: InputDecoration(
+                      hintText: widget.hintText,
+                      border: InputBorder.none,
+                      isCollapsed: true,
+                      contentPadding: const EdgeInsets.symmetric(vertical: 4),
+                      hintStyle: AppTextStyle.textSm(
+                          color: colors.onSurfaceVariant),
                     ),
-                    const SizedBox(width: 4),
-                    Icon(Icons.arrow_drop_down, size: 16, color: colors.primary),
-                  ],
+                  ),
                 ),
-              ),
+                // Send button always visible
+                const SizedBox(width: 8),
+                GestureDetector(
+                  onTap: _isSubmitting ? null : _handleSubmit,
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 150),
+                    width: 36,
+                    height: 36,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: _controller.text.trim().isEmpty || overLimit
+                          ? colors.surfaceVariant
+                          : _purple,
+                    ),
+                    child: _isSubmitting
+                        ? const Padding(
+                      padding: EdgeInsets.all(8),
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: Colors.white,
+                      ),
+                    )
+                        : const Icon(Icons.arrow_upward,
+                        size: 18, color: Colors.white),
+                  ),
+                ),
+              ],
             ),
 
-            const SizedBox(width: 4),
+            // ── Toolbar row (animated) ──────────────────────────────────
+            FadeTransition(
+              opacity: _fadeAnim,
+              child: SizeTransition(
+                sizeFactor: _fadeAnim,
+                axisAlignment: -1,
+                child: Padding(
+                  padding: const EdgeInsets.only(top: 12),
+                  child: Row(
+                    children: [
+                      // Type segmented control
+                      _SegmentedToggle(
+                        options: QuestionType.values,
+                        selected: _selectedType,
+                        activeColor: _purple,
+                        onSelect: (v) => setState(() => _selectedType = v),
+                      ),
+                      const SizedBox(width: 8),
 
-            IconButton(
-              padding: EdgeInsets.zero,
-              constraints: const BoxConstraints(),
-              onPressed: _isSubmitting ? null : _handleSubmit,
-              icon: Icon(Icons.send, size: 20, color: colors.primary),
+                      // Category picker
+                      _CategoryChip(
+                        categories: widget.categories,
+                        selected: _selectedCategory,
+                        onSelect: (v) => setState(() {
+                          _selectedCategory = v;
+                          _isPopupOpen = false;
+                        }),
+                        onOpened: () => setState(() => _isPopupOpen = true),
+                        onCanceled: () => setState(() => _isPopupOpen = false),
+                      ),
+
+                      const Spacer(),
+
+                      // Char count
+                      Text(
+                        '$charCount / $_maxChars',
+                        style: AppTextStyle.textXs(
+                          color: overLimit
+                              ? colors.error
+                              : colors.onSurfaceVariant,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
             ),
           ],
-        ],
+        ),
+      ),
+    );
+  }
+}
+
+// ── Segmented toggle ────────────────────────────────────────────────────────
+
+class _SegmentedToggle extends StatelessWidget {
+  final List<QuestionType> options;
+  final QuestionType selected;
+  final Color activeColor;
+  final void Function(QuestionType) onSelect;
+
+  const _SegmentedToggle({
+    required this.options,
+    required this.selected,
+    required this.activeColor,
+    required this.onSelect,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.colorScheme;
+    return Container(
+      decoration: BoxDecoration(
+        color: colors.surfaceVariant,
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: options.map((opt) {
+          final isActive = selected == opt;
+          return GestureDetector(
+            onTap: () => onSelect(opt),
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 150),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+              decoration: BoxDecoration(
+                color: isActive ? activeColor : Colors.transparent,
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Text(
+                opt.label,
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
+                  color: isActive ? Colors.white : colors.onSurfaceVariant,
+                ),
+              ),
+            ),
+          );
+        }).toList(),
+      ),
+    );
+  }
+}
+
+// ── Category chip with popup ────────────────────────────────────────────────
+
+class _CategoryChip extends StatelessWidget {
+  final List<String> categories;
+  final String selected;
+  final void Function(String) onSelect;
+  final VoidCallback onOpened;
+  final VoidCallback onCanceled;
+
+  const _CategoryChip({
+    required this.categories,
+    required this.selected,
+    required this.onSelect,
+    required this.onOpened,
+    required this.onCanceled,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.colorScheme;
+    return PopupMenuButton<String>(
+      padding: EdgeInsets.zero,
+      offset: const Offset(0, -8),
+      onOpened: onOpened,
+      onCanceled: onCanceled,
+      onSelected: onSelect,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+      itemBuilder: (_) => categories
+          .map((c) => PopupMenuItem(
+        value: c,
+        child: Text(c, style: const TextStyle(fontSize: 14)),
+      ))
+          .toList(),
+      child: Container(
+        padding:
+        const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+        decoration: BoxDecoration(
+          color: colors.surfaceVariant,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: colors.outline.withOpacity(0.4)),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.sell_outlined,
+                size: 13, color: colors.onSurfaceVariant),
+            const SizedBox(width: 4),
+            Text(
+              selected,
+              style: TextStyle(
+                  fontSize: 12, color: colors.onSurface),
+            ),
+            const SizedBox(width: 2),
+            Icon(Icons.expand_less,
+                size: 14, color: colors.onSurfaceVariant),
+          ],
+        ),
       ),
     );
   }

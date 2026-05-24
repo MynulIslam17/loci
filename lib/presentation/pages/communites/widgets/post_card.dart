@@ -26,6 +26,7 @@ class PostCardWidget extends StatefulWidget {
   // Mention suggestions — fully controlled by parent
   final List<BrowseBusinessModel> mentionSuggestions;
   final bool isMentionLoading;
+  final bool mentionSearchDone;
 
   const PostCardWidget({
     super.key,
@@ -38,6 +39,7 @@ class PostCardWidget extends StatefulWidget {
     this.onMentionBusinessSelected,
     this.mentionSuggestions = const [],
     this.isMentionLoading = false,
+    this.mentionSearchDone = false,
   });
 
   @override
@@ -56,9 +58,8 @@ class _PostCardWidgetState extends State<PostCardWidget> {
   }
 
   void _onTextChanged(String value) {
-    // Clear the selected business if the user edits the text manually
     if (_selectedBusiness != null && value != _selectedBusiness!.name) {
-      _selectedBusiness = null;
+      setState(() => _selectedBusiness = null);
     }
     widget.onMentionChanged?.call(widget.viewModel.postId, value);
   }
@@ -71,7 +72,7 @@ class _PostCardWidgetState extends State<PostCardWidget> {
 
   Future<void> _submit() async {
     final text = _mentionController.text.trim();
-    if (text.isEmpty || _isSubmitting) return;
+    if (text.isEmpty || _isSubmitting || _selectedBusiness == null) return;
     setState(() => _isSubmitting = true);
     try {
       await widget.onMentionSubmit?.call(
@@ -90,8 +91,9 @@ class _PostCardWidgetState extends State<PostCardWidget> {
   Widget build(BuildContext context) {
     final vm = widget.viewModel;
     final colors = context.colorScheme;
-    final showDropdown =
-        widget.isMentionLoading || widget.mentionSuggestions.isNotEmpty;
+    final showDropdown = widget.isMentionLoading ||
+        widget.mentionSuggestions.isNotEmpty ||
+        widget.mentionSearchDone;
 
     return Card(
       color: colors.surfaceContainer,
@@ -156,8 +158,8 @@ class _PostCardWidgetState extends State<PostCardWidget> {
 
             const SizedBox(height: 20),
 
-            // ── Mention / business input ─────────────────────────────────────
-            Row(
+            // ── Mention / business input (poll only) ─────────────────────────
+            if (vm.isPoll) Row(
               children: [
                 CustomCachedImage(
                   width: 40,
@@ -192,8 +194,13 @@ class _PostCardWidgetState extends State<PostCardWidget> {
                         ),
                       )
                           : IconButton(
-                        icon: const Icon(Icons.send),
-                        onPressed: _submit,
+                        icon: Icon(
+                          Icons.send,
+                          color: _selectedBusiness != null
+                              ? null
+                              : Colors.grey,
+                        ),
+                        onPressed: _selectedBusiness != null ? _submit : null,
                       ),
                     ),
                   ),
@@ -202,7 +209,7 @@ class _PostCardWidgetState extends State<PostCardWidget> {
             ),
 
             // ── Suggestion dropdown ──────────────────────────────────────────
-            if (showDropdown) ...[
+            if (vm.isPoll && showDropdown) ...[
               const SizedBox(height: 4),
               _SuggestionDropdown(
                 isLoading: widget.isMentionLoading,

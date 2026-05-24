@@ -1,17 +1,17 @@
 import 'package:flutter/material.dart';
-import 'package:loci/data/models/community/announcement_model.dart';
+import 'package:loci/core/constants/app_text_style.dart';
+import 'package:loci/core/theme/app_colors.dart';
+import 'package:loci/core/theme/theme_extention.dart';
+import 'package:loci/presentation/pages/communites/widgets/post_card_view_model.dart';
 import 'package:loci/presentation/widgets/custom_image_container.dart';
 import 'package:percent_indicator/linear_percent_indicator.dart';
-import 'package:loci/core/theme/app_colors.dart';
-import 'package:loci/core/constants/app_text_style.dart';
-import 'package:loci/core/theme/theme_extention.dart';
 
 class PollBar extends StatelessWidget {
   final String title;
-  final double percent;     // 0.0 – 1.0 for the progress indicator
-  final double percentage;  // 0 – 100 displayed as text
-  final String? imagePath;  // option image shown on the left
-  final List<Voter> voters;
+  final double percent;
+  final double percentage;
+  final String? imagePath;
+  final List<PostVoter> voters;
   final Color? progressColor;
 
   const PollBar({
@@ -29,7 +29,6 @@ class PollBar extends StatelessWidget {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Option image on the left
         CustomCachedImage(
           width: 40,
           height: 40,
@@ -50,7 +49,6 @@ class PollBar extends StatelessWidget {
               ),
               const SizedBox(height: 6),
 
-              // Progress bar + percentage
               Row(
                 children: [
                   Expanded(
@@ -76,7 +74,6 @@ class PollBar extends StatelessWidget {
                 ],
               ),
 
-              // Voter avatar stack
               if (voters.isNotEmpty) ...[
                 const SizedBox(height: 8),
                 VoterStack(voters: voters),
@@ -89,9 +86,8 @@ class PollBar extends StatelessWidget {
   }
 }
 
-// Exported so PollBottomSheet can reuse it
 class VoterStack extends StatelessWidget {
-  final List<Voter> voters;
+  final List<PostVoter> voters;
   final double size;
 
   const VoterStack({super.key, required this.voters, this.size = 28});

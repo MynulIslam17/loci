@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:loci/core/constants/app_text_style.dart';
 import 'package:loci/core/enums/announcement_type.dart';
+import 'package:loci/core/enums/question_type.dart';
+import 'package:loci/presentation/pages/communites/widgets/post_card_view_model.dart';
 import 'package:loci/core/enums/category_enum.dart';
 import 'package:loci/core/enums/community_role.dart';
 import 'package:loci/core/enums/rsvp_status.dart';
@@ -108,14 +110,16 @@ class _CommunityScreenState extends State<CommunityScreen>
   // ── Handlers ──────────────────────────────────────────────────────────────
 
   /// Called when user submits a new question from PostInputField
-  Future<void> _onPostQuestion(String text, String category) async {
+  Future<void> _onPostQuestion(String question, String category, QuestionType type) async {
     final communityId = widget.communityId;
     if (communityId == null) return;
 
     final success = await questionController.createPollQuestion(
       communityId: communityId,
-      pollQuestion: text,
+      pollQuestion: question,
       pollCategory: category,
+      qType: type.toJson,
+
     );
 
     if (success) {
@@ -209,7 +213,7 @@ class _CommunityScreenState extends State<CommunityScreen>
   void _showPollSheet(AnnouncementModel announcement) {
     PollBottomSheet.show(
       context,
-      announcement,
+      PostCardViewModel.from(announcement),
       currentUserId: authController.userModel?.id,
       onVote: (optionId) => _onVote(announcement.id, optionId),
     );

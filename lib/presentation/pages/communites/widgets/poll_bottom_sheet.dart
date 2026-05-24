@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:loci/core/constants/app_text_style.dart';
 import 'package:loci/core/theme/app_colors.dart';
 import 'package:loci/core/theme/theme_extention.dart';
-import 'package:loci/data/models/community/announcement_model.dart';
+import 'package:loci/presentation/pages/communites/widgets/post_card_view_model.dart';
 import 'package:loci/presentation/pages/home/widgets/poll_bar.dart';
 import 'package:loci/presentation/widgets/custom_image_container.dart';
 import 'package:percent_indicator/linear_percent_indicator.dart';
@@ -10,7 +10,7 @@ import 'package:percent_indicator/linear_percent_indicator.dart';
 class PollBottomSheet extends StatefulWidget {
   final String? pollQuestion;
   final int totalVotes;
-  final List<PollOption> options;
+  final List<PostPollOption> options;
   final String? currentUserId;
   final void Function(String optionId)? onVote;
 
@@ -25,11 +25,11 @@ class PollBottomSheet extends StatefulWidget {
 
   static void show(
     BuildContext context,
-    AnnouncementModel announcement, {
+    PostCardViewModel viewModel, {
     String? currentUserId,
     void Function(String optionId)? onVote,
   }) {
-    final options = announcement.pollOptions;
+    final options = viewModel.pollOptions;
     if (options == null || options.isEmpty) return;
 
     showModalBottomSheet(
@@ -39,8 +39,8 @@ class PollBottomSheet extends StatefulWidget {
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       builder: (_) => PollBottomSheet(
-        pollQuestion: announcement.pollQuestion,
-        totalVotes: announcement.totalVotes ?? 0,
+        pollQuestion: viewModel.text,
+        totalVotes: viewModel.totalVotes,
         options: options,
         currentUserId: currentUserId,
         onVote: onVote,
@@ -135,7 +135,6 @@ class _PollBottomSheetState extends State<PollBottomSheet> {
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Option image on the left
                       if (opt.image != null && opt.image!.isNotEmpty) ...[
                         CustomCachedImage(
                           width: 44,
@@ -162,7 +161,6 @@ class _PollBottomSheetState extends State<PollBottomSheet> {
                               ),
                             ),
                             const SizedBox(height: 8),
-                            // Progress bar + percentage
                             Row(
                               children: [
                                 Expanded(
@@ -191,7 +189,6 @@ class _PollBottomSheetState extends State<PollBottomSheet> {
                                 ),
                               ],
                             ),
-                            // Voter stack
                             if (opt.voters.isNotEmpty) ...[
                               const SizedBox(height: 8),
                               VoterStack(voters: opt.voters, size: 26),

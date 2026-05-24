@@ -1,5 +1,6 @@
 import 'package:loci/core/enums/acitivty_ref_type.dart';
 import 'package:loci/core/enums/activity_type.dart';
+import 'package:loci/core/enums/question_type.dart';
 
 import '../../../core/enums/announcement_type.dart';
 import '../busniess/my_business_list_model.dart';
@@ -12,6 +13,7 @@ import '../routes/routes_model.dart';
 class AnnouncementModel {
   final String id;
   final AnnouncementType announcementType;
+  final QuestionType qType;
   final String communityId;
   final bool isLiked;
 
@@ -44,6 +46,7 @@ class AnnouncementModel {
   AnnouncementModel({
     required this.id,
     required this.announcementType,
+    required this.qType,
     required this.communityId,
     this.business,
     this.createdBy,
@@ -71,6 +74,7 @@ class AnnouncementModel {
       id: json['_id'] ?? '',
       isLiked: json["isLiked"] ?? false,
       announcementType: AnnouncementType.fromString(json['type']),
+      qType: QuestionType.fromString(json['qtype'] as String?),
       communityId: json['communityId'] ?? '',
       pollCategory: json['pollCategory'],
       business: json['business'] != null
@@ -83,7 +87,7 @@ class AnnouncementModel {
       updatedAt: json['updatedAt'] ?? '',
       details: AnnouncementType.fromString(json['type']) == AnnouncementType.activity
           ? json['description'] ?? ''
-          : json['details'] ?? '',
+          : json['details'] ?? json['content'] ?? '',
       activityRefType: ActivityRefType.fromString(json['activityRefType']),
       activityId: json['activityId'],
       event: json['event'] != null
@@ -98,7 +102,7 @@ class AnnouncementModel {
       image: json['image'],
       likeCount: json['likeCount'],
       commentCount: json['commentCount'],
-      pollQuestion: json['question'],
+      pollQuestion: json['content'] ?? json['question'],
       pollOptions: json['options'] != null
           ? (json['options'] as List<dynamic>)
               .map((e) => PollOption.fromJson(e))
@@ -113,6 +117,7 @@ class AnnouncementModel {
   AnnouncementModel copyWith({
     String? id,
     AnnouncementType? announcementType,
+    QuestionType? qType,
     String? communityId,
     BusinessModel? business,
     CreatedUser? createdBy,
@@ -138,6 +143,7 @@ class AnnouncementModel {
     return AnnouncementModel(
       id: id ?? this.id,
       announcementType: announcementType ?? this.announcementType,
+      qType: qType ?? this.qType,
       communityId: communityId ?? this.communityId,
       business: business ?? this.business,
       createdBy: createdBy ?? this.createdBy,
