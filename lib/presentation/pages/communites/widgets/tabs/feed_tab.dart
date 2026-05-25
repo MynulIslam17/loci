@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:loci/data/models/busniess/browse_business_model.dart';
 import 'package:loci/data/models/community/announcement_model.dart';
+import 'package:loci/presentation/controllers/auth/auth_controller.dart';
 import 'package:loci/presentation/controllers/community/announcement_controller.dart';
 import 'package:loci/presentation/controllers/community/search_business_controller.dart';
 import 'package:loci/presentation/pages/communites/widgets/post_card.dart';
@@ -18,6 +19,7 @@ class FeedTab extends StatefulWidget {
   final void Function(String postId) onLikeTap;
   final Future<void> Function(String postId, String text, String image) onMentionSubmit;
 
+
   const FeedTab({
     super.key,
     required this.onCommentTap,
@@ -33,6 +35,7 @@ class FeedTab extends StatefulWidget {
 class _FeedTabState extends State<FeedTab> {
   late final SearchBusinessController _searchCtrl;
   String? _activeMentionPostId;
+  final _authController = Get.find<AuthController>();
 
   @override
   void initState() {
@@ -97,6 +100,7 @@ class _FeedTabState extends State<FeedTab> {
                   isActive ? searchCtrl.businesses : const [],
                   isMentionLoading: isActive && searchCtrl.isLoading,
                   mentionSearchDone: isActive && searchCtrl.searchDone,
+                  currentUserImage: _authController.userModel?.avatar ?? "",
                 );
               },
             ),

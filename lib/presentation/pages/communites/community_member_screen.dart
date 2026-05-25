@@ -5,7 +5,7 @@ import 'package:loci/core/theme/theme_extention.dart';
 import 'package:loci/core/utils/show_snackbar.dart';
 import 'package:loci/presentation/controllers/community/community_member_controller.dart';
 import 'package:loci/presentation/controllers/community/remove_member_controller.dart';
-import 'package:loci/presentation/pages/communites/widgets/empty_community_state.dart';
+import 'package:loci/presentation/widgets/empty_state.dart';
 import 'package:loci/presentation/pages/communites/widgets/member_card.dart';
 import 'package:loci/presentation/pages/communites/widgets/member_list_header.dart';
 import 'package:loci/presentation/pages/communites/widgets/member_shimmer.dart';
@@ -132,7 +132,7 @@ class _CommunityMemberScreenState extends State<CommunityMemberScreen> {
                 const MemberListShimmer()
               else if (controller.members.isEmpty)
                 SliverFillRemaining(
-                    child: EmptyCommunityState(icon: Icons.group_off, title: "No members yet")
+                    child: EmptyState(icon: Icons.group_off, title: "No members yet")
                 )
               else
                 SliverPadding(

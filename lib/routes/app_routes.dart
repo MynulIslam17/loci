@@ -49,6 +49,7 @@ static const String meetingInvitation="/meetingInvitation";
   static const String  searchBusiness="/searchBusiness";
   static const String  clamBusinessProfile="/clamBusinessProfile";
   static const String  myBusinessProfile="/myBusinessProfile";
+  static const String  myBusinessAllReviews="/myBusinessAllReviews";
   static const String  manualClaimBusiness="/manualClaimBusiness";
   static const String  createAdd="/createAdd";
 

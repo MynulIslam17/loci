@@ -3,7 +3,7 @@ import 'package:get/get.dart';
 import 'package:loci/presentation/controllers/community/join_community_controller.dart';
 import 'package:loci/presentation/pages/communites/widgets/community_card.dart';
 import 'package:loci/presentation/pages/communites/widgets/cummunity_shimmer.dart';
-import 'package:loci/presentation/pages/communites/widgets/empty_community_state.dart';
+import 'package:loci/presentation/widgets/empty_state.dart';
 import 'package:loci/presentation/pages/home/home%20navigator.dart';
 import 'package:loci/presentation/widgets/custom_appbar.dart';
 import 'package:loci/routes/app_routes.dart';
@@ -57,7 +57,7 @@ class AllCommunityScreen extends StatelessWidget {
                   if (controller.isLoading && controller.joined.isEmpty)
                     CommunitySkeleton.list(count: 2)
                   else if (controller.joined.isEmpty)
-                    const EmptyCommunityState(
+                    const EmptyState(
                       icon: Icons.groups_outlined,
                       title: "No joined communities",
                       subtitle: "Try again later or check joined communities",
@@ -105,7 +105,7 @@ class AllCommunityScreen extends StatelessWidget {
                   if (controller.isLoading && controller.available.isEmpty)
                     CommunitySkeleton.list(count: 2)
                   else if (controller.available.isEmpty)
-                    const EmptyCommunityState(
+                    const EmptyState(
                       icon: Icons.groups_outlined,
                       title: "No communities available",
                       subtitle: "Try again later or check joined communities",

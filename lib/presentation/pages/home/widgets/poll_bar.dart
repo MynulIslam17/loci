@@ -13,6 +13,7 @@ class PollBar extends StatelessWidget {
   final String? imagePath;
   final List<PostVoter> voters;
   final Color? progressColor;
+  final bool isVoted;
 
   const PollBar({
     super.key,
@@ -22,10 +23,14 @@ class PollBar extends StatelessWidget {
     this.imagePath,
     this.voters = const [],
     this.progressColor,
+    this.isVoted = false,
   });
 
   @override
   Widget build(BuildContext context) {
+    final activeColor = progressColor ?? AppColors.primaryG500;
+    final barColor = isVoted ? activeColor : activeColor.withOpacity(0.5);
+
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -44,7 +49,10 @@ class PollBar extends StatelessWidget {
               Text(
                 title,
                 style: AppTextStyle.textMd(
-                  color: context.colorScheme.onSurfaceVariant,
+                  color: isVoted
+                      ? context.colorScheme.primary
+                      : context.colorScheme.onSurfaceVariant,
+                  weight: isVoted ? FontWeight.w600 : FontWeight.w400,
                 ),
               ),
               const SizedBox(height: 6),
@@ -55,8 +63,8 @@ class PollBar extends StatelessWidget {
                     child: LinearPercentIndicator(
                       lineHeight: 10.0,
                       percent: percent.clamp(0.0, 1.0),
-                      backgroundColor: AppColors.base200,
-                      progressColor: progressColor ?? AppColors.primaryG500,
+                      backgroundColor: AppColors.base700,
+                      progressColor: barColor,
                       barRadius: const Radius.circular(10),
                       animation: true,
                       animationDuration: 1000,
@@ -68,7 +76,9 @@ class PollBar extends StatelessWidget {
                     '${percentage.toStringAsFixed(0)}%',
                     style: AppTextStyle.textSm(
                       weight: FontWeight.w600,
-                      color: AppColors.primaryG500,
+                      color: isVoted
+                          ? context.colorScheme.primary
+                          : AppColors.primaryG500,
                     ),
                   ),
                 ],

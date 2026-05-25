@@ -36,4 +36,18 @@ class PollOptionModel {
         'percentage': percentage,
         'voters': voters.map((e) => e.toJson()).toList(),
       };
+
+  PollOptionModel copyWith({
+    int? voteCount,
+    int? percentage,
+    List<VoterModel>? voters,
+  }) =>
+      PollOptionModel(
+        optionId: optionId,
+        text: text,
+        image: image,
+        voteCount: voteCount ?? this.voteCount,
+        percentage: percentage ?? this.percentage,
+        voters: voters ?? this.voters,
+      );
 }

@@ -81,7 +81,9 @@ abstract class AppUrl {
   static const String subscriptionPlans="$baseUrl/subscriptions/plans";
 
   //----reviews
-static String  businessReviews(String businessId)=>"$baseUrl/reviews/business/$businessId";
+static String  otherBusinessReviews(String businessId)=>"$baseUrl/reviews/business/$businessId";
+static String   myBusinessReviews(String businessId)=>"$baseUrl/businesses/${businessId}/reviews";
+static String   addReviews(String businessId)=>"$baseUrl/reviews/$businessId";
 
 //---community
 
@@ -109,6 +111,11 @@ static String  businessReviews(String businessId)=>"$baseUrl/reviews/business/$b
 
   static const String  postQuestionHome="$baseUrl/questions";
   static const String  questionList="$baseUrl/questions";
+  static  String   addHomePollQuestionAdd(String questionId)=>"$baseUrl/questions/${questionId}/poll-options";
+  static  String   homeVoteOnPollOption(String questionId)=>"$baseUrl/questions/${questionId}/vote";
+  static  String   homeFeedPostLike(String questionId)=>"$baseUrl/questions/${questionId}/upvote";
+  static  String   questionDetails(String questionId)=>"$baseUrl/questions/$questionId";
+  static  String   questionAnswers(String questionId)=>"$baseUrl/questions/$questionId/answers";
 
 
 

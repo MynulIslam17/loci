@@ -2,6 +2,7 @@ import 'package:get/get.dart';
 import 'package:loci/presentation/controllers/my_business/get_my_business_list _controller.dart';
 
 import '../controllers/my_business/business_claim_controller.dart';
+import '../controllers/my_business/business_review_controller.dart';
 import '../controllers/my_business/my_business_profile_controller.dart';
 
 class MyBusinessBindings extends Bindings{
@@ -11,6 +12,7 @@ class MyBusinessBindings extends Bindings{
     Get.lazyPut(()=>GetMyBusinessController());
     Get.lazyPut(()=>MyBusinessProfileController());
     Get.lazyPut(()=>BusinessClaimController());
+    Get.lazyPut(()=>MyBusinessReviewController());
 
 
   }

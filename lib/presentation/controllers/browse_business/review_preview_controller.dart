@@ -17,7 +17,7 @@ class ReviewPreviewController extends GetxController {
     update();
 
     final url =
-        "${AppUrl.businessReviews(businessId)}?page=1&limit=10";
+        "${AppUrl.otherBusinessReviews(businessId)}?page=1&limit=10";
 
     final response =
     await Get.find<NetworkCaller>().getRequest(url: url);

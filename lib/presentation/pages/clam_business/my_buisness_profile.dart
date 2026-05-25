@@ -6,6 +6,8 @@ import 'package:get/get_navigation/src/extension_navigation.dart';
 import 'package:loci/core/enums/category_enum.dart';
 import 'package:loci/core/theme/theme_extention.dart';
 import 'package:loci/data/models/busniess/update_business_request_model.dart';
+import 'package:loci/presentation/controllers/my_business/business_review_controller.dart';
+import 'package:loci/presentation/pages/clam_business/widgets/my_business_profile_shimmer.dart';
 import 'package:loci/presentation/controllers/my_business/my_business_profile_controller.dart';
 import 'package:loci/presentation/widgets/custom_button.dart';
 import 'package:loci/presentation/pages/clam_business/widgets/review_card.dart';
@@ -16,6 +18,7 @@ import '../../../core/constants/app_text_style.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/show_snackbar.dart';
 import '../../../data/models/busniess/business_profile_model.dart';
+import '../../widgets/empty_state.dart';
 import 'widgets/bottom_sheet.dart';
 import '../../widgets/custom_appbar.dart';
 import '../../widgets/custom_image_container.dart';
@@ -38,6 +41,7 @@ class _MyBusinessProfileState extends State<MyBusinessProfile> {
   late final String businessId;
 
   final profileController = Get.find<MyBusinessProfileController>();
+  final reviewController = Get.find<MyBusinessReviewController>();
 
   @override
   void initState() {
@@ -50,6 +54,13 @@ class _MyBusinessProfileState extends State<MyBusinessProfile> {
         : '';
 
     profileController.fetchBusinessProfile(businessId);
+    reviewController.fetchReviews(businessId);
+  }
+
+  @override
+  void dispose() {
+    Get.delete<MyBusinessReviewController>();
+    super.dispose();
   }
 
   //----- method to upload business logo
@@ -91,7 +102,7 @@ class _MyBusinessProfileState extends State<MyBusinessProfile> {
     );
 
     if (success) {
-     // SnackbarService.success("Photo removed");
+      // SnackbarService.success("Photo removed");
     } else {
       SnackbarService.error(
         profileController.errorMessage ?? "Failed to remove photo",
@@ -111,7 +122,7 @@ class _MyBusinessProfileState extends State<MyBusinessProfile> {
           //===== FULL PAGE LOADING STATE
 
           if (controller.isLoading) {
-            return const Center(child: CircularProgressIndicator());
+            return const MyBusinessProfileShimmer();
           }
 
           //===== EMPTY / ERROR STATE
@@ -186,8 +197,9 @@ class _MyBusinessProfileState extends State<MyBusinessProfile> {
                 Get.toNamed(
                   AppRoutes.exploreActivity,
                   arguments: {
-                    "businessName":business.name,
-                    "businessId": business.id},
+                    "businessName": business.name,
+                    "businessId": business.id,
+                  },
                 );
               },
               textStyle: AppTextStyle.textSm(
@@ -230,7 +242,16 @@ class _MyBusinessProfileState extends State<MyBusinessProfile> {
             const SizedBox(height: 25),
 
             // ================= REVIEWS =================
-            _buildSectionHeader("Reviews", showViewAll: true, onTap: () {}),
+            _buildSectionHeader("Reviews", showViewAll: true, onTap: () {
+              Get.toNamed(
+                AppRoutes.myBusinessAllReviews,
+                arguments: {
+                  'businessId': businessId,
+                  'reviewCount': business.reviewCount,
+                  'rating': business.rating,
+                },
+              );
+            }),
 
             _buildReviewsList(),
 
@@ -434,7 +455,10 @@ class _MyBusinessProfileState extends State<MyBusinessProfile> {
   }
 
   // ================= DESCRIPTION CARD =================
-  Widget _buildDescriptionCard(BuildContext context, BusinessProfileModel business) {
+  Widget _buildDescriptionCard(
+    BuildContext context,
+    BusinessProfileModel business,
+  ) {
     final colorScheme = context.colorScheme;
 
     return SizedBox(
@@ -666,19 +690,35 @@ class _MyBusinessProfileState extends State<MyBusinessProfile> {
   }
 
   // ================= REVIEWS LIST =================
+
   Widget _buildReviewsList() {
-    return Column(
-      children: List.generate(
-        2,
-        (index) => ReviewCard(
-          name: "Alexandra ssssBroke",
-          businessName: "Barclay Pizza",
-          rating: 5,
-          reviewText: "This was one of the most epic experience...",
-          imageUrl: "https://i.pravatar.cc/150?u=1",
-          onMenuTap: () {},
-        ),
-      ),
+    return GetBuilder<MyBusinessReviewController>(
+      builder: (controller) {
+        if (controller.isLoading) {
+          return const Center(child: CircularProgressIndicator());
+        }
+
+        if (controller.reviews.isEmpty) {
+          return const EmptyState(
+            icon: Icons.rate_review_outlined,
+            title: 'No reviews yet',
+            subtitle: 'Be the first to leave a review!',
+          );
+        }
+
+        return Column(
+          children: controller.reviews.take(2).map((review) {
+            return ReviewCard(
+              name: review.author.name,
+              businessName: '',
+              rating: review.rating.toDouble(),
+              reviewText: review.content,
+              imageUrl: review.author.avatar,
+              onMenuTap: () {},
+            );
+          }).toList(),
+        );
+      },
     );
   }
 

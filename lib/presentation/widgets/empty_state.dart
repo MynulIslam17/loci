@@ -1,16 +1,16 @@
 import 'package:flutter/material.dart';
 
-import '../../../../core/constants/app_text_style.dart';
-import '../../../../core/theme/theme_extention.dart';
+import '../../core/constants/app_text_style.dart';
+import '../../core/theme/theme_extention.dart';
 
 
-class EmptyCommunityState extends StatelessWidget {
+class EmptyState extends StatelessWidget {
   final IconData icon;
   final String title;
   final String? subtitle;
   final double iconSize;
 
-  const EmptyCommunityState({
+  const EmptyState({
     super.key,
     required this.icon,
     required this.title,

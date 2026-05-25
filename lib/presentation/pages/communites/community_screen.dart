@@ -131,18 +131,26 @@ class _CommunityScreenState extends State<CommunityScreen>
   }
 
   /// Called when user types a business name and submits (mention field)
-  Future<void> _onMentionSubmit(String announcementId, String text, String image) async {
-    final success = await postPollController.addPollOption(
+  Future<void> _onMentionSubmit(
+      String announcementId,
+      String text,
+      String image,
+      ) async {
+    final updated = await postPollController.addPollOption(
       announcementId: announcementId,
-      text: text,
+      question: text,
       imageUrl: image.isNotEmpty ? image : null,
     );
 
-    if (success) {
-      announcementController.fetchAnnouncements(isRefresh: true);
+    if (updated != null) {
+      final newOption = updated.pollOptions?.last;
+      if (newOption != null) {
+        announcementController.updatePollOption(announcementId, newOption);
+      }
     } else {
       SnackbarService.error(
-          postPollController.errorMessage ?? "Failed to add option");
+        postPollController.errorMessage ?? 'Failed to add option',
+      );
     }
   }
 

@@ -75,4 +75,26 @@ class QuestionModel {
   bool get isQuestion => type == QuestionType.question;
   bool get hasOptions => options.isNotEmpty;
   bool get hasAnswers => answers.isNotEmpty;
+
+  QuestionModel copyWith({
+    List<PollOptionModel>? options,
+    int? totalVotes,
+    int? likeCount,
+    bool? isLiked,
+  }) =>
+      QuestionModel(
+        id: id,
+        author: author,
+        type: type,
+        category: category,
+        content: content,
+        totalVotes: totalVotes ?? this.totalVotes,
+        likeCount: likeCount ?? this.likeCount,
+        isLiked: isLiked ?? this.isLiked,
+        options: options ?? this.options,
+        answers: answers,
+        communityId: communityId,
+        createdAt: createdAt,
+        updatedAt: updatedAt,
+      );
 }

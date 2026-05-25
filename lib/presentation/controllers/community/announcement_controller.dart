@@ -233,6 +233,16 @@ class AnnouncementController extends GetxController {
     update();
   }
 
+  void updatePollOption(String announcementId, PollOption option) {
+    final post = _announcementMap[announcementId];
+    if (post == null) return;
+    _announcementMap[announcementId] = post.copyWith(
+      pollOptions: [...(post.pollOptions ?? []), option],
+    );
+    update();
+  }
+
+
   void updateEventRsvpStatus(String eventId, RsvpStatus status) {
     // find announcement that contains this event
     final announcementId = _announcementIds.firstWhere(

@@ -11,6 +11,7 @@ import 'package:loci/presentation/widgets/custom_dropdown.dart';
 import '../../../core/theme/theme_extention.dart';
 import '../../../routes/app_routes.dart';
 import '../../controllers/browse_business/save_business_controller.dart';
+import '../../widgets/custom_appbar.dart';
 import '../../widgets/custom_text_field.dart';
 
 class BrowseBusinesses extends StatefulWidget {
@@ -66,12 +67,7 @@ class _BrowseBusinessesState extends State<BrowseBusinesses> {
     final size = MediaQuery.sizeOf(context);
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(
-          "Browse Businesses",
-          style: AppTextStyle.textLg(weight: FontWeight.w600),
-        ),
-      ),
+      appBar: CustomAppbar(title: "Browse business"),
       body: GetBuilder<BrowseBusinessController>(
         builder: (controller) {
           return SingleChildScrollView(

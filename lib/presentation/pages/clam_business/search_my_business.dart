@@ -13,6 +13,7 @@ import 'package:loci/routes/app_routes.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../controllers/my_business/get_my_business_list _controller.dart';
+import '../../widgets/custom_appbar.dart';
 import '../../widgets/error_state.dart';
 
 class SearchMyBusiness extends StatefulWidget {
@@ -49,12 +50,7 @@ class _SearchMyBusinessState extends State<SearchMyBusiness> {
 
     return Scaffold(
       backgroundColor: colorScheme.surface,
-      appBar: AppBar(
-        title: Text(
-          "Search My Business",
-          style: AppTextStyle.textLg(weight: FontWeight.w600),
-        ),
-      ),
+        appBar: CustomAppbar(title: "Search My Business"),
       body:CustomScrollView(
         slivers: [
           /// ================= HEADER =================

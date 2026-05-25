@@ -12,6 +12,7 @@ import 'package:loci/presentation/pages/auth/otp_screen.dart';
 import 'package:loci/presentation/pages/auth/reset_pass_sceen.dart';
 import 'package:loci/presentation/pages/auth/signup_screen.dart';
 import 'package:loci/presentation/pages/browse/all_review_screen.dart';
+import 'package:loci/presentation/pages/clam_business/my_business_all_reviews_screen.dart';
 import 'package:loci/presentation/pages/browse/business_profile_screen.dart';
 import 'package:loci/presentation/pages/checkin/check_in_screen.dart';
 import 'package:loci/presentation/pages/clam_business/clam_my_business.dart';
@@ -146,6 +147,11 @@ abstract class AppPages {
     GetPage(name: AppRoutes.searchBusiness, page: () => SearchMyBusiness(),binding: MyBusinessBindings()),
     GetPage(name: AppRoutes.clamBusinessProfile, page: () => ClamMyBusiness(),binding: MyBusinessBindings()),
     GetPage(name: AppRoutes.myBusinessProfile, page: () => MyBusinessProfile(),binding: MyBusinessBindings()),
+    GetPage(
+      name: AppRoutes.myBusinessAllReviews,
+      page: () => const MyBusinessAllReviewsScreen(),
+      binding: MyBusinessBindings(),
+    ),
     GetPage(
       name: AppRoutes.manualClaimBusiness,
       page: () => ManualClaimBusiness(),

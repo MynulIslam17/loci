@@ -1,21 +1,21 @@
 import 'package:get/get.dart';
 import 'package:loci/core/constants/app_url.dart';
 import 'package:loci/core/network/network_caller.dart';
-import 'package:loci/data/models/community/announcement_model.dart';
+import 'package:loci/data/models/home/question_model.dart';
 
-class PostPollOptionController extends GetxController {
+class HomeAddPollOptionController extends GetxController {
   bool _isLoading = false;
   String? _errorMessage;
 
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
 
-  Future<AnnouncementModel?> addPollOption({
-    required String announcementId,
-    required String question,
+  Future<QuestionModel?> addPollOption({
+    required String questionId,
+    required String text,
     String? imageUrl,
   }) async {
-    if (question.trim().isEmpty) return null;
+    if (text.trim().isEmpty) return null;
 
     _isLoading = true;
     _errorMessage = null;
@@ -23,9 +23,9 @@ class PostPollOptionController extends GetxController {
 
     try {
       final response = await Get.find<NetworkCaller>().postRequest(
-        url: AppUrl.addPollOption(announcementId),
+        url: AppUrl.addHomePollQuestionAdd(questionId),
         body: {
-          'text': question.trim(),
+          'text': text.trim(),
           if (imageUrl != null && imageUrl.isNotEmpty) 'image': imageUrl,
         },
       );
@@ -35,7 +35,7 @@ class PostPollOptionController extends GetxController {
         return null;
       }
 
-      return AnnouncementModel.fromJson(response.body!['data']);
+      return QuestionModel.fromJson(response.body!['data']);
     } catch (e) {
       _errorMessage = e.toString();
       return null;
@@ -43,11 +43,5 @@ class PostPollOptionController extends GetxController {
       _isLoading = false;
       update();
     }
-  }
-
-  void reset() {
-    _isLoading = false;
-    _errorMessage = null;
-    update();
   }
 }

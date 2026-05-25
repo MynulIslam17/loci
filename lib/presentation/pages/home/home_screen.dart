@@ -6,17 +6,28 @@ import 'package:loci/core/enums/category_enum.dart';
 import 'package:loci/core/theme/app_colors.dart';
 import 'package:loci/core/theme/theme_extention.dart';
 import 'package:loci/core/utils/show_snackbar.dart';
+import 'package:loci/data/models/busniess/browse_business_model.dart';
 import 'package:loci/data/models/carousel_data.dart';
+import 'package:loci/presentation/controllers/community/search_business_controller.dart';
+import 'package:loci/presentation/controllers/home/home_add_poll_option_controller.dart';
+import 'package:loci/presentation/controllers/home/home_comment_controller.dart';
+import 'package:loci/presentation/controllers/home/home_like_controller.dart';
+import 'package:loci/presentation/controllers/home/home_vote_controller.dart';
 import 'package:loci/presentation/pages/home/widgets/custom_carousel.dart';
 import 'package:loci/presentation/pages/home/widgets/post_input_filed.dart';
 import 'package:loci/presentation/pages/raffles/active_raffles_screen.dart';
+import 'package:loci/presentation/widgets/empty_state.dart';
+import 'package:loci/presentation/widgets/pagination_loading.dart';
 import 'package:percent_indicator/linear_percent_indicator.dart';
 import '../../../gen/assets.gen.dart';
 import '../../../routes/app_routes.dart';
+import '../../controllers/auth/auth_controller.dart';
 import '../../controllers/home/post_question_controller.dart';
 import '../../controllers/home/question_list_controller.dart';
 import '../../controllers/nav_controller.dart';
 import '../../widgets/custom_image_container.dart';
+import '../communites/widgets/poll_bottom_sheet.dart';
+import '../communites/widgets/post_comment_section.dart';
 import '../communites/widgets/post_card.dart';
 import '../communites/widgets/post_card_view_model.dart';
 import 'home navigator.dart';
@@ -33,13 +44,21 @@ class _HomeScreenState extends State<HomeScreen> {
   final navController = Get.find<NavController>();
   final postQuestionController = Get.find<PostQuestionController>();
   final questionListController = Get.find<QuestionListController>();
+  final _authController = Get.find<AuthController>();
 
   String? _expandedPostId;
 
   // --- Search bar controls ---
   final TextEditingController _postController = TextEditingController();
-
   final FocusNode _postFocusNode = FocusNode();
+
+  // --- Business mention ---
+  late final SearchBusinessController _searchCtrl;
+  late final HomeAddPollOptionController _addPollOptionCtrl;
+  late final HomeVoteController _voteCtrl;
+  late final HomeLikeController _likeCtrl;
+  late final HomeCommentController _commentCtrl;
+  String? _activeMentionPostId;
 
   //-- Banner data ---
   final List<CarouselData> bannerData = [
@@ -67,6 +86,11 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
+    _searchCtrl = Get.put(SearchBusinessController(), tag: 'home');
+    _addPollOptionCtrl = Get.put(HomeAddPollOptionController(), tag: 'home');
+    _voteCtrl = Get.put(HomeVoteController(), tag: 'home');
+    _likeCtrl = Get.put(HomeLikeController(), tag: 'home');
+    _commentCtrl = Get.put(HomeCommentController(), tag: 'home');
     questionListController.fetchQuestions();
   }
 
@@ -74,15 +98,119 @@ class _HomeScreenState extends State<HomeScreen> {
   void dispose() {
     _postFocusNode.dispose();
     _postController.dispose();
+    Get.delete<SearchBusinessController>(tag: 'home');
+    Get.delete<HomeAddPollOptionController>(tag: 'home');
+    Get.delete<HomeVoteController>(tag: 'home');
+    Get.delete<HomeLikeController>(tag: 'home');
+    Get.delete<HomeCommentController>(tag: 'home');
     super.dispose();
   }
+
+  // ── Mention callbacks ────────────────────────────────────────────────────
+
+  void _onMentionChanged(String postId, String query) {
+    setState(() => _activeMentionPostId = postId);
+    _searchCtrl.onSearchChanged(query);
+  }
+
+  void _onMentionBusinessSelected(String postId, BrowseBusinessModel business) {
+    setState(() => _activeMentionPostId = null);
+    _searchCtrl.reset();
+  }
+
+  Future<void> _onMentionSubmit(String postId, String text, String image) async {
+    setState(() => _activeMentionPostId = null);
+    _searchCtrl.reset();
+
+    final updated = await _addPollOptionCtrl.addPollOption(
+      questionId: postId,
+      text: text,
+      imageUrl: image.isNotEmpty ? image : null,
+    );
+
+    if (updated != null) {
+      final newOption = updated.options.lastOrNull;
+      if (newOption != null) {
+        questionListController.appendPollOption(postId, newOption);
+      }
+    } else {
+      SnackbarService.error(
+        _addPollOptionCtrl.errorMessage ?? 'Failed to add poll option',
+      );
+    }
+  }
+
+
+  void _showCommentSheet(String questionId) {
+    final inputController = TextEditingController();
+    _commentCtrl.fetchComments(questionId: questionId);
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (_) => GetBuilder<HomeCommentController>(
+        tag: 'home',
+        builder: (ctrl) => PostCommentSection(
+          comments: ctrl.comments,
+          controller: inputController,
+          scrollController: ctrl.scrollController,
+          paginationLoading: false,
+          currentUserImage: _authController.userModel?.avatar ?? '',
+          isLoading: ctrl.isLoading,
+          isSending: ctrl.isPosting,
+          onSendTap: (text) => ctrl.postComment(
+            content: text,
+            questionId: questionId,
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showAllPolls(PostCardViewModel viewModel) {
+    PollBottomSheet.show(
+      context,
+      viewModel,
+      currentUserId: _authController.userModel?.id,
+      onVote: (optionId) => _onVote(viewModel.postId, optionId),
+    );
+  }
+
+  Future<void> _onVote(String questionId, String optionId) async {
+    final success = await _voteCtrl.submitVote(
+      questionId: questionId,
+      optionId: optionId,
+    );
+
+    if (success) {
+      final user = _authController.userModel;
+      questionListController.updatePollVote(
+        questionId,
+        optionId,
+        userId: user?.id ?? '',
+        userName: user?.name ?? '',
+        userAvatar: user?.avatar ?? '',
+      );
+    } else {
+      SnackbarService.error(_voteCtrl.errorMessage ?? 'Vote failed');
+    }
+  }
+
+
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: context.colorScheme.surface,
-      body: SingleChildScrollView(
-        child: Column(
+      body: RefreshIndicator(
+        onRefresh: () => questionListController.fetchQuestions(isRefresh: true),
+        child: SingleChildScrollView(
+          controller: questionListController.scrollController,
+          physics: const AlwaysScrollableScrollPhysics(),
+          child: Column(
           children: [
             const SizedBox(height: 16),
 
@@ -166,7 +294,6 @@ class _HomeScreenState extends State<HomeScreen> {
 
             GetBuilder<QuestionListController>(
               builder: (controller) {
-
                 if (controller.isLoading) {
                   return const Padding(
                     padding: EdgeInsets.symmetric(vertical: 32),
@@ -174,31 +301,44 @@ class _HomeScreenState extends State<HomeScreen> {
                   );
                 }
                 if (controller.questions.isEmpty) {
-                  return const SizedBox.shrink();
+                  return EmptyState(
+                    icon: Icons.help_outline_rounded,
+                    title: "No questions yet",
+                    subtitle: "Be the first to ask something!",
+                  );
                 }
-                return ListView.builder(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  padding: const EdgeInsets.symmetric(horizontal: 12),
-                  itemCount: controller.questions.length +
-                      (controller.isPaginationLoading ? 1 : 0),
-                  itemBuilder: (context, index) {
-                    if (index == controller.questions.length) {
-                      return const Padding(
-                        padding: EdgeInsets.symmetric(vertical: 16),
-                        child: Center(child: CircularProgressIndicator()),
+                return GetBuilder<SearchBusinessController>(
+                  tag: 'home',
+                  builder: (searchCtrl) => ListView.builder(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    itemCount: controller.questions.length +
+                        (controller.isPaginationLoading ? 1 : 0),
+                    itemBuilder: (context, index) {
+                      if (index == controller.questions.length) {
+                        return PaginationLoader();
+                      }
+                      final question = controller.questions[index];
+                      final isActive = _activeMentionPostId == question.id;
+                      final viewModel = PostCardViewModel.fromQuestion(question);
+                      return PostCardWidget(
+                        viewModel: viewModel,
+                        onLikeTap: (postId) => _likeCtrl.toggleLike(postId),
+                        onCommentTap: (postId) => _showCommentSheet(postId),
+                        onClickPoll: (_) => _showAllPolls(viewModel),
+                        onMentionChanged: _onMentionChanged,
+                        onMentionSubmit: _onMentionSubmit,
+                        onMentionBusinessSelected: _onMentionBusinessSelected,
+                        mentionSuggestions:
+                            isActive ? searchCtrl.businesses : const [],
+                        isMentionLoading: isActive && searchCtrl.isLoading,
+                        mentionSearchDone: isActive && searchCtrl.searchDone,
+                        currentUserImage: _authController.userModel?.avatar ?? "",
+                        currentUserId: _authController.userModel?.id,
                       );
-                    }
-                    final viewModel = PostCardViewModel.fromQuestion(
-                      controller.questions[index],
-                    );
-                    return PostCardWidget(
-                      viewModel: viewModel,
-                      onLikeTap: (_) {},
-                      onCommentTap: (_) {},
-                      onClickPoll: (_) => _showAllPolls(),
-                    );
-                  },
+                    },
+                  ),
                 );
               },
             ),
@@ -206,106 +346,107 @@ class _HomeScreenState extends State<HomeScreen> {
           ],
         ),
       ),
-    );
-  }
-
-  //---- Show all polls in raffles bottom sheet ----
-  void _showAllPolls() {
-    final colorScheme = context.colorScheme;
-    int? selectedIndex; // Tracks which poll option is selected
-
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true, // Allows sheet to take up more screen height
-      backgroundColor: colorScheme.surface,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
-      builder: (context) {
-        return StatefulBuilder(
-          builder: (context, setState) {
-            return DraggableScrollableSheet(
-              expand: false,
-              initialChildSize: 0.6,
-              minChildSize: 0.4,
-              maxChildSize: 0.9,
-              builder: (context, scrollController) {
-                return Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  child: Column(
-                    children: [
-                      // --- Drag handle at the top ---
-                      Container(
-                        margin: const EdgeInsets.symmetric(vertical: 12),
-                        width: 40,
-                        height: 4,
-                        decoration: BoxDecoration(
-                          color: colorScheme.outlineVariant,
-                          borderRadius: BorderRadius.circular(2),
-                        ),
-                      ),
-
-                      // --- Poll question ---
-                      Align(
-                        alignment: Alignment.centerLeft,
-                        child: Text(
-                          "Any food that you liked recently?" * 4,
-                          style: AppTextStyle.textXs(
-                            color: colorScheme.primary,
-                            weight: FontWeight.w600,
-                          ),
-                          overflow: TextOverflow.ellipsis,
-                          maxLines: 4,
-                        ),
-                      ),
-                      const SizedBox(height: 20),
-
-                      // --- Poll options list ---
-                      // Expanded(
-                      //   child: ListView.separated(
-                      //     controller: scrollController,
-                      //     itemCount: mockPolls.length,
-                      //     separatorBuilder: (_, __) =>
-                      //         const SizedBox(height: 20),
-                      //     itemBuilder: (context, index) {
-                      //       final poll = mockPolls[index];
-                      //       final isSelected = selectedIndex == index;
-                      //
-                      //       return _buildPollResultRow(
-                      //         colorScheme: colorScheme,
-                      //         isSelected: isSelected,
-                      //         percent: poll.percent,
-                      //         optionName: poll.title,
-                      //         voteCount: poll.voteCount,
-                      //         avatarUrl: poll.imagePath,
-                      //         // Pass the callback to update selectedIndex when circle is tapped
-                      //         onSelect: () {
-                      //           setState(() {
-                      //             // remove vote from previous selection
-                      //             if (selectedIndex != null) {
-                      //               mockPolls[selectedIndex!].voteCount--;
-                      //             }
-                      //             // set new selection
-                      //             selectedIndex = index;
-                      //
-                      //             // increment vote for selected option
-                      //             mockPolls[index].voteCount++;
-                      //           });
-                      //         },
-                      //       );
-                      //     },
-                      //   ),
-                      // ),
-                    ],
-                  ),
-                );
-              },
-            );
-          },
-        );
-      },
     );
   }
+
+  // //---- Show all polls in raffles bottom sheet ----
+  // void _showAllPolls() {
+  //   final colorScheme = context.colorScheme;
+  //   int? selectedIndex; // Tracks which poll option is selected
+  //
+  //   showModalBottomSheet(
+  //     context: context,
+  //     isScrollControlled: true, // Allows sheet to take up more screen height
+  //     backgroundColor: colorScheme.surface,
+  //     shape: const RoundedRectangleBorder(
+  //       borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+  //     ),
+  //     builder: (context) {
+  //       return StatefulBuilder(
+  //         builder: (context, setState) {
+  //           return DraggableScrollableSheet(
+  //             expand: false,
+  //             initialChildSize: 0.6,
+  //             minChildSize: 0.4,
+  //             maxChildSize: 0.9,
+  //             builder: (context, scrollController) {
+  //               return Padding(
+  //                 padding: const EdgeInsets.symmetric(horizontal: 16),
+  //                 child: Column(
+  //                   children: [
+  //                     // --- Drag handle at the top ---
+  //                     Container(
+  //                       margin: const EdgeInsets.symmetric(vertical: 12),
+  //                       width: 40,
+  //                       height: 4,
+  //                       decoration: BoxDecoration(
+  //                         color: colorScheme.outlineVariant,
+  //                         borderRadius: BorderRadius.circular(2),
+  //                       ),
+  //                     ),
+  //
+  //                     // --- Poll question ---
+  //                     Align(
+  //                       alignment: Alignment.centerLeft,
+  //                       child: Text(
+  //                         "Any food that you liked recently?" * 4,
+  //                         style: AppTextStyle.textXs(
+  //                           color: colorScheme.primary,
+  //                           weight: FontWeight.w600,
+  //                         ),
+  //                         overflow: TextOverflow.ellipsis,
+  //                         maxLines: 4,
+  //                       ),
+  //                     ),
+  //                     const SizedBox(height: 20),
+  //
+  //                     // --- Poll options list ---
+  //                     // Expanded(
+  //                     //   child: ListView.separated(
+  //                     //     controller: scrollController,
+  //                     //     itemCount: mockPolls.length,
+  //                     //     separatorBuilder: (_, __) =>
+  //                     //         const SizedBox(height: 20),
+  //                     //     itemBuilder: (context, index) {
+  //                     //       final poll = mockPolls[index];
+  //                     //       final isSelected = selectedIndex == index;
+  //                     //
+  //                     //       return _buildPollResultRow(
+  //                     //         colorScheme: colorScheme,
+  //                     //         isSelected: isSelected,
+  //                     //         percent: poll.percent,
+  //                     //         optionName: poll.title,
+  //                     //         voteCount: poll.voteCount,
+  //                     //         avatarUrl: poll.imagePath,
+  //                     //         // Pass the callback to update selectedIndex when circle is tapped
+  //                     //         onSelect: () {
+  //                     //           setState(() {
+  //                     //             // remove vote from previous selection
+  //                     //             if (selectedIndex != null) {
+  //                     //               mockPolls[selectedIndex!].voteCount--;
+  //                     //             }
+  //                     //             // set new selection
+  //                     //             selectedIndex = index;
+  //                     //
+  //                     //             // increment vote for selected option
+  //                     //             mockPolls[index].voteCount++;
+  //                     //           });
+  //                     //         },
+  //                     //       );
+  //                     //     },
+  //                     //   ),
+  //                     // ),
+  //                   ],
+  //                 ),
+  //               );
+  //             },
+  //           );
+  //         },
+  //       );
+  //     },
+  //   );
+  // }
 
   //---- Poll result row widget ----
   Widget _buildPollResultRow({

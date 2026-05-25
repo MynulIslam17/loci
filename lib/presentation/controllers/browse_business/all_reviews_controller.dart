@@ -38,7 +38,7 @@ class AllReviewsController extends GetxController {
     update();
 
     final url =
-        "${AppUrl.businessReviews(_businessId)}?page=$_currentPage&limit=$_limit";
+        "${AppUrl.otherBusinessReviews(_businessId)}?page=$_currentPage&limit=$_limit";
 
     final response =
     await Get.find<NetworkCaller>().getRequest(url: url);
@@ -62,7 +62,7 @@ class AllReviewsController extends GetxController {
     _currentPage++;
 
     final url =
-        "${AppUrl.businessReviews(_businessId)}?page=$_currentPage&limit=$_limit";
+        "${AppUrl.otherBusinessReviews(_businessId)}?page=$_currentPage&limit=$_limit";
 
     final response =
     await Get.find<NetworkCaller>().getRequest(url: url);

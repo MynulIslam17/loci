@@ -12,6 +12,7 @@ import '../../home/widgets/user_post_header.dart';
 /// Every action is bubbled up via callbacks.
 class PostCardWidget extends StatefulWidget {
   final PostCardViewModel viewModel;
+  final String currentUserImage;
 
   // Core interactions
   final void Function(String postId)? onLikeTap;
@@ -28,6 +29,9 @@ class PostCardWidget extends StatefulWidget {
   final bool isMentionLoading;
   final bool mentionSearchDone;
 
+  // Used to highlight which poll bar this user voted on
+  final String? currentUserId;
+
   const PostCardWidget({
     super.key,
     required this.viewModel,
@@ -40,6 +44,8 @@ class PostCardWidget extends StatefulWidget {
     this.mentionSuggestions = const [],
     this.isMentionLoading = false,
     this.mentionSearchDone = false,
+    required this.currentUserImage,
+    this.currentUserId,
   });
 
   @override
@@ -129,6 +135,9 @@ class _PostCardWidgetState extends State<PostCardWidget> {
                       final percent = vm.totalVotes > 0
                           ? opt.voteCount / vm.totalVotes
                           : 0.0;
+                      final isVoted = widget.currentUserId != null &&
+                          widget.currentUserId!.isNotEmpty &&
+                          opt.voters.any((v) => v.userId == widget.currentUserId);
                       return Padding(
                         padding: const EdgeInsets.only(bottom: 10),
                         child: PollBar(
@@ -137,6 +146,7 @@ class _PostCardWidgetState extends State<PostCardWidget> {
                           percentage: opt.percentage,
                           imagePath: opt.image,
                           voters: opt.voters,
+                          isVoted: isVoted,
                         ),
                       );
                     }),
@@ -165,7 +175,7 @@ class _PostCardWidgetState extends State<PostCardWidget> {
                   width: 40,
                   height: 40,
                   isCircle: true,
-                  imageUrl: "assets/images/logo.png",
+                  imageUrl: widget.currentUserImage,
                 ),
                 const SizedBox(width: 12),
                 Expanded(

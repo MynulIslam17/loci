@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:loci/core/constants/app_text_style.dart';
 import 'package:loci/core/theme/theme_extention.dart';
+import 'package:loci/presentation/controllers/browse_business/post_review_controller.dart';
 import 'package:loci/presentation/controllers/browse_business/review_preview_controller.dart';
 import 'package:loci/presentation/controllers/browse_business/save_business_controller.dart';
 import 'package:loci/presentation/pages/browse/widgets/business_profile/business_header.dart';
@@ -13,7 +14,9 @@ import 'package:loci/presentation/pages/browse/widgets/business_profile/review_b
 import 'package:loci/presentation/pages/browse/widgets/business_profile/review_list.dart';
 import 'package:loci/routes/app_routes.dart';
 
+import '../../../core/utils/show_snackbar.dart';
 import '../../controllers/browse_business/business_profile_controller.dart';
+import '../../widgets/custom_appbar.dart';
 
 class BusinessProfileScreen extends StatefulWidget {
   const BusinessProfileScreen({super.key});
@@ -26,6 +29,7 @@ class _BusinessProfileScreenState extends State<BusinessProfileScreen> {
   final profileController = Get.find<BusinessProfileController>();
   final reviewController = Get.find<ReviewPreviewController>();
   final saveController = Get.find<SaveBusinessController>();
+  final postReviewController = Get.find<PostReviewController>();
   late final String businessId;
 
   @override
@@ -44,13 +48,7 @@ class _BusinessProfileScreenState extends State<BusinessProfileScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: context.colorScheme.surface,
-      appBar: AppBar(
-        title: Text(
-          "Business profile",
-          style: AppTextStyle.textLg(weight: FontWeight.w600),
-        ),
-        centerTitle: true,
-      ),
+      appBar: CustomAppbar(title: "Business Profile"),
       body: GetBuilder<BusinessProfileController>(
         builder: (controller) {
           if (controller.isLoading) {
@@ -102,7 +100,21 @@ class _BusinessProfileScreenState extends State<BusinessProfileScreen> {
 
                 const SizedBox(height: 32),
 
-                const ReviewBox(),
+                ReviewBox(
+                  onSubmit: (String content, double rating) async {
+                    final success = await postReviewController.postReview(
+                      businessId: businessId,
+                      rating: rating,
+                      content: content,
+                    );
+
+                    if (success) {
+                      SnackbarService.success( 'Thank you for your feedback!');
+                    } else {
+                      SnackbarService.error( 'Could not submit review. Please try again.');
+                    }
+                  },
+                ),
                 const SizedBox(height: 32),
 
                 _reviewsHeader(context),
