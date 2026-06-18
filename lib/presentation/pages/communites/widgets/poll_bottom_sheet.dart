@@ -71,7 +71,10 @@ class _PollBottomSheetState extends State<PollBottomSheet> {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
+    final maxHeight = MediaQuery.of(context).size.height * 0.85;
+    return ConstrainedBox(
+      constraints: BoxConstraints(maxHeight: maxHeight),
+      child: Padding(
       padding: const EdgeInsets.fromLTRB(20, 20, 20, 32),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -102,9 +105,10 @@ class _PollBottomSheetState extends State<PollBottomSheet> {
             ),
           ),
           const SizedBox(height: 20),
-          ListView.separated(
+          Flexible(
+            child: ListView.separated(
             shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
+            physics: const ClampingScrollPhysics(),
             itemCount: widget.options.length,
             separatorBuilder: (_, __) => const SizedBox(height: 10),
             itemBuilder: (_, index) {
@@ -203,6 +207,7 @@ class _PollBottomSheetState extends State<PollBottomSheet> {
                 ),
               );
             },
+            ),
           ),
           const SizedBox(height: 24),
           SizedBox(
@@ -225,6 +230,7 @@ class _PollBottomSheetState extends State<PollBottomSheet> {
           ),
         ],
       ),
+    ),
     );
   }
 }

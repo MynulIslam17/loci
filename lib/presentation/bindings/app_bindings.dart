@@ -12,6 +12,7 @@ import '../controllers/auth/auth_controller.dart';
 import '../controllers/community/vote_controller.dart';
 import '../controllers/event/rsvp_controller.dart';
 import '../controllers/nav_controller.dart';
+import '../controllers/notification/notification_controller.dart';
 
 class AppBindings extends Bindings {
   @override
@@ -28,13 +29,6 @@ class AppBindings extends Bindings {
     Get.put(RSVPController(), permanent: true);
     Get.put(VoteController(), permanent: true);
     Get.put(PostQuestionController(), permanent: true);
-   
-
-
-
-
-
-
-
+    Get.lazyPut<NotificationController>(() => NotificationController(), fenix: true);
   }
 }

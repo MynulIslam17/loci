@@ -5,20 +5,20 @@ import '../../../../core/enums/referral_enum.dart';
 
 class ReferralCard extends StatelessWidget {
   final ReferralStatus status;
-  final String fromName;
-  final String fromCompany;
-  final String toName;
-  final String toCompany;
+  final String recipientName;
+  final String recipientEmail;
+  final String businessOwnerName;
+  final String businessOwnerEmail;
   final String message;
   final String date;
 
   const ReferralCard({
     super.key,
     required this.status,
-    required this.fromName,
-    required this.fromCompany,
-    required this.toName,
-    required this.toCompany,
+    required this.recipientName,
+    required this.recipientEmail,
+    required this.businessOwnerName,
+    required this.businessOwnerEmail,
     required this.message,
     required this.date,
   });
@@ -29,9 +29,7 @@ class ReferralCard extends StatelessWidget {
 
     return Card(
       elevation: 1,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       color: colorScheme.surfaceContainerHigh,
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -39,7 +37,7 @@ class ReferralCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
 
-            /// ================= HEADER =================
+            /// ── Header: Status + Date ─────────────────────────────────────
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -61,32 +59,32 @@ class ReferralCard extends StatelessWidget {
 
             const SizedBox(height: 16),
 
-            /// ================= REFERRAL FLOW =================
+            /// ── Recipient → Business Owner ───────────────────────────────
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Expanded(
                   child: _buildPersonInfo(
                     context,
-                    fromName,
-                    fromCompany,
+                    label: 'Recipient',
+                    name: recipientName,
+                    email: recipientEmail,
                   ),
                 ),
-
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                  padding: const EdgeInsets.only(top: 4, left: 8, right: 8),
                   child: Icon(
                     Icons.arrow_forward,
                     color: colorScheme.onSurfaceVariant,
                     size: 20,
                   ),
                 ),
-
                 Expanded(
                   child: _buildPersonInfo(
                     context,
-                    toName,
-                    toCompany,
+                    label: 'Business Owner',
+                    name: businessOwnerName,
+                    email: businessOwnerEmail,
                     alignRight: true,
                   ),
                 ),
@@ -95,7 +93,7 @@ class ReferralCard extends StatelessWidget {
 
             const SizedBox(height: 16),
 
-            /// ================= MESSAGE =================
+            /// ── Message ───────────────────────────────────────────────────
             Container(
               width: double.infinity,
               padding: const EdgeInsets.all(12),
@@ -113,46 +111,44 @@ class ReferralCard extends StatelessWidget {
                 ),
               ),
             ),
+
           ],
         ),
       ),
     );
   }
 
-  /// ================= STATUS BADGE =================
+  /// ── Status Badge ──────────────────────────────────────────────────────────
   Widget _buildStatusBadge(BuildContext context) {
     Color bgColor;
     Color textColor;
     IconData icon;
-    String text;
 
     switch (status) {
       case ReferralStatus.sent:
         bgColor = Colors.blue.shade50;
         textColor = Colors.blue.shade700;
         icon = Icons.send;
-        text = "Sent";
         break;
-
       case ReferralStatus.pending:
         bgColor = Colors.amber.shade50;
         textColor = Colors.amber.shade700;
         icon = Icons.access_time_filled;
-        text = "Pending";
         break;
-
+      case ReferralStatus.accepted:
+        bgColor = Colors.green.shade50;
+        textColor = Colors.green.shade700;
+        icon = Icons.check_circle;
+        break;
       case ReferralStatus.confirmed:
         bgColor = Colors.green.shade50;
         textColor = Colors.green.shade700;
         icon = Icons.check_circle;
-        text = "Accepted";
         break;
-
       case ReferralStatus.rejected:
         bgColor = Colors.red.shade50;
         textColor = Colors.red.shade700;
         icon = Icons.cancel;
-        text = "Rejected";
         break;
     }
 
@@ -169,7 +165,7 @@ class ReferralCard extends StatelessWidget {
           const SizedBox(width: 6),
           Flexible(
             child: Text(
-              text,
+              status.label,
               overflow: TextOverflow.ellipsis,
               style: AppTextStyle.textXs(
                 color: textColor,
@@ -182,24 +178,36 @@ class ReferralCard extends StatelessWidget {
     );
   }
 
-  /// ================= PERSON INFO =================
+  /// ── Person Info ───────────────────────────────────────────────────────────
   Widget _buildPersonInfo(
-      BuildContext context,
-      String name,
-      String company, {
-        bool alignRight = false,
-      }) {
+    BuildContext context, {
+    required String label,
+    required String name,
+    required String email,
+    bool alignRight = false,
+  }) {
     final colorScheme = context.colorScheme;
+    final align =
+        alignRight ? CrossAxisAlignment.end : CrossAxisAlignment.start;
+    final textAlign = alignRight ? TextAlign.end : TextAlign.start;
 
     return Column(
-      crossAxisAlignment:
-      alignRight ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+      crossAxisAlignment: align,
       children: [
+        Text(
+          label,
+          textAlign: textAlign,
+          style: AppTextStyle.textXs(
+            color: colorScheme.onSurfaceVariant,
+            weight: FontWeight.w500,
+          ),
+        ),
+        const SizedBox(height: 4),
         Text(
           name,
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
-          textAlign: alignRight ? TextAlign.end : TextAlign.start,
+          textAlign: textAlign,
           style: AppTextStyle.textSm(
             weight: FontWeight.w700,
             color: colorScheme.onSurface,
@@ -207,10 +215,10 @@ class ReferralCard extends StatelessWidget {
         ),
         const SizedBox(height: 2),
         Text(
-          company,
+          email,
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
-          textAlign: alignRight ? TextAlign.end : TextAlign.start,
+          textAlign: textAlign,
           style: AppTextStyle.textXs(
             color: colorScheme.onSurfaceVariant,
           ),

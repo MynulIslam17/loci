@@ -93,19 +93,22 @@ class HomeCommentController extends GetxController {
       );
 
       if (response.isSuccess && response.body != null) {
-        // Try to parse the new comment from response, otherwise re-fetch
         try {
-          final data = response.body!['data'];
-          if (data != null) {
-            final newComment = _parseAnswerFromJson(data);
-            _comments.insert(0, newComment);
+          final data = response.body!['data'] as Map<String, dynamic>?;
+          final answers = data?['answers'] as List<dynamic>?;
+          if (answers != null) {
+            _comments = answers
+                .whereType<Map<String, dynamic>>()
+                .map(_parseAnswerFromJson)
+                .toList();
+          } else {
+            await fetchComments(questionId: questionId);
+            return;
           }
         } catch (_) {
-          // If parsing fails, just re-fetch to stay in sync
           await fetchComments(questionId: questionId);
           return;
         }
-        // Bump the comment count on the post card
         Get.find<QuestionListController>().incrementCommentCount(questionId);
         update();
       } else {

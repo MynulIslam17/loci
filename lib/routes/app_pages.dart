@@ -6,6 +6,8 @@ import 'package:loci/presentation/bindings/community_binding.dart';
 import 'package:loci/presentation/bindings/drawer_bindings.dart';
 import 'package:loci/presentation/bindings/event_bindings.dart';
 import 'package:loci/presentation/bindings/my_business_bindings.dart';
+import 'package:loci/presentation/bindings/meetings_bindings.dart';
+import 'package:loci/presentation/bindings/refferrals_bindings.dart';
 import 'package:loci/presentation/pages/auth/forget_pass_screen.dart';
 import 'package:loci/presentation/pages/auth/login_screen.dart';
 import 'package:loci/presentation/pages/auth/otp_screen.dart';
@@ -41,12 +43,11 @@ import 'package:loci/presentation/pages/message/chat_list_screen.dart';
 import 'package:loci/presentation/pages/message/message_screen.dart';
 import 'package:loci/presentation/pages/my_qr_code/my_qr_code_screen.dart';
 import 'package:loci/presentation/pages/network/connection_screen.dart';
-import 'package:loci/presentation/pages/network/meeting_invitation_screen.dart';
-import 'package:loci/presentation/pages/network/metting_screen.dart';
-import 'package:loci/presentation/pages/network/referrals_invitation_screen.dart';
-import 'package:loci/presentation/pages/network/referrals_screen.dart';
-import 'package:loci/presentation/pages/network/schedule_meeting_screen.dart';
-import 'package:loci/presentation/pages/network/send_new_referrals_screen.dart';
+import 'package:loci/presentation/pages/network/meetings/meeting_invitation_screen.dart';
+import 'package:loci/presentation/pages/network/meetings/metting_screen.dart';
+import 'package:loci/presentation/pages/network/referrals/referrals_screen.dart';
+import 'package:loci/presentation/pages/network/meetings/schedule_meeting_screen.dart';
+import 'package:loci/presentation/pages/network/referrals/send_new_referrals_screen.dart';
 import 'package:loci/presentation/pages/onboarding/onboarding_screen.dart';
 import 'package:loci/presentation/pages/profile/about_screen.dart';
 import 'package:loci/presentation/pages/profile/change_password_screen.dart';
@@ -113,18 +114,16 @@ abstract class AppPages {
     ),
 
     // ----- Network
-    GetPage(name: AppRoutes.referral, page: () => ReferralsScreen(),binding: BottomNavBinding()),
-    GetPage(name: AppRoutes.meeting, page: () => MeetingScreen(),binding: BottomNavBinding()),
+    GetPage(name: AppRoutes.referral, page: () => ReferralsScreen(),binding: ReferralsBindings()),
+    GetPage(name: AppRoutes.meeting, page: () => MeetingScreen(),binding: MeetingsBindings()),
     GetPage(name: AppRoutes.connection, page: () => ConnectionScreen(),binding: BottomNavBinding()),
-    GetPage(name: AppRoutes.sendReferral, page: () => SendNewReferralsScreen()),
+    GetPage(name: AppRoutes.sendReferral, page: () => SendNewReferralsScreen(),binding: ReferralsBindings()),
     GetPage(
       name: AppRoutes.scheduleMeeting,
       page: () => ScheduleMeetingScreen(),
+      binding: MeetingsBindings(),
     ),
-    GetPage(
-      name: AppRoutes.referralsInvitation,
-      page: () => ReferralsInvitationScreen(),
-    ),
+
     GetPage(
       name: AppRoutes.meetingInvitation,
       page: () => MeetingInvitationScreen(),
@@ -141,6 +140,7 @@ abstract class AppPages {
     //--raffles
     GetPage(name: AppRoutes.activeRaffles, page: () => ActiveRafflesPage(),binding: BottomNavBinding()),
     GetPage(name: AppRoutes.rafflesDetails, page: () => RafflesDetailsScreen(),binding: BottomNavBinding()),
+
 
 
     //---clam my business
@@ -215,7 +215,7 @@ abstract class AppPages {
     //appbar screen
     GetPage(name: AppRoutes.chatList, page: () => ChatListScreen()),
     GetPage(name: AppRoutes.message, page: () => MessageScreen()),
-    GetPage(name: AppRoutes.notification, page: () => NotificationScreen()),
+    GetPage(name: AppRoutes.notification, page: () => NotificationScreen(),binding: BottomNavBinding()),
 
     GetPage(name: AppRoutes.subscription, page: () => SubscriptionScreen(),binding: DrawerBindings()),
   ];

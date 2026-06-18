@@ -1,11 +1,11 @@
-
 import 'package:flutter/material.dart';
 import 'package:loci/core/constants/app_text_style.dart';
 import 'package:loci/core/theme/theme_extention.dart';
-import 'package:loci/core/utils/status.dart';
+import 'package:loci/presentation/widgets/custom_button.dart';
+import '../../../../core/enums/meeting_status.dart';
 
 class MeetingInvitationCard extends StatelessWidget {
-  final ReferralStatusEnum status;
+  final MeetingStatus status;
   final String fromName;
   final String fromCompany;
   final String toName;
@@ -16,6 +16,8 @@ class MeetingInvitationCard extends StatelessWidget {
   final String date;
   final VoidCallback? onConfirm;
   final VoidCallback? onReject;
+  final bool isConfirming;
+  final bool isRejecting;
 
   const MeetingInvitationCard({
     super.key,
@@ -30,6 +32,8 @@ class MeetingInvitationCard extends StatelessWidget {
     required this.date,
     this.onConfirm,
     this.onReject,
+    this.isConfirming = false,
+    this.isRejecting = false,
   });
 
   @override
@@ -40,7 +44,6 @@ class MeetingInvitationCard extends StatelessWidget {
       elevation: 1,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
-
       ),
       color: colorScheme.surfaceContainerHigh,
       child: Padding(
@@ -48,7 +51,8 @@ class MeetingInvitationCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // --- Header: Status Badge and Date ---
+
+            /// ── Header: Status + Date ─────────────────────────────────────
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -62,36 +66,54 @@ class MeetingInvitationCard extends StatelessWidget {
                 ),
               ],
             ),
+
             const SizedBox(height: 16),
 
-            // --- Referral Path: From -> To ---
+            /// ── From → To ─────────────────────────────────────────────────
             Row(
               children: [
-                Expanded(child: _buildPersonInfo(context, fromName, fromCompany)),
+                Expanded(
+                  child: _buildPersonInfo(context, fromName, fromCompany),
+                ),
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 12),
-                  child: Icon(Icons.arrow_forward,
-                      color: colorScheme.onSurfaceVariant.withOpacity(0.5), size: 24),
+                  child: Icon(
+                    Icons.arrow_forward,
+                    color: colorScheme.onSurfaceVariant.withOpacity(0.5),
+                    size: 24,
+                  ),
                 ),
-                Expanded(child: _buildPersonInfo(context, toName, toCompany)),
+                Expanded(
+                  child: _buildPersonInfo(context, toName, toCompany),
+                ),
               ],
             ),
+
             const SizedBox(height: 12),
 
-            // --- Meeting Details (Location & Time) ---
+            /// ── Location + Time ───────────────────────────────────────────
             Row(
               children: [
                 Expanded(
-                  child: _buildIconLabel(context, Icons.location_on_outlined, location),
+                  child: _buildIconLabel(
+                    context,
+                    Icons.location_on_outlined,
+                    location,
+                  ),
                 ),
                 Expanded(
-                  child: _buildIconLabel(context, Icons.access_time, time),
+                  child: _buildIconLabel(
+                    context,
+                    Icons.access_time,
+                    time,
+                  ),
                 ),
               ],
             ),
+
             const SizedBox(height: 16),
 
-            // --- Message Bubble ---
+            /// ── Message Bubble ────────────────────────────────────────────
             Container(
               width: double.infinity,
               padding: const EdgeInsets.all(12),
@@ -107,85 +129,79 @@ class MeetingInvitationCard extends StatelessWidget {
                 ),
               ),
             ),
-            const SizedBox(height: 16),
 
-            // --- Action Buttons (only if status is pending) ---
-            if (status == ReferralStatusEnum.pending)
+            /// ── Action Buttons (pending only) ─────────────────────────────
+            if (status == MeetingStatus.pending) ...[
+              const SizedBox(height: 16),
               Row(
                 children: [
                   Expanded(
-                    child: SizedBox(
+                    child: CustomButton(
+                      onPressed: onConfirm,
+                      isLoading: isConfirming,
                       height: 48,
-                      child: ElevatedButton(
-                        onPressed: onConfirm,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: colorScheme.primary,
-                          foregroundColor: colorScheme.onPrimary,
-                          elevation: 0,
-                          shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12)),
+                      child: Text(
+                        'Confirm',
+                        style: AppTextStyle.textSm(
+                          weight: FontWeight.w600,
+                          color: colorScheme.onPrimary,
                         ),
-                        child: const Text("Confirm"),
                       ),
                     ),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
-                    child: SizedBox(
+                    child: CustomButton(
+                      onPressed: onReject,
+                      isLoading: isRejecting,
                       height: 48,
-                      child: OutlinedButton(
-                        onPressed: onReject,
-                        style: OutlinedButton.styleFrom(
-                          side: BorderSide(color: colorScheme.outline),
-                          shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12)),
-                        ),
-                        child: const Text(
-                          "Reject",
-                          style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold),
+                      backgroundColor: Colors.transparent,
+                      side: const BorderSide(color: Colors.red),
+                      child: Text(
+                        'Reject',
+                        style: AppTextStyle.textSm(
+                          weight: FontWeight.w600,
+                          color: Colors.red,
                         ),
                       ),
                     ),
                   ),
                 ],
               ),
+            ],
+
           ],
         ),
       ),
     );
   }
 
-  // --- Status Badge ---
+  /// ── Status Badge ──────────────────────────────────────────────────────────
   Widget _buildStatusBadge(BuildContext context) {
-    Color bgColor;
-    Color textColor;
-    IconData icon;
-    String text;
+    late Color bgColor;
+    late Color textColor;
+    late IconData icon;
 
     switch (status) {
-      case ReferralStatusEnum.sent:
+      case MeetingStatus.sent:
         bgColor = Colors.blue.withOpacity(0.1);
         textColor = Colors.blue;
         icon = Icons.send;
-        text = "Sent";
         break;
-      case ReferralStatusEnum.pending:
+      case MeetingStatus.pending:
         bgColor = Colors.orange.withOpacity(0.1);
         textColor = Colors.orange;
         icon = Icons.access_time_filled;
-        text = "Pending";
         break;
-      case ReferralStatusEnum.confirm:
+      case MeetingStatus.confirmed:
         bgColor = Colors.green.withOpacity(0.1);
         textColor = Colors.green;
         icon = Icons.check_circle_outline;
-        text = "Confirmed";
         break;
-      case ReferralStatusEnum.rejected:
+      case MeetingStatus.rejected:
         bgColor = Colors.red.withOpacity(0.1);
         textColor = Colors.red;
         icon = Icons.cancel_outlined;
-        text = "Rejected";
         break;
     }
 
@@ -201,7 +217,7 @@ class MeetingInvitationCard extends StatelessWidget {
           Icon(icon, size: 14, color: textColor),
           const SizedBox(width: 6),
           Text(
-            text,
+            status.label,
             style: AppTextStyle.textXs(
               color: textColor,
               weight: FontWeight.w700,
@@ -212,8 +228,10 @@ class MeetingInvitationCard extends StatelessWidget {
     );
   }
 
-  // --- Person Info ---
+  /// ── Person Info ───────────────────────────────────────────────────────────
   Widget _buildPersonInfo(BuildContext context, String name, String company) {
+    final colorScheme = context.colorScheme;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -223,26 +241,29 @@ class MeetingInvitationCard extends StatelessWidget {
           overflow: TextOverflow.ellipsis,
           style: AppTextStyle.textSm(
             weight: FontWeight.w700,
-            color: context.colorScheme.onSurface,
+            color: colorScheme.onSurface,
           ),
         ),
+        const SizedBox(height: 2),
         Text(
           company,
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
           style: AppTextStyle.textXs(
-            color: context.colorScheme.onSurfaceVariant,
+            color: colorScheme.onSurfaceVariant,
           ),
         ),
       ],
     );
   }
 
-  // --- Icon + Label ---
+  /// ── Icon + Label ──────────────────────────────────────────────────────────
   Widget _buildIconLabel(BuildContext context, IconData icon, String label) {
+    final colorScheme = context.colorScheme;
+
     return Row(
       children: [
-        Icon(icon, size: 16, color: context.colorScheme.primary),
+        Icon(icon, size: 16, color: colorScheme.primary),
         const SizedBox(width: 6),
         Flexible(
           child: Text(
@@ -250,7 +271,7 @@ class MeetingInvitationCard extends StatelessWidget {
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: AppTextStyle.textXs(
-              color: context.colorScheme.onSurfaceVariant,
+              color: colorScheme.onSurfaceVariant,
             ),
           ),
         ),

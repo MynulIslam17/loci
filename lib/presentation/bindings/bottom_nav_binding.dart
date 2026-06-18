@@ -9,6 +9,7 @@ import 'package:loci/presentation/controllers/raffles/raffle_list_controller.dar
 import 'package:loci/presentation/controllers/network_dash/connection_controller.dart';
 
 import '../controllers/event/event_list_controller.dart';
+import '../controllers/notification/notification_controller.dart';
 import '../controllers/routes/route_details_controller.dart';
 import '../controllers/routes/route_list_controller.dart';
 
@@ -29,5 +30,7 @@ class BottomNavBinding extends Bindings {
     Get.lazyPut(() => ProfileController());
     Get.lazyPut(() => ConnectionController(), fenix: true);
     Get.lazyPut(() => QuestionListController(), fenix: true);
+    Get.lazyPut(() => NotificationController(), fenix: true);
+
   }
 }

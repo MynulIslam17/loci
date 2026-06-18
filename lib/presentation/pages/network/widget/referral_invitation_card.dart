@@ -1,34 +1,35 @@
 import 'package:flutter/material.dart';
 import 'package:loci/core/constants/app_text_style.dart';
 import 'package:loci/core/theme/theme_extention.dart';
-import 'package:loci/core/utils/status.dart';
+import 'package:loci/presentation/widgets/custom_button.dart';
+import '../../../../core/enums/referral_enum.dart';
 
 class ReferralInvitationCard extends StatelessWidget {
-  final ReferralStatusEnum status;
-  final String fromName;
-  final String fromCompany;
-  final String toName;
-  final String toCompany;
-  final String location;
-  final String time;
+  final ReferralStatus status;
+  final String recipientName;
+  final String recipientEmail;
+  final String referredByName;
+  final String referredByEmail;
   final String message;
   final String date;
-  final VoidCallback onConfirm;
-  final VoidCallback onReject;
+  final VoidCallback? onConfirm;
+  final VoidCallback? onReject;
+  final bool isAccepting;
+  final bool isRejecting;
 
   const ReferralInvitationCard({
     super.key,
     required this.status,
-    required this.fromName,
-    required this.fromCompany,
-    required this.toName,
-    required this.toCompany,
-    required this.location,
-    required this.time,
+    required this.recipientName,
+    required this.recipientEmail,
+    required this.referredByName,
+    required this.referredByEmail,
     required this.message,
     required this.date,
     required this.onConfirm,
     required this.onReject,
+    this.isAccepting = false,
+    this.isRejecting = false,
   });
 
   @override
@@ -46,16 +47,22 @@ class ReferralInvitationCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            /// Header (Status + Date)
+
+            /// ── Header: Status + Date ─────────────────────────────────────
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                _buildStatusBadge(context),
-                Text(
-                  date,
-                  style: AppTextStyle.textXs(
-                    color: colorScheme.onSurface,
-                    weight: FontWeight.w600,
+                Flexible(child: _buildStatusBadge(context)),
+                const SizedBox(width: 8),
+                Flexible(
+                  child: Text(
+                    date,
+                    textAlign: TextAlign.end,
+                    overflow: TextOverflow.ellipsis,
+                    style: AppTextStyle.textXs(
+                      color: colorScheme.onSurface,
+                      weight: FontWeight.w600,
+                    ),
                   ),
                 ),
               ],
@@ -63,39 +70,33 @@ class ReferralInvitationCard extends StatelessWidget {
 
             const SizedBox(height: 16),
 
-            /// Referral Flow
+            /// ── Recipient ← Referred by ───────────────────────────────────
             Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Expanded(child: _buildPersonInfo(context, fromName, fromCompany)),
+                Expanded(
+                  child: _buildPersonInfo(
+                    context,
+                    label: 'Recipient',
+                    name: recipientName,
+                    email: recipientEmail,
+                  ),
+                ),
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 12),
                   child: Icon(
                     Icons.arrow_forward,
                     color: colorScheme.onSurfaceVariant,
-                    size: 24,
-                  ),
-                ),
-                Expanded(child: _buildPersonInfo(context, toName, toCompany)),
-              ],
-            ),
-
-            const SizedBox(height: 12),
-
-            /// Location + Time
-            Row(
-              children: [
-                Expanded(
-                  child: _buildIconLabel(
-                    context,
-                    Icons.location_on_outlined,
-                    location,
+                    size: 22,
                   ),
                 ),
                 Expanded(
-                  child: _buildIconLabel(
+                  child: _buildPersonInfo(
                     context,
-                    Icons.access_time,
-                    time,
+                    label: 'Referred by',
+                    name: referredByName,
+                    email: referredByEmail,
+                    alignRight: true,
                   ),
                 ),
               ],
@@ -103,7 +104,7 @@ class ReferralInvitationCard extends StatelessWidget {
 
             const SizedBox(height: 16),
 
-            /// Message Bubble
+            /// ── Message Bubble ────────────────────────────────────────────
             Container(
               width: double.infinity,
               padding: const EdgeInsets.all(12),
@@ -120,48 +121,36 @@ class ReferralInvitationCard extends StatelessWidget {
               ),
             ),
 
-            /// Action Buttons (only when pending)
-            if (status == ReferralStatusEnum.pending) ...[
+            /// ── Action Buttons (pending only) ─────────────────────────────
+            if (status == ReferralStatus.pending) ...[
               const SizedBox(height: 16),
               Row(
                 children: [
                   Expanded(
-                    child: SizedBox(
-                      height: 48,
-                      child: ElevatedButton(
-                        onPressed: onConfirm,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: colorScheme.primary,
-                          foregroundColor: colorScheme.onPrimary,
-                          elevation: 0,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
+                    child: CustomButton(
+                      onPressed: onConfirm,
+                      isLoading: isAccepting,
+                      child: Text(
+                        'Confirm',
+                        style: AppTextStyle.textSm(
+                          weight: FontWeight.w600,
+                          color: colorScheme.onPrimary,
                         ),
-                        child: const Text("Confirm"),
                       ),
                     ),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
-                    child: SizedBox(
-                      height: 48,
-                      child: OutlinedButton(
-                        onPressed: onReject,
-                        style: OutlinedButton.styleFrom(
-                          side: BorderSide(
-                            color: colorScheme.outline.withOpacity(0.2),
-                          ),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                        child: const Text(
-                          "Reject",
-                          style: TextStyle(
-                            color: Colors.red,
-                            fontWeight: FontWeight.bold,
-                          ),
+                    child: CustomButton(
+                      onPressed: onReject,
+                      isLoading: isRejecting,
+                      backgroundColor: Colors.transparent,
+                      side: BorderSide(color: Colors.red),
+                      child: Text(
+                        'Reject',
+                        style: AppTextStyle.textSm(
+                          weight: FontWeight.w600,
+                          color: Colors.red,
                         ),
                       ),
                     ),
@@ -169,46 +158,44 @@ class ReferralInvitationCard extends StatelessWidget {
                 ],
               ),
             ],
+
           ],
         ),
       ),
     );
   }
 
-  /// Status Badge
+  /// ── Status Badge ──────────────────────────────────────────────────────────
   Widget _buildStatusBadge(BuildContext context) {
-    Color bgColor;
-    Color textColor;
-    IconData icon;
-    String text;
+    late Color bgColor;
+    late Color textColor;
+    late IconData icon;
 
     switch (status) {
-      case ReferralStatusEnum.sent:
+      case ReferralStatus.sent:
         bgColor = Colors.blue.shade50;
         textColor = Colors.blue.shade700;
         icon = Icons.send;
-        text = "Sent";
         break;
-
-      case ReferralStatusEnum.pending:
+      case ReferralStatus.pending:
         bgColor = Colors.amber.shade50;
         textColor = Colors.amber.shade700;
         icon = Icons.access_time_filled;
-        text = "Pending";
         break;
-
-      case ReferralStatusEnum.confirm:
+      case ReferralStatus.accepted:
         bgColor = Colors.green.shade50;
         textColor = Colors.green.shade700;
         icon = Icons.check_circle;
-        text = "Accepted";
         break;
-
-      case ReferralStatusEnum.rejected:
+      case ReferralStatus.confirmed:
+        bgColor = Colors.green.shade50;
+        textColor = Colors.green.shade700;
+        icon = Icons.check_circle;
+        break;
+      case ReferralStatus.rejected:
         bgColor = Colors.red.shade50;
         textColor = Colors.red.shade700;
         icon = Icons.cancel;
-        text = "Rejected";
         break;
     }
 
@@ -223,11 +210,14 @@ class ReferralInvitationCard extends StatelessWidget {
         children: [
           Icon(icon, size: 14, color: textColor),
           const SizedBox(width: 6),
-          Text(
-            text,
-            style: AppTextStyle.textXs(
-              color: textColor,
-              weight: FontWeight.w700,
+          Flexible(
+            child: Text(
+              status.label,
+              overflow: TextOverflow.ellipsis,
+              style: AppTextStyle.textXs(
+                color: textColor,
+                weight: FontWeight.w700,
+              ),
             ),
           ),
         ],
@@ -235,48 +225,49 @@ class ReferralInvitationCard extends StatelessWidget {
     );
   }
 
-  /// Person Info
-  Widget _buildPersonInfo(BuildContext context, String name, String company) {
+  /// ── Person Info ───────────────────────────────────────────────────────────
+  Widget _buildPersonInfo(
+    BuildContext context, {
+    required String label,
+    required String name,
+    required String email,
+    bool alignRight = false,
+  }) {
     final colorScheme = context.colorScheme;
+    final align =
+        alignRight ? CrossAxisAlignment.end : CrossAxisAlignment.start;
+    final textAlign = alignRight ? TextAlign.end : TextAlign.start;
 
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+      crossAxisAlignment: align,
       children: [
+        Text(
+          label,
+          textAlign: textAlign,
+          style: AppTextStyle.textXs(
+            color: colorScheme.onSurfaceVariant,
+            weight: FontWeight.w500,
+          ),
+        ),
+        const SizedBox(height: 4),
         Text(
           name,
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
+          textAlign: textAlign,
           style: AppTextStyle.textSm(
             weight: FontWeight.w700,
             color: colorScheme.onSurface,
           ),
         ),
+        const SizedBox(height: 2),
         Text(
-          company,
+          email,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          textAlign: textAlign,
           style: AppTextStyle.textXs(
             color: colorScheme.onSurfaceVariant,
-          ),
-        ),
-      ],
-    );
-  }
-
-  /// Icon + Label Row
-  Widget _buildIconLabel(BuildContext context, IconData icon, String label) {
-    final colorScheme = context.colorScheme;
-
-    return Row(
-      children: [
-        Icon(icon, size: 16, color: colorScheme.primary),
-        const SizedBox(width: 6),
-        Flexible(
-          child: Text(
-            label,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: AppTextStyle.textXs(
-              color: colorScheme.onSurfaceVariant,
-            ),
           ),
         ),
       ],

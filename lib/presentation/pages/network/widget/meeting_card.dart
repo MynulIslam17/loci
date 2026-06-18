@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:loci/core/constants/app_text_style.dart';
-import 'package:loci/core/enums/metting_enum.dart';
+import 'package:loci/core/enums/meeting_status.dart';
 import 'package:loci/core/theme/theme_extention.dart';
 
 class MeetingCard extends StatelessWidget {
@@ -139,6 +139,13 @@ class MeetingCard extends StatelessWidget {
     late String text;
 
     switch (status) {
+      case MeetingStatus.sent:
+        bgColor = Colors.blue.withOpacity(0.15);
+        textColor = Colors.blue;
+        icon = Icons.send;
+        text = "Sent";
+        break;
+
       case MeetingStatus.pending:
         bgColor = Colors.orange.withOpacity(0.15);
         textColor = Colors.orange;

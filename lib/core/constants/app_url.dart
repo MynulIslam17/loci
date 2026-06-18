@@ -19,7 +19,6 @@ abstract class AppUrl {
 
 
 
-
   ///=============================================== event ===============================================
 
   static const String eventList="$baseUrl/events";
@@ -69,8 +68,21 @@ abstract class AppUrl {
 
 
 
-  //--------------network
+  //--------------network------------------------
   static const String networkDashboard="$baseUrl/users/me/dashboard";
+  //--referrals
+  static const String sendReferral="$baseUrl/referrals";
+  static const String sentReferral="$baseUrl/referrals/sent";
+  static const String receiveReferral="$baseUrl/referrals/received";
+  static  String acceptReferral(String referralId)=>"$baseUrl/referrals/${referralId}/respond";
+
+
+  //--meeting
+  static const String scheduleMeeting="$baseUrl/meetings";
+  static const String incomingMeetings="$baseUrl/meetings/incoming";
+  static const String sentMeetings="$baseUrl/meetings/my";
+  static String respondMeeting(String meetingId)=>"$baseUrl/meetings/$meetingId/respond";
+
 
 
   //----recent activity
@@ -115,9 +127,11 @@ static String   addReviews(String businessId)=>"$baseUrl/reviews/$businessId";
   static  String   homeVoteOnPollOption(String questionId)=>"$baseUrl/questions/${questionId}/vote";
   static  String   homeFeedPostLike(String questionId)=>"$baseUrl/questions/${questionId}/upvote";
   static  String   questionDetails(String questionId)=>"$baseUrl/questions/$questionId";
-  static  String   questionAnswers(String questionId)=>"$baseUrl/questions/$questionId/answers";
+  static  String   questionAnswers(String questionId)=>"$baseUrl/questions/$questionId/answer";
 
+  ///-----------------notification
 
+  static const String   notifications="$baseUrl/notifications";
 
 
 

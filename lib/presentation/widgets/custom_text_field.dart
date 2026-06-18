@@ -6,6 +6,7 @@ class CustomTextField extends StatefulWidget {
   final TextInputType? keyboardType;
   final bool isObscureText;
   final String obscuringCharacter;
+  final int? maxLength;
   final Color? fillColor;
   final Color? borderColor;
   final Color? focusBorderColor;
@@ -40,6 +41,7 @@ class CustomTextField extends StatefulWidget {
     this.prefixIcon,
     this.suffixIcon,
     this.maxLine,
+    this.maxLength,
     this.validator,
     this.hintTextColor,
     this.borderColor,
@@ -105,6 +107,7 @@ class _CustomTextFieldState extends State<CustomTextField> {
         ],
 
         TextFormField(
+          maxLength: widget.maxLength,
           onChanged: widget.onChanged,
           onTap: widget.onTap,
           focusNode: widget.focusNode,
@@ -124,7 +127,7 @@ class _CustomTextFieldState extends State<CustomTextField> {
             fontSize: widget.fontSize ?? 14,
           ),
           decoration: InputDecoration(
-            isDense: true, // ✅ Makes it compact
+            isDense: true,
             contentPadding: EdgeInsets.symmetric(
               horizontal: widget.contentPaddingHorizontal ?? 14,
               vertical: widget.contentPaddingVertical ?? 14,
