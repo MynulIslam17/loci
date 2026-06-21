@@ -1,17 +1,63 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
+import 'package:get/get.dart';
+import 'package:loci/presentation/controllers/network_dash/respond_meeting_controller.dart';
+import 'package:loci/routes/app_routes.dart';
 
 import '../../../../core/constants/app_text_style.dart';
-import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/theme_extention.dart';
 import '../../../../core/utils/time_parser.dart';
 import '../../../../data/models/notification/notification_model.dart';
 
+enum _NotificationKind { meeting, referral, other }
+
 class NotificationCard extends StatelessWidget {
   final NotificationModel notification;
 
-  const NotificationCard({required this.notification});
+  const NotificationCard({super.key, required this.notification});
+
+  _NotificationKind get _kind {
+    final t = notification.type.toLowerCase();
+    if (t.contains('meeting')) return _NotificationKind.meeting;
+    if (t.contains('referral')) return _NotificationKind.referral;
+    return _NotificationKind.other;
+  }
+
+  /// Best-effort lookup for the entity id the notification refers to.
+  String? get _referenceId {
+    for (final key in const [
+      'meetingId',
+      'referralId',
+      'referenceId',
+      'id',
+      '_id',
+    ]) {
+      final value = notification.data[key];
+      if (value is String && value.isNotEmpty) return value;
+    }
+    return null;
+  }
+
+  bool get _canRespondToMeeting =>
+      _kind == _NotificationKind.meeting &&
+      notification.actionRequired &&
+      _referenceId != null;
+
+  void _onTapBody() {
+    switch (_kind) {
+      case _NotificationKind.meeting:
+        // Land on the Received tab — this is an incoming invitation.
+        Get.toNamed(
+          AppRoutes.meeting,
+          arguments: {'initialTab': 'received'},
+        );
+        break;
+      case _NotificationKind.referral:
+        Get.toNamed(AppRoutes.referral);
+        break;
+      case _NotificationKind.other:
+        break;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -26,7 +72,7 @@ class NotificationCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(12),
         child: InkWell(
           borderRadius: BorderRadius.circular(12),
-          onTap: () {},
+          onTap: _onTapBody,
           child: Padding(
             padding: const EdgeInsets.all(12),
             child: Column(
@@ -60,7 +106,7 @@ class NotificationCard extends StatelessWidget {
                                 Container(
                                   width: 8,
                                   height: 8,
-                                  decoration: BoxDecoration(
+                                  decoration: const BoxDecoration(
                                     color: Colors.red,
                                     shape: BoxShape.circle,
                                   ),
@@ -83,53 +129,9 @@ class NotificationCard extends StatelessWidget {
                     ),
                   ],
                 ),
-                if (notification.actionRequired) ...[
+                if (_canRespondToMeeting) ...[
                   const SizedBox(height: 12),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: ElevatedButton(
-                          onPressed: () {},
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF62B4AC),
-                            foregroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(vertical: 10),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                          ),
-                          child: Text(
-                            "Confirm",
-                            style: AppTextStyle.textSm(
-                              color: Colors.white,
-                              weight: FontWeight.w600,
-                            ),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: OutlinedButton(
-                          onPressed: () {},
-                          style: OutlinedButton.styleFrom(
-                            foregroundColor: Colors.redAccent,
-                            padding: const EdgeInsets.symmetric(vertical: 10),
-                            side: const BorderSide(color: Colors.redAccent),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                          ),
-                          child: Text(
-                            "Reject",
-                            style: AppTextStyle.textSm(
-                              color: Colors.redAccent,
-                              weight: FontWeight.w600,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
+                  _MeetingActionRow(meetingId: _referenceId!),
                 ],
               ],
             ),
@@ -138,14 +140,116 @@ class NotificationCard extends StatelessWidget {
       ),
     );
   }
-
 }
 
+/// Confirm / Reject buttons for a meeting notification.
+/// Reads the live respond state from [RespondMeetingController] so the
+/// button shows a spinner while the request is in flight.
+class _MeetingActionRow extends StatelessWidget {
+  final String meetingId;
+
+  const _MeetingActionRow({required this.meetingId});
+
+  RespondMeetingController _responder() {
+    if (!Get.isRegistered<RespondMeetingController>()) {
+      Get.put(RespondMeetingController(), permanent: true);
+    }
+    return Get.find<RespondMeetingController>();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final controller = _responder();
+
+    return GetBuilder<RespondMeetingController>(
+      init: controller,
+      builder: (ctrl) {
+        final isConfirming = ctrl.isConfirming(meetingId);
+        final isRejecting = ctrl.isRejecting(meetingId);
+        final isBusy = ctrl.isResponding(meetingId);
+
+        return Row(
+          children: [
+            Expanded(
+              child: ElevatedButton(
+                onPressed: isBusy
+                    ? null
+                    : () => ctrl.respond(
+                          meetingId,
+                          RespondMeetingController.confirmAction,
+                        ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF62B4AC),
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 10),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+                child: isConfirming
+                    ? const SizedBox(
+                        height: 18,
+                        width: 18,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.white,
+                        ),
+                      )
+                    : Text(
+                        "Confirm",
+                        style: AppTextStyle.textSm(
+                          color: Colors.white,
+                          weight: FontWeight.w600,
+                        ),
+                      ),
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: OutlinedButton(
+                onPressed: isBusy
+                    ? null
+                    : () => ctrl.respond(
+                          meetingId,
+                          RespondMeetingController.rejectAction,
+                        ),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: Colors.redAccent,
+                  padding: const EdgeInsets.symmetric(vertical: 10),
+                  side: const BorderSide(color: Colors.redAccent),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+                child: isRejecting
+                    ? const SizedBox(
+                        height: 18,
+                        width: 18,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.redAccent,
+                        ),
+                      )
+                    : Text(
+                        "Reject",
+                        style: AppTextStyle.textSm(
+                          color: Colors.redAccent,
+                          weight: FontWeight.w600,
+                        ),
+                      ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+}
 
 class TypeIcon extends StatelessWidget {
   final String type;
 
-  const TypeIcon({required this.type});
+  const TypeIcon({super.key, required this.type});
 
   @override
   Widget build(BuildContext context) {

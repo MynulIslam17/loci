@@ -58,6 +58,7 @@ class _PostInputFieldState extends State<PostInputField>
   }
 
   void _collapse() {
+    if (!mounted) return;
     if (_controller.text.isEmpty && !_isPopupOpen) {
       _expandAnim.reverse().then((_) {
         if (mounted) setState(() => _isExpanded = false);

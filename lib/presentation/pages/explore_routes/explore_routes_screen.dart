@@ -6,6 +6,7 @@ import 'package:loci/presentation/pages/explore_routes/route_details_screen.dart
 import 'package:loci/presentation/widgets/custom_text_field.dart';
 import '../../controllers/routes/route_list_controller.dart';
 import 'widgets/route_card.dart';
+import 'widgets/route_card_skeleton.dart';
 
 class ExploreRoutesScreen extends StatelessWidget {
   const ExploreRoutesScreen({super.key});
@@ -33,6 +34,7 @@ class ExploreRoutesPage extends StatefulWidget {
 class _ExploreRoutesPageState extends State<ExploreRoutesPage> {
   final routeController = Get.find<RouteListController>();
   final ScrollController _scrollController = ScrollController();
+  final TextEditingController _searchController = TextEditingController();
 
   @override
   void initState() {
@@ -44,6 +46,8 @@ class _ExploreRoutesPageState extends State<ExploreRoutesPage> {
       }
     });
 
+    _searchController.text = routeController.searchQuery;
+
     //routes call
     routeController.fetchRoutes();
 
@@ -52,6 +56,7 @@ class _ExploreRoutesPageState extends State<ExploreRoutesPage> {
   @override
   void dispose() {
     _scrollController.dispose();
+    _searchController.dispose();
     super.dispose();
   }
 
@@ -79,109 +84,137 @@ class _ExploreRoutesPageState extends State<ExploreRoutesPage> {
       padding: const EdgeInsets.symmetric(horizontal: 16.0),
       child: GetBuilder<RouteListController>(
         builder: (controller) {
-          // Loading
-          if (controller.isLoading) {
-            return const Center(child: CircularProgressIndicator());
-          }
+          final hasSearch = controller.searchQuery.trim().isNotEmpty;
+          final isInitialLoading = controller.isLoading;
+          final hasFatalError = controller.errorMessage != null &&
+              controller.routeList.isEmpty &&
+              !isInitialLoading;
 
-          // Error
-          if (controller.errorMessage != null && controller.routeList.isEmpty) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.error_outline, size: 48, color: colorScheme.error),
-                  const SizedBox(height: 12),
-                  Text(
-                    controller.errorMessage!,
-                    style: AppTextStyle.textSm(color: colorScheme.error),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 16),
-                  TextButton(
-                    onPressed: () => controller.fetchRoutes(),
-                    child: const Text("Try Again"),
-                  ),
-                ],
-              ),
-            );
-          }
-
-          // Empty
-          if (controller.routeList.isEmpty) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    Icons.route,
-                    size: 48,
-                    color: colorScheme.onSurfaceVariant,
-                  ),
-                  const SizedBox(height: 12),
-                  Text(
-                    "No routes found",
-                    style: AppTextStyle.textSm(
-                      color: colorScheme.onSurfaceVariant,
-                    ),
-                  ),
-                ],
-              ),
-            );
-          }
-
-          // List + Refresh + Pagination
           return RefreshIndicator(
             onRefresh: () => controller.fetchRoutes(isRefresh: true),
             child: CustomScrollView(
-              controller: _scrollController,
-              slivers: [
-                // Search + Header
-                SliverToBoxAdapter(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const SizedBox(height: 16),
-                      CustomTextField(
-                        hintText: "Search Routes",
-                        hintTextColor: colorScheme.onSurfaceVariant,
-                        fontSize: 14,
-                        borderColor: colorScheme.outline,
-                        textColor: colorScheme.onSurface,
-                        suffixIcon: Icon(
-                          Icons.search,
-                          color: colorScheme.onSurfaceVariant,
-                        ),
+            controller: _scrollController,
+            slivers: [
+              // Search + Header
+              SliverToBoxAdapter(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const SizedBox(height: 16),
+                    CustomTextField(
+                      controller: _searchController,
+                      hintText: "Search Routes",
+                      hintTextColor: colorScheme.onSurfaceVariant,
+                      fontSize: 14,
+                      borderColor: colorScheme.outline,
+                      textColor: colorScheme.onSurface,
+                      onChanged: controller.onSearchChanged,
+                      suffixIcon: hasSearch
+                          ? IconButton(
+                              icon: Icon(
+                                Icons.close,
+                                color: colorScheme.onSurfaceVariant,
+                              ),
+                              onPressed: () {
+                                _searchController.clear();
+                                controller.onSearchChanged('');
+                              },
+                            )
+                          : Icon(
+                              Icons.search,
+                              color: colorScheme.onSurfaceVariant,
+                            ),
+                    ),
+                    const SizedBox(height: 24),
+                    Text(
+                      "Explore Routes",
+                      style: AppTextStyle.textXl(
+                        color: colorScheme.onSurface,
+                        weight: FontWeight.w600,
                       ),
-                      const SizedBox(height: 24),
-                      Text(
-                        "Explore Routes",
-                        style: AppTextStyle.textXl(
-                          color: colorScheme.onSurface,
-                          weight: FontWeight.w600,
-                        ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      "Discover pub crawls, shop hopping, and scavenger hunts",
+                      style: AppTextStyle.textSm(
+                        color: colorScheme.onSurfaceVariant,
                       ),
-                      const SizedBox(height: 8),
-                      Text(
-                        "Discover pub crawls, shop hopping, and scavenger hunts",
-                        style: AppTextStyle.textSm(
-                          color: colorScheme.onSurfaceVariant,
-                        ),
-                      ),
-                      const SizedBox(height: 20),
-                    ],
-                  ),
+                    ),
+                    const SizedBox(height: 20),
+                  ],
                 ),
+              ),
 
-                // Route List
+              if (isInitialLoading)
+                SliverList(
+                  delegate: SliverChildBuilderDelegate(
+                    (_, _) => const Padding(
+                      padding: EdgeInsets.only(bottom: 16.0),
+                      child: RouteCardSkeleton(),
+                    ),
+                    childCount: 3,
+                  ),
+                )
+              else if (hasFatalError)
+                SliverFillRemaining(
+                  hasScrollBody: false,
+                  child: Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.error_outline,
+                            size: 48, color: colorScheme.error),
+                        const SizedBox(height: 12),
+                        Text(
+                          controller.errorMessage!,
+                          style: AppTextStyle.textSm(color: colorScheme.error),
+                          textAlign: TextAlign.center,
+                        ),
+                        const SizedBox(height: 16),
+                        TextButton(
+                          onPressed: () => controller.fetchRoutes(),
+                          child: const Text("Try Again"),
+                        ),
+                      ],
+                    ),
+                  ),
+                )
+              else if (controller.routeList.isEmpty)
+                SliverFillRemaining(
+                  hasScrollBody: false,
+                  child: Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          hasSearch
+                              ? Icons.search_off_outlined
+                              : Icons.route,
+                          size: 48,
+                          color: colorScheme.onSurfaceVariant,
+                        ),
+                        const SizedBox(height: 12),
+                        Text(
+                          hasSearch
+                              ? "No routes match \"${controller.searchQuery}\""
+                              : "No routes found",
+                          style: AppTextStyle.textSm(
+                            color: colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                )
+              else
                 SliverList(
                   delegate: SliverChildBuilderDelegate(
                     (context, index) {
-                      // Pagination loader
+                      // Pagination skeleton
                       if (index == controller.routeList.length) {
                         return const Padding(
-                          padding: EdgeInsets.symmetric(vertical: 16),
-                          child: Center(child: CircularProgressIndicator()),
+                          padding: EdgeInsets.only(bottom: 16.0),
+                          child: RouteCardSkeleton(),
                         );
                       }
 
@@ -196,21 +229,20 @@ class _ExploreRoutesPageState extends State<ExploreRoutesPage> {
                           openingTime: route.openingTime,
                           availabilityType: route.availabilityType,
                           imageUrl: route.banner,
-                          onTap:(){
-
-                            _onTapRouteHandler(context,route.routeId,route.title);
-                          }
+                          onTap: () {
+                            _onTapRouteHandler(
+                                context, route.routeId, route.title);
+                          },
                         ),
                       );
                     },
-                    childCount:
-                        controller.routeList.length +
+                    childCount: controller.routeList.length +
                         (controller.isPaginationLoading ? 1 : 0),
                   ),
                 ),
 
-                const SliverToBoxAdapter(child: SizedBox(height: 20)),
-              ],
+              const SliverToBoxAdapter(child: SizedBox(height: 20)),
+            ],
             ),
           );
         },

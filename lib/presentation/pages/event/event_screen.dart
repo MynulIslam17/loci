@@ -9,6 +9,7 @@ import 'package:loci/routes/app_routes.dart';
 import '../../../core/enums/rsvp_status.dart';
 import '../../controllers/event/event_list_controller.dart';
 import 'widgets/event_card.dart';
+import 'widgets/event_card_skeleton.dart';
 
 class EventScreen extends StatefulWidget {
   const EventScreen({super.key});
@@ -24,6 +25,7 @@ class _EventScreenState extends State<EventScreen> {
 
   //---scroll controller for pagination loader
   final ScrollController _scrollController = ScrollController();
+  final TextEditingController _searchController = TextEditingController();
 
   @override
   void initState() {
@@ -35,6 +37,8 @@ class _EventScreenState extends State<EventScreen> {
       }
     });
 
+    _searchController.text = eventController.searchQuery;
+
     eventController.fetchEvents();
 
   }
@@ -42,6 +46,7 @@ class _EventScreenState extends State<EventScreen> {
   @override
   void dispose() {
     _scrollController.dispose();
+    _searchController.dispose();
     super.dispose();
   }
 
@@ -80,65 +85,12 @@ class _EventScreenState extends State<EventScreen> {
           child: GetBuilder<EventListController>(
             init: EventListController(),
             builder: (controller) {
-              // Loading sate
-              if (controller.isLoading) {
-                return const Center(child: CircularProgressIndicator());
-              }
+              final hasSearch = controller.searchQuery.trim().isNotEmpty;
+              final isInitialLoading = controller.isLoading;
+              final hasFatalError = controller.errorMessage != null &&
+                  controller.eventList.isEmpty &&
+                  !isInitialLoading;
 
-              // Error state
-              if (controller.errorMessage != null &&
-                  controller.eventList.isEmpty) {
-                return Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        Icons.error_outline,
-                        size: 48,
-                        color: context.colorScheme.error,
-                      ),
-                      const SizedBox(height: 12),
-                      Text(
-                        controller.errorMessage!,
-                        style: AppTextStyle.textSm(
-                          color: context.colorScheme.error,
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                      const SizedBox(height: 16),
-                      TextButton(
-                        onPressed: () => controller.fetchEvents(),
-                        child: const Text("Try Again"),
-                      ),
-                    ],
-                  ),
-                );
-              }
-
-              // Empty
-              if (controller.eventList.isEmpty) {
-                return Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        Icons.event_busy,
-                        size: 48,
-                        color: context.colorScheme.onSurfaceVariant,
-                      ),
-                      const SizedBox(height: 12),
-                      Text(
-                        "No upcoming events",
-                        style: AppTextStyle.textSm(
-                          color: context.colorScheme.onSurfaceVariant,
-                        ),
-                      ),
-                    ],
-                  ),
-                );
-              }
-
-              //  Search + Header + List will scroll together
               return RefreshIndicator(
                 onRefresh: () => controller.fetchEvents(isRefresh: true),
                 child: CustomScrollView(
@@ -150,14 +102,29 @@ class _EventScreenState extends State<EventScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           CustomTextField(
+                            controller: _searchController,
                             borderColor: context.colorScheme.outline,
                             hintText: "Search Event",
                             hintTextColor: context.colorScheme.onSurfaceVariant,
                             textColor: context.colorScheme.onSurface,
-                            suffixIcon: Icon(
-                              Icons.search,
-                              color: context.colorScheme.onSurfaceVariant,
-                            ),
+                            onChanged: controller.onSearchChanged,
+                            suffixIcon: hasSearch
+                                ? IconButton(
+                                    icon: Icon(
+                                      Icons.close,
+                                      color: context
+                                          .colorScheme.onSurfaceVariant,
+                                    ),
+                                    onPressed: () {
+                                      _searchController.clear();
+                                      controller.onSearchChanged('');
+                                    },
+                                  )
+                                : Icon(
+                                    Icons.search,
+                                    color:
+                                        context.colorScheme.onSurfaceVariant,
+                                  ),
                           ),
                           const SizedBox(height: 16),
                           Text(
@@ -179,51 +146,119 @@ class _EventScreenState extends State<EventScreen> {
                       ),
                     ),
 
-                    // Event List
-                    SliverList(
-                      delegate: SliverChildBuilderDelegate(
-                        (context, index) {
-                          // Pagination loader
-                          if (index == controller.eventList.length) {
-                            return const Padding(
-                              padding: EdgeInsets.symmetric(vertical: 16),
-                              child: Center(child: CircularProgressIndicator()),
-                            );
-                          }
-
-                          //get single event from data
-                          final event = controller.eventList[index];
-
-                          return Padding(
-                            padding: const EdgeInsets.only(bottom: 6),
-                            child: GetBuilder<RSVPController>(builder: (rsvpController){
-
-                              // check if button loading
-                              bool isThisButtonLoading=rsvpController.isLoading && event.id ==rsvpController.loadingEventId;
-
-                              return EventCard(
-                                rsvpButtonText: event.myRsvpStatus.label,//send string rsvp status
-                                onTapCard: () => _eventOnTapHandler(event.id,event.title),
-                                imageUrl: event.coverImage,
-                                title: event.title,
-                                description: event.description,
-                                date: event.date,
-                                location: event.location,
-                                attendance:
-                                "${event.goingCount} going / ${event.maxAttendees} max",
-                                organizer: event.organizerName,
-                                onRSVP: () => _rsvpOnTapHandler(event.id),
-                                isLoading: isThisButtonLoading,
+                    if (isInitialLoading)
+                      SliverList(
+                        delegate: SliverChildBuilderDelegate(
+                          (_, _) => const Padding(
+                            padding: EdgeInsets.only(bottom: 6),
+                            child: EventCardSkeleton(),
+                          ),
+                          childCount: 3,
+                        ),
+                      )
+                    else if (hasFatalError)
+                      SliverFillRemaining(
+                        hasScrollBody: false,
+                        child: Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                Icons.error_outline,
+                                size: 48,
+                                color: context.colorScheme.error,
+                              ),
+                              const SizedBox(height: 12),
+                              Text(
+                                controller.errorMessage!,
+                                style: AppTextStyle.textSm(
+                                  color: context.colorScheme.error,
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                              const SizedBox(height: 16),
+                              TextButton(
+                                onPressed: () => controller.fetchEvents(),
+                                child: const Text("Try Again"),
+                              ),
+                            ],
+                          ),
+                        ),
+                      )
+                    else if (controller.eventList.isEmpty)
+                      SliverFillRemaining(
+                        hasScrollBody: false,
+                        child: Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                hasSearch
+                                    ? Icons.search_off_outlined
+                                    : Icons.event_busy,
+                                size: 48,
+                                color: context.colorScheme.onSurfaceVariant,
+                              ),
+                              const SizedBox(height: 12),
+                              Text(
+                                hasSearch
+                                    ? "No events match \"${controller.searchQuery}\""
+                                    : "No upcoming events",
+                                style: AppTextStyle.textSm(
+                                  color: context.colorScheme.onSurfaceVariant,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      )
+                    else
+                      SliverList(
+                        delegate: SliverChildBuilderDelegate(
+                          (context, index) {
+                            // Pagination skeleton
+                            if (index == controller.eventList.length) {
+                              return const Padding(
+                                padding: EdgeInsets.only(bottom: 6),
+                                child: EventCardSkeleton(),
                               );
+                            }
 
-                            })
-                          );
-                        },
-                        childCount:
-                            controller.eventList.length +
-                            (controller.isPaginationLoading ? 1 : 0),
+                            //get single event from data
+                            final event = controller.eventList[index];
+
+                            return Padding(
+                              padding: const EdgeInsets.only(bottom: 6),
+                              child: GetBuilder<RSVPController>(
+                                  builder: (rsvpController) {
+                                // check if button loading
+                                bool isThisButtonLoading =
+                                    rsvpController.isLoading &&
+                                        event.id ==
+                                            rsvpController.loadingEventId;
+
+                                return EventCard(
+                                  rsvpButtonText: event.myRsvpStatus.label,
+                                  onTapCard: () => _eventOnTapHandler(
+                                      event.id, event.title),
+                                  imageUrl: event.coverImage,
+                                  title: event.title,
+                                  description: event.description,
+                                  date: event.date,
+                                  location: event.location,
+                                  attendance:
+                                      "${event.goingCount} going / ${event.maxAttendees} max",
+                                  organizer: event.organizerName,
+                                  onRSVP: () => _rsvpOnTapHandler(event.id),
+                                  isLoading: isThisButtonLoading,
+                                );
+                              }),
+                            );
+                          },
+                          childCount: controller.eventList.length +
+                              (controller.isPaginationLoading ? 1 : 0),
+                        ),
                       ),
-                    ),
                   ],
                 ),
               );

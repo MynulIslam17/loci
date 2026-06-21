@@ -36,8 +36,9 @@ class EventUpdateRequest {
     if (details != null) data['details'] = details!;
     if (eventDate != null) data['eventDate'] = eventDate!;
     if (eventTime != null) data['eventTime'] = eventTime!;
-    if (maxParticipants != null)
+    if (maxParticipants != null) {
       data['maxParticipants'] = maxParticipants.toString();
+    }
     if (location != null) data['location'] = location!;
     if (url != null) data['url'] = url!;
     if (isPublic != null) data['isPublic'] = isPublic.toString();

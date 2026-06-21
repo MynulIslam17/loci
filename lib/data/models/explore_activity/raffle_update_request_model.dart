@@ -47,6 +47,7 @@ class RaffleUpdateRequest {
     if (maxSupply != null) map['maxSupply'] = maxSupply.toString();
     if (status != null) map['status'] = status!;
     if (isPublic != null) map['isPublic'] = isPublic.toString();
+    if (removeCoupon != null) map['removeCoupon'] = removeCoupon.toString();
     if (raffleBundleName != null) map['raffleBundleName'] = raffleBundleName!;
 
 

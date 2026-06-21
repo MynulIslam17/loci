@@ -1,20 +1,17 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:loci/core/constants/app_text_style.dart';
 import 'package:loci/core/enums/category_enum.dart';
 import 'package:loci/core/theme/theme_extention.dart';
-import 'package:loci/core/utils/show_snackbar.dart';
-import 'package:loci/presentation/widgets/custom_button.dart';
 import 'package:loci/presentation/widgets/custom_dropdown.dart';
 import 'package:loci/presentation/widgets/custom_image_container.dart';
 import 'package:loci/presentation/widgets/custom_text_field.dart';
 import 'package:loci/routes/app_routes.dart';
 
-import '../../../core/theme/app_colors.dart';
 import '../../controllers/my_business/get_my_business_list _controller.dart';
 import '../../widgets/custom_appbar.dart';
 import '../../widgets/error_state.dart';
+import 'widgets/my_business_card_shimmer.dart';
 
 class SearchMyBusiness extends StatefulWidget {
   const SearchMyBusiness({super.key});
@@ -29,20 +26,28 @@ class _SearchMyBusinessState extends State<SearchMyBusiness> {
   BusinessCategory? selectedCategory;
   int? _expandedIndex;
 
-  //---view page handler
+  // --- Actions ----------------------------------------------------------------
 
-  void _onViewPageHandler({
+  void _onCategoryChanged(BusinessCategory? value) {
+    setState(() => selectedCategory = value);
+    myBusinessController.getMyBusinesses(category: value?.label);
+  }
+
+  void _retry() {
+    myBusinessController.getMyBusinesses(category: selectedCategory?.label);
+  }
+
+  Future<void> _onViewPageHandler({
     required String businessId,
     required String businessName,
   }) async {
-    final result = await Get.toNamed(
+    await Get.toNamed(
       AppRoutes.myBusinessProfile,
       arguments: {"businessId": businessId, "businessName": businessName},
     );
-
-    // TODO : on success
-    if (result != null && result["success"] == true) {}
   }
+
+  // --- Build ------------------------------------------------------------------
 
   @override
   Widget build(BuildContext context) {
@@ -50,243 +55,273 @@ class _SearchMyBusinessState extends State<SearchMyBusiness> {
 
     return Scaffold(
       backgroundColor: colorScheme.surface,
-        appBar: CustomAppbar(title: "Search My Business"),
-      body:CustomScrollView(
-        slivers: [
-          /// ================= HEADER =================
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.all(15),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  /// 🔎 SEARCH + ADD
-                  Row(
-                    children: [
-                      Expanded(
-                        flex: 3,
-                        child: CustomTextField(
-                          hintText: "Claim your Business",
-                          borderColor: colorScheme.outline,
-                          fontSize: 14,
-                          textColor: colorScheme.onSurface,
-                          hintTextColor: colorScheme.onSurfaceVariant,
-                          suffixIcon: Icon(
-                            Icons.search,
-                            color: colorScheme.onSurfaceVariant,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      ElevatedButton.icon(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: colorScheme.primary,
-                          foregroundColor: colorScheme.onPrimary,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                        ),
-                        icon: Icon(Icons.add, color: colorScheme.onPrimary),
-                        onPressed: () {
-                          Get.toNamed(
-                            AppRoutes.clamBusinessProfile,
-                            arguments: {'isFromManualClaim': false},
-                          );
-                        },
-                        label: const Text("Add"),
-                      ),
-                    ],
-                  ),
+      appBar: const CustomAppbar(title: "Search My Business"),
+      body: GetBuilder<GetMyBusinessController>(
+        builder: (controller) {
+          // Only show the category filter when there is something to filter,
+          // OR a filter is already applied (so the user can change/clear it).
+          final showFilter = controller.isBusinessOwner &&
+              controller.errorMessage == null &&
+              (selectedCategory != null || controller.businessList.isNotEmpty);
 
-                  const SizedBox(height: 20),
-
-                  /// 📌 MANUAL ADD CARD
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: colorScheme.primary.withOpacity(0.05),
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(
-                        color: colorScheme.primary.withOpacity(0.2),
-                      ),
-                    ),
-                    child: Row(
-                      children: [
-                        CircleAvatar(
-                          radius: 18,
-                          backgroundColor: colorScheme.primary.withOpacity(0.1),
-                          child: Icon(
-                            Icons.business_center_outlined,
-                            size: 18,
-                            color: colorScheme.primary,
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                "Can't find your business?",
-                                style: AppTextStyle.textSm(
-                                  weight: FontWeight.w500,
-                                ),
-                              ),
-                              Text(
-                                "Create new listing manually",
-                                style: AppTextStyle.textXs(
-                                  color: colorScheme.onSurfaceVariant,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        TextButton(
-                          onPressed: () =>
-                              Get.toNamed(AppRoutes.manualClaimBusiness),
-                          child: const Row(
-                            children: [
-                              Text("Add Now"),
-                              Icon(Icons.chevron_right, size: 18),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-
-                  const SizedBox(height: 24),
-
-                  /// 📂 CATEGORY DROPDOWN
-                  SizedBox(
-                    width: 200,
-                    child: Card(
-                      color: colorScheme.surfaceContainerHigh,
-                      child: CustomDropdown<BusinessCategory>(
-                        dropdownColor: colorScheme.surfaceContainerHigh,
-                        borderColor: colorScheme.outline,
-                        hintColor: colorScheme.onSurfaceVariant,
-                        textColor: colorScheme.onSurface,
-                        value: selectedCategory,
-                        hintText: "Select Category",
-                        onChanged: (value) {
-                          setState(() {
-                            selectedCategory = value;
-                          });
-
-                          myBusinessController.getMyBusinesses(
-                            category: value?.label,
-                          );
-                        },
-                        items: BusinessCategory.values
-                            .map(
-                              (category) => DropdownMenuItem(
-                            value: category,
-                            child: Text(category.label),
-                          ),
-                        )
-                            .toList(),
-                      ),
-                    ),
-                  ),
-
-                  const SizedBox(height: 16),
-                ],
-              ),
+          return RefreshIndicator(
+            onRefresh: () => myBusinessController.getMyBusinesses(
+              category: selectedCategory?.label,
             ),
-          ),
-
-          /// ================= STATE HANDLING =================
-          SliverToBoxAdapter(
-            child: GetBuilder<GetMyBusinessController>(
-              builder: (controller) {
-                /// NOT OWNER
-                if (!controller.isBusinessOwner) {
-                  return const Center(
-                    child: Padding(
-                      padding: EdgeInsets.only(top: 50),
-                      child: Text("You are not a business owner"),
-                    ),
-                  );
-                }
-
-                /// LOADING
-                if (controller.isLoading) {
-                  return const Center(
-                    child: Padding(
-                      padding: EdgeInsets.only(top: 50),
-                      child: CircularProgressIndicator(),
-                    ),
-                  );
-                }
-
-                /// ERROR
-                if (controller.errorMessage != null) {
-                  return ErrorStateWidget(
-                    message: controller.errorMessage!,
-                    onRetry: () => controller.getMyBusinesses(
-                      category: selectedCategory?.label,
-                    ),
-                  );
-                }
-
-                /// EMPTY
-                if (controller.businessList.isEmpty) {
-                  return const Center(
-                    child: Padding(
-                      padding: EdgeInsets.only(top: 50),
-                      child: Text("No business claimed yet"),
-                    ),
-                  );
-                }
-
-                /// SUCCESS PLACEHOLDER (LIST BELOW)
-                return const SizedBox.shrink();
-              },
+            child: CustomScrollView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              slivers: [
+                SliverToBoxAdapter(child: _buildHeader(colorScheme)),
+                if (showFilter)
+                  SliverToBoxAdapter(child: _buildCategoryFilter(colorScheme)),
+                _buildBody(controller, colorScheme),
+              ],
             ),
-          ),
-
-          /// ================= BUSINESS LIST =================
-          GetBuilder<GetMyBusinessController>(
-            builder: (controller) {
-              /// HIDE LIST IF NOT VALID
-              if (!controller.isBusinessOwner ||
-                  controller.isLoading ||
-                  controller.errorMessage != null ||
-                  controller.businessList.isEmpty) {
-                return const SliverToBoxAdapter(child: SizedBox());
-              }
-
-              return SliverList(
-                delegate: SliverChildBuilderDelegate(
-                      (context, index) {
-                    final business = controller.businessList[index];
-
-                    return _buildExpandableBusinessCard(
-                      colorScheme: context.colorScheme,
-                      index: index,
-                      isExpanded: _expandedIndex == index,
-                      businessName: business.name ?? "",
-                      imagePath: business.logo ?? "",
-                      description: business.description ?? "",
-                      onViewPage: () => _onViewPageHandler(
-                        businessId: business.id ?? "",
-                        businessName: business.name ?? "",
-                      ),
-                    );
-                  },
-                  childCount: controller.businessList.length,
-                ),
-              );
-            },
-          ),
-        ],
-      )
+          );
+        },
+      ),
     );
   }
 
-  // --- Expandable Business Card ---
+  // --- Header -----------------------------------------------------------------
+
+  Widget _buildHeader(ColorScheme colorScheme) {
+    return Padding(
+      padding: const EdgeInsets.all(15),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          /// SEARCH + ADD
+          Row(
+            children: [
+              Expanded(
+                flex: 3,
+                child: CustomTextField(
+                  hintText: "Claim your Business",
+                  borderColor: colorScheme.outline,
+                  fontSize: 14,
+                  textColor: colorScheme.onSurface,
+                  hintTextColor: colorScheme.onSurfaceVariant,
+                  suffixIcon: Icon(
+                    Icons.search,
+                    color: colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              ElevatedButton.icon(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: colorScheme.primary,
+                  foregroundColor: colorScheme.onPrimary,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
+                icon: Icon(Icons.add, color: colorScheme.onPrimary),
+                onPressed: () {
+                  Get.toNamed(
+                    AppRoutes.clamBusinessProfile,
+                    arguments: {'isFromManualClaim': false},
+                  );
+                },
+                label: const Text("Add"),
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 20),
+
+          /// MANUAL ADD CARD
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: colorScheme.primary.withOpacity(0.05),
+              borderRadius: BorderRadius.circular(12),
+              border:
+                  Border.all(color: colorScheme.primary.withOpacity(0.2)),
+            ),
+            child: Row(
+              children: [
+                CircleAvatar(
+                  radius: 18,
+                  backgroundColor: colorScheme.primary.withOpacity(0.1),
+                  child: Icon(
+                    Icons.business_center_outlined,
+                    size: 18,
+                    color: colorScheme.primary,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        "Can't find your business?",
+                        style: AppTextStyle.textSm(weight: FontWeight.w500),
+                      ),
+                      Text(
+                        "Create new listing manually",
+                        style: AppTextStyle.textXs(
+                          color: colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                TextButton(
+                  onPressed: () =>
+                      Get.toNamed(AppRoutes.manualClaimBusiness),
+                  child: const Row(
+                    children: [
+                      Text("Add Now"),
+                      Icon(Icons.chevron_right, size: 18),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // --- Filter -----------------------------------------------------------------
+
+  Widget _buildCategoryFilter(ColorScheme colorScheme) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(15, 0, 15, 16),
+      child: SizedBox(
+        width: 200,
+        child: Card(
+          color: colorScheme.surfaceContainerHigh,
+          child: CustomDropdown<BusinessCategory>(
+            dropdownColor: colorScheme.surfaceContainerHigh,
+            borderColor: colorScheme.outline,
+            hintColor: colorScheme.onSurfaceVariant,
+            textColor: colorScheme.onSurface,
+            value: selectedCategory,
+            hintText: "Select Category",
+            onChanged: _onCategoryChanged,
+            items: BusinessCategory.values
+                .map((category) => DropdownMenuItem(
+                      value: category,
+                      child: Text(category.label),
+                    ))
+                .toList(),
+          ),
+        ),
+      ),
+    );
+  }
+
+  // --- Body (single source of truth for all states) --------------------------
+
+  Widget _buildBody(GetMyBusinessController controller, ColorScheme colorScheme) {
+    if (!controller.isBusinessOwner) {
+      return _fillMessage(
+        icon: Icons.lock_outline,
+        title: "You are not a business owner",
+        subtitle: "Claim a business to manage it here.",
+        colorScheme: colorScheme,
+      );
+    }
+
+    if (controller.isLoading) {
+      return SliverList(
+        delegate: SliverChildBuilderDelegate(
+          (_, _) => const MyBusinessCardShimmer(),
+          childCount: 4,
+        ),
+      );
+    }
+
+    if (controller.errorMessage != null) {
+      return SliverFillRemaining(
+        hasScrollBody: false,
+        child: ErrorStateWidget(
+          message: controller.errorMessage!,
+          onRetry: _retry,
+        ),
+      );
+    }
+
+    if (controller.businessList.isEmpty) {
+      final isFiltering = selectedCategory != null;
+      return _fillMessage(
+        icon: isFiltering
+            ? Icons.search_off_outlined
+            : Icons.storefront_outlined,
+        title: isFiltering
+            ? "No businesses in this category"
+            : "No business claimed yet",
+        subtitle: isFiltering
+            ? "Try a different category or clear the filter."
+            : "Use the search above to claim your first business.",
+        colorScheme: colorScheme,
+      );
+    }
+
+    return SliverList(
+      delegate: SliverChildBuilderDelegate(
+        (context, index) {
+          final business = controller.businessList[index];
+          return _buildExpandableBusinessCard(
+            colorScheme: colorScheme,
+            index: index,
+            isExpanded: _expandedIndex == index,
+            businessName: business.name,
+            imagePath: business.logo ?? "",
+            description: business.description ?? "",
+            onViewPage: () => _onViewPageHandler(
+              businessId: business.id,
+              businessName: business.name,
+            ),
+          );
+        },
+        childCount: controller.businessList.length,
+      ),
+    );
+  }
+
+  Widget _fillMessage({
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    required ColorScheme colorScheme,
+  }) {
+    return SliverFillRemaining(
+      hasScrollBody: false,
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(icon, size: 48, color: colorScheme.onSurfaceVariant),
+              const SizedBox(height: 12),
+              Text(
+                title,
+                textAlign: TextAlign.center,
+                style: AppTextStyle.textMd(weight: FontWeight.w600),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                subtitle,
+                textAlign: TextAlign.center,
+                style: AppTextStyle.textSm(color: colorScheme.onSurfaceVariant),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  // --- Expandable Business Card ----------------------------------------------
+
   Widget _buildExpandableBusinessCard({
     required ColorScheme colorScheme,
     required String businessName,
@@ -380,9 +415,8 @@ class _SearchMyBusinessState extends State<SearchMyBusiness> {
             const SizedBox(width: 12),
             Text(
               label,
-              style: AppTextStyle.textSm(
-                weight: FontWeight.w500,
-              ).copyWith(color: color),
+              style: AppTextStyle.textSm(weight: FontWeight.w500)
+                  .copyWith(color: color),
             ),
           ],
         ),

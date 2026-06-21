@@ -1,8 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:get/get_core/src/get_main.dart';
-import 'package:get/get_navigation/src/extension_navigation.dart';
 import 'package:loci/core/enums/category_enum.dart';
 import 'package:loci/core/theme/theme_extention.dart';
 import 'package:loci/data/models/busniess/update_business_request_model.dart';
@@ -23,8 +21,8 @@ import 'widgets/bottom_sheet.dart';
 import '../../widgets/custom_appbar.dart';
 import '../../widgets/custom_image_container.dart';
 import '../../widgets/image_picker_helper.dart';
-import '../home/widgets/post_input_filed.dart';
 import 'package:intl_phone_field/intl_phone_field.dart';
+import 'package:intl_phone_field/countries.dart';
 
 class MyBusinessProfile extends StatefulWidget {
   const MyBusinessProfile({super.key});
@@ -70,9 +68,14 @@ class _MyBusinessProfileState extends State<MyBusinessProfile> {
       logo: file,
     );
 
+    if (!mounted) return;
+
     if (success) {
-      SnackbarService.success("Logo updated successfully");
+      // Drop the local preview now that the server URL has refreshed.
+      setState(() => _profileImage = null);
+
     } else {
+      setState(() => _profileImage = null);
       SnackbarService.error(profileController.errorMessage!);
     }
   }
@@ -86,10 +89,13 @@ class _MyBusinessProfileState extends State<MyBusinessProfile> {
       photos: files,
     );
 
+    if (!mounted) return;
+
     if (success) {
-      _photos.clear();
-      SnackbarService.success("Photos updated successfully");
+      setState(_photos.clear);
+
     } else {
+      setState(() => _photos.removeWhere(files.contains));
       SnackbarService.error(profileController.errorMessage!);
     }
   }
@@ -141,7 +147,7 @@ class _MyBusinessProfileState extends State<MyBusinessProfile> {
               // =====Edit overlay loader
               if (controller.isUpdating)
                 Container(
-                  color: Colors.black.withOpacity(0.15), //dim the background
+                  color: Colors.black.withValues(alpha: 0.15),
                   child: const Center(child: CircularProgressIndicator()),
                 ),
             ],
@@ -184,12 +190,7 @@ class _MyBusinessProfileState extends State<MyBusinessProfile> {
 
             const SizedBox(height: 20),
 
-            // ================= POLL / AD CREATOR =================
-            _buildSectionHeader("Advertisements"),
-            _buildPollCreator(),
-
-            const SizedBox(height: 12),
-
+            // ================= EXPLORE ACTIVITIES =================
             CustomButton(
               text: "Explore Activities",
               backgroundColor: colorScheme.primary,
@@ -210,8 +211,8 @@ class _MyBusinessProfileState extends State<MyBusinessProfile> {
 
             const SizedBox(height: 25),
 
-            // ================= HERO ADS =================
-            _buildSectionHeader("Hero Ads"),
+            // ================= ADVERTISEMENTS =================
+            _buildSectionHeader("Advertisements"),
 
             _buildHeroAd(),
 
@@ -220,7 +221,10 @@ class _MyBusinessProfileState extends State<MyBusinessProfile> {
             CustomButton(
               backgroundColor: colorScheme.primary,
               onPressed: () {
-                Get.toNamed(AppRoutes.createAdd);
+                Get.toNamed(
+                  AppRoutes.createAdd,
+                  arguments: {'businessName': business.name},
+                );
               },
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -502,8 +506,8 @@ class _MyBusinessProfileState extends State<MyBusinessProfile> {
 
   // ================= PHOTO GRID =================
   Widget _buildPhotoGrid(BusinessProfileModel business) {
-    final _apiPhotos = business.photos;
-    final int totalImages = _apiPhotos.length + _photos.length;
+    final apiPhotos = business.photos;
+    final int totalImages = apiPhotos.length + _photos.length;
 
     return GridView.builder(
       shrinkWrap: true,
@@ -518,11 +522,11 @@ class _MyBusinessProfileState extends State<MyBusinessProfile> {
       itemBuilder: (context, index) {
         if (index == totalImages) return _buildAddPhotoButton();
 
-        if (index < _apiPhotos.length) {
+        if (index < apiPhotos.length) {
           return Stack(
             children: [
               CustomCachedImage(
-                imageUrl: _apiPhotos[index],
+                imageUrl: apiPhotos[index],
                 width: double.infinity,
                 height: double.infinity,
               ),
@@ -530,9 +534,7 @@ class _MyBusinessProfileState extends State<MyBusinessProfile> {
                 right: 5,
                 top: 5,
                 child: _editCircleButton(
-                  onTap: () {
-                    setState(() => _removeApiPhoto(_apiPhotos[index]));
-                  },
+                  onTap: () => _removeApiPhoto(apiPhotos[index]),
                   size: 20,
                   icon: Icons.cancel,
                   iconColor: AppColors.danger,
@@ -542,7 +544,7 @@ class _MyBusinessProfileState extends State<MyBusinessProfile> {
           );
         }
 
-        final localIndex = index - _apiPhotos.length;
+        final localIndex = index - apiPhotos.length;
         return Stack(
           children: [
             CustomCachedImage(
@@ -652,39 +654,6 @@ class _MyBusinessProfileState extends State<MyBusinessProfile> {
             ),
           ),
         ],
-      ),
-    );
-  }
-
-  // ================= POLL CREATOR =================
-  Widget _buildPollCreator() {
-    final colorScheme = context.colorScheme;
-
-    return Card(
-      color: colorScheme.surfaceContainerHigh,
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              "Create raffles poll",
-              style: AppTextStyle.textMd(
-                color: colorScheme.onSurface,
-                weight: FontWeight.w600,
-              ),
-            ),
-            const SizedBox(height: 10),
-            // PostInputField(
-            //   categories: ['Foodie', 'Drinks', 'Restu'],
-            //   initialCategory: 'Foodie',
-            //   hintText: 'Ask anything',
-            //   onSubmit: (text, category) {
-            //     print("Posting: $text in $category");
-            //   },
-            // ),
-          ],
-        ),
       ),
     );
   }
@@ -844,127 +813,240 @@ class _MyBusinessProfileState extends State<MyBusinessProfile> {
   // ================= EDIT BUSINESS INFO BOTTOM SHEET =================
 
   void _showEditBusinessBottomSheet(BusinessProfileModel business) {
-    final colorScheme = context.colorScheme;
-    final formKey = GlobalKey<FormState>();
-
-    final nameTEController = TextEditingController(text: business.name);
-    final locationTEController = TextEditingController(text: business.location);
-
-    BusinessCategory selectedCategory = BusinessCategory.fromString(
-      business.category,
-    );
-
-    String phoneNumber = business.phone;
-
     ProfileBottomSheet.show(
       title: "Edit Business Info",
-      formKey: formKey,
+      child: _EditBusinessInfoForm(
+        business: business,
+        onSubmit: (body) => profileController.updateBusinessText(
+          businessId: businessId,
+          body: body,
+        ),
+      ),
+    );
+  }
+
+  void _showEditDescriptionBottomSheet(BusinessProfileModel business) {
+    ProfileBottomSheet.show(
+      title: "Edit Description",
+      child: _EditDescriptionForm(
+        initialValue: business.description,
+        onSubmit: (description) => profileController.updateBusinessText(
+          businessId: businessId,
+          body: UpdateBusinessRequest(description: description).toJson(),
+        ),
+      ),
+    );
+  }
+}
+
+/// Splits a stored phone (e.g. "+8801712345678") into the matching ISO
+/// country code and local-number portion expected by IntlPhoneField.
+/// Falls back to US + raw value when the prefix can't be matched.
+({String code, String number}) _splitPhone(String raw) {
+  final trimmed = raw.trim();
+  if (!trimmed.startsWith('+')) {
+    return (code: 'US', number: trimmed);
+  }
+  final digits = trimmed.substring(1);
+  // Sort longest-first so e.g. +1242 (Bahamas) matches before +1 (US).
+  final sorted = [...countries]
+    ..sort((a, b) => b.dialCode.length.compareTo(a.dialCode.length));
+  for (final c in sorted) {
+    if (digits.startsWith(c.dialCode)) {
+      return (code: c.code, number: digits.substring(c.dialCode.length));
+    }
+  }
+  return (code: 'US', number: trimmed);
+}
+
+// ================= EDIT BUSINESS INFO FORM =================
+class _EditBusinessInfoForm extends StatefulWidget {
+  final BusinessProfileModel business;
+  final Future<bool> Function(Map<String, dynamic> body) onSubmit;
+
+  const _EditBusinessInfoForm({
+    required this.business,
+    required this.onSubmit,
+  });
+
+  @override
+  State<_EditBusinessInfoForm> createState() => _EditBusinessInfoFormState();
+}
+
+class _EditBusinessInfoFormState extends State<_EditBusinessInfoForm> {
+  final _formKey = GlobalKey<FormState>();
+  late final TextEditingController _nameController;
+  late final TextEditingController _locationController;
+  late BusinessCategory _category;
+  late String _phone;
+  late final ({String code, String number}) _parsedPhone;
+  bool _isSubmitting = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _nameController = TextEditingController(text: widget.business.name);
+    _locationController =
+        TextEditingController(text: widget.business.location);
+    _category = BusinessCategory.fromString(widget.business.category);
+    _phone = widget.business.phone;
+    _parsedPhone = _splitPhone(widget.business.phone);
+  }
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _locationController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _submit() async {
+    if (!(_formKey.currentState?.validate() ?? false)) return;
+    setState(() => _isSubmitting = true);
+    try {
+      final body = UpdateBusinessRequest(
+        name: _nameController.text.trim(),
+        location: _locationController.text.trim(),
+        phone: _phone.trim(),
+        category: _category.toJson,
+      ).toJson();
+      await widget.onSubmit(body);
+      if (mounted) Navigator.pop(context);
+    } finally {
+      if (mounted) setState(() => _isSubmitting = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = context.colorScheme;
+    return Form(
+      key: _formKey,
       child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          // ================= NAME =================
           CustomTextField(
-            controller: nameTEController,
+            controller: _nameController,
             borderColor: colorScheme.outline,
             validator: (value) => value == null || value.trim().isEmpty
                 ? "Name is required"
                 : null,
           ),
-
           const SizedBox(height: 12),
-
-          // ================= PHONE =================
           IntlPhoneField(
-            initialValue: business.phone,
-            initialCountryCode: 'US',
+            initialValue: _parsedPhone.number,
+            initialCountryCode: _parsedPhone.code,
             decoration: InputDecoration(
               labelText: "Phone Number",
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
               ),
             ),
-            onChanged: (phone) {
-              phoneNumber = phone.completeNumber;
-            },
+            onChanged: (phone) => _phone = phone.completeNumber,
             validator: (phone) => phone == null || phone.number.isEmpty
                 ? "Phone is required"
                 : null,
           ),
-
           const SizedBox(height: 12),
-
-          // ================= LOCATION =================
           CustomTextField(
-            controller: locationTEController,
+            controller: _locationController,
             borderColor: colorScheme.outline,
             validator: (value) => value == null || value.trim().isEmpty
                 ? "Location required"
                 : null,
           ),
-
           const SizedBox(height: 12),
-
-          // ================= CATEGORY =================
           CustomDropdown<BusinessCategory>(
-            value: selectedCategory,
-            onChanged: (BusinessCategory? value) {
+            value: _category,
+            onChanged: (value) {
               if (value == null) return;
-              setState(() {
-                selectedCategory = value;
-              });
+              setState(() => _category = value);
             },
-            items: BusinessCategory.values.map((category) {
-              return DropdownMenuItem<BusinessCategory>(
-                value: category,
-                child: Text(category.label),
-              );
-            }).toList(),
+            items: BusinessCategory.values
+                .map((category) => DropdownMenuItem<BusinessCategory>(
+                      value: category,
+                      child: Text(category.label),
+                    ))
+                .toList(),
+          ),
+          const SizedBox(height: 20),
+          CustomButton(
+            isLoading: _isSubmitting,
+            text: "Update",
+            onPressed: _isSubmitting ? null : _submit,
           ),
         ],
       ),
-
-      onSubmit: () async {
-        final requestData = UpdateBusinessRequest(
-          name: nameTEController.text.trim(),
-          location: locationTEController.text.trim(),
-          phone: phoneNumber.trim(),
-          category: selectedCategory.toJson,
-        );
-
-        await profileController.updateBusinessText(
-          businessId: businessId,
-          body: requestData.toJson(),
-        );
-      },
     );
   }
+}
 
-  void _showEditDescriptionBottomSheet(BusinessProfileModel business) {
+// ================= EDIT DESCRIPTION FORM =================
+class _EditDescriptionForm extends StatefulWidget {
+  final String initialValue;
+  final Future<bool> Function(String description) onSubmit;
+
+  const _EditDescriptionForm({
+    required this.initialValue,
+    required this.onSubmit,
+  });
+
+  @override
+  State<_EditDescriptionForm> createState() => _EditDescriptionFormState();
+}
+
+class _EditDescriptionFormState extends State<_EditDescriptionForm> {
+  final _formKey = GlobalKey<FormState>();
+  late final TextEditingController _controller;
+  bool _isSubmitting = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = TextEditingController(text: widget.initialValue);
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  Future<void> _submit() async {
+    if (!(_formKey.currentState?.validate() ?? false)) return;
+    setState(() => _isSubmitting = true);
+    try {
+      await widget.onSubmit(_controller.text.trim());
+      if (mounted) Navigator.pop(context);
+    } finally {
+      if (mounted) setState(() => _isSubmitting = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final colorScheme = context.colorScheme;
-    final formKey = GlobalKey<FormState>();
-    final descriptionTEController = TextEditingController(
-      text: business.description,
-    );
-
-    ProfileBottomSheet.show(
-      title: "Edit Description",
-      formKey: formKey,
-      child: CustomTextField(
-        controller: descriptionTEController,
-        hintText: "Enter Description",
-        maxLine: 3,
-        borderColor: colorScheme.outline,
-        validator: (value) =>
-            value == null || value.isEmpty ? "Required" : null,
+    return Form(
+      key: _formKey,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          CustomTextField(
+            controller: _controller,
+            hintText: "Enter Description",
+            maxLine: 3,
+            borderColor: colorScheme.outline,
+            validator: (value) =>
+                value == null || value.isEmpty ? "Required" : null,
+          ),
+          const SizedBox(height: 20),
+          CustomButton(
+            isLoading: _isSubmitting,
+            text: "Update",
+            onPressed: _isSubmitting ? null : _submit,
+          ),
+        ],
       ),
-      onSubmit: () async {
-        final requestData = UpdateBusinessRequest(
-          description: descriptionTEController.text.trim(),
-        );
-        await profileController.updateBusinessText(
-          businessId: businessId,
-          body: requestData.toJson(),
-        );
-      },
     );
   }
 }

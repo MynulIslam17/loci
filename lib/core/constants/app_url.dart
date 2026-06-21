@@ -54,6 +54,9 @@ abstract class AppUrl {
   static const String addBusinessToSaveList = "$baseUrl/users/me/saved-businesses";
   static  String removeSavedBusiness(String businessId) => "$baseUrl/users/me/saved-businesses/${businessId}";
 
+  ///-------ads
+  static const String submitAd = "$baseUrl/admin/ads/submit";
+
 
 
 

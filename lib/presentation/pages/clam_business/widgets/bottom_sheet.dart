@@ -1,70 +1,48 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:loci/presentation/controllers/my_business/my_business_profile_controller.dart';
-import 'package:loci/presentation/widgets/custom_button.dart';
 
+/// Thin shell for an edit modal bottom sheet.
+///
+/// The caller is expected to pass a `StatefulWidget` as [child] that owns its
+/// own state (text controllers, form key, submit button, navigation), so that
+/// disposal is tied to the widget's `State.dispose()` and the sheet is never
+/// rebuilt by external state changes while it is animating out.
 class ProfileBottomSheet {
-  static void show({
+  static Future<void> show({
     required String title,
-    required GlobalKey<FormState> formKey,
     required Widget child,
-    required Future<void> Function() onSubmit,
   }) {
     final colorScheme = Get.context!.theme.colorScheme;
 
-    showModalBottomSheet(
+    return showModalBottomSheet(
       context: Get.context!,
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
-      builder: (context) {
+      builder: (sheetContext) {
         return Padding(
           padding: EdgeInsets.only(
-            bottom: MediaQuery.of(context).viewInsets.bottom,
+            bottom: MediaQuery.of(sheetContext).viewInsets.bottom,
             left: 16,
             right: 16,
             top: 20,
           ),
-          child: Form(
-            key: formKey,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  title,
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: colorScheme.primary,
-                  ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                title,
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: colorScheme.primary,
                 ),
-
-                const SizedBox(height: 20),
-
-                child,
-
-                const SizedBox(height: 20),
-
-                GetBuilder<MyBusinessProfileController>(
-                  builder: (controller) {
-                    return CustomButton(
-                      isLoading: controller.isUpdating,
-                      text: "Update",
-                      onPressed: () async {
-                        if (formKey.currentState!.validate()) {
-                          Get.back(); // close sheet
-                          await onSubmit();
-
-                        }
-                      },
-                    );
-                  },
-                ),
-
-                const SizedBox(height: 20),
-              ],
-            ),
+              ),
+              const SizedBox(height: 20),
+              child,
+              const SizedBox(height: 20),
+            ],
           ),
         );
       },

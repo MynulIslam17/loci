@@ -1,6 +1,9 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:loci/core/theme/theme_extention.dart';
+import 'package:loci/core/utils/show_snackbar.dart';
+import 'package:loci/presentation/controllers/my_business/create_ad_controller.dart';
 import 'package:loci/presentation/widgets/custom_button.dart';
 import '../../../core/constants/app_text_style.dart';
 import '../../widgets/custom_imagepicker.dart';
@@ -14,47 +17,111 @@ class CreateAd extends StatefulWidget {
 }
 
 class _CreateAdState extends State<CreateAd> {
+  final _formKey = GlobalKey<FormState>();
+  final _controller = Get.find<CreateAdController>();
+
   File? _adBanner;
+  String? _imageError;
 
   // Controllers for TextField data handling
+  final _titleController = TextEditingController();
   final _businessController = TextEditingController();
   final _locationController = TextEditingController();
   final _dateController = TextEditingController();
   final _timeController = TextEditingController();
 
+  // Real values backing the read-only date/time text fields.
+  DateTime? _pickedDate;
+  TimeOfDay? _pickedTime;
+
+  /// True when the business name was supplied via Get.arguments (i.e. user
+  /// opened this page from a specific business profile). In that case the
+  /// field is locked so the ad can't be redirected to another business.
+  bool _businessLocked = false;
+
+  @override
+  void initState() {
+    super.initState();
+    final args = Get.arguments;
+    if (args is Map && args['businessName'] is String) {
+      _businessController.text = args['businessName'] as String;
+      _businessLocked = (args['businessName'] as String).isNotEmpty;
+    }
+  }
+
   // --- method for showing calendar
   Future<void> _showCalendar() async {
-    DateTime? pickedDate = await showDatePicker(
+    final pickedDate = await showDatePicker(
       context: context,
-      initialDate: DateTime.now(),
+      initialDate: _pickedDate ?? DateTime.now(),
       firstDate: DateTime.now(),
       lastDate: DateTime(2050),
     );
 
     if (pickedDate != null) {
       setState(() {
+        _pickedDate = pickedDate;
         _dateController.text =
             "${pickedDate.day}/${pickedDate.month}/${pickedDate.year}";
       });
+      _formKey.currentState?.validate();
     }
   }
 
   // --- method for showing TimePicker
   Future<void> _showTime() async {
-    TimeOfDay? pickedTime = await showTimePicker(
+    final pickedTime = await showTimePicker(
       context: context,
-      initialTime: TimeOfDay.now(),
+      initialTime: _pickedTime ?? TimeOfDay.now(),
     );
 
-    if (pickedTime != null) {
+    if (pickedTime != null && mounted) {
       setState(() {
+        _pickedTime = pickedTime;
         _timeController.text = pickedTime.format(context);
       });
+      _formKey.currentState?.validate();
+    }
+  }
+
+  // --- submit
+  Future<void> _onSubmit() async {
+    // Image isn't a FormField, so validate it ourselves alongside the form.
+    setState(() {
+      _imageError = _adBanner == null ? "Please select an ad banner" : null;
+    });
+    final formOk = _formKey.currentState?.validate() ?? false;
+    if (!formOk || _adBanner == null) return;
+
+    final runtimeDate = DateTime(
+      _pickedDate!.year,
+      _pickedDate!.month,
+      _pickedDate!.day,
+      _pickedTime!.hour,
+      _pickedTime!.minute,
+    );
+
+    final success = await _controller.submitAd(
+      title: _titleController.text.trim(),
+      businessName: _businessController.text.trim(),
+      location: _locationController.text.trim(),
+      runtimeDate: runtimeDate,
+      image: _adBanner!,
+    );
+
+    if (!mounted) return;
+
+    if (success) {
+      SnackbarService.success("Ad submitted successfully");
+      Get.back();
+    } else {
+      SnackbarService.error(_controller.errorMessage ?? "Failed to submit ad");
     }
   }
 
   @override
   void dispose() {
+    _titleController.dispose();
     _businessController.dispose();
     _locationController.dispose();
     _dateController.dispose();
@@ -76,52 +143,57 @@ class _CreateAdState extends State<CreateAd> {
         backgroundColor: colorScheme.surface,
         elevation: 0,
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(horizontal: 20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const SizedBox(height: 10),
-            Text(
-              "Ads Detail",
-              style: AppTextStyle.textXl(
-                weight: FontWeight.w700,
-                color: colorScheme.onSurface,
+      body: Form(
+        key: _formKey,
+        autovalidateMode: AutovalidateMode.onUserInteraction,
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(horizontal: 20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const SizedBox(height: 10),
+              Text(
+                "Ads Detail",
+                style: AppTextStyle.textXl(
+                  weight: FontWeight.w700,
+                  color: colorScheme.onSurface,
+                ),
               ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              "Fill the details to run the ads",
-              style: AppTextStyle.textSm(color: colorScheme.onSurfaceVariant),
-            ),
-            const SizedBox(height: 20),
-            _buildFormCard(),
-            const SizedBox(height: 30),
-            CustomButton(
-              onPressed: () {
-                // Logic for ad creation
-              },
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(
-                    "Continue",
-                    style: AppTextStyle.textMd(
-                      weight: FontWeight.w600,
-                      color: colorScheme.onPrimary,
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Icon(
-                    Icons.arrow_forward,
-                    color: colorScheme.onPrimary,
-                    size: 20,
-                  ),
-                ],
+              const SizedBox(height: 4),
+              Text(
+                "Fill the details to run the ads",
+                style: AppTextStyle.textSm(color: colorScheme.onSurfaceVariant),
               ),
-            ),
-            const SizedBox(height: 20),
-          ],
+              const SizedBox(height: 20),
+              _buildFormCard(),
+              const SizedBox(height: 30),
+              GetBuilder<CreateAdController>(
+                builder: (c) => CustomButton(
+                  isLoading: c.isLoading,
+                  onPressed: c.isLoading ? null : _onSubmit,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        "Continue",
+                        style: AppTextStyle.textMd(
+                          weight: FontWeight.w600,
+                          color: colorScheme.onPrimary,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Icon(
+                        Icons.arrow_forward,
+                        color: colorScheme.onPrimary,
+                        size: 20,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 20),
+            ],
+          ),
         ),
       ),
     );
@@ -139,12 +211,11 @@ class _CreateAdState extends State<CreateAd> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            //--business Name
+            //-- title
             CustomTextField(
-              controller: _businessController,
-              title: "Business",
-              hintText: "Enter owner's name",
-              // Solid border color
+              controller: _titleController,
+              title: "Title",
+              hintText: "e.g. Summer Sale - 30% Off All Items",
               borderColor: colorScheme.outline,
               hintTextColor: colorScheme.onSurfaceVariant,
               textColor: colorScheme.onSurface,
@@ -152,8 +223,34 @@ class _CreateAdState extends State<CreateAd> {
                 weight: FontWeight.w600,
                 color: colorScheme.onSurface,
               ),
+              validator: (value) =>
+                  value == null || value.trim().isEmpty ? "Title is required" : null,
             ),
             const SizedBox(height: 16),
+
+            //--business Name (pre-filled & locked when opened from a
+            //   business profile, editable otherwise)
+            CustomTextField(
+              controller: _businessController,
+              readOnly: _businessLocked,
+              fillColor: _businessLocked
+                  ? colorScheme.surfaceContainerHighest
+                  : null,
+              title: "Business",
+              hintText: "Enter business name",
+              borderColor: colorScheme.outline,
+              hintTextColor: colorScheme.onSurfaceVariant,
+              textColor: colorScheme.onSurface,
+              titleStyle: AppTextStyle.textSm(
+                weight: FontWeight.w600,
+                color: colorScheme.onSurface,
+              ),
+              validator: (value) => value == null || value.trim().isEmpty
+                  ? "Business name is required"
+                  : null,
+            ),
+            const SizedBox(height: 16),
+
             //-- location
             CustomTextField(
               controller: _locationController,
@@ -164,7 +261,6 @@ class _CreateAdState extends State<CreateAd> {
                 color: colorScheme.primary,
                 size: 20,
               ),
-              // Solid border color
               borderColor: colorScheme.outline,
               hintTextColor: colorScheme.onSurfaceVariant,
               textColor: colorScheme.onSurface,
@@ -172,6 +268,9 @@ class _CreateAdState extends State<CreateAd> {
                 weight: FontWeight.w600,
                 color: colorScheme.onSurface,
               ),
+              validator: (value) => value == null || value.trim().isEmpty
+                  ? "Location is required"
+                  : null,
             ),
             const SizedBox(height: 16),
 
@@ -185,6 +284,7 @@ class _CreateAdState extends State<CreateAd> {
             ),
             const SizedBox(height: 8),
             Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Expanded(
                   child: CustomTextField(
@@ -198,10 +298,11 @@ class _CreateAdState extends State<CreateAd> {
                       size: 14,
                       color: colorScheme.onSurfaceVariant,
                     ),
-                    // Solid border color
                     borderColor: colorScheme.outline,
                     hintTextColor: colorScheme.onSurfaceVariant,
                     textColor: colorScheme.onSurface,
+                    validator: (_) =>
+                        _pickedDate == null ? "Pick a date" : null,
                   ),
                 ),
                 const SizedBox(width: 8),
@@ -217,14 +318,16 @@ class _CreateAdState extends State<CreateAd> {
                       size: 14,
                       color: colorScheme.onSurfaceVariant,
                     ),
-                    // Solid border color
                     borderColor: colorScheme.outline,
                     hintTextColor: colorScheme.onSurfaceVariant,
                     textColor: colorScheme.onSurface,
+                    validator: (_) =>
+                        _pickedTime == null ? "Pick a time" : null,
                   ),
                 ),
               ],
             ),
+
             //--add banner
             const SizedBox(height: 16),
             Text(
@@ -236,6 +339,13 @@ class _CreateAdState extends State<CreateAd> {
             ),
             const SizedBox(height: 8),
             _buildImagePickerArea(),
+            if (_imageError != null) ...[
+              const SizedBox(height: 6),
+              Text(
+                _imageError!,
+                style: TextStyle(color: colorScheme.error, fontSize: 12),
+              ),
+            ],
           ],
         ),
       ),
@@ -246,12 +356,14 @@ class _CreateAdState extends State<CreateAd> {
     final colorScheme = context.colorScheme;
     return CustomImagePicker(
       selectedImage: _adBanner,
-      onImageSelected: (file) => setState(() => _adBanner = file),
+      onImageSelected: (file) => setState(() {
+        _adBanner = file;
+        _imageError = null;
+      }),
       height: 160,
       borderRadius: 12,
       backgroundColor: colorScheme.surfaceContainerHighest,
-      // Solid border color
-      borderColor: colorScheme.outline,
+      borderColor: _imageError != null ? colorScheme.error : colorScheme.outline,
       placeholder: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [

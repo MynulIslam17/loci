@@ -5,7 +5,6 @@ import 'package:loci/presentation/controllers/subscription/plans_controller.dart
 import 'package:loci/presentation/pages/subscription/widget/billing_toggle.dart';
 import 'package:loci/presentation/pages/subscription/widget/plan_list.dart';
 import 'package:loci/presentation/pages/subscription/widget/subscription_shimmer.dart';
-import 'package:loci/presentation/widgets/app_skeleton.dart';
 import 'package:loci/presentation/widgets/custom_appbar.dart';
 import '../../../core/enums/billing_type_enum.dart';
 
@@ -37,15 +36,6 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
       appBar: const CustomAppbar(title: "Subscription Plan"),
       body: GetBuilder<PlansController>(
         builder: (ctrl) {
-          if (ctrl.isLoading) {
-            return const SubscriptionShimmer();
-          }
-          if(ctrl.errorMessage!=null){
-            return Center(child: Text(ctrl.errorMessage!));
-          }
-
-
-
           return Column(
             children: [
               const SizedBox(height: 20),
@@ -53,6 +43,7 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
               BillingToggleSection(
                 isMonthly: _isMonthly,
                 onChanged: (value) {
+                  if (value == _isMonthly) return;
                   setState(() => _isMonthly = value);
 
                   ctrl.fetchPlans(
@@ -64,21 +55,46 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
               const SizedBox(height: 10),
 
               Expanded(
-                child: PlansList(
-                  plans: ctrl.plans,
-                  isMonthly: _isMonthly,
-                  expandedIndex: _expandedIndex,
-                  onExpand: (index) {
-                    setState(() {
-                      _expandedIndex = _expandedIndex == index ? null : index;
-                    });
-                  },
-                ),
+                child: _buildPlansBody(ctrl),
               ),
             ],
           );
         },
       ),
+    );
+  }
+
+  Widget _buildPlansBody(PlansController ctrl) {
+    return RefreshIndicator(
+      onRefresh: () => controller.refreshPlans(
+        _isMonthly ? BillingType.monthly : BillingType.oneTime,
+      ),
+      child: _plansContent(ctrl),
+    );
+  }
+
+  Widget _plansContent(PlansController ctrl) {
+    if (ctrl.isLoading) {
+      return const SubscriptionShimmer();
+    }
+    if (ctrl.errorMessage != null) {
+      return ListView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        children: [
+          const SizedBox(height: 120),
+          Center(child: Text(ctrl.errorMessage!)),
+        ],
+      );
+    }
+    return PlansList(
+      plans: ctrl.plans,
+      isMonthly: _isMonthly,
+      expandedIndex: _expandedIndex,
+      onExpand: (index) {
+        setState(() {
+          _expandedIndex = _expandedIndex == index ? null : index;
+        });
+      },
     );
   }
 }

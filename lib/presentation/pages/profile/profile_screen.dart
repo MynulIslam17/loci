@@ -4,6 +4,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:loci/core/constants/app_text_style.dart';
 import 'package:loci/core/theme/theme_extention.dart';
 import 'package:loci/core/theme/app_colors.dart';
+import 'package:loci/presentation/widgets/app_skeleton.dart';
 import 'package:loci/presentation/widgets/custom_button.dart';
 import 'package:loci/presentation/widgets/custom_text_field.dart';
 import 'package:loci/presentation/widgets/custom_image_container.dart';
@@ -14,9 +15,7 @@ import '../../controllers/profile/profile_controller.dart';
 class ProfileScreen extends StatelessWidget {
   ProfileScreen({super.key});
 
-  final ProfileController controller = Get.find<ProfileController>();
-
-
+  final ProfileController _controller = Get.find<ProfileController>();
 
   @override
   Widget build(BuildContext context) {
@@ -24,209 +23,176 @@ class ProfileScreen extends StatelessWidget {
 
     return Scaffold(
       body: GetBuilder<ProfileController>(
-        initState: (_) {
-          Get.find<ProfileController>().silentFetchProfile();
-        },
+        initState: (_) => _controller.silentFetchProfile(),
         builder: (c) {
-          return Stack(
-            children: [
-              RefreshIndicator(
-                onRefresh: () async {
-                  await c.fetchProfile();
-                },
-                child: SingleChildScrollView(
-                  physics: const AlwaysScrollableScrollPhysics(),
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 12,
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.center,
+          return RefreshIndicator(
+            onRefresh: _controller.silentFetchProfile,
+            child: SingleChildScrollView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  const SizedBox(height: 20),
+
+                  // ================= PROFILE IMAGE =================
+                  Stack(
                     children: [
-                      const SizedBox(height: 20),
-
-                      // ================= PROFILE IMAGE =================
-                      Stack(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(3),
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              border: Border.all(color: colorScheme.primary),
-                            ),
-                            child: CustomCachedImage(
-                              imageFile: c.profileImage,
-                              imageUrl: c.profileImageUrl,
-                              height: 110,
-                              width: 110,
-                              isCircle: true,
-                            ),
-                          ),
-                          Positioned(
-                            right: 0,
-                            top: 0,
-                            child: _editButton(
-                              onTap: () {
-                                CustomImagePicker.pickImageSimple(
-                                  context: context,
-                                  onImageSelected: (file) {
-                                    c.updateImage(file);
-                                  },
-                                );
-                              },
-                            ),
-                          ),
-                        ],
-                      ),
-
-                      const SizedBox(height: 10),
-
-                      // ================= USER NAME =================
-                      Stack(
-                        alignment: Alignment.center,
-                        children: [
-                          Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 40),
-                            child: Text(
-                              c.userName,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              textAlign: TextAlign.center,
-                              style: AppTextStyle.textXl(
-                                color: colorScheme.primary,
-                                weight: FontWeight.w600,
-                              ),
-                            ),
-                          ),
-                          Positioned(
-                            right: 0,
-                            child: _editButton(
-                              onTap: () {
-                                _showEditBottomSheet(
-                                  context: context,
-                                  title: "Edit Name",
-                                  hintText: "Edit Name",
-                                  initialValue: c.userName,
-                                  onSave: (value) {
-                                    c.updateName(value);
-                                  },
-                                );
-                              },
-                            ),
-                          ),
-                        ],
-                      ),
-
-                      const SizedBox(height: 5),
-
-                      Text(
-                        "Member since December 23, 2021",
-                        style: AppTextStyle.textXs(
-                          color: colorScheme.onSurfaceVariant,
+                      Container(
+                        padding: const EdgeInsets.all(3),
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          border: Border.all(color: colorScheme.primary),
+                        ),
+                        child: CustomCachedImage(
+                          imageFile: c.profileImage,
+                          imageUrl: c.profileImageUrl,
+                          height: 110,
+                          width: 110,
+                          isCircle: true,
                         ),
                       ),
-
-                      const SizedBox(height: 20),
-
-                      // ================= ABOUT =================
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Text(
-                            "About",
-                            style: AppTextStyle.textMd(
-                              color: colorScheme.onSurface,
-                            ),
-                          ),
-                          const SizedBox(width: 5),
-                          _editButton(
-                            onTap: () {
-                              _showEditBottomSheet(
-                                context: context,
-                                title: "Edit About",
-                                hintText: "Edit About",
-                                initialValue: c.about,
-                                maxLines: 3,
-                                onSave: (value) {
-                                  c.updateAbout(value);
-                                },
-                              );
-                            },
-                          ),
-                        ],
-                      ),
-
-                      const SizedBox(height: 10),
-
-                      SizedBox(
-                        width: double.infinity,
-
-                        child: Card(
-                          color: colorScheme.surfaceContainer,
-                          child: Padding(
-                            padding: const EdgeInsets.all(12),
-                            child: Text(
-                              c.about,
-                              textAlign: TextAlign.center,
-                              style: AppTextStyle.textXs(
-                                color: colorScheme.onSurfaceVariant,
-                              ),
-                            ),
+                      Positioned(
+                        right: 0,
+                        top: 0,
+                        child: _editButton(
+                          onTap: () => CustomImagePicker.pickImageSimple(
+                            context: context,
+                            onImageSelected: c.updateImage,
                           ),
                         ),
                       ),
-
-                      const SizedBox(height: 20),
-
-                      // ================= ACHIEVEMENTS =================
-                      Align(
-                        alignment: Alignment.topLeft,
-                        child: Text(
-                          "Progress and achievements",
-                          style: AppTextStyle.textXl(
-                            color: colorScheme.primary,
-                          ),
-                        ),
-                      ),
-
-                      const SizedBox(height: 10),
-
-                      Row(
-                        children: [
-                          _buildStatCard(
-                            "Events",
-                            "assets/icons/calander.svg",
-                            c.isLoading ? "_" : "${c.stats?.eventsCheckedIn ?? 0}",
-                            colorScheme,
-                          ),
-
-                          _buildStatCard(
-                            "Routes",
-                            "assets/icons/map.svg",
-                            c.isLoading ? "_": "${c.stats?.routesCheckedIn ?? 0}",
-                            colorScheme,
-                          ),
-
-                          _buildStatCard(
-                            "Raffles",
-                            "assets/icons/rafel.svg",
-                            c.isLoading ? "_": "${c.stats?.rafflesWon ?? 0}",
-                            colorScheme,
-                          ),
-                        ],
-                      )
                     ],
                   ),
-                ),
-              ),
 
-              // ================= LOADER OVERLAY =================
-              if (c.isLoading)
-                Container(
-                  color: Colors.black.withOpacity(0.2),
-                  child: const Center(child: CircularProgressIndicator()),
-                ),
-            ],
+                  const SizedBox(height: 10),
+
+                  // ================= USER NAME =================
+                  Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 40),
+                        child: Text(
+                          c.userName,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          textAlign: TextAlign.center,
+                          style: AppTextStyle.textXl(
+                            color: colorScheme.primary,
+                            weight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                      Positioned(
+                        right: 0,
+                        child: _editButton(
+                          onTap: () => _showEditBottomSheet(
+                            context: context,
+                            title: "Edit Name",
+                            hintText: "Edit Name",
+                            initialValue: c.userName,
+                            onSave: c.updateName,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+
+                  const SizedBox(height: 5),
+
+                  if (c.memberSince.isNotEmpty)
+                    Text(
+                      "Member since ${c.memberSince}",
+                      style: AppTextStyle.textXs(
+                        color: colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+
+                  const SizedBox(height: 20),
+
+                  // ================= ABOUT =================
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        "About",
+                        style: AppTextStyle.textMd(
+                          color: colorScheme.onSurface,
+                        ),
+                      ),
+                      const SizedBox(width: 5),
+                      _editButton(
+                        onTap: () => _showEditBottomSheet(
+                          context: context,
+                          title: "Edit About",
+                          hintText: "Edit About",
+                          initialValue: c.about,
+                          maxLines: 3,
+                          onSave: c.updateAbout,
+                        ),
+                      ),
+                    ],
+                  ),
+
+                  const SizedBox(height: 10),
+
+                  SizedBox(
+                    width: double.infinity,
+                    child: Card(
+                      color: colorScheme.surfaceContainer,
+                      child: Padding(
+                        padding: const EdgeInsets.all(12),
+                        child: Text(
+                          c.about,
+                          textAlign: TextAlign.center,
+                          style: AppTextStyle.textXs(
+                            color: colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(height: 20),
+
+                  // ================= ACHIEVEMENTS =================
+                  Align(
+                    alignment: Alignment.topLeft,
+                    child: Text(
+                      "Progress and achievements",
+                      style: AppTextStyle.textXl(color: colorScheme.primary),
+                    ),
+                  ),
+
+                  const SizedBox(height: 10),
+
+                  Row(
+                    children: [
+                      _buildStatCard(
+                        title: "Events",
+                        icon: "assets/icons/calander.svg",
+                        value: c.stats?.eventsCheckedIn,
+                        colorScheme: colorScheme,
+                      ),
+                      _buildStatCard(
+                        title: "Routes",
+                        icon: "assets/icons/map.svg",
+                        value: c.stats?.routesCheckedIn,
+                        colorScheme: colorScheme,
+                      ),
+                      _buildStatCard(
+                        title: "Raffles",
+                        icon: "assets/icons/rafel.svg",
+                        value: c.stats?.rafflesWon,
+                        colorScheme: colorScheme,
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
           );
         },
       ),
@@ -235,12 +201,12 @@ class ProfileScreen extends StatelessWidget {
 
   // ================= stats helper =================
 
-  Widget _buildStatCard(
-      String title,
-      String icon,
-      String value,
-      ColorScheme colorScheme,
-      ) {
+  Widget _buildStatCard({
+    required String title,
+    required String icon,
+    required int? value,
+    required ColorScheme colorScheme,
+  }) {
     return Expanded(
       child: Padding(
         padding: const EdgeInsets.all(4),
@@ -252,7 +218,9 @@ class ProfileScreen extends StatelessWidget {
               children: [
                 SvgPicture.asset(icon, width: 24),
                 const SizedBox(height: 10),
-                Text(value), // now String safe
+                value == null
+                    ? AppSkeleton.box(width: 28, height: 16)
+                    : Text('$value'),
                 const SizedBox(height: 10),
                 Text(title),
               ],
@@ -294,62 +262,97 @@ class ProfileScreen extends StatelessWidget {
     String? hintText,
     int maxLines = 1,
   }) {
-    final textController = TextEditingController(text: initialValue);
-
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-
-      builder: (BuildContext context) {
-        return SingleChildScrollView(
-          child: Padding(
-            padding: EdgeInsets.only(
-              bottom: MediaQuery.of(context).viewInsets.bottom + 20,
-              left: 16,
-              right: 16,
-              top: 16,
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  title,
-                  style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 10),
-
-                CustomTextField(
-                  controller: textController,
-                  maxLine: maxLines,
-                  hintText: hintText,
-                ),
-
-                const SizedBox(height: 15),
-
-                CustomButton(
-                  text: "Save",
-                  onPressed: () {
-                    onSave(textController.text.trim());
-                    Navigator.pop(context);
-                  },
-                ),
-
-                const SizedBox(height: 10),
-              ],
-            ),
-          ),
-        );
-      },
+      builder: (_) => _EditFieldSheet(
+        title: title,
+        hintText: hintText,
+        initialValue: initialValue,
+        maxLines: maxLines,
+        onSave: onSave,
+      ),
     );
   }
+}
 
+class _EditFieldSheet extends StatefulWidget {
+  final String title;
+  final String? hintText;
+  final String initialValue;
+  final int maxLines;
+  final Function(String) onSave;
 
+  const _EditFieldSheet({
+    required this.title,
+    required this.hintText,
+    required this.initialValue,
+    required this.maxLines,
+    required this.onSave,
+  });
 
+  @override
+  State<_EditFieldSheet> createState() => _EditFieldSheetState();
+}
 
+class _EditFieldSheetState extends State<_EditFieldSheet> {
+  late final TextEditingController _textController;
 
+  @override
+  void initState() {
+    super.initState();
+    _textController = TextEditingController(text: widget.initialValue);
+  }
 
+  @override
+  void dispose() {
+    _textController.dispose();
+    super.dispose();
+  }
 
+  void _onSave() {
+    final value = _textController.text.trim();
+    if (value != widget.initialValue) {
+      widget.onSave(value);
+    }
+    Navigator.pop(context);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SingleChildScrollView(
+      child: Padding(
+        padding: EdgeInsets.only(
+          bottom: MediaQuery.of(context).viewInsets.bottom + 20,
+          left: 16,
+          right: 16,
+          top: 16,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              widget.title,
+              style: const TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 10),
+            CustomTextField(
+              controller: _textController,
+              maxLine: widget.maxLines,
+              hintText: widget.hintText,
+            ),
+            const SizedBox(height: 15),
+            CustomButton(
+              text: "Save",
+              onPressed: _onSave,
+            ),
+            const SizedBox(height: 10),
+          ],
+        ),
+      ),
+    );
+  }
 }

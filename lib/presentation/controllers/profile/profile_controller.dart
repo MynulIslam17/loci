@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:get/get.dart';
 import 'package:loci/core/constants/app_url.dart';
 import 'package:loci/core/network/network_caller.dart';
+import 'package:loci/core/utils/date_parser.dart';
 import 'package:loci/core/utils/show_snackbar.dart';
 
 import '../../../data/models/profile/profile_state.dart';
@@ -24,6 +25,15 @@ class ProfileController extends GetxController {
   String get userName => _auth.userModel?.name ?? '';
   String get about => _auth.userModel?.about ?? '';
   String? get profileImageUrl => _auth.userModel?.avatar;
+
+  /// Formatted join date — e.g. "June 4, 2026". Empty when unavailable.
+  String get memberSince {
+    final iso = _auth.userModel?.createdAt;
+    if (iso == null || iso.isEmpty) return '';
+    final date = DateTime.tryParse(iso);
+    if (date == null) return '';
+    return '${DateParserHelper.getMonthName(date)} ${date.day}, ${date.year}';
+  }
 
   // -------------------------
   // Internal Helpers
@@ -152,7 +162,6 @@ class ProfileController extends GetxController {
       );
 
       if (res.isSuccess) {
-        Get.back();
         SnackbarService.success(
           res.body?['message'] ?? 'Updated successfully',
         );
@@ -191,7 +200,6 @@ class ProfileController extends GetxController {
       );
 
       if (res.isSuccess) {
-        Get.back();
         SnackbarService.success('About updated');
       } else {
         await _updateUserModel(about: old); // rollback

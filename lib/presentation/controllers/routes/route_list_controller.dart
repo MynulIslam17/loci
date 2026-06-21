@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:get/get.dart';
 import 'package:loci/core/constants/app_url.dart';
 import 'package:loci/core/network/network_caller.dart';
@@ -16,6 +18,9 @@ class RouteListController extends GetxController {
   bool _hasNextPage = true;
   final int _limit = 10;
 
+  String _searchQuery = '';
+  Timer? _searchDebounce;
+
 
   //----getter
   bool get isLoading => _isLoading;
@@ -23,6 +28,22 @@ class RouteListController extends GetxController {
   String? get errorMessage => _errorMessage;
   List<RouteModel> get routeList => _routeList;
   bool get hasMore => _hasNextPage;
+  String get searchQuery => _searchQuery;
+
+  /// Debounced search — updates the query and refetches from the API.
+  void onSearchChanged(String query) {
+    _searchQuery = query;
+    _searchDebounce?.cancel();
+    _searchDebounce = Timer(const Duration(milliseconds: 400), () {
+      fetchRoutes(isRefresh: true);
+    });
+  }
+
+  @override
+  void onClose() {
+    _searchDebounce?.cancel();
+    super.onClose();
+  }
 
 
 
@@ -41,9 +62,7 @@ class RouteListController extends GetxController {
 
     try {
 
-      final url = businessId != null
-          ? '${AppUrl.routeList}?page=$_currentPage&limit=$_limit&businessId=$businessId'
-          : '${AppUrl.routeList}?page=$_currentPage&limit=$_limit';
+      final url = _buildUrl(businessId: businessId);
 
 
       final NetworkResponse response = await Get.find<NetworkCaller>()
@@ -76,9 +95,7 @@ class RouteListController extends GetxController {
     update();
 
     try {
-      final url = businessId != null
-          ? '${AppUrl.routeList}?page=$_currentPage&limit=$_limit&businessId=$businessId'
-          : '${AppUrl.routeList}?page=$_currentPage&limit=$_limit';
+      final url = _buildUrl(businessId: businessId);
 
       final NetworkResponse response = await Get.find<NetworkCaller>()
           .getRequest(
@@ -109,6 +126,24 @@ class RouteListController extends GetxController {
     _routeList.clear();
     _currentPage = 1;
     _hasNextPage = true;
+    _searchQuery = '';
+    _searchDebounce?.cancel();
+  }
+
+  String _buildUrl({String? businessId}) {
+    final params = <String, String>{
+      'page': '$_currentPage',
+      'limit': '$_limit',
+    };
+    if (businessId != null) params['businessId'] = businessId;
+    final query = _searchQuery.trim();
+    if (query.isNotEmpty) params['search'] = query;
+
+    final qs = params.entries
+        .map((e) =>
+            '${Uri.encodeQueryComponent(e.key)}=${Uri.encodeQueryComponent(e.value)}')
+        .join('&');
+    return '${AppUrl.routeList}?$qs';
   }
 
 

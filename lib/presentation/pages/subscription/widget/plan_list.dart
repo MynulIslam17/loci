@@ -20,6 +20,7 @@ class PlansList extends StatelessWidget {
   Widget build(BuildContext context) {
     return ListView.builder(
       padding: const EdgeInsets.all(16),
+      physics: const AlwaysScrollableScrollPhysics(),
       itemCount: plans.length,
       itemBuilder: (context, index) {
         final plan = plans[index];

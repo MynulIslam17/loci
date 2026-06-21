@@ -30,7 +30,10 @@ class _MeetingScreenState extends State<MeetingScreen>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 2, vsync: this);
+    final args = Get.arguments;
+    final initialTab = (args is Map && args['initialTab'] == 'received') ? 1 : 0;
+    _tabController =
+        TabController(length: 2, vsync: this, initialIndex: initialTab);
     _selectedDate = _normalize(DateTime.now());
 
     // Subscribe directly so any markedDates change rebuilds the calendar.

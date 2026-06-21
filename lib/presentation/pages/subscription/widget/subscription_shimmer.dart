@@ -8,13 +8,8 @@ class SubscriptionShimmer extends StatelessWidget {
   Widget build(BuildContext context) {
     return ListView(
       padding: const EdgeInsets.all(16),
+      physics: const AlwaysScrollableScrollPhysics(),
       children: const [
-        /// ───────────── TOGGLE (ONCE) ─────────────
-        _ToggleShimmer(),
-
-        SizedBox(height: 16),
-
-        /// ───────────── CARDS ─────────────
         _SubscriptionShimmerCard(),
         SizedBox(height: 16),
         _SubscriptionShimmerCard(),
@@ -22,25 +17,6 @@ class SubscriptionShimmer extends StatelessWidget {
         _SubscriptionShimmerCard(),
         SizedBox(height: 16),
         _SubscriptionShimmerCard(),
-      ],
-    );
-  }
-}
-
-class _ToggleShimmer extends StatelessWidget {
-  const _ToggleShimmer();
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Expanded(
-          child: AppSkeleton.box(height: 45),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: AppSkeleton.box(height: 45),
-        ),
       ],
     );
   }

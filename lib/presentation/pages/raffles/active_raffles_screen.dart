@@ -2,14 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:loci/core/constants/app_text_style.dart';
 import 'package:loci/core/theme/theme_extention.dart';
-import 'package:loci/core/utils/date_parser.dart';
-import 'package:loci/data/models/raffles/raffles_model.dart';
 import 'package:loci/presentation/controllers/raffles/raffle_list_controller.dart';
 import 'package:loci/presentation/pages/raffles/raffles_details_screen.dart';
-import 'package:loci/presentation/pages/raffles/widgets/date_range_helper.dart';
 import 'package:loci/presentation/pages/raffles/widgets/raffle_card.dart';
-import 'package:loci/presentation/widgets/custom_button.dart';
-import 'package:loci/presentation/widgets/custom_image_container.dart';
+import 'package:loci/presentation/pages/raffles/widgets/raffle_card_skeleton.dart';
 import 'package:loci/presentation/widgets/custom_text_field.dart';
 
 class ActiveRafflesScreen extends StatelessWidget {
@@ -35,13 +31,30 @@ class ActiveRafflesPage extends StatefulWidget {
 
 class _ActiveRafflesPageState extends State<ActiveRafflesPage> {
   final raffleListController = Get.find<RaffleListController>();
+  final ScrollController _scrollController = ScrollController();
+  final TextEditingController _searchController = TextEditingController();
 
   @override
   void initState() {
-    // TODO: implement initState
     super.initState();
 
+    _scrollController.addListener(() {
+      if (_scrollController.position.pixels >=
+          _scrollController.position.maxScrollExtent - 200) {
+        raffleListController.loadMoreRaffles();
+      }
+    });
+
+    _searchController.text = raffleListController.searchQuery;
+
     raffleListController.fetchRaffles(isRefresh: true);
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    _searchController.dispose();
+    super.dispose();
   }
 
   @override
@@ -56,55 +69,74 @@ class _ActiveRafflesPageState extends State<ActiveRafflesPage> {
             await raffleListController.refreshRaffles();
           }
         },
-        child: CustomScrollView(
-          physics: AlwaysScrollableScrollPhysics(),
-          slivers: [
-            SliverToBoxAdapter(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const SizedBox(height: 16),
-                  CustomTextField(
-                    hintText: "Search Raffle",
-                    borderColor: colorScheme.outline,
-                    fontSize: 14,
-                    textColor: colorScheme.onSurface,
-                    hintTextColor: colorScheme.onSurfaceVariant,
-                    suffixIcon: Icon(
-                      Icons.search,
-                      color: colorScheme.onSurfaceVariant,
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-                  Text(
-                    "Active Raffles",
-                    style: AppTextStyle.textXl(weight: FontWeight.w600),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    "Check in to locations to enter and win prizes",
-                    style: AppTextStyle.textSm(
-                      color: colorScheme.onSurfaceVariant,
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-                ],
-              ),
-            ),
+        child: GetBuilder<RaffleListController>(
+          builder: (controller) {
+            final hasSearch = controller.searchQuery.trim().isNotEmpty;
+            final isInitialLoading = controller.isLoading;
+            final hasFatalError = controller.errorMessage != null &&
+                controller.raffleList.isEmpty &&
+                !isInitialLoading;
 
-            GetBuilder<RaffleListController>(
-              builder: (controller) {
-                // loading state
-                if (controller.isLoading) {
-                  return SliverFillRemaining(
-                    child: Center(child: CircularProgressIndicator()),
-                  );
-                }
+            return CustomScrollView(
+              controller: _scrollController,
+              physics: const AlwaysScrollableScrollPhysics(),
+              slivers: [
+                SliverToBoxAdapter(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const SizedBox(height: 16),
+                      CustomTextField(
+                        controller: _searchController,
+                        hintText: "Search Raffle",
+                        borderColor: colorScheme.outline,
+                        fontSize: 14,
+                        textColor: colorScheme.onSurface,
+                        hintTextColor: colorScheme.onSurfaceVariant,
+                        onChanged: controller.onSearchChanged,
+                        suffixIcon: hasSearch
+                            ? IconButton(
+                                icon: Icon(
+                                  Icons.close,
+                                  color: colorScheme.onSurfaceVariant,
+                                ),
+                                onPressed: () {
+                                  _searchController.clear();
+                                  controller.onSearchChanged('');
+                                },
+                              )
+                            : Icon(
+                                Icons.search,
+                                color: colorScheme.onSurfaceVariant,
+                              ),
+                      ),
+                      const SizedBox(height: 24),
+                      Text(
+                        "Active Raffles",
+                        style: AppTextStyle.textXl(weight: FontWeight.w600),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        "Check in to locations to enter and win prizes",
+                        style: AppTextStyle.textSm(
+                          color: colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+                    ],
+                  ),
+                ),
 
-                // Error state
-                if (controller.errorMessage != null &&
-                    controller.raffleList.isEmpty) {
-                  return SliverFillRemaining(
+                if (isInitialLoading)
+                  SliverList(
+                    delegate: SliverChildBuilderDelegate(
+                      (_, _) => const RaffleCardSkeleton(),
+                      childCount: 3,
+                    ),
+                  )
+                else if (hasFatalError)
+                  SliverFillRemaining(
+                    hasScrollBody: false,
                     child: Center(
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
@@ -124,30 +156,33 @@ class _ActiveRafflesPageState extends State<ActiveRafflesPage> {
                           ),
                           const SizedBox(height: 16),
                           TextButton(
-                            onPressed: () => controller.fetchRaffles(),
+                            onPressed: () => controller.fetchRaffles(
+                                isRefresh: true),
                             child: const Text("Try Again"),
                           ),
                         ],
                       ),
                     ),
-                  );
-                }
-
-                // Empty state
-                if (controller.raffleList.isEmpty) {
-                  return SliverFillRemaining(
+                  )
+                else if (controller.raffleList.isEmpty)
+                  SliverFillRemaining(
+                    hasScrollBody: false,
                     child: Center(
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Icon(
-                            Icons.event_busy,
+                            hasSearch
+                                ? Icons.search_off_outlined
+                                : Icons.event_busy,
                             size: 48,
                             color: context.colorScheme.onSurfaceVariant,
                           ),
                           const SizedBox(height: 12),
                           Text(
-                            "No active raffles",
+                            hasSearch
+                                ? "No raffles match \"${controller.searchQuery}\""
+                                : "No active raffles",
                             style: AppTextStyle.textSm(
                               color: context.colorScheme.onSurfaceVariant,
                             ),
@@ -155,35 +190,37 @@ class _ActiveRafflesPageState extends State<ActiveRafflesPage> {
                         ],
                       ),
                     ),
-                  );
-                }
+                  )
+                else
+                  SliverList(
+                    delegate: SliverChildBuilderDelegate(
+                      (context, index) {
+                        // Pagination skeleton
+                        if (index == controller.raffleList.length) {
+                          return const RaffleCardSkeleton();
+                        }
 
-                final raffleList = controller.raffleList;
-                return SliverList(
-                  delegate: SliverChildBuilderDelegate((context, index) {
-                    final raffle = raffleList[index];
-
-                    return RaffleCard(
-                      raffle: raffle,
-
-                      onTap: () {
-                        //TODO : navigate to raffle details screen
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) =>
-                                RafflesDetailsScreen(raffleId: raffle.id),
-                          ),
-
-
+                        final raffle = controller.raffleList[index];
+                        return RaffleCard(
+                          raffle: raffle,
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => RafflesDetailsScreen(
+                                    raffleId: raffle.id),
+                              ),
+                            );
+                          },
                         );
                       },
-                    );
-                  }, childCount: raffleList.length),
-                );
-              },
-            ),
-          ],
+                      childCount: controller.raffleList.length +
+                          (controller.isPaginationLoading ? 1 : 0),
+                    ),
+                  ),
+              ],
+            );
+          },
         ),
       ),
     );

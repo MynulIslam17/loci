@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:get/get.dart';
 import 'package:loci/core/constants/app_url.dart';
 import 'package:loci/core/network/network_caller.dart';
@@ -20,12 +22,31 @@ class EventListController extends GetxController {
   // use to change the limit of events per page
   final int _limit = 20;
 
+  String _searchQuery = '';
+  Timer? _searchDebounce;
+
   ///  Public getters
   bool get isLoading => _isLoading;
   bool get isPaginationLoading => _isPaginationLoading;
   String? get errorMessage => _errorMessage;
   List<EventModel> get eventList => _eventList;
   bool get hasMore => _hasNextPage;
+  String get searchQuery => _searchQuery;
+
+  /// Debounced search — updates the query and refetches from the API.
+  void onSearchChanged(String query) {
+    _searchQuery = query;
+    _searchDebounce?.cancel();
+    _searchDebounce = Timer(const Duration(milliseconds: 400), () {
+      fetchEvents(isRefresh: true);
+    });
+  }
+
+  @override
+  void onClose() {
+    _searchDebounce?.cancel();
+    super.onClose();
+  }
 
 
   ///  Fetch events from API
@@ -44,9 +65,7 @@ class EventListController extends GetxController {
     update();
 
     try {
-      final url = businessId != null
-          ? '${AppUrl.eventList}?page=$_currentPage&limit=$_limit&businessId=$businessId' // for business owner
-          : '${AppUrl.eventList}?page=$_currentPage&limit=$_limit';
+      final url = _buildUrl(businessId: businessId);
 
       final NetworkResponse response = await Get.find<NetworkCaller>()
           .getRequest(url: url);
@@ -75,9 +94,7 @@ class EventListController extends GetxController {
     update(); // update UI
 
     try {
-      final url = businessId != null
-          ? '${AppUrl.eventList}?page=$_currentPage&limit=$_limit&businessId=$businessId'
-          : '${AppUrl.eventList}?page=$_currentPage&limit=$_limit';
+      final url = _buildUrl(businessId: businessId);
 
       final NetworkResponse response = await Get.find<NetworkCaller>()
           .getRequest(url: url);
@@ -120,6 +137,24 @@ class EventListController extends GetxController {
     _eventList.clear();
     _currentPage = 1;
     _hasNextPage = true;
+    _searchQuery = '';
+    _searchDebounce?.cancel();
+  }
+
+  String _buildUrl({String? businessId}) {
+    final params = <String, String>{
+      'page': '$_currentPage',
+      'limit': '$_limit',
+    };
+    if (businessId != null) params['businessId'] = businessId;
+    final query = _searchQuery.trim();
+    if (query.isNotEmpty) params['search'] = query;
+
+    final qs = params.entries
+        .map((e) =>
+            '${Uri.encodeQueryComponent(e.key)}=${Uri.encodeQueryComponent(e.value)}')
+        .join('&');
+    return '${AppUrl.eventList}?$qs';
   }
 
 }
