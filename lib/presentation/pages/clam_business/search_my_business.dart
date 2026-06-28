@@ -3,6 +3,9 @@ import 'package:get/get.dart';
 import 'package:loci/core/constants/app_text_style.dart';
 import 'package:loci/core/enums/category_enum.dart';
 import 'package:loci/core/theme/theme_extention.dart';
+import 'package:loci/data/models/busniess/find_business_response.dart';
+import 'package:loci/presentation/controllers/my_business/find_google_business_controller.dart';
+import 'package:loci/presentation/pages/clam_business/widgets/business_search_result_widget.dart';
 import 'package:loci/presentation/widgets/custom_dropdown.dart';
 import 'package:loci/presentation/widgets/custom_image_container.dart';
 import 'package:loci/presentation/widgets/custom_text_field.dart';
@@ -22,9 +25,49 @@ class SearchMyBusiness extends StatefulWidget {
 
 class _SearchMyBusinessState extends State<SearchMyBusiness> {
   final myBusinessController = Get.find<GetMyBusinessController>();
+  final findGoogleBusinessController = Get.find<FindGoogleBusinessController>();
+  final TextEditingController _searchTEController = TextEditingController();
 
   BusinessCategory? selectedCategory;
   int? _expandedIndex;
+
+  bool get _canAdd => findGoogleBusinessController.selectedBusiness != null;
+
+  void _onSearchChanged(String value) {
+    findGoogleBusinessController.searchBusinesses(value);
+    setState(() {});
+  }
+
+  void _onBusinessSelected(Business business) {
+    _searchTEController.text = business.name;
+    findGoogleBusinessController.selectBusiness(business);
+    setState(() {});
+  }
+
+  void _onClearSelectedBusiness() {
+    _searchTEController.clear();
+    findGoogleBusinessController.clearSelectedBusiness();
+    setState(() {});
+  }
+
+  void _onAddPressed() {
+    final business = findGoogleBusinessController.selectedBusiness;
+    if (business == null) return;
+
+    Get.toNamed(
+      AppRoutes.clamBusinessProfile,
+      arguments: {
+        'placeId': business.placeId,
+        'name': business.name,
+        'location': business.location,
+        'phone': business.phone,
+        'website': business.website,
+        'description': business.description,
+        'logo': business.logo,
+        'suggestedCategory': business.suggestedCategory,
+      },
+    );
+  }
 
   // --- Actions ----------------------------------------------------------------
 
@@ -45,6 +88,12 @@ class _SearchMyBusinessState extends State<SearchMyBusiness> {
       AppRoutes.myBusinessProfile,
       arguments: {"businessId": businessId, "businessName": businessName},
     );
+  }
+
+  @override
+  void dispose() {
+    _searchTEController.dispose();
+    super.dispose();
   }
 
   // --- Build ------------------------------------------------------------------
@@ -74,6 +123,7 @@ class _SearchMyBusinessState extends State<SearchMyBusiness> {
                 SliverToBoxAdapter(child: _buildHeader(colorScheme)),
                 if (showFilter)
                   SliverToBoxAdapter(child: _buildCategoryFilter(colorScheme)),
+
                 _buildBody(controller, colorScheme),
               ],
             ),
@@ -93,19 +143,41 @@ class _SearchMyBusinessState extends State<SearchMyBusiness> {
         children: [
           /// SEARCH + ADD
           Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Expanded(
                 flex: 3,
-                child: CustomTextField(
-                  hintText: "Claim your Business",
-                  borderColor: colorScheme.outline,
-                  fontSize: 14,
-                  textColor: colorScheme.onSurface,
-                  hintTextColor: colorScheme.onSurfaceVariant,
-                  suffixIcon: Icon(
-                    Icons.search,
-                    color: colorScheme.onSurfaceVariant,
-                  ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    CustomTextField(
+                      controller: _searchTEController,
+                      hintText: 'Claim your Business',
+                      borderColor: colorScheme.outline,
+                      fontSize: 14,
+                      textColor: colorScheme.onSurface,
+                      hintTextColor: colorScheme.onSurfaceVariant,
+                      readOnly: _canAdd,
+                      onChanged: _onSearchChanged,
+                      suffixIcon: _canAdd
+                          ? IconButton(
+                              icon: Icon(
+                                Icons.clear,
+                                color: colorScheme.onSurfaceVariant,
+                              ),
+                              onPressed: _onClearSelectedBusiness,
+                            )
+                          : Icon(
+                              Icons.search,
+                              color: colorScheme.onSurfaceVariant,
+                            ),
+                    ),
+                    const SizedBox(height: 4),
+                    BusinessSearchResultWidget(
+                      onSelect: _onBusinessSelected,
+                    ),
+                  ],
                 ),
               ),
               const SizedBox(width: 12),
@@ -113,18 +185,22 @@ class _SearchMyBusinessState extends State<SearchMyBusiness> {
                 style: ElevatedButton.styleFrom(
                   backgroundColor: colorScheme.primary,
                   foregroundColor: colorScheme.onPrimary,
+                  disabledBackgroundColor:
+                      colorScheme.onSurface.withValues(alpha: 0.12),
+                  disabledForegroundColor:
+                      colorScheme.onSurface.withValues(alpha: 0.38),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(10),
                   ),
                 ),
-                icon: Icon(Icons.add, color: colorScheme.onPrimary),
-                onPressed: () {
-                  Get.toNamed(
-                    AppRoutes.clamBusinessProfile,
-                    arguments: {'isFromManualClaim': false},
-                  );
-                },
-                label: const Text("Add"),
+                icon: Icon(
+                  Icons.add,
+                  color: _canAdd
+                      ? colorScheme.onPrimary
+                      : colorScheme.onSurface.withValues(alpha: 0.38),
+                ),
+                onPressed: _canAdd ? _onAddPressed : null,
+                label: const Text('Add'),
               ),
             ],
           ),

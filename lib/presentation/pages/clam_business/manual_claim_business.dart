@@ -1,13 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:get/get_core/src/get_main.dart';
-import 'package:get/get_navigation/src/extension_navigation.dart';
+import 'package:get/get.dart';
 import 'package:intl_phone_field/intl_phone_field.dart';
 import 'package:loci/core/constants/app_text_style.dart';
 import 'package:loci/core/theme/theme_extention.dart';
 import 'package:loci/core/utils/show_snackbar.dart';
 import 'package:loci/presentation/widgets/custom_text_field.dart';
 
-import '../../../routes/app_routes.dart'; // Ensure path is correct
+import '../../../routes/app_routes.dart';
 
 class ManualClaimBusiness extends StatefulWidget {
   const ManualClaimBusiness({super.key});
@@ -17,14 +16,13 @@ class ManualClaimBusiness extends StatefulWidget {
 }
 
 class _ManualClaimBusinessState extends State<ManualClaimBusiness> {
-  // Controllers to manage input data
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _locationController = TextEditingController();
   final TextEditingController _websiteController = TextEditingController();
   final TextEditingController _detailsController = TextEditingController();
 
   String? phoneNumber;
-  final _forKey = GlobalKey<FormState>();
+  final _formKey = GlobalKey<FormState>();
 
   @override
   void dispose() {
@@ -35,32 +33,26 @@ class _ManualClaimBusinessState extends State<ManualClaimBusiness> {
     super.dispose();
   }
 
-  void _submitFormHandler() async {
-    if (!_forKey.currentState!.validate()) return;
-
-    // Prepare the data to pass to the next screen
-    final businessData = {
-      "name": _nameController.text.trim(),
-      "location": _locationController.text.trim(),
-      "phone": phoneNumber,
-      "website": _websiteController.text.trim(),
-      "description": _detailsController.text.trim(),
-      "isFromManualClaim": true,
-    };
+  Future<void> _submitFormHandler() async {
+    if (!_formKey.currentState!.validate()) return;
 
     final result = await Get.toNamed(
       AppRoutes.clamBusinessProfile,
-      arguments: businessData,
+      arguments: {
+        'isManualClaim': true,
+        'name': _nameController.text.trim(),
+        'location': _locationController.text.trim(),
+        'phone': phoneNumber,
+        'website': _websiteController.text.trim(),
+        'description': _detailsController.text.trim(),
+      },
     );
 
-    if (result != null && result["success"] == true) {
-
-
+    if (result != null && result['success'] == true) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        SnackbarService.success("Business claimed successfully");
+        SnackbarService.success('Business claimed successfully');
       });
-
-       Get.back();
+      Get.back(result: result);
     }
   }
 
@@ -77,77 +69,75 @@ class _ManualClaimBusinessState extends State<ManualClaimBusiness> {
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
-          "Add New Business",
+          'Add New Business',
           style: AppTextStyle.textLg(weight: FontWeight.w600),
         ),
       ),
       body: Form(
-        key: _forKey,
+        key: _formKey,
         child: Column(
           children: [
             Expanded(
               child: SingleChildScrollView(
-                padding: const EdgeInsets.all(16.0),
+                padding: const EdgeInsets.all(16),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      "Business Details",
+                      'Business Details',
                       style: AppTextStyle.textLg(weight: FontWeight.w700),
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      "Tell us know about your business",
+                      'Enter your business info, then continue to claim it.',
                       style: AppTextStyle.textSm(
                         color: colorScheme.onSurfaceVariant,
                       ),
                     ),
                     const SizedBox(height: 24),
-
                     Card(
                       color: colorScheme.surfaceContainerHigh,
                       elevation: 2,
-
                       child: Padding(
                         padding: const EdgeInsets.all(13),
                         child: Column(
                           children: [
                             CustomTextField(
                               borderColor: colorScheme.outline,
-                              title: "Business Name",
-                              hintText: "Enter business name",
+                              title: 'Business Name',
+                              hintText: 'Enter business name',
                               textColor: colorScheme.onSurface,
                               fontSize: 14,
                               controller: _nameController,
                               fillColor: Colors.transparent,
                               validator: (v) {
-
-                                if(v==null || v.trim().isEmpty) return "Required";
-                                if ( v.length <2) return "Business name must be at least 2 characters";
+                                if (v == null || v.trim().isEmpty) {
+                                  return 'Required';
+                                }
+                                if (v.length < 2) {
+                                  return 'Business name must be at least 2 characters';
+                                }
                                 return null;
                               },
                             ),
                             const SizedBox(height: 20),
                             CustomTextField(
                               borderColor: colorScheme.outline,
-                              title: "Location",
-                              hintText: "Enter full location",
+                              title: 'Location',
+                              hintText: 'Enter full location',
                               textColor: colorScheme.onSurface,
                               fontSize: 14,
                               controller: _locationController,
                               fillColor: Colors.transparent,
-                              validator: (v) => v == null || v.trim().isEmpty
-                                  ? "Required"
-                                  : null,
+                              validator: (v) =>
+                                  v == null || v.trim().isEmpty ? 'Required' : null,
                             ),
                             const SizedBox(height: 20),
                             FormField<String>(
-                              validator: (value) {
-                                if (phoneNumber == null ||
-                                    phoneNumber!.isEmpty) {
+                              validator: (_) {
+                                if (phoneNumber == null || phoneNumber!.isEmpty) {
                                   return 'Phone number is required';
                                 }
-
                                 return null;
                               },
                               builder: (state) {
@@ -170,8 +160,8 @@ class _ManualClaimBusinessState extends State<ManualClaimBusiness> {
                             ),
                             const SizedBox(height: 20),
                             CustomTextField(
-                              title: "Website (optional)",
-                              hintText: "URL of your business website",
+                              title: 'Website (optional)',
+                              hintText: 'URL of your business website',
                               borderColor: colorScheme.outline,
                               textColor: colorScheme.onSurface,
                               fontSize: 14,
@@ -180,8 +170,8 @@ class _ManualClaimBusinessState extends State<ManualClaimBusiness> {
                             ),
                             const SizedBox(height: 20),
                             CustomTextField(
-                              title: "Business Details",
-                              hintText: "Enter details here...",
+                              title: 'Business Details',
+                              hintText: 'Enter details here...',
                               maxLine: 5,
                               borderColor: colorScheme.outline,
                               textColor: colorScheme.onSurface,
@@ -189,11 +179,8 @@ class _ManualClaimBusinessState extends State<ManualClaimBusiness> {
                               controller: _detailsController,
                               fillColor: Colors.transparent,
                               validator: (v) {
-
-                                if(v==null || v.trim().isEmpty) return "Required";
-                                if ( v.length > 200) {
-                                  return "Limit: 200 char";
-                                }
+                                if (v == null || v.trim().isEmpty) return 'Required';
+                                if (v.length > 200) return 'Limit: 200 char';
                                 return null;
                               },
                             ),
@@ -201,7 +188,7 @@ class _ManualClaimBusinessState extends State<ManualClaimBusiness> {
                             Align(
                               alignment: Alignment.centerRight,
                               child: Text(
-                                "Limit: 200 char",
+                                'Limit: 200 char',
                                 style: AppTextStyle.textXs(
                                   color: colorScheme.onSurfaceVariant,
                                 ),
@@ -215,8 +202,6 @@ class _ManualClaimBusinessState extends State<ManualClaimBusiness> {
                 ),
               ),
             ),
-
-            // Bottom Action Button
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
               child: SizedBox(
@@ -236,7 +221,7 @@ class _ManualClaimBusinessState extends State<ManualClaimBusiness> {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Text(
-                        "Continue",
+                        'Continue',
                         style: AppTextStyle.textMd(weight: FontWeight.w600),
                       ),
                       const SizedBox(width: 8),

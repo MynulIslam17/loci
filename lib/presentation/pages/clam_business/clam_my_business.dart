@@ -1,6 +1,5 @@
 import 'dart:io';
 
-import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:loci/core/constants/app_text_style.dart';
@@ -8,16 +7,17 @@ import 'package:loci/core/enums/category_enum.dart';
 import 'package:loci/core/theme/theme_extention.dart';
 import 'package:loci/core/utils/show_snackbar.dart';
 import 'package:loci/data/models/busniess/business_claim_request_model.dart';
+import 'package:loci/data/models/busniess/create_business_request_model.dart';
 import 'package:loci/presentation/controllers/my_business/business_claim_controller.dart';
 import 'package:loci/presentation/widgets/custom_button.dart';
 import 'package:loci/presentation/widgets/custom_dropdown.dart';
 import 'package:loci/presentation/widgets/custom_image_container.dart';
+import 'package:loci/presentation/widgets/custom_text_field.dart';
 import 'package:loci/presentation/widgets/file_picker.dart';
-import 'package:loci/routes/app_routes.dart';
 
 import '../../../core/theme/app_colors.dart';
-import '../../widgets/custom_imagepicker.dart';
 
+/// Unified claim screen for Google-discovered and manually created businesses.
 class ClamMyBusiness extends StatefulWidget {
   const ClamMyBusiness({super.key});
 
@@ -27,16 +27,17 @@ class ClamMyBusiness extends StatefulWidget {
 
 class _ClamMyBusinessState extends State<ClamMyBusiness> {
   final claimController = Get.find<BusinessClaimController>();
-
   final _formKey = GlobalKey<FormState>();
+  final _messageController = TextEditingController();
 
   BusinessCategory? selectedCategory;
-  bool isFromManualClaim = false;
-
   late final Map<String, dynamic> businessData;
+  List<File> proofFiles = [];
 
-  File? _pickedImage;
-  List<File> attachments = [];
+  String? get _placeId => businessData['placeId'] as String?;
+  bool get _isGoogleClaim =>
+      _placeId != null && _placeId!.trim().isNotEmpty;
+  bool get _isManualClaim => businessData['isManualClaim'] == true;
 
   @override
   void initState() {
@@ -44,53 +45,84 @@ class _ClamMyBusinessState extends State<ClamMyBusiness> {
     _initData();
   }
 
-  void _initData() {
-    businessData = Get.arguments as Map<String, dynamic>? ?? {};
-    isFromManualClaim = businessData['isFromManualClaim'] ?? false;
+  @override
+  void dispose() {
+    _messageController.dispose();
+    super.dispose();
   }
 
-  // ---------------- ACTIONS ----------------
+  void _initData() {
+    businessData = Get.arguments as Map<String, dynamic>? ?? {};
 
-  void _handleClaimBusiness() async {
-    // TODO: handle API call
+    if (businessData['suggestedCategory'] != null) {
+      selectedCategory = BusinessCategory.fromString(
+        businessData['suggestedCategory'] as String?,
+      );
+    }
+  }
 
+  Future<void> _handleClaimBusiness() async {
     if (!_formKey.currentState!.validate()) return;
 
-    if (attachments.isEmpty) {
-      SnackbarService.error("Please add at least one ownership document");
+    if (proofFiles.isEmpty) {
+      SnackbarService.error('Please add at least one proof document');
+      return;
+    }
+
+    if (_isManualClaim) {
+      final createRequest = CreateBusinessRequestModel.fromManualData(
+        businessData,
+        category: selectedCategory!.toJson,
+      );
+
+      final created = await claimController.createBusiness(
+        createRequest,
+        attachments: proofFiles,
+      );
+
+      if (created != null) {
+        Get.back(
+          result: {
+            'success': true,
+            'message': claimController.successMessage ?? 'Business created',
+            'businessId': created.id,
+          },
+        );
+      } else {
+        SnackbarService.error(
+          claimController.errorMessage ?? 'Failed to create business',
+        );
+      }
+      return;
+    }
+
+    if (!_isGoogleClaim || _placeId == null || _placeId!.isEmpty) {
+      SnackbarService.error('Missing Google business reference');
       return;
     }
 
     final request = BusinessClaimRequestModel(
-      name: businessData['name'],
-      category: selectedCategory?.toJson,
-      description: businessData['description'],
-      phone: businessData['phone'],
-      website: businessData['website'],
-      location: businessData['location'],
-      logo: _pickedImage,
-      attachments: attachments,
+      placeId: _placeId,
+      category: selectedCategory!.toJson,
+      message: _messageController.text.trim(),
+      proof: proofFiles,
     );
 
-    bool success = await claimController.claimBusiness(request);
+    final success = await claimController.claimBusiness(request);
 
     if (success) {
       Get.back(
-        result: {"success": true, "message": claimController.successMessage},
+        result: {'success': true, 'message': claimController.successMessage},
       );
     } else {
-      SnackbarService.error(claimController.errorMessage!);
+      SnackbarService.error(claimController.errorMessage ?? 'Claim failed');
     }
   }
 
-  Future<void> _pickAttachment() async {
+  Future<void> _pickProof() async {
     final file = await AppFilePicker.pickSingle();
-    if (file != null) {
-      setState(() => attachments.add(file));
-    }
+    if (file != null) setState(() => proofFiles.add(file));
   }
-
-  // ---------------- UI BUILD ----------------
 
   @override
   Widget build(BuildContext context) {
@@ -99,7 +131,12 @@ class _ClamMyBusinessState extends State<ClamMyBusiness> {
 
     return Scaffold(
       backgroundColor: colorScheme.surface,
-      appBar: _buildAppBar(),
+      appBar: AppBar(
+        title: Text(
+          _isManualClaim ? 'Create Business' : 'Business Claim',
+          style: AppTextStyle.textLg(weight: FontWeight.w600),
+        ),
+      ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Form(
@@ -107,24 +144,30 @@ class _ClamMyBusinessState extends State<ClamMyBusiness> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              //---top section
               _buildBusinessCard(colorScheme, brandColor),
               const SizedBox(height: 24),
-
-              //---category section
               _buildCategoryDropdown(colorScheme),
+              if (_isGoogleClaim) ...[
+                const SizedBox(height: 24),
+                CustomTextField(
+                  controller: _messageController,
+                  title: 'Message (optional)',
+                  hintText: 'I am the owner of this establishment',
+                  maxLine: 3,
+                  maxLength: 500,
+                  borderColor: colorScheme.outline,
+                  textColor: colorScheme.onSurface,
+                  hintTextColor: colorScheme.onSurfaceVariant,
+                  fontSize: 14,
+                ),
+              ],
               const SizedBox(height: 24),
-
-              //--attachment section
-              _buildAttachmentHeader(colorScheme, brandColor),
+              _buildProofHeader(colorScheme, brandColor),
               const SizedBox(height: 12),
-
-              _buildAttachmentList(colorScheme),
+              _buildProofList(colorScheme),
               const SizedBox(height: 16),
-              _buildAddAttachmentButton(colorScheme),
+              _buildAddProofButton(colorScheme),
               const SizedBox(height: 40),
-
-              //---submit button
               _buildClaimButton(colorScheme),
             ],
           ),
@@ -133,20 +176,11 @@ class _ClamMyBusinessState extends State<ClamMyBusiness> {
     );
   }
 
-  // ---------------- APP BAR ----------------
-
-  AppBar _buildAppBar() {
-    return AppBar(
-      title: Text(
-        "Business Claim",
-        style: AppTextStyle.textLg(weight: FontWeight.w600),
-      ),
-    );
-  }
-
-  // ---------------- BUSINESS CARD ----------------
-
   Widget _buildBusinessCard(ColorScheme scheme, Color brandColor) {
+    final name = businessData['name'] as String? ?? 'Business';
+    final description = businessData['description'] as String?;
+    final logo = businessData['logo'] as String?;
+
     return Card(
       color: scheme.surfaceContainerHigh,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -154,114 +188,89 @@ class _ClamMyBusinessState extends State<ClamMyBusiness> {
       child: Padding(
         padding: const EdgeInsets.all(12),
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _buildBusinessHeader(scheme, brandColor),
-            const SizedBox(height: 20),
-            _buildBusinessTitle(brandColor),
-            const SizedBox(height: 8),
-            _buildBusinessDescription(scheme),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildLogo(logo, scheme),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _buildContactRow(
+                        Icons.location_on_outlined,
+                        businessData['location'] as String? ?? '',
+                        scheme.onSurfaceVariant,
+                      ),
+                      const SizedBox(height: 6),
+                      _buildContactRow(
+                        Icons.phone_outlined,
+                        businessData['phone'] as String? ?? '',
+                        brandColor,
+                      ),
+                      if (_isGoogleClaim) ...[
+                        const SizedBox(height: 6),
+                        _buildContactRow(
+                          Icons.storefront_outlined,
+                          'Google business',
+                          scheme.onSurfaceVariant,
+                        ),
+                      ] else if (_isManualClaim) ...[
+                        const SizedBox(height: 6),
+                        _buildContactRow(
+                          Icons.edit_outlined,
+                          'Manual listing',
+                          scheme.onSurfaceVariant,
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            Text(
+              name,
+              style: AppTextStyle.textSm(
+                weight: FontWeight.w600,
+              ).copyWith(color: brandColor),
+            ),
+            if (description != null && description.isNotEmpty) ...[
+              const SizedBox(height: 8),
+              Text(
+                description,
+                style: AppTextStyle.textXs(
+                  color: scheme.onSurfaceVariant,
+                ).copyWith(height: 1.5),
+              ),
+            ],
           ],
         ),
       ),
     );
   }
 
-  Widget _buildBusinessHeader(ColorScheme scheme, Color brandColor) {
-    return Row(
-      children: [
-        _buildImageSection(scheme),
-        const SizedBox(width: 12),
-        Expanded(child: _buildBusinessInfo(scheme, brandColor)),
-      ],
-    );
-  }
+  Widget _buildLogo(String? logo, ColorScheme scheme) {
+    if (logo != null && logo.isNotEmpty) {
+      return CustomCachedImage(width: 120, height: 90, imageUrl: logo);
+    }
 
-  Widget _buildImageSection(ColorScheme scheme) {
-    return SizedBox(
+    return Container(
       width: 120,
       height: 90,
-      child: isFromManualClaim
-          ? CustomImagePicker(
-              height: 90,
-              selectedImage: _pickedImage,
-              borderColor: scheme.outline,
-              backgroundColor: scheme.surface,
-              onImageSelected: (file) {
-                setState(() => _pickedImage = file);
-              },
-              placeholder: Icon(
-                Icons.add_a_photo_outlined,
-                color: scheme.primary.withOpacity(0.5),
-                size: 30,
-              ),
-            )
-          : CustomCachedImage(
-              width: 120,
-              height: 90,
-              imageUrl: "assets/images/finedine.png",
-            ),
+      decoration: BoxDecoration(
+        color: scheme.primary.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Icon(
+        Icons.storefront_outlined,
+        color: scheme.primary.withValues(alpha: 0.5),
+        size: 32,
+      ),
     );
   }
-
-  Widget _buildBusinessInfo(ColorScheme scheme, Color brandColor) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _buildContactRow(
-          Icons.location_on_outlined,
-          businessData['location'],
-          scheme.onSurfaceVariant,
-        ),
-        const SizedBox(height: 6),
-        _buildContactRow(
-          Icons.phone_outlined,
-          businessData["phone"],
-          brandColor,
-        ),
-        const SizedBox(height: 6),
-        if (!isFromManualClaim) _buildRatingRow(scheme),
-      ],
-    );
-  }
-
-  Widget _buildRatingRow(ColorScheme scheme) {
-    return Row(
-      children: [
-        Text(
-          "0 Review",
-          style: AppTextStyle.textXs(color: scheme.onSurfaceVariant),
-        ),
-        const SizedBox(width: 6),
-        ...List.generate(
-          5,
-          (index) =>
-              const Icon(Icons.star, size: 14, color: AppColors.starColor),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildBusinessTitle(Color brandColor) {
-    return Text(
-      isFromManualClaim ? "New Business Listing" : "Dominos Pizza",
-      style: AppTextStyle.textSm(
-        weight: FontWeight.w600,
-      ).copyWith(color: brandColor),
-    );
-  }
-
-  Widget _buildBusinessDescription(ColorScheme scheme) {
-    return Text(
-      isFromManualClaim
-          ? "Upload raffles logo and set the category to begin your manual claim process."
-          : "Dominos Pizza, founded in 1931, is raffles prominent global manufacturer...",
-      style: AppTextStyle.textXs(
-        color: scheme.onSurfaceVariant,
-      ).copyWith(height: 1.5),
-    );
-  }
-
-  // ---------------- CATEGORY ----------------
 
   Widget _buildCategoryDropdown(ColorScheme scheme) {
     return SizedBox(
@@ -271,7 +280,7 @@ class _ClamMyBusinessState extends State<ClamMyBusiness> {
           dropdownColor: scheme.surfaceContainerHigh,
           value: selectedCategory,
           borderColor: scheme.outline,
-          hintText: "Select Category",
+          hintText: 'Select Category',
           textFontSize: 14,
           hintFontSize: 14,
           hintColor: scheme.onSurfaceVariant,
@@ -280,23 +289,18 @@ class _ClamMyBusinessState extends State<ClamMyBusiness> {
           items: BusinessCategory.values
               .map((e) => DropdownMenuItem(value: e, child: Text(e.label)))
               .toList(),
-          validator: (value) => value == null ? "Required" : null,
+          validator: (value) => value == null ? 'Required' : null,
         ),
       ),
     );
   }
 
-  // ---------------- ATTACHMENTS ----------------
-
-  Widget _buildAttachmentHeader(ColorScheme scheme, Color brandColor) {
+  Widget _buildProofHeader(ColorScheme scheme, Color brandColor) {
     return Row(
       children: [
+        Text('Proof ', style: AppTextStyle.textSm(weight: FontWeight.w600)),
         Text(
-          "Attachment ",
-          style: AppTextStyle.textSm(weight: FontWeight.w600),
-        ),
-        Text(
-          "(Proof)",
+          '(Required)',
           style: AppTextStyle.textSm(color: scheme.onSurfaceVariant),
         ),
         const SizedBox(width: 4),
@@ -318,57 +322,53 @@ class _ClamMyBusinessState extends State<ClamMyBusiness> {
             Icon(Icons.info_outline, color: brandColor, size: 20),
             const SizedBox(width: 8),
             Text(
-              "Proof of Ownership",
+              'Proof of Ownership',
               style: AppTextStyle.textSm(weight: FontWeight.w600),
             ),
           ],
         ),
         content: Text(
-          "Please upload business document...",
+          'Upload business license, utility bill, or other ownership documents.',
           style: AppTextStyle.textXs(color: scheme.onSurfaceVariant),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text("Got it"),
+            child: const Text('Got it'),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildAttachmentList(ColorScheme scheme) {
-    if (attachments.isEmpty) return const SizedBox();
+  Widget _buildProofList(ColorScheme scheme) {
+    if (proofFiles.isEmpty) return const SizedBox.shrink();
 
     return Column(
-      children: attachments.map((file) {
-        final isPdf = file.path.endsWith(".pdf");
-        return _buildFileItem(file, isPdf, scheme);
+      children: proofFiles.map((file) {
+        final isPdf = file.path.toLowerCase().endsWith('.pdf');
+        return Card(
+          color: scheme.surfaceContainerHigh,
+          child: ListTile(
+            leading: Icon(
+              isPdf ? Icons.picture_as_pdf : Icons.image_outlined,
+              color: isPdf ? Colors.red : scheme.onSurfaceVariant,
+            ),
+            title: Text(file.path.split(Platform.pathSeparator).last),
+            subtitle: Text(isPdf ? 'PDF' : 'Image'),
+            trailing: IconButton(
+              icon: const Icon(Icons.delete_outline, color: AppColors.danger),
+              onPressed: () => setState(() => proofFiles.remove(file)),
+            ),
+          ),
+        );
       }).toList(),
     );
   }
 
-  Widget _buildFileItem(File file, bool isPdf, ColorScheme scheme) {
-    return Card(
-      color: scheme.surfaceContainerHigh,
-      child: ListTile(
-        leading: Icon(
-          isPdf ? Icons.picture_as_pdf : Icons.image_outlined,
-          color: isPdf ? Colors.red : scheme.onSurfaceVariant,
-        ),
-        title: Text(file.path.split("/").last),
-        subtitle: Text(isPdf ? "PDF" : "Image"),
-        trailing: IconButton(
-          icon: const Icon(Icons.delete_outline, color: AppColors.danger),
-          onPressed: () => setState(() => attachments.remove(file)),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildAddAttachmentButton(ColorScheme scheme) {
+  Widget _buildAddProofButton(ColorScheme scheme) {
     return InkWell(
-      onTap: _pickAttachment,
+      onTap: _pickProof,
       child: Container(
         width: double.infinity,
         padding: const EdgeInsets.symmetric(vertical: 14),
@@ -379,23 +379,21 @@ class _ClamMyBusinessState extends State<ClamMyBusiness> {
         child: const Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.link),
+            Icon(Icons.upload_file),
             SizedBox(width: 8),
-            Text("Add Attachment"),
+            Text('Add Proof'),
           ],
         ),
       ),
     );
   }
 
-  // ---------------- CLAIM BUTTON ----------------
-
   Widget _buildClaimButton(ColorScheme scheme) {
     return GetBuilder<BusinessClaimController>(
       builder: (controller) {
         return CustomButton(
           isLoading: controller.isLoading,
-          text: "Claim Business",
+          text: _isManualClaim ? 'Create Business' : 'Claim Business',
           backgroundColor: scheme.primary,
           textColor: scheme.onPrimary,
           onPressed: _handleClaimBusiness,
@@ -404,9 +402,9 @@ class _ClamMyBusinessState extends State<ClamMyBusiness> {
     );
   }
 
-  // ---------------- COMMON ----------------
-
   Widget _buildContactRow(IconData icon, String label, Color color) {
+    if (label.isEmpty) return const SizedBox.shrink();
+
     return Row(
       children: [
         Icon(icon, size: 16, color: color),

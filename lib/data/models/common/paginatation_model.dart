@@ -26,4 +26,15 @@ class PaginationMeta {
       hasPrevPage: json['hasPrevPage'] ?? false,
     );
   }
+
+
+  Map<String, dynamic> toJson() => {
+    'total': total,
+    'page': page,
+    'limit': limit,
+    'totalPages': totalPages,
+    'hasNextPage': hasNextPage,
+    'hasPrevPage': hasPrevPage,
+  };
+
 }

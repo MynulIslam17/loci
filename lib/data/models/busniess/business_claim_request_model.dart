@@ -1,64 +1,39 @@
 import 'dart:io';
 
 class BusinessClaimRequestModel {
-  final String? name;
-  final String? category;
-  final String? description;
-  final String? phone;
-  final String? website;
-  final String? location;
-
-  // Files
-  final File? logo;
-  final List<File>? attachments;
+  final String? placeId;
+  final String? businessId;
+  final String category;
+  final String? message;
+  final List<File> proof;
 
   BusinessClaimRequestModel({
-    this.name,
-    this.category,
-    this.description,
-    this.phone,
-    this.website,
-    this.location,
-    this.logo,
-    this.attachments,
-  });
+    this.placeId,
+    this.businessId,
+    required this.category,
+    this.message,
+    required this.proof,
+  }) : assert(
+          (placeId != null && placeId.isNotEmpty) ^
+              (businessId != null && businessId.isNotEmpty),
+          'Provide either placeId or businessId',
+        );
 
-  /// Converts text fields to a Map for Multipart requests.
   Map<String, String> toFields() {
-    final map = <String, String>{};
+    final map = <String, String>{'category': category};
 
-    if (name != null) map['name'] = name!;
-    if (category != null) map['category'] = category!;
-    if (description != null) map['description'] = description!;
-    if (phone != null) map['phone'] = phone!;
-    if (website != null) map['website'] = website!;
-    if (location != null) map['location'] = location!;
-
-    return map;
-  }
-
-  /// Returns a map of files.
-  /// Handles the 'logo' and multiple 'attachments'.
-  Map<String, File> toFileMap() {
-    final map = <String, File>{};
-
-    if (logo != null) {
-      map['logo'] = logo!;
+    if (placeId != null && placeId!.isNotEmpty) {
+      map['placeId'] = placeId!;
+    }
+    if (businessId != null && businessId!.isNotEmpty) {
+      map['businessId'] = businessId!;
+    }
+    if (message != null && message!.trim().isNotEmpty) {
+      map['message'] = message!.trim();
     }
 
     return map;
   }
 
-  Map<String, List<File>> toMultiFileMap() {
-    final map = <String, List<File>>{};
-
-    if (attachments != null && attachments!.isNotEmpty) {
-      map['attachments'] = attachments!;
-    }
-
-    return map;
-  }
-
-
-
+  Map<String, List<File>> toMultiFileMap() => {'proof': proof};
 }

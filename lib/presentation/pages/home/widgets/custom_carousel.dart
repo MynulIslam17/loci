@@ -14,6 +14,7 @@ class CustomCarousel extends StatefulWidget {
   final Color? activeIndicatorColor;
   final Color? inactiveIndicatorColor;
   final Duration autoPlayInterval;
+  final ValueChanged<CarouselData>? onItemTap;
 
   const CustomCarousel({
     super.key,
@@ -25,6 +26,7 @@ class CustomCarousel extends StatefulWidget {
     this.activeIndicatorColor,
     this.inactiveIndicatorColor,
     this.autoPlayInterval = const Duration(seconds: 3),
+    this.onItemTap,
   });
 
   @override
@@ -33,6 +35,13 @@ class CustomCarousel extends StatefulWidget {
 
 class _CustomCarouselState extends State<CustomCarousel> {
   int _currentIndex = 0;
+
+  ImageProvider _imageFor(CarouselData item) {
+    if (item.placeImageUrl.isNotEmpty) {
+      return NetworkImage(item.placeImageUrl);
+    }
+    return AssetImage(item.placeImage);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -54,80 +63,85 @@ class _CustomCarouselState extends State<CustomCarousel> {
             },
           ),
           items: widget.carouselData.map((item) {
-            return Stack(
-              children: [
-                // 1. The Image Background
-                Container(
-                  width: MediaQuery.sizeOf(context).width,
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(widget.borderRadius),
-                    image: DecorationImage(
-                      image: AssetImage(item.placeImage),
-                      fit: BoxFit.cover,
+            final hasWeather = item.placeWeather.isNotEmpty;
+            return GestureDetector(
+              onTap: widget.onItemTap == null ? null : () => widget.onItemTap!(item),
+              child: Stack(
+                children: [
+                  // 1. The Image Background
+                  Container(
+                    width: MediaQuery.sizeOf(context).width,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(widget.borderRadius),
+                      image: DecorationImage(
+                        image: _imageFor(item),
+                        fit: BoxFit.cover,
+                      ),
                     ),
                   ),
-                ),
 
-                Padding(
-                  padding: const EdgeInsets.all(12),
-                  child: Align(
-                    alignment: Alignment.topRight,
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Icon(
-                          Icons.cloud,
-                          size: 24,
-                          color: AppColors.base500,
+                  if (hasWeather)
+                    Padding(
+                      padding: const EdgeInsets.all(12),
+                      child: Align(
+                        alignment: Alignment.topRight,
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(
+                              Icons.cloud,
+                              size: 24,
+                              color: AppColors.base500,
+                            ),
+                            const SizedBox(width: 6),
+                            Text(
+                              "${item.placeWeather}°C",
+                              style: AppTextStyle.textMd(color: AppColors.base500),
+                            ),
+                          ],
                         ),
-                        const SizedBox(width: 6),
+                      ),
+                    ),
+
+                  ///place Name & location
+                  Positioned(
+                    bottom: 30,
+                    left: 20,
+                    right: 20,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
                         Text(
-                          "${item.placeWeather}\u00B0C",
+                          item.placeName,
                           style: AppTextStyle.textMd(color: AppColors.base500),
+                          overflow: TextOverflow.ellipsis,
+                          maxLines: 1,
+                        ),
+                        const SizedBox(height: 3),
+                        Row(
+                          children: [
+                            Icon(
+                              Icons.location_on_outlined,
+                              color: AppColors.base500,
+                              size: 14,
+                            ),
+                            const SizedBox(width: 6),
+                            Expanded(
+                              child: Text(
+                                item.placeLocation,
+                                style: AppTextStyle.textXs(color: AppColors.base500),
+                                overflow: TextOverflow.ellipsis,
+                                maxLines: 1,
+                                softWrap: true,
+                              ),
+                            ),
+                          ],
                         ),
                       ],
                     ),
                   ),
-                ),
-
-                ///place Name & location
-                Positioned(
-                  bottom: 30,
-                  left: 20,
-                  right: 20,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        item.placeName,
-                        style: AppTextStyle.textMd(color: AppColors.base500),
-                        overflow: TextOverflow.ellipsis,
-                        maxLines: 1,
-                      ),
-                      const SizedBox(height: 3),
-                      Row(
-                        children: [
-                          Icon(
-                            Icons.location_on_outlined,
-                            color: AppColors.base500,
-                            size: 14,
-                          ),
-                          const SizedBox(width: 6,),
-                          Expanded(
-                            child: Text(
-                              item.placeLocation,
-                              style: AppTextStyle.textXs(color: AppColors.base500,),
-                              overflow: TextOverflow.ellipsis,
-                              maxLines: 1,
-                              softWrap: true,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-              ],
+                ],
+              ),
             );
           }).toList(),
         ),

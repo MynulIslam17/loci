@@ -10,25 +10,36 @@ class CreateAdController extends GetxController {
 
   Future<bool> submitAd({
     required String title,
-    required String businessName,
-    required String location,
-    required DateTime runtimeDate,
+    required DateTime endDate,
     required File image,
+    String? businessName,
+    String? location,
+    DateTime? startDate,
   }) async {
     try {
       isLoading = true;
       errorMessage = null;
       update();
 
+      final fields = <String, String>{
+        'title': title,
+        'endDate': endDate.toUtc().toIso8601String(),
+      };
+
+      if (businessName != null && businessName.isNotEmpty) {
+        fields['businessName'] = businessName;
+      }
+      if (location != null && location.isNotEmpty) {
+        fields['location'] = location;
+      }
+      if (startDate != null) {
+        fields['startDate'] = startDate.toUtc().toIso8601String();
+      }
+
       final response = await Get.find<NetworkCaller>().multipartRequest(
         url: AppUrl.submitAd,
         method: 'POST',
-        fields: {
-          'title': title,
-          'businessName': businessName,
-          'location': location,
-          'runtimeDate': runtimeDate.toUtc().toIso8601String(),
-        },
+        fields: fields,
         files: {'image': image},
       );
 

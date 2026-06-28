@@ -17,22 +17,29 @@ class CreateAd extends StatefulWidget {
 }
 
 class _CreateAdState extends State<CreateAd> {
+  static const int _titleMin = 2;
+  static const int _titleMax = 200;
+  static const int _businessNameMax = 200;
+
   final _formKey = GlobalKey<FormState>();
   final _controller = Get.find<CreateAdController>();
 
   File? _adBanner;
   String? _imageError;
+  String? _endDateError;
 
-  // Controllers for TextField data handling
   final _titleController = TextEditingController();
   final _businessController = TextEditingController();
   final _locationController = TextEditingController();
-  final _dateController = TextEditingController();
-  final _timeController = TextEditingController();
+  final _startDateController = TextEditingController();
+  final _startTimeController = TextEditingController();
+  final _endDateController = TextEditingController();
+  final _endTimeController = TextEditingController();
 
-  // Real values backing the read-only date/time text fields.
-  DateTime? _pickedDate;
-  TimeOfDay? _pickedTime;
+  DateTime? _startDate;
+  TimeOfDay? _startTime;
+  DateTime? _endDate;
+  TimeOfDay? _endTime;
 
   /// True when the business name was supplied via Get.arguments (i.e. user
   /// opened this page from a specific business profile). In that case the
@@ -49,63 +56,94 @@ class _CreateAdState extends State<CreateAd> {
     }
   }
 
-  // --- method for showing calendar
-  Future<void> _showCalendar() async {
-    final pickedDate = await showDatePicker(
+  Future<void> _pickDate({required bool isStart}) async {
+    final initial = isStart
+        ? (_startDate ?? DateTime.now())
+        : (_endDate ?? _startDate ?? DateTime.now());
+    final first = isStart ? DateTime.now() : (_startDate ?? DateTime.now());
+
+    final picked = await showDatePicker(
       context: context,
-      initialDate: _pickedDate ?? DateTime.now(),
-      firstDate: DateTime.now(),
+      initialDate: initial.isBefore(first) ? first : initial,
+      firstDate: first,
       lastDate: DateTime(2050),
     );
 
-    if (pickedDate != null) {
-      setState(() {
-        _pickedDate = pickedDate;
-        _dateController.text =
-            "${pickedDate.day}/${pickedDate.month}/${pickedDate.year}";
-      });
-      _formKey.currentState?.validate();
-    }
+    if (picked == null) return;
+    setState(() {
+      if (isStart) {
+        _startDate = picked;
+        _startDateController.text =
+            "${picked.day}/${picked.month}/${picked.year}";
+        // If end is now before start, clear it so user re-picks.
+        if (_endDate != null && _endDate!.isBefore(picked)) {
+          _endDate = null;
+          _endDateController.clear();
+        }
+      } else {
+        _endDate = picked;
+        _endDateController.text =
+            "${picked.day}/${picked.month}/${picked.year}";
+        _endDateError = null;
+      }
+    });
+    _formKey.currentState?.validate();
   }
 
-  // --- method for showing TimePicker
-  Future<void> _showTime() async {
-    final pickedTime = await showTimePicker(
-      context: context,
-      initialTime: _pickedTime ?? TimeOfDay.now(),
-    );
-
-    if (pickedTime != null && mounted) {
-      setState(() {
-        _pickedTime = pickedTime;
-        _timeController.text = pickedTime.format(context);
-      });
-      _formKey.currentState?.validate();
-    }
+  Future<void> _pickTime({required bool isStart}) async {
+    final initial =
+        isStart ? (_startTime ?? TimeOfDay.now()) : (_endTime ?? TimeOfDay.now());
+    final picked = await showTimePicker(context: context, initialTime: initial);
+    if (picked == null || !mounted) return;
+    setState(() {
+      if (isStart) {
+        _startTime = picked;
+        _startTimeController.text = picked.format(context);
+      } else {
+        _endTime = picked;
+        _endTimeController.text = picked.format(context);
+      }
+    });
+    _formKey.currentState?.validate();
   }
 
-  // --- submit
+  DateTime? _combine(DateTime? date, TimeOfDay? time) {
+    if (date == null) return null;
+    final t = time ?? const TimeOfDay(hour: 0, minute: 0);
+    return DateTime(date.year, date.month, date.day, t.hour, t.minute);
+  }
+
   Future<void> _onSubmit() async {
-    // Image isn't a FormField, so validate it ourselves alongside the form.
+    final start = _combine(_startDate, _startTime);
+    final end = _combine(_endDate, _endTime);
+
+    String? endErr;
+    if (end == null) {
+      endErr = "End date is required";
+    } else if (start != null && !end.isAfter(start)) {
+      endErr = "End must be after start";
+    } else if (end.isBefore(DateTime.now())) {
+      endErr = "End date must be in the future";
+    }
+
     setState(() {
       _imageError = _adBanner == null ? "Please select an ad banner" : null;
+      _endDateError = endErr;
     });
-    final formOk = _formKey.currentState?.validate() ?? false;
-    if (!formOk || _adBanner == null) return;
 
-    final runtimeDate = DateTime(
-      _pickedDate!.year,
-      _pickedDate!.month,
-      _pickedDate!.day,
-      _pickedTime!.hour,
-      _pickedTime!.minute,
-    );
+    final formOk = _formKey.currentState?.validate() ?? false;
+    if (!formOk || _adBanner == null || endErr != null) return;
 
     final success = await _controller.submitAd(
       title: _titleController.text.trim(),
-      businessName: _businessController.text.trim(),
-      location: _locationController.text.trim(),
-      runtimeDate: runtimeDate,
+      businessName: _businessController.text.trim().isEmpty
+          ? null
+          : _businessController.text.trim(),
+      location: _locationController.text.trim().isEmpty
+          ? null
+          : _locationController.text.trim(),
+      startDate: start,
+      endDate: end!,
       image: _adBanner!,
     );
 
@@ -124,8 +162,10 @@ class _CreateAdState extends State<CreateAd> {
     _titleController.dispose();
     _businessController.dispose();
     _locationController.dispose();
-    _dateController.dispose();
-    _timeController.dispose();
+    _startDateController.dispose();
+    _startTimeController.dispose();
+    _endDateController.dispose();
+    _endTimeController.dispose();
     super.dispose();
   }
 
@@ -211,11 +251,12 @@ class _CreateAdState extends State<CreateAd> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            //-- title
+            //-- title (required, 2–200)
             CustomTextField(
               controller: _titleController,
               title: "Title",
               hintText: "e.g. Summer Sale - 30% Off All Items",
+              maxLength: _titleMax,
               borderColor: colorScheme.outline,
               hintTextColor: colorScheme.onSurfaceVariant,
               textColor: colorScheme.onSurface,
@@ -223,21 +264,30 @@ class _CreateAdState extends State<CreateAd> {
                 weight: FontWeight.w600,
                 color: colorScheme.onSurface,
               ),
-              validator: (value) =>
-                  value == null || value.trim().isEmpty ? "Title is required" : null,
+              validator: (value) {
+                final v = value?.trim() ?? '';
+                if (v.isEmpty) return "Title is required";
+                if (v.length < _titleMin) {
+                  return "Title must be at least $_titleMin characters";
+                }
+                if (v.length > _titleMax) {
+                  return "Title must be at most $_titleMax characters";
+                }
+                return null;
+              },
             ),
             const SizedBox(height: 16),
 
-            //--business Name (pre-filled & locked when opened from a
-            //   business profile, editable otherwise)
+            //-- business name (optional, 1–200 if entered)
             CustomTextField(
               controller: _businessController,
               readOnly: _businessLocked,
               fillColor: _businessLocked
                   ? colorScheme.surfaceContainerHighest
                   : null,
-              title: "Business",
+              title: "Business (optional)",
               hintText: "Enter business name",
+              maxLength: _businessNameMax,
               borderColor: colorScheme.outline,
               hintTextColor: colorScheme.onSurfaceVariant,
               textColor: colorScheme.onSurface,
@@ -245,16 +295,21 @@ class _CreateAdState extends State<CreateAd> {
                 weight: FontWeight.w600,
                 color: colorScheme.onSurface,
               ),
-              validator: (value) => value == null || value.trim().isEmpty
-                  ? "Business name is required"
-                  : null,
+              validator: (value) {
+                final v = value?.trim() ?? '';
+                if (v.isEmpty) return null;
+                if (v.length > _businessNameMax) {
+                  return "Business name must be at most $_businessNameMax characters";
+                }
+                return null;
+              },
             ),
             const SizedBox(height: 16),
 
-            //-- location
+            //-- location (optional)
             CustomTextField(
               controller: _locationController,
-              title: "Location",
+              title: "Location (optional)",
               hintText: "Enter location",
               prefixIcon: Icon(
                 Icons.location_on_outlined,
@@ -268,67 +323,41 @@ class _CreateAdState extends State<CreateAd> {
                 weight: FontWeight.w600,
                 color: colorScheme.onSurface,
               ),
-              validator: (value) => value == null || value.trim().isEmpty
-                  ? "Location is required"
-                  : null,
             ),
             const SizedBox(height: 16),
 
-            //--add duration
-            Text(
-              "Ads Runtime",
-              style: AppTextStyle.textSm(
-                weight: FontWeight.w600,
-                color: colorScheme.onSurface,
-              ),
+            //-- start date (optional)
+            _buildDateTimeRow(
+              label: "Start Date (Optional)",
+              dateController: _startDateController,
+              timeController: _startTimeController,
+              onDateTap: () => _pickDate(isStart: true),
+              onTimeTap: () => _pickTime(isStart: true),
+              // No validators — optional.
             ),
-            const SizedBox(height: 8),
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(
-                  child: CustomTextField(
-                    onTap: _showCalendar,
-                    controller: _dateController,
-                    readOnly: true,
-                    hintText: "Select Date",
-                    fontSize: 11,
-                    suffixIcon: Icon(
-                      Icons.calendar_today_outlined,
-                      size: 14,
-                      color: colorScheme.onSurfaceVariant,
-                    ),
-                    borderColor: colorScheme.outline,
-                    hintTextColor: colorScheme.onSurfaceVariant,
-                    textColor: colorScheme.onSurface,
-                    validator: (_) =>
-                        _pickedDate == null ? "Pick a date" : null,
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: CustomTextField(
-                    controller: _timeController,
-                    onTap: _showTime,
-                    readOnly: true,
-                    hintText: "Select Time",
-                    fontSize: 11,
-                    suffixIcon: Icon(
-                      Icons.access_time,
-                      size: 14,
-                      color: colorScheme.onSurfaceVariant,
-                    ),
-                    borderColor: colorScheme.outline,
-                    hintTextColor: colorScheme.onSurfaceVariant,
-                    textColor: colorScheme.onSurface,
-                    validator: (_) =>
-                        _pickedTime == null ? "Pick a time" : null,
-                  ),
-                ),
-              ],
-            ),
+            const SizedBox(height: 16),
 
-            //--add banner
+            //-- end date (required, must be after start, must be future)
+            _buildDateTimeRow(
+              label: "End Date",
+              dateController: _endDateController,
+              timeController: _endTimeController,
+              onDateTap: () => _pickDate(isStart: false),
+              onTimeTap: () => _pickTime(isStart: false),
+              dateValidator: (_) =>
+                  _endDate == null ? "Pick an end date" : null,
+              timeValidator: (_) =>
+                  _endTime == null ? "Pick an end time" : null,
+            ),
+            if (_endDateError != null) ...[
+              const SizedBox(height: 6),
+              Text(
+                _endDateError!,
+                style: TextStyle(color: colorScheme.error, fontSize: 12),
+              ),
+            ],
+
+            //-- ads banner (required)
             const SizedBox(height: 16),
             Text(
               "Ads Banner",
@@ -349,6 +378,73 @@ class _CreateAdState extends State<CreateAd> {
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildDateTimeRow({
+    required String label,
+    required TextEditingController dateController,
+    required TextEditingController timeController,
+    required VoidCallback onDateTap,
+    required VoidCallback onTimeTap,
+    FormFieldValidator<String>? dateValidator,
+    FormFieldValidator<String>? timeValidator,
+  }) {
+    final colorScheme = context.colorScheme;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: AppTextStyle.textSm(
+            weight: FontWeight.w600,
+            color: colorScheme.onSurface,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              child: CustomTextField(
+                onTap: onDateTap,
+                controller: dateController,
+                readOnly: true,
+                hintText: "Select Date",
+                fontSize: 11,
+                suffixIcon: Icon(
+                  Icons.calendar_today_outlined,
+                  size: 14,
+                  color: colorScheme.onSurfaceVariant,
+                ),
+                borderColor: colorScheme.outline,
+                hintTextColor: colorScheme.onSurfaceVariant,
+                textColor: colorScheme.onSurface,
+                validator: dateValidator,
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: CustomTextField(
+                controller: timeController,
+                onTap: onTimeTap,
+                readOnly: true,
+                hintText: "Select Time",
+                fontSize: 11,
+                suffixIcon: Icon(
+                  Icons.access_time,
+                  size: 14,
+                  color: colorScheme.onSurfaceVariant,
+                ),
+                borderColor: colorScheme.outline,
+                hintTextColor: colorScheme.onSurfaceVariant,
+                textColor: colorScheme.onSurface,
+                validator: timeValidator,
+              ),
+            ),
+          ],
+        ),
+      ],
     );
   }
 

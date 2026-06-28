@@ -9,6 +9,7 @@ import 'package:loci/core/utils/show_snackbar.dart';
 import 'package:loci/data/models/busniess/browse_business_model.dart';
 import 'package:loci/data/models/carousel_data.dart';
 import 'package:loci/presentation/controllers/community/search_business_controller.dart';
+import 'package:loci/presentation/controllers/home/ad_list_controller.dart';
 import 'package:loci/presentation/controllers/home/home_add_poll_option_controller.dart';
 import 'package:loci/presentation/controllers/home/home_comment_controller.dart';
 import 'package:loci/presentation/controllers/home/home_like_controller.dart';
@@ -16,6 +17,7 @@ import 'package:loci/presentation/controllers/home/home_vote_controller.dart';
 import 'package:loci/presentation/pages/home/widgets/custom_carousel.dart';
 import 'package:loci/presentation/pages/home/widgets/post_input_filed.dart';
 import 'package:loci/presentation/pages/raffles/active_raffles_screen.dart';
+import 'package:loci/presentation/widgets/app_skeleton.dart';
 import 'package:loci/presentation/widgets/empty_state.dart';
 import 'package:loci/presentation/widgets/pagination_loading.dart';
 import 'package:percent_indicator/linear_percent_indicator.dart';
@@ -45,6 +47,7 @@ class _HomeScreenState extends State<HomeScreen> {
   final navController = Get.find<NavController>();
   final postQuestionController = Get.find<PostQuestionController>();
   final questionListController = Get.find<QuestionListController>();
+  final _adListController = Get.find<AdListController>();
   final _authController = Get.find<AuthController>();
 
   String? _expandedPostId;
@@ -61,8 +64,8 @@ class _HomeScreenState extends State<HomeScreen> {
   late final HomeCommentController _commentCtrl;
   String? _activeMentionPostId;
 
-  //-- Banner data ---
-  final List<CarouselData> bannerData = [
+  //-- Fallback banner data (shown when /ads returns empty) ---
+  final List<CarouselData> _fallbackBannerData = [
     CarouselData(
       placeName: "Barclay Prime",
       placeLocation: "237 S 18th St, Philadelphia, PA 19103",
@@ -207,7 +210,12 @@ class _HomeScreenState extends State<HomeScreen> {
     return Scaffold(
       backgroundColor: context.colorScheme.surface,
       body: RefreshIndicator(
-        onRefresh: () => questionListController.fetchQuestions(isRefresh: true),
+        onRefresh: () async {
+          await Future.wait([
+            questionListController.fetchQuestions(isRefresh: true),
+            _adListController.fetchAds(),
+          ]);
+        },
         child: SingleChildScrollView(
           controller: questionListController.scrollController,
           physics: const AlwaysScrollableScrollPhysics(),
@@ -215,8 +223,29 @@ class _HomeScreenState extends State<HomeScreen> {
           children: [
             const SizedBox(height: 16),
 
-            // --- 1️⃣ Carousel Slider ---
-            CustomCarousel(carouselData: bannerData),
+            // --- 1️⃣ Carousel Slider (live ads from /ads) ---
+            GetBuilder<AdListController>(
+              builder: (adCtrl) {
+                if (adCtrl.isLoading && adCtrl.ads.isEmpty) {
+                  return const _BannerShimmer();
+                }
+                final items = adCtrl.ads
+                    .map(
+                      (ad) => CarouselData(
+                        placeName: ad.title,
+                        placeLocation: ad.location.isNotEmpty
+                            ? ad.location
+                            : ad.businessName,
+                        placeWeather: '',
+                        placeImageUrl: ad.imageUrl,
+                        linkUrl: ad.linkUrl,
+                      ),
+                    )
+                    .toList();
+                final data = items.isNotEmpty ? items : _fallbackBannerData;
+                return CustomCarousel(carouselData: data);
+              },
+            ),
             const SizedBox(height: 20),
 
             // --- 2️⃣ Activity Row ---
@@ -349,4 +378,83 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
 
+}
+
+class _BannerShimmer extends StatelessWidget {
+  const _BannerShimmer();
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.colorScheme;
+    final cardWidth = MediaQuery.sizeOf(context).width * 0.85;
+
+    return Column(
+      children: [
+        SizedBox(
+          height: 208,
+          child: Center(
+            child: Container(
+              width: cardWidth,
+              height: 200,
+              decoration: BoxDecoration(
+                color: colors.surfaceContainerHigh,
+                borderRadius: BorderRadius.circular(15),
+              ),
+              child: Stack(
+                children: [
+                  // Image area placeholder (fills the card)
+                  Positioned.fill(
+                    child: AppSkeleton.box(
+                      width: double.infinity,
+                      height: double.infinity,
+                      radius: 15,
+                    ),
+                  ),
+                  // Title + location row (mirrors CustomCarousel's bottom block)
+                  Positioned(
+                    bottom: 22,
+                    left: 20,
+                    right: 20,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        AppSkeleton.box(width: 160, height: 14, radius: 4),
+                        const SizedBox(height: 8),
+                        Row(
+                          children: [
+                            AppSkeleton.box(width: 14, height: 14, radius: 7),
+                            const SizedBox(width: 6),
+                            Expanded(
+                              child: AppSkeleton.box(
+                                width: double.infinity,
+                                height: 10,
+                                radius: 4,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+        // Indicator dots placeholder
+        const SizedBox(height: 8),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            AppSkeleton.box(width: 27, height: 8, radius: 4),
+            const SizedBox(width: 6),
+            AppSkeleton.box(width: 10, height: 8, radius: 4),
+            const SizedBox(width: 6),
+            AppSkeleton.box(width: 10, height: 8, radius: 4),
+          ],
+        ),
+      ],
+    );
+  }
 }

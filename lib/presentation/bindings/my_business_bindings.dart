@@ -1,4 +1,5 @@
 import 'package:get/get.dart';
+import 'package:loci/presentation/controllers/my_business/find_google_business_controller.dart';
 import 'package:loci/presentation/controllers/my_business/get_my_business_list _controller.dart';
 
 import '../controllers/my_business/business_claim_controller.dart';
@@ -15,6 +16,7 @@ class MyBusinessBindings extends Bindings{
     Get.lazyPut(()=>BusinessClaimController());
     Get.lazyPut(()=>MyBusinessReviewController());
     Get.lazyPut(()=>CreateAdController(),fenix: true);
+    Get.lazyPut(()=>FindGoogleBusinessController());
 
 
   }

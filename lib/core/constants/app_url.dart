@@ -48,6 +48,7 @@ abstract class AppUrl {
 ///-------business
   static const String myBusiness="$baseUrl/businesses/me";
   static const String createBusiness="$baseUrl/businesses";
+  static const String claimBusiness="$baseUrl/businesses/claim";
   static  String businessProfile(String businessId)=>"$baseUrl/businesses/$businessId";
   static  String updateBusinessProfile(String businessId)=>"$baseUrl/businesses/$businessId";
   static const String browseBusinesses = "$baseUrl/businesses";
@@ -56,6 +57,7 @@ abstract class AppUrl {
 
   ///-------ads
   static const String submitAd = "$baseUrl/admin/ads/submit";
+  static const String adsList = "$baseUrl/ads";
 
 
 
@@ -117,7 +119,7 @@ static String   addReviews(String businessId)=>"$baseUrl/reviews/$businessId";
   static  String  searchActivity(String communityId)=>"$baseUrl/community-announcements/all-activity?communityId={{communityId}}";
   static String searchBusinesses(String search) => "$baseUrl/businesses?search=$search";
   static String addPollOption(String announcementId) => "$baseUrl/community-announcements/$announcementId/poll-options";
-
+  static String findGoogleBusiness= "$baseUrl/businesses/discover";
 
 
 
