@@ -7,6 +7,7 @@ import 'package:loci/core/network/network_caller.dart';
 class CreateAdController extends GetxController {
   bool isLoading = false;
   String? errorMessage;
+  String? successMessage;
 
   Future<bool> submitAd({
     required String title,
@@ -19,6 +20,7 @@ class CreateAdController extends GetxController {
     try {
       isLoading = true;
       errorMessage = null;
+      successMessage = null;
       update();
 
       final fields = <String, String>{
@@ -48,6 +50,8 @@ class CreateAdController extends GetxController {
         return false;
       }
 
+      successMessage = response.body!['message'] as String? ??
+          'Ad submitted for review';
       return true;
     } catch (e) {
       errorMessage = e.toString();

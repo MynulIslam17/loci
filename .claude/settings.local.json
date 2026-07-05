@@ -3,7 +3,8 @@
     "allow": [
       "Bash(flutter analyze *)",
       "Bash(dir C:\\\\Users\\\\azaan\\\\StudioProjects\\\\loci *)",
-      "Bash(flutter --version)"
+      "Bash(flutter --version)",
+      "Bash(grep -E \"shared_preferences|hive\" C:\\\\\\\\Users\\\\\\\\azaan\\\\\\\\StudioProjects\\\\\\\\loci\\\\\\\\pubspec.yaml)"
     ]
   }
 }

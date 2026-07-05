@@ -150,8 +150,10 @@ class _CreateAdState extends State<CreateAd> {
     if (!mounted) return;
 
     if (success) {
-      SnackbarService.success("Ad submitted successfully");
-      Get.back();
+      Get.back(result: true);
+      SnackbarService.success(
+        _controller.successMessage ?? "Ad submitted for review",
+      );
     } else {
       SnackbarService.error(_controller.errorMessage ?? "Failed to submit ad");
     }
