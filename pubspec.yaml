@@ -10,6 +10,9 @@ dependencies:
   flutter:
     sdk: flutter
 
+  # Payments
+  flutter_stripe: ^11.1.0
+
   # UI & Styling
   cupertino_icons: ^1.0.8
   flutter_screenutil: ^5.9.3

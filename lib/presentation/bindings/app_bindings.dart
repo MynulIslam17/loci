@@ -6,6 +6,7 @@ import 'package:loci/presentation/controllers/home/post_question_controller.dart
 import 'package:loci/presentation/controllers/home/question_list_controller.dart';
 
 import '../../core/network/network_setup.dart';
+import '../../core/services/stripe_service.dart';
 import '../../data/datasources/local_storage_service.dart';
 import '../../data/repositories/auth_repository.dart';
 import '../controllers/auth/auth_controller.dart';
@@ -25,6 +26,10 @@ class AppBindings extends Bindings {
     Get.put(AuthController(Get.find()), permanent: true);
     Get.put(NavController(), permanent: true);
     Get.put(setUpNetworkClient(), permanent: true);
+
+    // Fetch the Stripe publishable key and initialize the SDK (fire-and-forget;
+    // ready well before the user can reach checkout, which requires login).
+    Get.put(StripeService(), permanent: true).init();
 
     Get.put(RSVPController(), permanent: true);
     Get.put(VoteController(), permanent: true);

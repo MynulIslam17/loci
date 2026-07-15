@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:loci/core/theme/theme_extention.dart';
 import 'package:loci/presentation/controllers/subscription/plans_controller.dart';
+import 'package:loci/presentation/controllers/subscription/subscription_checkout_controller.dart';
+import 'package:loci/presentation/pages/subscription/widget/active_plan_banner.dart';
 import 'package:loci/presentation/pages/subscription/widget/billing_toggle.dart';
 import 'package:loci/presentation/pages/subscription/widget/plan_list.dart';
 import 'package:loci/presentation/pages/subscription/widget/subscription_shimmer.dart';
@@ -20,11 +22,13 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
   int? _expandedIndex;
 
   final controller = Get.find<PlansController>();
+  final checkoutController = Get.find<SubscriptionCheckoutController>();
 
   @override
   void initState() {
     super.initState();
     controller.fetchPlans(BillingType.monthly);
+    checkoutController.fetchMySubscription();
   }
 
   @override
@@ -39,6 +43,9 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
           return Column(
             children: [
               const SizedBox(height: 20),
+
+              const ActivePlanBanner(),
+              const SizedBox(height: 10),
 
               BillingToggleSection(
                 isMonthly: _isMonthly,
