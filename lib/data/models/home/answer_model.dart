@@ -18,9 +18,9 @@ class AnswerModel {
   });
 
   factory AnswerModel.fromJson(Map<String, dynamic> json) => AnswerModel(
-    id: json['_id'] as String,
-    content: json['content'] as String,
-    user: AuthorModel.fromJson(json['user'] as Map<String, dynamic>),
+    id: (json['_id'] ?? json['id'] ?? '').toString(),
+    content: (json['content'] as String?) ?? '',
+    user: AuthorModel.fromJson((json['user'] as Map<String, dynamic>?) ?? const {}),
     likeCount: json['likeCount'] as int? ?? 0,
     isLiked: json['isLiked'] as bool? ?? false,
     createdAt: json['createdAt'] as String? ?? '',

@@ -10,8 +10,8 @@ class AuthorModel {
   });
 
   factory AuthorModel.fromJson(Map<String, dynamic> json) => AuthorModel(
-        id: json['_id'] as String,
-        name: json['name'] as String,
+        id: (json['_id'] ?? json['id'] ?? '').toString(),
+        name: (json['name'] as String?) ?? '',
         avatar: json['avatar'] as String? ?? '',
       );
 
