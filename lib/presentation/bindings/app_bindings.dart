@@ -6,7 +6,9 @@ import 'package:loci/presentation/controllers/home/post_question_controller.dart
 import 'package:loci/presentation/controllers/home/question_list_controller.dart';
 
 import '../../core/network/network_setup.dart';
+import '../../core/services/chat_socket_service.dart';
 import '../../core/services/stripe_service.dart';
+import '../controllers/chat/chat_list_controller.dart';
 import '../../data/datasources/local_storage_service.dart';
 import '../../data/repositories/auth_repository.dart';
 import '../controllers/auth/auth_controller.dart';
@@ -22,10 +24,14 @@ class AppBindings extends Bindings {
 
     Get.put(LocalStorageService(), permanent: true);
     Get.put(AuthRepository(Get.find()), permanent: true);
+    // Register the chat socket BEFORE AuthController so its async loadUserData()
+    // can connect the socket once a stored token is loaded on startup.
+    Get.put(ChatSocketService(), permanent: true);
     // ✅ global
     Get.put(AuthController(Get.find()), permanent: true);
     Get.put(NavController(), permanent: true);
     Get.put(setUpNetworkClient(), permanent: true);
+    Get.lazyPut<ChatListController>(() => ChatListController(), fenix: true);
 
     // Fetch the Stripe publishable key and initialize the SDK (fire-and-forget;
     // ready well before the user can reach checkout, which requires login).
