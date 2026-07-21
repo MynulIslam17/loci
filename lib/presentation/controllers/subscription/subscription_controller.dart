@@ -88,7 +88,7 @@ class SubscriptionController extends GetxController {
     update();
 
     try {
-      final response = await _network.getRequest(url: AppUrl.subscriptionMy);
+      final response = await _network.getRequest(url: AppUrl.mySubscription);
       if (response.isSuccess && response.body != null) {
         final data = response.body!['data'];
         mySubscription = data is Map<String, dynamic>
@@ -137,13 +137,13 @@ class SubscriptionController extends GetxController {
         return;
       }
 
-      if (checkout.free) {
+      if (checkout.isFree) {
         SnackbarService.success('Plan activated');
         await fetchMySubscription();
         return;
       }
 
-      if (!checkout.requiresPaymentSheet) {
+      if (!checkout.canPresentSheet) {
         SnackbarService.error('Could not start checkout. Please try again.');
         return;
       }
@@ -182,7 +182,7 @@ class SubscriptionController extends GetxController {
     update();
 
     try {
-      final response = await _network.deleteRequest(url: AppUrl.subscriptionMy);
+      final response = await _network.deleteRequest(url: AppUrl.mySubscription);
       if (response.isSuccess) {
         final data = response.body?['data'];
         if (data is Map<String, dynamic>) {
@@ -259,7 +259,7 @@ class SubscriptionController extends GetxController {
     return selected?.id;
   }
 
-  Future<CheckoutResponseModel?> _startCheckout({
+  Future<CheckoutModel?> _startCheckout({
     required String planId,
     required String businessId,
   }) async {
@@ -272,14 +272,17 @@ class SubscriptionController extends GetxController {
     );
 
     if (response.isSuccess && response.body != null) {
-      return CheckoutResponseModel.fromJson(response.body!);
+      final data = response.body!['data'];
+      return CheckoutModel.fromJson(
+        data is Map<String, dynamic> ? data : response.body!,
+      );
     }
 
     SnackbarService.error(response.errorMessage ?? 'Checkout failed');
     return null;
   }
 
-  Future<void> _presentPaymentSheet(CheckoutResponseModel checkout) async {
+  Future<void> _presentPaymentSheet(CheckoutModel checkout) async {
     await Stripe.instance.initPaymentSheet(
       paymentSheetParameters: SetupPaymentSheetParameters(
         merchantDisplayName: 'Loci',
@@ -295,7 +298,7 @@ class SubscriptionController extends GetxController {
   /// Stripe webhooks take 1–3 seconds — poll until status is active.
   Future<bool> _waitForActive({int attempts = 8}) async {
     for (var i = 0; i < attempts; i++) {
-      final response = await _network.getRequest(url: AppUrl.subscriptionMy);
+      final response = await _network.getRequest(url: AppUrl.mySubscription);
       if (response.isSuccess && response.body != null) {
         final data = response.body!['data'];
         if (data is Map<String, dynamic>) {
@@ -312,7 +315,11 @@ class SubscriptionController extends GetxController {
     return false;
   }
 
-  String _formatDate(DateTime date) {
+  /// `currentPeriodEnd` arrives as an ISO string — fall back to the raw
+  /// value if it can't be parsed.
+  String _formatDate(String isoDate) {
+    final date = DateTime.tryParse(isoDate);
+    if (date == null) return isoDate;
     return '${date.month}/${date.day}/${date.year}';
   }
 }

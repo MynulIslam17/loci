@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:loci/core/constants/app_text_style.dart';
 import 'package:loci/core/enums/category_enum.dart';
 import 'package:loci/core/theme/theme_extention.dart';
+import 'package:loci/core/utils/show_snackbar.dart';
 import 'package:loci/data/models/busniess/find_business_response.dart';
 import 'package:loci/presentation/controllers/my_business/find_google_business_controller.dart';
 import 'package:loci/presentation/pages/clam_business/widgets/business_search_result_widget.dart';
@@ -50,11 +51,11 @@ class _SearchMyBusinessState extends State<SearchMyBusiness> {
     setState(() {});
   }
 
-  void _onAddPressed() {
+  Future<void> _onAddPressed() async {
     final business = findGoogleBusinessController.selectedBusiness;
     if (business == null) return;
 
-    Get.toNamed(
+    final result = await Get.toNamed(
       AppRoutes.clamBusinessProfile,
       arguments: {
         'placeId': business.placeId,
@@ -67,6 +68,29 @@ class _SearchMyBusinessState extends State<SearchMyBusiness> {
         'suggestedCategory': business.suggestedCategory,
       },
     );
+
+    _handleClaimResult(result);
+  }
+
+  /// Called when a claim/create flow returns. Shows the server's own
+  /// message, resets the search field to its default state, and refreshes
+  /// the claimed-business list so the new entry shows up.
+  void _handleClaimResult(dynamic result) {
+    if (!mounted || result is! Map || result['success'] != true) return;
+
+    // Reset the search box + any selected business to default state.
+    _searchTEController.clear();
+    findGoogleBusinessController.clearSelectedBusiness();
+    setState(() {});
+
+    // Surface the returned message (e.g. "Claim submitted for review...").
+    final message = result['message'] as String?;
+    if (message != null && message.isNotEmpty) {
+      SnackbarService.success(message);
+    }
+
+    // Reload so the freshly claimed business appears in the list.
+    myBusinessController.getMyBusinesses(category: selectedCategory?.label);
   }
 
   // --- Actions ----------------------------------------------------------------
@@ -247,8 +271,11 @@ class _SearchMyBusinessState extends State<SearchMyBusiness> {
                   ),
                 ),
                 TextButton(
-                  onPressed: () =>
-                      Get.toNamed(AppRoutes.manualClaimBusiness),
+                  onPressed: () async {
+                    final result =
+                        await Get.toNamed(AppRoutes.manualClaimBusiness);
+                    _handleClaimResult(result);
+                  },
                   child: const Row(
                     children: [
                       Text("Add Now"),

@@ -3,7 +3,6 @@ import 'package:get/get.dart';
 import 'package:intl_phone_field/intl_phone_field.dart';
 import 'package:loci/core/constants/app_text_style.dart';
 import 'package:loci/core/theme/theme_extention.dart';
-import 'package:loci/core/utils/show_snackbar.dart';
 import 'package:loci/presentation/widgets/custom_text_field.dart';
 
 import '../../../routes/app_routes.dart';
@@ -34,6 +33,9 @@ class _ManualClaimBusinessState extends State<ManualClaimBusiness> {
   }
 
   Future<void> _submitFormHandler() async {
+    // Dismiss the keyboard so it doesn't linger after navigating back.
+    FocusManager.instance.primaryFocus?.unfocus();
+
     if (!_formKey.currentState!.validate()) return;
 
     final result = await Get.toNamed(
@@ -48,10 +50,9 @@ class _ManualClaimBusinessState extends State<ManualClaimBusiness> {
       },
     );
 
+    // Pass the server result (incl. its message) straight back to the search
+    // screen, which shows the message and resets its fields.
     if (result != null && result['success'] == true) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        SnackbarService.success('Business claimed successfully');
-      });
       Get.back(result: result);
     }
   }

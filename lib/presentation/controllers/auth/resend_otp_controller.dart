@@ -19,6 +19,11 @@ class ResendOtpController extends GetxController {
 
   Timer? _timer;
 
+  /// Matches server cooldown messages like
+  /// "Please wait 31 second(s) before requesting a new code."
+  static final RegExp _waitSecondsRegex =
+      RegExp(r'wait\s+(\d+)\s*second', caseSensitive: false);
+
   Future<bool> resendOtp({required String email}) async {
     _isLoading = true;
     _errorMessage = null;
@@ -36,7 +41,18 @@ class ResendOtpController extends GetxController {
         _startCountdown();
         return true;
       } else {
-        _errorMessage = response.errorMessage ?? "Failed to resend OTP";
+        final message = response.errorMessage ?? "Failed to resend OTP";
+
+        // Server-side cooldown (e.g. "Please wait 31 second(s)...") —
+        // sync our countdown to the server's remaining time so the UI
+        // shows "Resend in Ns" instead of a raw error.
+        final match = _waitSecondsRegex.firstMatch(message);
+        if (match != null) {
+          final seconds = int.tryParse(match.group(1) ?? '') ?? 40;
+          _startCountdown(seconds: seconds);
+        }
+
+        _errorMessage = message;
         return false;
       }
     } catch (e) {
@@ -48,9 +64,10 @@ class ResendOtpController extends GetxController {
     }
   }
 
-  void _startCountdown() {
+  void _startCountdown({int seconds = 40}) {
+    _timer?.cancel(); // Avoid stacking timers on repeated calls
     _canResend = false;
-    _secondsRemaining = 40;
+    _secondsRemaining = seconds;
     update();
 
     _timer = Timer.periodic(const Duration(seconds: 1), (timer) {

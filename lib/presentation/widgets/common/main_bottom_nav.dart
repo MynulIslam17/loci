@@ -40,6 +40,12 @@ class _MainBottomNavState extends State<MainBottomNav> {
     ProfileScreen(),
   ];
 
+  /// Tabs the user has actually opened. A tab is only built (and its
+  /// initial API call fired) the first time it's visited; after that it
+  /// stays mounted so switching back is instant with no reload.
+  /// Home (index 0) is the default tab, so it starts loaded.
+  final Set<int> _loadedIndices = {0};
+
   /// Drawer menu items
   /// Each item contains title + icon name
   final List<Map<String, dynamic>> _drawerMenuItems = [
@@ -290,7 +296,28 @@ class _MainBottomNavState extends State<MainBottomNav> {
       /// Screen content (bottom inset handled globally + bottom nav bar)
       child: GetBuilder<NavController>(
         builder: (controller) {
-          return controller.drawerPage ?? _screens[controller.currentIndex];
+          /// Lazy IndexedStack: a tab is built only once it's first visited,
+          /// then kept mounted so switching back is instant with no reload
+          /// (no repeated API calls / loaders on tab switch). Unvisited tabs
+          /// stay as empty placeholders and fetch nothing until opened.
+          /// A drawer page, when open, overlays the tabs without disposing them.
+          _loadedIndices.add(controller.currentIndex);
+
+          return Stack(
+            children: [
+              IndexedStack(
+                index: controller.currentIndex,
+                children: List.generate(
+                  _screens.length,
+                  (i) => _loadedIndices.contains(i)
+                      ? _screens[i]
+                      : const SizedBox.shrink(),
+                ),
+              ),
+              if (controller.drawerPage != null)
+                Positioned.fill(child: controller.drawerPage!),
+            ],
+          );
         },
       ),
     );

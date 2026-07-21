@@ -44,11 +44,23 @@ class _OtpScreenState extends State<OtpScreen> {
     email = args?["email"] ?? "";
     message = args?["message"] ?? "";
     type = args?["type"] ?? "";
+
+    // Rebuild on every input change so the Verify button
+    // enables/disables as the user types (or the field is cleared).
+    otpTEController.addListener(_onOtpChanged);
   }
+
+  void _onOtpChanged() {
+    if (mounted) setState(() {});
+  }
+
+  /// Verify is only allowed once all 6 digits are entered.
+  bool get _isOtpComplete => otpTEController.text.trim().length == 6;
 
   @override
   void dispose() {
     // Dispose controllers and focus node to avoid memory leaks
+    otpTEController.removeListener(_onOtpChanged);
     otpTEController.dispose();
     focusNode.dispose();
     super.dispose();
@@ -101,10 +113,19 @@ class _OtpScreenState extends State<OtpScreen> {
     final isResent = await resendController.resendOtp(email: email);
 
     if (!isResent) {
-      // Show error if resend failed
-      SnackbarService.error(
-        resendController.errorMessage ?? "Failed to resend OTP",
-      );
+      if (!resendController.canResend) {
+        // Server-side cooldown — the countdown is already showing,
+        // so present it as info rather than an error.
+        SnackbarService.info(
+          "You can request a new code in ${resendController.secondsRemaining}s.",
+          title: "Please wait",
+        );
+      } else {
+        // Show error if resend failed
+        SnackbarService.error(
+          resendController.errorMessage ?? "Failed to resend OTP",
+        );
+      }
     } else {
       otpTEController.clear(); // Clear old OTP input
       SnackbarService.success(
@@ -186,7 +207,7 @@ class _OtpScreenState extends State<OtpScreen> {
                       Text(
                         type == "signup"
                             ? message
-                            : "We’ve sent raffles verification code to $email. Please enter the code to continue",
+                            : "We’ve sent a verification code to $email. Please enter the code to continue",
                         style: AppTextStyle.textXs(
                           color: context.colorScheme.onSurfaceVariant,
                         ),
@@ -275,7 +296,9 @@ class _OtpScreenState extends State<OtpScreen> {
                             backgroundColor: context.colorScheme.primary,
                             textColor: context.colorScheme.onPrimary,
                             text: "Verify",
-                            onPressed: _verifyEmailHandler,
+                            // Disabled (greyed out) until all 6 digits are entered.
+                            onPressed:
+                                _isOtpComplete ? _verifyEmailHandler : null,
                           );
                         },
                       ),
