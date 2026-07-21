@@ -149,6 +149,8 @@ static String   addReviews(String businessId)=>"$baseUrl/reviews/$businessId";
   static  String   homeFeedPostLike(String questionId)=>"$baseUrl/questions/${questionId}/upvote";
   static  String   questionDetails(String questionId)=>"$baseUrl/questions/$questionId";
   static  String   questionAnswers(String questionId)=>"$baseUrl/questions/$questionId/answer";
+  // Paginated answers/comments list: GET /questions/{id}/answers?page=&limit=
+  static  String   questionAnswersList(String questionId)=>"$baseUrl/questions/$questionId/answers";
 
   ///-----------------notification
 

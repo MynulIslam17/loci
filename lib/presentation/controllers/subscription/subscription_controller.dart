@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_stripe/flutter_stripe.dart';
+import 'package:loci/core/services/stripe_service.dart';
 import 'package:get/get.dart';
 import 'package:loci/core/constants/app_url.dart';
 import 'package:loci/core/network/network_caller.dart';
@@ -289,6 +290,8 @@ class SubscriptionController extends GetxController {
         customerId: checkout.customerId!,
         customerEphemeralKeySecret: checkout.ephemeralKey!,
         paymentIntentClientSecret: checkout.paymentIntentClientSecret!,
+        // Match the sheet (and its cancel dialog) to the app theme.
+        appearance: Get.find<StripeService>().themedAppearance(),
       ),
     );
 

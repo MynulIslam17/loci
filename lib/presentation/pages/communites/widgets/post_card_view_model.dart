@@ -107,7 +107,7 @@ class PostCardViewModel {
       category: q.category,
       text: q.content,
       likes: q.likeCount.toString(),
-      comments: q.answers.length.toString(),
+      comments: q.commentCount.toString(),
       isPoll: q.type == QuestionType.poll,
       isLiked: q.isLiked,
       totalVotes: q.totalVotes,

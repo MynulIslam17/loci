@@ -40,85 +40,113 @@ class PlanCard extends StatelessWidget {
       builder: (checkout) {
         final isCurrentPlan = _isCurrentPlan(checkout.mySubscription);
 
-        return Container(
+        return AnimatedContainer(
+          duration: const Duration(milliseconds: 250),
+          curve: Curves.easeOut,
           margin: const EdgeInsets.only(bottom: 16),
           decoration: BoxDecoration(
             color: colorScheme.surfaceContainerHigh,
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(20),
+            // Full-strength outline: surfaceContainerHigh is nearly identical
+            // to the scaffold surface in light mode (#FCFCFC on #FFFFFF), so
+            // the border + shadow are what make the card visible.
             border: Border.all(
-              color: isCurrentPlan
-                  ? colorScheme.primary
-                  : colorScheme.outline.withValues(alpha: 0.1),
-              width: isCurrentPlan ? 2 : 1,
+              color: isCurrentPlan ? colorScheme.primary : colorScheme.outline,
+              width: isCurrentPlan ? 1.5 : 1,
             ),
+            boxShadow: [
+              BoxShadow(
+                color: isCurrentPlan
+                    ? colorScheme.primary.withValues(alpha: 0.16)
+                    : Colors.black.withValues(alpha: 0.08),
+                blurRadius: 16,
+                offset: const Offset(0, 5),
+              ),
+            ],
           ),
           child: Padding(
-            padding: const EdgeInsets.all(18),
+            padding: const EdgeInsets.all(20),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // ── Header: name + type chip ──────────────────────────────
+                // ── Header: icon tile + name + billing hint + badge ───────
                 Row(
                   children: [
-                    Expanded(
-                      child: Text(
-                        plan.name,
-                        style: AppTextStyle.textMd(
-                          color: colorScheme.onSurface,
-                          weight: FontWeight.w700,
-                        ),
-                      ),
-                    ),
-                    if (isCurrentPlan) ...[
-                      const _CurrentPlanBadge(),
-                      const SizedBox(width: 8),
-                    ],
-                    _TypeChip(
-                      label: isFree
-                          ? 'Free'
-                          : (isMonthly ? 'Monthly' : 'One-time'),
+                    _PlanIcon(
+                      isFree: isFree,
+                      isCurrentPlan: isCurrentPlan,
                       colorScheme: colorScheme,
                     ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            plan.name,
+                            style: AppTextStyle.textMd(
+                              color: colorScheme.onSurface,
+                              weight: FontWeight.w700,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            isFree
+                                ? 'Free forever'
+                                : (isMonthly
+                                    ? 'Billed monthly'
+                                    : 'One-time payment'),
+                            style: AppTextStyle.textXs(
+                              color: colorScheme.onSurfaceVariant,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    if (isCurrentPlan)
+                      const _CurrentPlanBadge()
+                    else
+                      _TypeChip(
+                        label:
+                            isFree ? 'Free' : (isMonthly ? 'Monthly' : 'One-time'),
+                        colorScheme: colorScheme,
+                      ),
                   ],
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 18),
 
-                // ── Price ─────────────────────────────────────────────────
-                _PriceRow(
-                  isFree: isFree,
-                  amount: plan.amount,
-                  isMonthly: isMonthly,
-                  colorScheme: colorScheme,
+                // ── Price + spotlight credits ─────────────────────────────
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    _PriceRow(
+                      isFree: isFree,
+                      amount: plan.amount,
+                      isMonthly: isMonthly,
+                      colorScheme: colorScheme,
+                    ),
+                    const Spacer(),
+                    if (plan.heroSpotlightCredits > 0)
+                      _CreditsChip(
+                        credits: plan.heroSpotlightCredits,
+                        colorScheme: colorScheme,
+                      ),
+                  ],
                 ),
 
-                if (plan.heroSpotlightCredits > 0) ...[
-                  const SizedBox(height: 6),
-                  Row(
-                    children: [
-                      Icon(
-                        Icons.star_rounded,
-                        size: 16,
-                        color: colorScheme.primary,
-                      ),
-                      const SizedBox(width: 4),
-                      Text(
-                        '${plan.heroSpotlightCredits} spotlight credits',
-                        style: AppTextStyle.textXs(
-                          color: colorScheme.onSurfaceVariant,
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-
                 const SizedBox(height: 16),
+                Divider(
+                  height: 1,
+                  color: colorScheme.outline.withValues(alpha: 0.5),
+                ),
+                const SizedBox(height: 8),
 
                 // ── Benefits reveal ───────────────────────────────────────
                 InkWell(
                   onTap: onTap,
                   borderRadius: BorderRadius.circular(8),
                   child: Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 4),
+                    padding: const EdgeInsets.symmetric(vertical: 6),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
@@ -130,12 +158,14 @@ class PlanCard extends StatelessWidget {
                           ),
                         ),
                         const SizedBox(width: 4),
-                        Icon(
-                          isExpanded
-                              ? Icons.keyboard_arrow_up
-                              : Icons.keyboard_arrow_down,
-                          size: 20,
-                          color: colorScheme.primary,
+                        AnimatedRotation(
+                          turns: isExpanded ? 0.5 : 0,
+                          duration: const Duration(milliseconds: 200),
+                          child: Icon(
+                            Icons.keyboard_arrow_down_rounded,
+                            size: 20,
+                            color: colorScheme.primary,
+                          ),
                         ),
                       ],
                     ),
@@ -145,27 +175,39 @@ class PlanCard extends StatelessWidget {
                 AnimatedCrossFade(
                   firstChild: const SizedBox(width: double.infinity),
                   secondChild: Padding(
-                    padding: const EdgeInsets.only(top: 8),
+                    padding: const EdgeInsets.only(top: 10),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: plan.features
                           .map(
                             (e) => Padding(
-                              padding: const EdgeInsets.only(bottom: 8),
+                              padding: const EdgeInsets.only(bottom: 10),
                               child: Row(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Icon(
-                                    Icons.check_circle_rounded,
-                                    size: 16,
-                                    color: colorScheme.primary,
+                                  Container(
+                                    width: 22,
+                                    height: 22,
+                                    decoration: BoxDecoration(
+                                      color: colorScheme.primary
+                                          .withValues(alpha: 0.1),
+                                      shape: BoxShape.circle,
+                                    ),
+                                    child: Icon(
+                                      Icons.check_rounded,
+                                      size: 14,
+                                      color: colorScheme.primary,
+                                    ),
                                   ),
-                                  const SizedBox(width: 8),
+                                  const SizedBox(width: 10),
                                   Expanded(
-                                    child: Text(
-                                      e,
-                                      style: AppTextStyle.textXs(
-                                        color: colorScheme.onSurface,
+                                    child: Padding(
+                                      padding: const EdgeInsets.only(top: 3),
+                                      child: Text(
+                                        e,
+                                        style: AppTextStyle.textXs(
+                                          color: colorScheme.onSurface,
+                                        ),
                                       ),
                                     ),
                                   ),
@@ -188,12 +230,14 @@ class PlanCard extends StatelessWidget {
                 if (isCurrentPlan)
                   SizedBox(
                     width: double.infinity,
-                    height: 50,
+                    height: 52,
                     child: DecoratedBox(
                       decoration: BoxDecoration(
-                        color: colorScheme.primary.withValues(alpha: 0.12),
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: colorScheme.primary),
+                        color: colorScheme.primary.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(
+                          color: colorScheme.primary.withValues(alpha: 0.6),
+                        ),
                       ),
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
@@ -221,17 +265,18 @@ class PlanCard extends StatelessWidget {
                       final isProcessing = checkout.isProcessing(plan.id);
                       return SizedBox(
                         width: double.infinity,
-                        height: 50,
+                        height: 52,
                         child: ElevatedButton(
                           style: ElevatedButton.styleFrom(
                             backgroundColor: colorScheme.primary,
                             foregroundColor: colorScheme.onPrimary,
+                            elevation: 0,
                             disabledBackgroundColor: colorScheme.primary
                                 .withValues(alpha: 0.4),
                             disabledForegroundColor: colorScheme.onPrimary
                                 .withValues(alpha: 0.8),
                             shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
+                              borderRadius: BorderRadius.circular(14),
                             ),
                           ),
                           // Disable every card's button while any purchase is in flight.
@@ -249,12 +294,23 @@ class PlanCard extends StatelessWidget {
                                     ),
                                   ),
                                 )
-                              : Text(
-                                  isFree ? "Join Free" : "Subscribe",
-                                  style: AppTextStyle.textSm(
-                                    color: colorScheme.onPrimary,
-                                    weight: FontWeight.w700,
-                                  ),
+                              : Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Text(
+                                      isFree ? "Join Free" : "Subscribe",
+                                      style: AppTextStyle.textSm(
+                                        color: colorScheme.onPrimary,
+                                        weight: FontWeight.w700,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 6),
+                                    Icon(
+                                      Icons.arrow_forward_rounded,
+                                      size: 18,
+                                      color: colorScheme.onPrimary,
+                                    ),
+                                  ],
                                 ),
                         ),
                       );
@@ -265,6 +321,76 @@ class PlanCard extends StatelessWidget {
           ),
         );
       },
+    );
+  }
+}
+
+/// Rounded-square tile with a tier icon — gives each card a visual anchor.
+class _PlanIcon extends StatelessWidget {
+  final bool isFree;
+  final bool isCurrentPlan;
+  final ColorScheme colorScheme;
+
+  const _PlanIcon({
+    required this.isFree,
+    required this.isCurrentPlan,
+    required this.colorScheme,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 44,
+      height: 44,
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            colorScheme.primary.withValues(alpha: isCurrentPlan ? 0.22 : 0.12),
+            colorScheme.primary.withValues(alpha: 0.05),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(13),
+      ),
+      child: Icon(
+        isFree ? Icons.storefront_rounded : Icons.workspace_premium_rounded,
+        size: 22,
+        color: colorScheme.primary,
+      ),
+    );
+  }
+}
+
+/// Star pill showing how many spotlight credits the plan includes.
+class _CreditsChip extends StatelessWidget {
+  final int credits;
+  final ColorScheme colorScheme;
+
+  const _CreditsChip({required this.credits, required this.colorScheme});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: colorScheme.primary.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.star_rounded, size: 14, color: colorScheme.primary),
+          const SizedBox(width: 4),
+          Text(
+            '$credits credits',
+            style: AppTextStyle.textXs(
+              color: colorScheme.primary,
+              weight: FontWeight.w600,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -360,7 +486,7 @@ class _PriceRow extends StatelessWidget {
           '\$$formatted',
           style: AppTextStyle.displayXs(
             color: colorScheme.onSurface,
-            weight: FontWeight.w700,
+            weight: FontWeight.w800,
           ),
         ),
         if (isMonthly) ...[

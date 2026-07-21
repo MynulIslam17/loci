@@ -6,6 +6,7 @@ import 'package:loci/data/models/busniess/browse_business_model.dart';
 import '../../../../core/theme/theme_extention.dart';
 import '../../../controllers/browse_business/save_business_controller.dart';
 import '../../../widgets/custom_image_container.dart';
+import 'business_logo_avatar.dart';
 
 
 class BrowseBusinessCard extends StatelessWidget {
@@ -52,14 +53,11 @@ class BrowseBusinessCard extends StatelessWidget {
                 const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                 child: Row(
                   children: [
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(10),
-                      child: CustomCachedImage(
-                        width: 52,
-                        height: 52,
-                        imageUrl: item.logo,
-                        fit: BoxFit.cover,
-                      ),
+                    BusinessLogoAvatar(
+                      logo: item.logo,
+                      name: item.name,
+                      size: 52,
+                      borderRadius: 10,
                     ),
                     const SizedBox(width: 12),
 
@@ -144,12 +142,7 @@ class BrowseBusinessCard extends StatelessWidget {
                     ),
 
 
-                      CustomCachedImage(
-                        width: double.infinity,
-                        height: 160,
-                        imageUrl: item.logo,
-                        fit: BoxFit.cover,
-                      ),
+                      _ExpandedBanner(logo: item.logo),
 
                     Padding(
                       padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
@@ -235,6 +228,39 @@ class BrowseBusinessCard extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+/// Full-width banner shown in the expanded card. Falls back to a neutral
+/// placeholder instead of a broken-image box when the business has no logo.
+class _ExpandedBanner extends StatelessWidget {
+  final String logo;
+  const _ExpandedBanner({required this.logo});
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = context.colorScheme;
+
+    if (logo.trim().isEmpty) {
+      return Container(
+        width: double.infinity,
+        height: 160,
+        color: scheme.primary.withValues(alpha: 0.06),
+        alignment: Alignment.center,
+        child: Icon(
+          Icons.storefront_rounded,
+          size: 48,
+          color: scheme.primary.withValues(alpha: 0.5),
+        ),
+      );
+    }
+
+    return CustomCachedImage(
+      width: double.infinity,
+      height: 160,
+      imageUrl: logo,
+      fit: BoxFit.cover,
     );
   }
 }

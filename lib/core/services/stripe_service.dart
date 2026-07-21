@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_stripe/flutter_stripe.dart';
 import 'package:get/get.dart';
 import 'package:logger/logger.dart';
@@ -33,5 +34,46 @@ class StripeService extends GetxService {
       // Non-fatal: checkout will surface a clear error if the key never loaded.
       _logger.e('Stripe init failed: $e');
     }
+  }
+
+  /// Builds a PaymentSheet appearance that matches the app's current theme.
+  ///
+  /// Without this, Stripe's native sheet — and the "cancel without paying"
+  /// confirmation it shows — fall back to a default light styling that
+  /// clashes with our theme (most obvious in dark mode). Colours are pulled
+  /// from the live [ColorScheme] so it always tracks the active theme.
+  PaymentSheetAppearance themedAppearance() {
+    final ColorScheme scheme = Get.theme.colorScheme;
+
+    final primaryButtonColors = PaymentSheetPrimaryButtonThemeColors(
+      background: scheme.primary,
+      text: scheme.onPrimary,
+      border: scheme.primary,
+    );
+
+    return PaymentSheetAppearance(
+      colors: PaymentSheetAppearanceColors(
+        primary: scheme.primary,
+        background: scheme.surface,
+        componentBackground: scheme.surfaceContainerHighest,
+        componentBorder: scheme.outline,
+        componentDivider: scheme.outlineVariant,
+        componentText: scheme.onSurface,
+        primaryText: scheme.onSurface,
+        secondaryText: scheme.onSurfaceVariant,
+        placeholderText: scheme.onSurfaceVariant,
+        icon: scheme.onSurfaceVariant,
+        error: scheme.error,
+      ),
+      shapes: const PaymentSheetShape(borderRadius: 12, borderWidth: 1),
+      primaryButton: PaymentSheetPrimaryButtonAppearance(
+        // Same colours for both so Stripe's own light/dark detection can't
+        // diverge from our theme.
+        colors: PaymentSheetPrimaryButtonTheme(
+          light: primaryButtonColors,
+          dark: primaryButtonColors,
+        ),
+      ),
+    );
   }
 }

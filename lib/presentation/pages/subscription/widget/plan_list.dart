@@ -18,20 +18,23 @@ class PlansList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ListView.builder(
+    // A sliver so it can live inside the screen's CustomScrollView and let
+    // the header (banner + billing toggle) scroll away above the list.
+    return SliverPadding(
       padding: const EdgeInsets.all(16),
-      physics: const AlwaysScrollableScrollPhysics(),
-      itemCount: plans.length,
-      itemBuilder: (context, index) {
-        final plan = plans[index];
+      sliver: SliverList.builder(
+        itemCount: plans.length,
+        itemBuilder: (context, index) {
+          final plan = plans[index];
 
-        return PlanCard(
-          plan: plan,
-          isMonthly: isMonthly,
-          isExpanded: expandedIndex == index,
-          onTap: () => onExpand(index),
-        );
-      },
+          return PlanCard(
+            plan: plan,
+            isMonthly: isMonthly,
+            isExpanded: expandedIndex == index,
+            onTap: () => onExpand(index),
+          );
+        },
+      ),
     );
   }
 }

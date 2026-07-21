@@ -109,6 +109,8 @@ class SubscriptionCheckoutController extends GetxController {
           customerId: checkout.customerId,
           customerEphemeralKeySecret: checkout.ephemeralKey,
           paymentIntentClientSecret: checkout.paymentIntentClientSecret,
+          // Match the sheet (and its cancel dialog) to the app theme.
+          appearance: Get.find<StripeService>().themedAppearance(),
         ),
       );
 

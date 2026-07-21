@@ -127,9 +127,8 @@ class QuestionListController extends GetxController {
   void incrementCommentCount(String questionId) {
     final question = _questionMap[questionId];
     if (question == null) return;
-    // answers list length drives comment count in the viewModel,
-    // so we don't need a separate counter — just update() to reflect
-    // any change that was already made server-side.
+    _questionMap[questionId] =
+        question.copyWith(commentCount: question.commentCount + 1);
     update();
   }
 
