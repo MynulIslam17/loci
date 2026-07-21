@@ -33,9 +33,10 @@ class AppBindings extends Bindings {
     Get.put(setUpNetworkClient(), permanent: true);
     Get.lazyPut<ChatListController>(() => ChatListController(), fenix: true);
 
-    // Fetch the Stripe publishable key and initialize the SDK (fire-and-forget;
-    // ready well before the user can reach checkout, which requires login).
-    Get.put(StripeService(), permanent: true).init();
+    // Register the Stripe service, but DON'T init here — its config fetch needs
+    // network + login. AuthController calls .init() after authentication, so the
+    // login screen never triggers a pre-login request (no cold-start errors).
+    Get.put(StripeService(), permanent: true);
 
     Get.put(RSVPController(), permanent: true);
     Get.put(VoteController(), permanent: true);

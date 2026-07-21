@@ -9,6 +9,9 @@ class MySubscriptionModel {
   final bool cancelAtPeriodEnd;
   final String? stripeSubscriptionId;
   final String? stripePriceId;
+  final String? planId;
+  final String? planName;
+  final int amount;
 
   MySubscriptionModel({
     required this.status,
@@ -17,6 +20,9 @@ class MySubscriptionModel {
     required this.cancelAtPeriodEnd,
     this.stripeSubscriptionId,
     this.stripePriceId,
+    this.planId,
+    this.planName,
+    this.amount = 0,
   });
 
   bool get isActive => status == 'active';
@@ -29,6 +35,9 @@ class MySubscriptionModel {
       cancelAtPeriodEnd: json['cancelAtPeriodEnd'] == true,
       stripeSubscriptionId: json['stripeSubscriptionId'],
       stripePriceId: json['stripePriceId'],
+      planId: json['planId']?.toString(),
+      planName: json['planName']?.toString(),
+      amount: json['amount'] ?? 0,
     );
   }
 }

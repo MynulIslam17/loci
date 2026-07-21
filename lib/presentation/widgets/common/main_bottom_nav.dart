@@ -31,6 +31,28 @@ class _MainBottomNavState extends State<MainBottomNav> {
   /// GetX controller that manages bottom navigation and drawer pages
   final navController = Get.find<NavController>();
 
+  /// GetX controller that holds the currently authenticated user
+  final authController = Get.find<AuthController>();
+
+  /// Human-readable label for a user's role (drawer subtitle)
+  String _roleLabel(String? role) {
+    switch (role) {
+      case 'admin':
+        return 'Admin';
+      case 'business_owner':
+        return 'Business Owner';
+      case 'user':
+      default:
+        return 'Member';
+    }
+  }
+
+  /// First name only, for the app bar greeting
+  String _firstName(String? fullName) {
+    if (fullName == null || fullName.trim().isEmpty) return 'there';
+    return fullName.trim().split(' ').first;
+  }
+
   /// Main screens used in bottom navigation
   final List<Widget> _screens = [
     const HomeNavigator(),
@@ -163,43 +185,52 @@ class _MainBottomNavState extends State<MainBottomNav> {
 
   /// Drawer top header showing user info
   Widget _buildDrawerHeader(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      height: 160,
-      color: context.colorScheme.surfaceContainer,
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 30),
-      child: Row(
-        children: [
-          /// User profile image
-          CircleAvatar(
-            radius: 28,
-            backgroundImage: AssetImage(Assets.images.user1.path),
-          ),
+    return GetBuilder<AuthController>(
+      builder: (auth) {
+        final user = auth.userModel;
+        final hasAvatar = (user?.avatar ?? '').isNotEmpty;
 
-          const SizedBox(width: 20),
-
-          /// User name + business name
-          Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.start,
+        return Container(
+          width: double.infinity,
+          height: 160,
+          color: context.colorScheme.surfaceContainer,
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 30),
+          child: Row(
             children: [
-              Text(
-                "Mynul Islam",
-                style: AppTextStyle.textLg(
-                  color: context.colorScheme.onSurface,
-                  weight: FontWeight.w600,
-                ),
+              /// User profile image
+              CircleAvatar(
+                radius: 28,
+                backgroundImage: hasAvatar
+                    ? NetworkImage(user!.avatar!)
+                    : AssetImage(Assets.images.user1.path) as ImageProvider,
               ),
-              Text(
-                "Business name",
-                style: AppTextStyle.textXs(
-                  color: context.colorScheme.onSurfaceVariant,
-                ),
+
+              const SizedBox(width: 20),
+
+              /// User name + role
+              Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    (user?.name ?? '').isNotEmpty ? user!.name : 'Guest',
+                    style: AppTextStyle.textLg(
+                      color: context.colorScheme.onSurface,
+                      weight: FontWeight.w600,
+                    ),
+                  ),
+                  Text(
+                    _roleLabel(user?.role),
+                    style: AppTextStyle.textXs(
+                      color: context.colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 
@@ -221,11 +252,13 @@ class _MainBottomNavState extends State<MainBottomNav> {
       ),
 
       /// Greeting title
-      title: Text(
-        "Hello Mynul !",
-        style: AppTextStyle.textLg(
-          color: context.colorScheme.onSurface,
-          weight: FontWeight.w600,
+      title: GetBuilder<AuthController>(
+        builder: (auth) => Text(
+          "Hello ${_firstName(auth.userModel?.name)} !",
+          style: AppTextStyle.textLg(
+            color: context.colorScheme.onSurface,
+            weight: FontWeight.w600,
+          ),
         ),
       ),
 
