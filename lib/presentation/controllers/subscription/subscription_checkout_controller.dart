@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter_stripe/flutter_stripe.dart';
 import 'package:get/get.dart';
 
@@ -68,10 +69,26 @@ class SubscriptionCheckoutController extends GetxController {
         (response.body!['data'] as Map<String, dynamic>?) ?? {},
       );
 
-      // 2a. Free plan — already active, no payment UI.
+      // 2a. Free plan — already active, no payment UI. Verify the refreshed
+      // subscription actually reflects Free before celebrating — the backend
+      // used to silently no-op this when another plan was already active.
       if (checkout.isFree) {
         await fetchMySubscription();
-        SnackbarService.success('Plan activated.');
+        if (mySubscription?.isActive == true && mySubscription?.amount == 0) {
+          SnackbarService.success('Plan activated.');
+        } else {
+          SnackbarService.error('Could not switch to the Free plan. Please try again.');
+        }
+        return;
+      }
+
+      // Paid plans use Stripe's native PaymentSheet, which flutter_stripe only
+      // implements on Android/iOS. On web there is no plugin, so surface a clear
+      // message (rather than the misleading generic "not available" one) and stop.
+      if (kIsWeb) {
+        SnackbarService.info(
+          'Subscriptions can be purchased from the Loci mobile app (iOS/Android).',
+        );
         return;
       }
 

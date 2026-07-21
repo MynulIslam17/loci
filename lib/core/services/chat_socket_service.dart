@@ -86,7 +86,10 @@ class ChatSocketService extends GetxService {
     _socket = io.io(
       AppUrl.socketUrl,
       io.OptionBuilder()
-          .setTransports(['websocket'])
+          // Allow HTTP polling with upgrade to WebSocket. Polling works over any
+          // transport (incl. `adb reverse` tunnels and proxies that block WS
+          // upgrades); the client transparently upgrades to WebSocket when it can.
+          .setTransports(['polling', 'websocket'])
           .disableAutoConnect()
           .setAuth({'token': token})
           .enableReconnection()
