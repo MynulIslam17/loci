@@ -44,9 +44,11 @@ class SubscriptionStatusBanner extends StatelessWidget {
     }
 
     final sub = subscription!;
-    final dateLabel = sub.currentPeriodEnd != null
-        ? DateFormat.yMMMd().format(sub.currentPeriodEnd!)
+    final periodEnd = sub.currentPeriodEnd != null
+        ? DateTime.tryParse(sub.currentPeriodEnd!)
         : null;
+    final dateLabel =
+        periodEnd != null ? DateFormat.yMMMd().format(periodEnd) : null;
 
     if (sub.isPastDue) {
       return Padding(

@@ -21,6 +21,8 @@ class MySubscriptionModel {
 
   bool get isActive => status == 'active';
 
+  bool get isPastDue => status == 'past_due';
+
   factory MySubscriptionModel.fromJson(Map<String, dynamic> json) {
     return MySubscriptionModel(
       status: json['status'] ?? '',

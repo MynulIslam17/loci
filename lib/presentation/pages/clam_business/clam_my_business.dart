@@ -62,6 +62,9 @@ class _ClamMyBusinessState extends State<ClamMyBusiness> {
   }
 
   Future<void> _handleClaimBusiness() async {
+    // Dismiss the keyboard so it doesn't linger after navigating back.
+    FocusManager.instance.primaryFocus?.unfocus();
+
     if (!_formKey.currentState!.validate()) return;
 
     if (proofFiles.isEmpty) {
