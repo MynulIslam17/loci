@@ -287,13 +287,11 @@ class _MainBottomNavState extends State<MainBottomNav> {
         SystemNavigator.pop();
       },
 
-      /// Screen content
-      child: SafeArea(
-        child: GetBuilder<NavController>(
-          builder: (controller) {
-            return controller.drawerPage ?? _screens[controller.currentIndex];
-          },
-        ),
+      /// Screen content (bottom inset handled globally + bottom nav bar)
+      child: GetBuilder<NavController>(
+        builder: (controller) {
+          return controller.drawerPage ?? _screens[controller.currentIndex];
+        },
       ),
     );
   }
@@ -316,7 +314,7 @@ class _MainBottomNavState extends State<MainBottomNav> {
               ),
             ],
           ),
-          padding: const EdgeInsets.symmetric(vertical: 8),
+          padding: const EdgeInsets.only(top: 8, bottom: 4),
 
           /// Bottom nav items
           child: Row(

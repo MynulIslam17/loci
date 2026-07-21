@@ -6,14 +6,18 @@ class PlansList extends StatelessWidget {
   final List<PlanModel> plans;
   final bool isMonthly;
   final int? expandedIndex;
+  final bool isProcessing;
   final Function(int) onExpand;
+  final void Function(PlanModel plan)? onSubscribe;
 
   const PlansList({
     super.key,
     required this.plans,
     required this.isMonthly,
     required this.expandedIndex,
+    this.isProcessing = false,
     required this.onExpand,
+    this.onSubscribe,
   });
 
   @override
@@ -29,7 +33,9 @@ class PlansList extends StatelessWidget {
           plan: plan,
           isMonthly: isMonthly,
           isExpanded: expandedIndex == index,
+          isProcessing: isProcessing,
           onTap: () => onExpand(index),
+          onSubscribe: onSubscribe == null ? null : () => onSubscribe!(plan),
         );
       },
     );

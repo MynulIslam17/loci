@@ -7,14 +7,18 @@ class PlanCard extends StatelessWidget {
   final PlanModel plan;
   final bool isExpanded;
   final bool isMonthly;
+  final bool isProcessing;
   final VoidCallback onTap;
+  final VoidCallback? onSubscribe;
 
   const PlanCard({
     super.key,
     required this.plan,
     required this.isExpanded,
     required this.isMonthly,
+    this.isProcessing = false,
     required this.onTap,
+    this.onSubscribe,
   });
 
   @override
@@ -46,7 +50,7 @@ class PlanCard extends StatelessWidget {
             Text(
               isFree
                   ? "Free"
-                  : "\$${plan.amount}${isMonthly ? '/month' : ''}",
+                  : "\$${plan.priceInDollars.toStringAsFixed(plan.priceInDollars.truncateToDouble() == plan.priceInDollars ? 0 : 2)}${isMonthly ? '/month' : ''}",
               style: AppTextStyle.textXl(
                 color: colorScheme.primary,
                 weight: FontWeight.w600,
@@ -115,8 +119,14 @@ class PlanCard extends StatelessWidget {
               width: double.infinity,
               height: 48,
               child: ElevatedButton(
-                onPressed: () {},
-                child: Text(isFree ? "Join Free" : "Subscribe"),
+                onPressed: isProcessing ? null : onSubscribe,
+                child: isProcessing
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : Text(isFree ? "Join Free" : "Subscribe"),
               ),
             ),
           ],

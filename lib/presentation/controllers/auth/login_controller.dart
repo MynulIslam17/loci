@@ -5,6 +5,7 @@ import 'package:loci/core/network/network_caller.dart';
 import 'package:loci/core/network/network_response.dart';
 import 'package:loci/data/models/user/user_model.dart';
 import 'package:loci/presentation/controllers/auth/auth_controller.dart';
+import 'package:loci/presentation/controllers/subscription/subscription_controller.dart';
 
 
 class LoginController extends GetxController {
@@ -45,6 +46,9 @@ class LoginController extends GetxController {
               model: user,
               token: token,
             );
+            if (Get.isRegistered<SubscriptionController>()) {
+              Get.find<SubscriptionController>().initializeStripe();
+            }
           }
         }
         return true;

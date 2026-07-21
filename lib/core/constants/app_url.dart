@@ -96,6 +96,9 @@ abstract class AppUrl {
 
   //------subscription
   static const String subscriptionPlans="$baseUrl/subscriptions/plans";
+  static const String subscriptionConfig="$baseUrl/subscriptions/config";
+  static const String subscriptionCheckout="$baseUrl/subscriptions/checkout";
+  static const String subscriptionMy="$baseUrl/subscriptions/my";
 
   //----reviews
 static String  otherBusinessReviews(String businessId)=>"$baseUrl/reviews/business/$businessId";

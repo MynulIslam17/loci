@@ -438,7 +438,7 @@ class _MyBusinessProfileState extends State<MyBusinessProfile> {
 
         // ================= BUTTON =================
         OutlinedButton(
-          onPressed: () {},
+          onPressed: () => Get.toNamed(AppRoutes.subscription),
           style: OutlinedButton.styleFrom(
             side: BorderSide(color: colorScheme.outline),
             shape: RoundedRectangleBorder(

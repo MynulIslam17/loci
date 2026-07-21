@@ -60,12 +60,11 @@ class _ChatListScreenState extends State<ChatListScreen> {
       backgroundColor: colorScheme.surface,
       appBar: CustomAppbar(title: "Chats"),
 
-      body: SafeArea(
-        child: Column(
-          children: [
+      body: Column(
+        children: [
 
-            /// ---------------- SEARCH BAR ----------------
-            Padding(
+          /// ---------------- SEARCH BAR ----------------
+          Padding(
               padding: const EdgeInsets.all(16.0),
               child: CustomTextField(
                 hintText: "Search chats",
@@ -202,7 +201,6 @@ class _ChatListScreenState extends State<ChatListScreen> {
             ),
           ],
         ),
-      ),
     );
   }
 }

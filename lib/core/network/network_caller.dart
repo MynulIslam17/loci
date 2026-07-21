@@ -26,11 +26,17 @@ class NetworkCaller {
 
   // ===========================================================
   // CENTRAL STATUS CODE → ERROR MESSAGE RESOLVER
-  // Controllers never need to touch raffles status code directly.
-  // Always tries the server's own "message" field first.
+  // Controllers never need to touch a status code directly.
+  // Prefers detailed field-level "errors" from the server,
+  // then the server's own "message" field, then a fallback.
   // ===========================================================
   String _resolveErrorMessage(int statusCode, Map<String, dynamic>? decoded) {
     final serverMsg = decoded?['message'] as String?;
+
+    // Validation-style responses: {"errors": {"field": ["msg1", "msg2"]}}
+    // Show the actual field messages instead of a generic "Validation failed".
+    final fieldErrors = _extractFieldErrors(decoded);
+    if (fieldErrors != null) return fieldErrors;
 
     switch (statusCode) {
       case 400:
@@ -48,7 +54,7 @@ class NetworkCaller {
       case 422:
         return serverMsg ?? 'Invalid data submitted. Please review your input.';
       case 429:
-        return serverMsg ?? 'Too many requests. Please wait raffles moment and try again.';
+        return serverMsg ?? 'Too many requests. Please wait a moment and try again.';
       case 500:
         return serverMsg ?? 'Server error. Please try again later.';
       case 502:
@@ -62,16 +68,34 @@ class NetworkCaller {
     }
   }
 
+  /// Flattens {"errors": {"field": ["msg1", ...]}} into a readable,
+  /// line-separated list of messages. Returns null if none present.
+  String? _extractFieldErrors(Map<String, dynamic>? decoded) {
+    final errors = decoded?['errors'];
+    if (errors is! Map) return null;
+
+    final messages = <String>[];
+    for (final value in errors.values) {
+      if (value is List) {
+        messages.addAll(value.map((e) => e.toString()));
+      } else if (value is String) {
+        messages.add(value);
+      }
+    }
+
+    if (messages.isEmpty) return null;
+    return messages.join('\n');
+  }
+
   // ===========================================================
   // CENTRAL UNAUTHORIZED + FORBIDDEN HANDLER
   // Call this after every non-success response.
   // ===========================================================
-  void _handleAuthErrors(int statusCode) {
-    if (statusCode == 401) {
+  void _handleAuthErrors(int statusCode, {required bool hadToken}) {
+    // Only redirect when a token was sent but rejected — not for logged-out calls.
+    if (statusCode == 401 && hadToken) {
       onUnAuthorize();
     }
-    // 403 does not call onUnAuthorize because the token is still valid —
-    // the user simply lacks permission. Handle UI feedback via errorMessage.
   }
 
   // ===========================================================
@@ -97,8 +121,9 @@ class NetworkCaller {
         uri = uri.replace(queryParameters: existingParams);
       }
 
+      final token = accessToken();
       final headers = {
-        'Authorization': 'Bearer ${accessToken()}',
+        'Authorization': 'Bearer $token',
         'Content-Type': 'application/json',
       };
 
@@ -119,7 +144,7 @@ class NetworkCaller {
         );
       }
 
-      _handleAuthErrors(response.statusCode);
+      _handleAuthErrors(response.statusCode, hadToken: token.isNotEmpty);
 
       return NetworkResponse(
         isSuccess: false,
@@ -169,7 +194,9 @@ class NetworkCaller {
         );
       }
 
-      if (!isFromLogin) _handleAuthErrors(response.statusCode);
+      if (!isFromLogin) {
+        _handleAuthErrors(response.statusCode, hadToken: token.isNotEmpty);
+      }
 
       return NetworkResponse(
         isSuccess: false,
@@ -197,9 +224,10 @@ class NetworkCaller {
   }) async {
     try {
       final uri = Uri.parse(url);
+      final token = accessToken();
       final headers = {
         'Content-Type': 'application/json',
-        'Authorization': 'Bearer ${accessToken()}',
+        'Authorization': 'Bearer $token',
       };
 
       _logRequest(url, body, headers);
@@ -218,7 +246,9 @@ class NetworkCaller {
         );
       }
 
-      if (!isFromLogin) _handleAuthErrors(response.statusCode);
+      if (!isFromLogin) {
+        _handleAuthErrors(response.statusCode, hadToken: token.isNotEmpty);
+      }
 
       return NetworkResponse(
         isSuccess: false,
@@ -245,9 +275,10 @@ class NetworkCaller {
   }) async {
     try {
       final uri = Uri.parse(url);
+      final token = accessToken();
       final headers = {
         'Content-Type': 'application/json',
-        'Authorization': 'Bearer ${accessToken()}',
+        'Authorization': 'Bearer $token',
       };
 
       _logRequest(url, body, headers);
@@ -266,7 +297,9 @@ class NetworkCaller {
         );
       }
 
-      if (!isFromLogin) _handleAuthErrors(response.statusCode);
+      if (!isFromLogin) {
+        _handleAuthErrors(response.statusCode, hadToken: token.isNotEmpty);
+      }
 
       return NetworkResponse(
         isSuccess: false,
@@ -293,9 +326,10 @@ class NetworkCaller {
   }) async {
     try {
       final uri = Uri.parse(url);
+      final token = accessToken();
       final headers = {
         'Content-Type': 'application/json',
-        'Authorization': 'Bearer ${accessToken()}',
+        'Authorization': 'Bearer $token',
       };
 
       _logRequest(url, body, headers);
@@ -317,7 +351,9 @@ class NetworkCaller {
         );
       }
 
-      if (!isFromLogin) _handleAuthErrors(response.statusCode);
+      if (!isFromLogin) {
+        _handleAuthErrors(response.statusCode, hadToken: token.isNotEmpty);
+      }
 
       return NetworkResponse(
         isSuccess: false,
@@ -348,9 +384,10 @@ class NetworkCaller {
   }) async {
     try {
       final uri = Uri.parse(url);
+      final token = accessToken();
       final request = http.MultipartRequest(method.toUpperCase(), uri);
 
-      request.headers['Authorization'] = 'Bearer ${accessToken()}';
+      request.headers['Authorization'] = 'Bearer $token';
 
       if (fields != null) request.fields.addAll(fields);
 
@@ -420,7 +457,9 @@ class NetworkCaller {
         );
       }
 
-      if (!isFromLogin) _handleAuthErrors(streamed.statusCode);
+      if (!isFromLogin) {
+        _handleAuthErrors(streamed.statusCode, hadToken: token.isNotEmpty);
+      }
 
       return NetworkResponse(
         isSuccess: false,

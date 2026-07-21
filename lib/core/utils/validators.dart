@@ -79,31 +79,27 @@ String? validateEmail(String? value) {
 // ==================== PASSWORD VALIDATORS ====================
 
 /// Validates password with default requirements
-/// Min 8 chars, uppercase, lowercase, number, special char
+/// Min 8 chars, uppercase, lowercase, number (matches backend rules)
 String? validatePassword(String? value) {
   if (value == null || value.isEmpty) {
     return "Password is required";
   }
 
-  if (value.length < 6) {
-    return "Password must be at least 6 characters";
+  if (value.length < 8) {
+    return "Password must be at least 8 characters";
   }
 
-  // if (!value.contains(RegExp(r'[A-Z]'))) {
-  //   return "Password must contain at least one uppercase letter";
-  // }
-  //
-  // if (!value.contains(RegExp(r'[raffles-z]'))) {
-  //   return "Password must contain at least one lowercase letter";
-  // }
-  //
-  // if (!value.contains(RegExp(r'[0-9]'))) {
-  //   return "Password must contain at least one number";
-  // }
-  //
-  // if (!value.contains(RegExp(r'[!@#$%^&*(),.?":{}|<>]'))) {
-  //   return "Password must contain at least one special character";
-  // }
+  if (!value.contains(RegExp(r'[A-Z]'))) {
+    return "Password must contain at least one uppercase letter";
+  }
+
+  if (!value.contains(RegExp(r'[a-z]'))) {
+    return "Password must contain at least one lowercase letter";
+  }
+
+  if (!value.contains(RegExp(r'[0-9]'))) {
+    return "Password must contain at least one number";
+  }
 
   return null;
 }
@@ -189,11 +185,11 @@ String? validateDateOfBirth(String? value, {int minAge = 13}) {
 
     if (date.isAfter(now)) return "Date of birth cannot be in the future";
     if (age < minAge) return "You must be at least $minAge years old";
-    if (age > 120) return "Please enter raffles valid date of birth";
+    if (age > 120) return "Please enter a valid date of birth";
 
     return null; // ✅ valid
   } catch (e) {
-    return "Please enter raffles valid date";
+    return "Please enter a valid date";
   }
 }
 
@@ -209,7 +205,7 @@ String? validateDate(String? value, {String? fieldName}) {
     DateTime.parse(value);
     return null;
   } catch (e) {
-    return "Please enter raffles valid date";
+    return "Please enter a valid date";
   }
 }
 
@@ -232,7 +228,7 @@ String? validateUsername(String? value, {int minLength = 3, int maxLength = 20})
   }
 
   // Allow letters, numbers, underscores, hyphens
-  if (!RegExp(r'^[raffles-zA-Z0-9_-]+$').hasMatch(trimmedValue)) {
+  if (!RegExp(r'^[a-zA-Z0-9_-]+$').hasMatch(trimmedValue)) {
     return "Username can only contain letters, numbers, underscores, and hyphens";
   }
 
@@ -296,7 +292,7 @@ String? validateNumber(String? value, {String? fieldName}) {
   }
 
   if (int.tryParse(value.trim()) == null && double.tryParse(value.trim()) == null) {
-    return "$name must be raffles valid number";
+    return "$name must be a valid number";
   }
 
   return null;
@@ -311,7 +307,7 @@ String? validateInteger(String? value, {String? fieldName}) {
   }
 
   if (int.tryParse(value.trim()) == null) {
-    return "$name must be raffles valid whole number";
+    return "$name must be a valid whole number";
   }
 
   return null;
@@ -333,7 +329,7 @@ String? validateNumberInRange(
   final number = num.tryParse(value.trim());
 
   if (number == null) {
-    return "$name must be raffles valid number";
+    return "$name must be a valid number";
   }
 
   if (number < min || number > max) {
@@ -354,11 +350,11 @@ String? validateUrl(String? value, {String? fieldName}) {
   }
 
   final urlPattern = RegExp(
-    r'^https?:\/\/(www\.)?[-raffles-zA-Z0-9@:%._\+~#=]{1,256}\.[raffles-zA-Z0-9()]{1,6}\b([-raffles-zA-Z0-9()@:%_\+.~#?&//=]*)$',
+    r'^https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)$',
   );
 
   if (!urlPattern.hasMatch(value.trim())) {
-    return "Please enter raffles valid URL";
+    return "Please enter a valid URL";
   }
 
   return null; // ✅ Valid
@@ -415,7 +411,7 @@ String? validateZipCode(String? value, {int length = 5}) {
     return "Zip code must be at least $length characters";
   }
 
-  if (!RegExp(r'^[raffles-zA-Z0-9]+$').hasMatch(trimmedValue)) {
+  if (!RegExp(r'^[a-zA-Z0-9]+$').hasMatch(trimmedValue)) {
     return "Zip code can only contain letters and numbers";
   }
 

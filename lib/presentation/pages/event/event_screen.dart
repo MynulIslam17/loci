@@ -79,10 +79,9 @@ class _EventScreenState extends State<EventScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 12),
-          child: GetBuilder<EventListController>(
+      body: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 12),
+        child: GetBuilder<EventListController>(
             init: EventListController(),
             builder: (controller) {
               final hasSearch = controller.searchQuery.trim().isNotEmpty;
@@ -265,7 +264,6 @@ class _EventScreenState extends State<EventScreen> {
             },
           ),
         ),
-      ),
     );
   }
 }
