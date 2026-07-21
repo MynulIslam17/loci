@@ -4,6 +4,9 @@ abstract class AppUrl {
   //static const String baseUrl="https://jakuan5000.syedbipul.me/api/v1";//local
   static const String baseUrl="https://jakuan5000.syedbipul.me/api/v1"; //live
 
+  /// Socket.io connects to the server root (no /api/v1 prefix).
+  static const String socketUrl="https://jakuan5000.syedbipul.me";
+
 
   /// ========================auth===================================
 
@@ -98,7 +101,17 @@ abstract class AppUrl {
   static const String subscriptionPlans="$baseUrl/subscriptions/plans";
   static const String subscriptionConfig="$baseUrl/subscriptions/config";
   static const String subscriptionCheckout="$baseUrl/subscriptions/checkout";
-  static const String subscriptionMy="$baseUrl/subscriptions/my";
+  static const String mySubscription="$baseUrl/subscriptions/my"; // GET current + DELETE to cancel
+
+  //------chat / messaging
+  static const String conversations="$baseUrl/conversations"; // GET my list, POST create
+  static String conversationById(String id)=>"$baseUrl/conversations/$id"; // GET, DELETE
+  static String conversationRead(String id)=>"$baseUrl/conversations/$id/read"; // POST
+  static String conversationMessages(String conversationId)=>"$baseUrl/conversations/$conversationId/messages"; // GET, POST
+  static String conversationMessagesRead(String conversationId)=>"$baseUrl/conversations/$conversationId/messages/read"; // POST
+  static String editMessage(String id)=>"$baseUrl/messages/$id"; // PATCH, DELETE (for everyone)
+  static String deleteMessageForMe(String id)=>"$baseUrl/messages/$id/me"; // DELETE
+  static String messageReactions(String id)=>"$baseUrl/messages/$id/reactions"; // POST, DELETE
 
   //----reviews
 static String  otherBusinessReviews(String businessId)=>"$baseUrl/reviews/business/$businessId";

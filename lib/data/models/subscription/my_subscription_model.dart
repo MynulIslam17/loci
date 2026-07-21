@@ -1,34 +1,34 @@
+/// Parsed `data` of `GET /subscriptions/my`.
+///
+/// `data` is `null` when the user has no active subscription — callers should
+/// treat a null model as "no subscription / show plans".
 class MySubscriptionModel {
-  final String id;
-  final String status;
-  final String planId;
+  final String status; // active | past_due | incomplete | cancelled ...
   final int heroSpotlightCredits;
-  final DateTime? currentPeriodEnd;
+  final String? currentPeriodEnd;
   final bool cancelAtPeriodEnd;
+  final String? stripeSubscriptionId;
+  final String? stripePriceId;
 
   MySubscriptionModel({
-    required this.id,
     required this.status,
-    required this.planId,
     required this.heroSpotlightCredits,
     this.currentPeriodEnd,
-    this.cancelAtPeriodEnd = false,
+    required this.cancelAtPeriodEnd,
+    this.stripeSubscriptionId,
+    this.stripePriceId,
   });
+
+  bool get isActive => status == 'active';
 
   factory MySubscriptionModel.fromJson(Map<String, dynamic> json) {
     return MySubscriptionModel(
-      id: json['_id']?.toString() ?? json['id']?.toString() ?? '',
-      status: json['status']?.toString() ?? '',
-      planId: json['planId']?.toString() ?? '',
+      status: json['status'] ?? '',
       heroSpotlightCredits: json['heroSpotlightCredits'] ?? 0,
-      currentPeriodEnd: json['currentPeriodEnd'] != null
-          ? DateTime.tryParse(json['currentPeriodEnd'].toString())
-          : null,
+      currentPeriodEnd: json['currentPeriodEnd']?.toString(),
       cancelAtPeriodEnd: json['cancelAtPeriodEnd'] == true,
+      stripeSubscriptionId: json['stripeSubscriptionId'],
+      stripePriceId: json['stripePriceId'],
     );
   }
-
-  bool get isActive => status == 'active';
-  bool get isPastDue => status == 'past_due';
-  bool get isIncomplete => status == 'incomplete';
 }

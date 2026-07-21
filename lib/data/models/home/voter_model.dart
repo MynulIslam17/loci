@@ -10,8 +10,8 @@ class VoterModel {
   });
 
   factory VoterModel.fromJson(Map<String, dynamic> json) => VoterModel(
-        userId: json['userId'] as String,
-        name: json['name'] as String,
+        userId: (json['userId'] ?? json['_id'] ?? json['id'] ?? '').toString(),
+        name: (json['name'] as String?) ?? '',
         avatar: json['avatar'] as String? ?? '',
       );
 

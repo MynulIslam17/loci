@@ -3,11 +3,11 @@ import 'package:get/get_instance/src/extension_instance.dart';
 import 'package:get/get_navigation/src/extension_navigation.dart';
 import 'package:get/get_state_manager/src/simple/get_controllers.dart';
 
+import '../../../core/services/chat_socket_service.dart';
 import '../../../data/models/user/user_model.dart';
 import '../../../data/repositories/auth_repository.dart';
 import '../../../routes/app_routes.dart';
 import '../nav_controller.dart';
-import '../subscription/subscription_controller.dart';
 
 class AuthController extends GetxController {
   final AuthRepository _repository;
@@ -33,6 +33,7 @@ class AuthController extends GetxController {
     accessToken = token;
     userModel = model;
     role = model.role;
+    _connectChatSocket();
   }
 
   Future<void> loadUserData() async {
@@ -40,10 +41,7 @@ class AuthController extends GetxController {
     accessToken = data.token;
     userModel = data.user;
     role = data.role;
-
-    if (isLoggedIn && Get.isRegistered<SubscriptionController>()) {
-      Get.find<SubscriptionController>().initializeStripe();
-    }
+    if (accessToken != null && accessToken!.isNotEmpty) _connectChatSocket();
   }
 
   Future<void> updateUser(UserModel updatedUser) async {
@@ -58,10 +56,21 @@ class AuthController extends GetxController {
     userModel = null;
     role = null;
 
+    if (Get.isRegistered<ChatSocketService>()) {
+      Get.find<ChatSocketService>().disconnect();
+    }
+
     Get.find<NavController>().changeIndex(0);
 
     Get.offAllNamed(AppRoutes.login);
   }
 
   bool get isLoggedIn => accessToken != null;
+
+  /// Opens the realtime chat connection once we have a valid token.
+  void _connectChatSocket() {
+    if (Get.isRegistered<ChatSocketService>()) {
+      Get.find<ChatSocketService>().connect();
+    }
+  }
 }

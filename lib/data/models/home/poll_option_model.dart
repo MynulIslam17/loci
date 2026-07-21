@@ -18,8 +18,8 @@ class PollOptionModel {
   });
 
   factory PollOptionModel.fromJson(Map<String, dynamic> json) => PollOptionModel(
-        optionId: json['optionId'] as String,
-        text: json['text'] as String,
+        optionId: (json['optionId'] ?? json['_id'] ?? json['id'] ?? '').toString(),
+        text: (json['text'] as String?) ?? '',
         image: json['image'] as String?,
         voteCount: json['voteCount'] as int? ?? 0,
         percentage: json['percentage'] as int? ?? 0,

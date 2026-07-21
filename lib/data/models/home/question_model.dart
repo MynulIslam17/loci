@@ -36,11 +36,12 @@ class QuestionModel {
   });
 
   factory QuestionModel.fromJson(Map<String, dynamic> json) => QuestionModel(
-    id: json['_id'] as String,
-    author: AuthorModel.fromJson(json['author'] as Map<String, dynamic>),
+    id: (json['_id'] ?? json['id'] ?? '').toString(),
+    author: AuthorModel.fromJson((json['author'] as Map<String, dynamic>?) ?? const {}),
     type: QuestionType.fromString(json['type'] as String?),
-    category: json['category'] as String,
-    content: (json['content'] ?? json['question'] ?? '') as String,
+    // category is nullable on the backend (default null) — never hard-cast it.
+    category: (json['category'] as String?) ?? '',
+    content: (json['content'] ?? json['question'] ?? '').toString(),
     totalVotes: json['totalVotes'] as int? ?? 0,
     likeCount: json['likeCount'] as int? ?? 0,
     isLiked: json['isLiked'] as bool? ?? false,
