@@ -21,7 +21,9 @@ class ToggleItem extends StatelessWidget {
     return Expanded(
       child: GestureDetector(
         onTap: onTap,
-        child: Container(
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          curve: Curves.easeOut,
           height: 48,
           alignment: Alignment.center,
           decoration: BoxDecoration(
@@ -37,14 +39,15 @@ class ToggleItem extends StatelessWidget {
             ]
                 : [],
           ),
-          child: Text(
-            title,
+          child: AnimatedDefaultTextStyle(
+            duration: const Duration(milliseconds: 200),
             style: AppTextStyle.textSm(
               color: isSelected
                   ? colorScheme.primary
                   : colorScheme.onSurfaceVariant,
               weight: FontWeight.w600,
             ),
+            child: Text(title),
           ),
         ),
       ),

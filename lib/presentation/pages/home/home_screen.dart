@@ -161,7 +161,7 @@ class _HomeScreenState extends State<HomeScreen> {
           comments: ctrl.comments,
           controller: inputController,
           scrollController: ctrl.scrollController,
-          paginationLoading: false,
+          paginationLoading: ctrl.isPaginating,
           currentUserImage: _authController.userModel?.avatar ?? '',
           isLoading: ctrl.isLoading,
           isSending: ctrl.isPosting,

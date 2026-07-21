@@ -13,6 +13,7 @@ class QuestionModel {
   final int totalVotes;
   final int likeCount;
   final bool isLiked;
+  final int commentCount;
   final List<PollOptionModel> options;
   final List<AnswerModel> answers;
   final String? communityId;
@@ -28,6 +29,7 @@ class QuestionModel {
     required this.totalVotes,
     required this.likeCount,
     required this.isLiked,
+    required this.commentCount,
     required this.options,
     required this.answers,
     this.communityId,
@@ -45,6 +47,10 @@ class QuestionModel {
     totalVotes: json['totalVotes'] as int? ?? 0,
     likeCount: json['likeCount'] as int? ?? 0,
     isLiked: json['isLiked'] as bool? ?? false,
+    // Prefer an explicit server count; fall back to the embedded answers length.
+    commentCount: json['answerCount'] as int? ??
+        json['commentCount'] as int? ??
+        (json['answers'] as List<dynamic>? ?? []).length,
     options: (json['options'] as List<dynamic>? ?? [])
         .map((e) => PollOptionModel.fromJson(e as Map<String, dynamic>))
         .toList(),
@@ -65,6 +71,7 @@ class QuestionModel {
     'totalVotes': totalVotes,
     'likeCount': likeCount,
     'isLiked': isLiked,
+    'commentCount': commentCount,
     'options': options.map((e) => e.toJson()).toList(),
     'answers': answers.map((e) => e.toJson()).toList(),
     'communityId': communityId,
@@ -82,6 +89,7 @@ class QuestionModel {
     int? totalVotes,
     int? likeCount,
     bool? isLiked,
+    int? commentCount,
   }) =>
       QuestionModel(
         id: id,
@@ -92,6 +100,7 @@ class QuestionModel {
         totalVotes: totalVotes ?? this.totalVotes,
         likeCount: likeCount ?? this.likeCount,
         isLiked: isLiked ?? this.isLiked,
+        commentCount: commentCount ?? this.commentCount,
         options: options ?? this.options,
         answers: answers,
         communityId: communityId,

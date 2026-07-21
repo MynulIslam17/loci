@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:loci/core/constants/app_text_style.dart';
 import 'package:loci/core/theme/theme_extention.dart';
 import 'package:loci/data/models/busniess/browse_business_model.dart';
+import 'package:loci/presentation/controllers/auth/auth_controller.dart';
 import 'package:loci/presentation/pages/communites/widgets/post_card_view_model.dart';
 import 'package:loci/presentation/widgets/custom_image_container.dart';
 import '../../home/widgets/expandable_text.dart';
@@ -171,11 +173,32 @@ class _PostCardWidgetState extends State<PostCardWidget> {
             // ── Mention / business input (poll only) ─────────────────────────
             if (vm.isPoll) Row(
               children: [
-                CustomCachedImage(
-                  width: 40,
-                  height: 40,
-                  isCircle: true,
-                  imageUrl: widget.currentUserImage,
+                // Live avatar of the logged-in user: reacts to auth updates
+                // (profile fetch / avatar upload) instead of freezing on the
+                // value captured when the tab was first built.
+                GetBuilder<AuthController>(
+                  builder: (auth) {
+                    final avatar =
+                        auth.userModel?.avatar ?? widget.currentUserImage;
+                    if (avatar.isEmpty) {
+                      return CircleAvatar(
+                        radius: 20,
+                        backgroundColor:
+                            colors.primary.withValues(alpha: 0.1),
+                        child: Icon(
+                          Icons.person_rounded,
+                          size: 22,
+                          color: colors.primary,
+                        ),
+                      );
+                    }
+                    return CustomCachedImage(
+                      width: 40,
+                      height: 40,
+                      isCircle: true,
+                      imageUrl: avatar,
+                    );
+                  },
                 ),
                 const SizedBox(width: 12),
                 Expanded(

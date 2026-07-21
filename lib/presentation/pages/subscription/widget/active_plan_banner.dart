@@ -22,60 +22,120 @@ class ActivePlanBanner extends StatelessWidget {
 
         final isPastDue = sub.status == 'past_due';
         final accent = isPastDue ? colorScheme.error : colorScheme.primary;
+        final periodText = _periodText(sub.cancelAtPeriodEnd, sub.currentPeriodEnd);
 
         return Container(
           margin: const EdgeInsets.symmetric(horizontal: 16),
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(18),
           decoration: BoxDecoration(
-            color: accent.withValues(alpha: 0.08),
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: accent.withValues(alpha: 0.4)),
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                accent.withValues(alpha: 0.12),
+                accent.withValues(alpha: 0.04),
+              ],
+            ),
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(color: accent.withValues(alpha: 0.3)),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(
                 children: [
-                  Icon(
-                    isPastDue ? Icons.error_outline : Icons.verified,
-                    size: 18,
-                    color: accent,
-                  ),
-                  const SizedBox(width: 8),
-                  Text(
-                    _statusLabel(sub.status),
-                    style: AppTextStyle.textSm(
+                  Container(
+                    width: 40,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      color: accent.withValues(alpha: 0.14),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Icon(
+                      isPastDue
+                          ? Icons.error_outline_rounded
+                          : Icons.verified_rounded,
+                      size: 22,
                       color: accent,
-                      weight: FontWeight.w700,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          _statusLabel(sub.status),
+                          style: AppTextStyle.textSm(
+                            color: accent,
+                            weight: FontWeight.w700,
+                          ),
+                        ),
+                        if (periodText != null) ...[
+                          const SizedBox(height: 2),
+                          Row(
+                            children: [
+                              Icon(
+                                Icons.event_repeat_rounded,
+                                size: 13,
+                                color: colorScheme.onSurfaceVariant,
+                              ),
+                              const SizedBox(width: 4),
+                              Text(
+                                periodText,
+                                style: AppTextStyle.textXs(
+                                  color: colorScheme.onSurfaceVariant,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                  // Spotlight credits pill.
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 6,
+                    ),
+                    decoration: BoxDecoration(
+                      color: colorScheme.surface.withValues(alpha: 0.7),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.star_rounded, size: 14, color: accent),
+                        const SizedBox(width: 4),
+                        Text(
+                          '${sub.heroSpotlightCredits}',
+                          style: AppTextStyle.textXs(
+                            color: colorScheme.onSurface,
+                            weight: FontWeight.w700,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ],
               ),
-              const SizedBox(height: 8),
-
-              Text(
-                '${sub.heroSpotlightCredits} spotlight credits',
-                style: AppTextStyle.textXs(color: colorScheme.onSurface),
-              ),
-
-              if (_periodText(sub.cancelAtPeriodEnd, sub.currentPeriodEnd) != null) ...[
-                const SizedBox(height: 2),
-                Text(
-                  _periodText(sub.cancelAtPeriodEnd, sub.currentPeriodEnd)!,
-                  style: AppTextStyle.textXs(color: colorScheme.onSurfaceVariant),
-                ),
-              ],
 
               // Only offer cancel while the plan is still running.
               if (sub.status == 'active' && !sub.cancelAtPeriodEnd) ...[
-                const SizedBox(height: 12),
+                const SizedBox(height: 14),
                 SizedBox(
                   width: double.infinity,
                   height: 42,
                   child: OutlinedButton(
                     style: OutlinedButton.styleFrom(
                       foregroundColor: colorScheme.error,
-                      side: BorderSide(color: colorScheme.error.withValues(alpha: 0.5)),
+                      side: BorderSide(
+                        color: colorScheme.error.withValues(alpha: 0.4),
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
                     ),
                     onPressed: checkout.isCancelling
                         ? null
