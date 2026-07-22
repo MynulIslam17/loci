@@ -12,6 +12,10 @@ class MySubscriptionModel {
   final String? planId;
   final String? planName;
   final int amount;
+  /// Set while a downgrade is scheduled to take effect at [currentPeriodEnd]
+  /// instead of right away — null means no switch is pending.
+  final String? pendingPlanId;
+  final String? pendingPlanName;
 
   MySubscriptionModel({
     required this.status,
@@ -23,6 +27,8 @@ class MySubscriptionModel {
     this.planId,
     this.planName,
     this.amount = 0,
+    this.pendingPlanId,
+    this.pendingPlanName,
   });
 
   bool get isActive => status == 'active';
@@ -40,6 +46,8 @@ class MySubscriptionModel {
       planId: json['planId']?.toString(),
       planName: json['planName']?.toString(),
       amount: json['amount'] ?? 0,
+      pendingPlanId: json['pendingPlanId']?.toString(),
+      pendingPlanName: json['pendingPlanName']?.toString(),
     );
   }
 }

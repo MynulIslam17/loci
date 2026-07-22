@@ -31,6 +31,14 @@ class PlanCard extends StatelessWidget {
         (subPlanId == plan.id || subPlanId == plan.realProductId);
   }
 
+  /// True when this plan is a scheduled (not-yet-applied) downgrade — the
+  /// caller's current plan keeps running until `currentPeriodEnd`.
+  bool _isPendingPlan(dynamic sub) {
+    if (sub == null) return false;
+    final pendingId = sub.pendingPlanId as String?;
+    return pendingId != null && pendingId == plan.id;
+  }
+
   @override
   Widget build(BuildContext context) {
     final colorScheme = context.colorScheme;
@@ -39,6 +47,7 @@ class PlanCard extends StatelessWidget {
     return GetBuilder<SubscriptionCheckoutController>(
       builder: (checkout) {
         final isCurrentPlan = _isCurrentPlan(checkout.mySubscription);
+        final isPendingPlan = _isPendingPlan(checkout.mySubscription);
 
         return AnimatedContainer(
           duration: const Duration(milliseconds: 250),
@@ -51,8 +60,12 @@ class PlanCard extends StatelessWidget {
             // to the scaffold surface in light mode (#FCFCFC on #FFFFFF), so
             // the border + shadow are what make the card visible.
             border: Border.all(
-              color: isCurrentPlan ? colorScheme.primary : colorScheme.outline,
-              width: isCurrentPlan ? 1.5 : 1,
+              color: isCurrentPlan
+                  ? colorScheme.primary
+                  : isPendingPlan
+                      ? colorScheme.primary.withValues(alpha: 0.5)
+                      : colorScheme.outline,
+              width: isCurrentPlan || isPendingPlan ? 1.5 : 1,
             ),
             boxShadow: [
               BoxShadow(
@@ -105,6 +118,8 @@ class PlanCard extends StatelessWidget {
                     ),
                     if (isCurrentPlan)
                       const _CurrentPlanBadge()
+                    else if (isPendingPlan)
+                      const _ScheduledBadge()
                     else
                       _TypeChip(
                         label:
@@ -259,6 +274,35 @@ class PlanCard extends StatelessWidget {
                       ),
                     ),
                   )
+                else if (isPendingPlan)
+                  SizedBox(
+                    width: double.infinity,
+                    height: 50,
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(
+                        color: colorScheme.primary.withValues(alpha: 0.08),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: colorScheme.primary.withValues(alpha: 0.5),
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.schedule_rounded,
+                              size: 16, color: colorScheme.primary),
+                          const SizedBox(width: 8),
+                          Text(
+                            "Starts at next renewal",
+                            style: AppTextStyle.textSm(
+                              color: colorScheme.primary,
+                              weight: FontWeight.w700,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  )
                 else
                   Builder(
                     builder: (context) {
@@ -390,6 +434,30 @@ class _CreditsChip extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// Badge marking the plan a scheduled downgrade will switch to at renewal.
+class _ScheduledBadge extends StatelessWidget {
+  const _ScheduledBadge();
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = context.colorScheme;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        color: colorScheme.primary.withValues(alpha: 0.15),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Text(
+        'Scheduled',
+        style: AppTextStyle.textXs(
+          color: colorScheme.primary,
+          weight: FontWeight.w700,
+        ),
       ),
     );
   }

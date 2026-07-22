@@ -1,9 +1,13 @@
 /// Parsed `data` of `POST /subscriptions/checkout`.
 ///
-/// The endpoint returns three shapes (see PAYMENTS.md §3):
-///  A) Free plan   → `{ planId, free: true }`            → activates instantly, no PaymentSheet.
-///  B) Monthly     → PaymentSheet params + `subscriptionId`.
-///  C) One-time     → PaymentSheet params, no `subscriptionId`.
+/// The endpoint returns five shapes (see PAYMENTS.md §3):
+///  A) Free plan     → `{ planId, free: true }`                 → activates instantly, no PaymentSheet.
+///  B) Monthly (new) → PaymentSheet params + `subscriptionId`.
+///  C) One-time      → PaymentSheet params, no `subscriptionId`.
+///  D) Upgrade       → `{ planId, switched: true, ... }` — applied immediately;
+///     PaymentSheet params present only if the prorated charge needs confirmation.
+///  E) Downgrade     → `{ planId, scheduled: true, pendingPlanName, effectiveDate }`
+///     — nothing to confirm; the switch takes effect at `effectiveDate`.
 class CheckoutModel {
   final String planId;
   final bool isFree;
@@ -12,6 +16,10 @@ class CheckoutModel {
   final String? ephemeralKey;
   final String? paymentIntentClientSecret;
   final String? subscriptionId; // present for monthly plans only
+  final bool switched;
+  final bool scheduled;
+  final String? pendingPlanName;
+  final String? effectiveDate;
 
   CheckoutModel({
     required this.planId,
@@ -21,11 +29,16 @@ class CheckoutModel {
     this.ephemeralKey,
     this.paymentIntentClientSecret,
     this.subscriptionId,
+    this.switched = false,
+    this.scheduled = false,
+    this.pendingPlanName,
+    this.effectiveDate,
   });
 
   /// True when we have everything needed to open Stripe's PaymentSheet.
   bool get canPresentSheet =>
       !isFree &&
+      !scheduled &&
       (customerId?.isNotEmpty ?? false) &&
       (ephemeralKey?.isNotEmpty ?? false) &&
       (paymentIntentClientSecret?.isNotEmpty ?? false);
@@ -39,6 +52,10 @@ class CheckoutModel {
       ephemeralKey: json['ephemeralKey'],
       paymentIntentClientSecret: json['paymentIntentClientSecret'],
       subscriptionId: json['subscriptionId'],
+      switched: json['switched'] == true,
+      scheduled: json['scheduled'] == true,
+      pendingPlanName: json['pendingPlanName']?.toString(),
+      effectiveDate: json['effectiveDate']?.toString(),
     );
   }
 }

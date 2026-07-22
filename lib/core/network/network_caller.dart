@@ -31,6 +31,13 @@ class NetworkCaller {
   // then the server's own "message" field, then a fallback.
   // ===========================================================
   String _resolveErrorMessage(int statusCode, Map<String, dynamic>? decoded) {
+    // Field-level validation messages (e.g. "Please provide a valid email
+    // address") are far more useful than the generic wrapper message
+    // ("Validation failed") the backend puts alongside them — prefer those
+    // when present. Auth failures (wrong email/password) intentionally don't
+    // carry an `errors` map, so this never turns those into an enumeration
+    // ("no such email" vs "wrong password") leak — it only ever surfaces
+    // genuine per-field input validation problems.
     final serverMsg = decoded?['message'] as String?;
 
     // Validation-style responses: {"errors": {"field": ["msg1", "msg2"]}}
