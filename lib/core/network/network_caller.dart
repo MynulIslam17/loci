@@ -28,7 +28,13 @@ class NetworkCaller {
   // resolve via status code — they never become FormatException.
   // ===========================================================
   String _resolveErrorMessage(int statusCode, Map<String, dynamic>? decoded) {
-    // Validation-style responses: {"errors": {"field": ["msg1", "msg2"]}}
+    // Field-level validation messages (e.g. "Please provide a valid email
+    // address") are far more useful than the generic wrapper message
+    // ("Validation failed"), so prefer them when present. Auth failures (wrong
+    // email/password) intentionally don't carry an `errors` map, so this never
+    // turns those into an enumeration ("no such email" vs "wrong password")
+    // leak — it only ever surfaces genuine per-field input validation problems.
+    // Shape: {"errors": {"field": ["msg1", "msg2"]}}
     final fieldErrors = _extractFieldErrors(decoded);
     if (fieldErrors != null) return fieldErrors;
 

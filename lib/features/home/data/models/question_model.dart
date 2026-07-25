@@ -13,6 +13,11 @@ class QuestionModel {
   final int totalVotes;
   final int likeCount;
   final bool isLiked;
+
+  /// Total answer count. The list endpoint (`GET /questions`) sends
+  /// `answerCount` directly and omits [answers] entirely (fetch those,
+  /// paginated, via `GET /questions/:id/answers`) — the detail endpoint
+  /// still embeds the full array, in which case this falls back to its length.
   final int commentCount;
   final List<PollOptionModel> options;
   final List<AnswerModel> answers;
@@ -85,7 +90,7 @@ class QuestionModel {
   bool get isPoll => type == QuestionType.poll;
   bool get isQuestion => type == QuestionType.question;
   bool get hasOptions => options.isNotEmpty;
-  bool get hasAnswers => answers.isNotEmpty;
+  bool get hasAnswers => commentCount > 0;
 
   QuestionModel copyWith({
     List<PollOptionModel>? options,
