@@ -48,6 +48,11 @@ class PlanCard extends StatelessWidget {
       final checkout = Get.find<SubscriptionCheckoutController>();
       final isCurrentPlan = _isCurrentPlan(checkout.mySubscription);
       final isPendingPlan = _isPendingPlan(checkout.mySubscription);
+      // Read these here (inside the Obx builder) so the observable is tracked —
+      // if read lazily inside a nested Builder callback the loader never shows
+      // because Obx doesn't register the dependency and won't rebuild.
+      final isProcessing = checkout.isProcessing(plan.id);
+      final anyProcessing = checkout.processingPlanId != null;
 
       return AnimatedContainer(
         duration: const Duration(milliseconds: 250),
@@ -309,61 +314,58 @@ class PlanCard extends StatelessWidget {
                   ),
                 )
               else
-                Builder(
-                  builder: (context) {
-                    final isProcessing = checkout.isProcessing(plan.id);
-                    return SizedBox(
-                      width: double.infinity,
-                      height: 52,
-                      child: ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: colorScheme.primary,
-                          foregroundColor: colorScheme.onPrimary,
-                          elevation: 0,
-                          disabledBackgroundColor: colorScheme.primary
-                              .withValues(alpha: 0.4),
-                          disabledForegroundColor: colorScheme.onPrimary
-                              .withValues(alpha: 0.8),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(14),
-                          ),
-                        ),
-                        // Disable every card's button while any purchase is in flight.
-                        onPressed: checkout.processingPlanId != null
-                            ? null
-                            : () => checkout.subscribe(plan.id),
-                        child: isProcessing
-                            ? SizedBox(
-                                height: 20,
-                                width: 20,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  valueColor: AlwaysStoppedAnimation(
-                                    colorScheme.onPrimary,
-                                  ),
-                                ),
-                              )
-                            : Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Text(
-                                    isFree ? "Join Free" : "Subscribe",
-                                    style: AppTextStyle.textSm(
-                                      color: colorScheme.onPrimary,
-                                      weight: FontWeight.w700,
-                                    ),
-                                  ),
-                                  const SizedBox(width: 6),
-                                  Icon(
-                                    Icons.arrow_forward_rounded,
-                                    size: 18,
-                                    color: colorScheme.onPrimary,
-                                  ),
-                                ],
-                              ),
+                SizedBox(
+                  width: double.infinity,
+                  height: 52,
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: colorScheme.primary,
+                      foregroundColor: colorScheme.onPrimary,
+                      elevation: 0,
+                      disabledBackgroundColor: colorScheme.primary.withValues(
+                        alpha: 0.4,
                       ),
-                    );
-                  },
+                      disabledForegroundColor: colorScheme.onPrimary.withValues(
+                        alpha: 0.8,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                    ),
+                    // Disable every card's button while any purchase is in flight.
+                    onPressed: anyProcessing
+                        ? null
+                        : () => checkout.subscribe(plan.id),
+                    child: isProcessing
+                        ? SizedBox(
+                            height: 20,
+                            width: 20,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              valueColor: AlwaysStoppedAnimation(
+                                colorScheme.onPrimary,
+                              ),
+                            ),
+                          )
+                        : Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Text(
+                                isFree ? "Join Free" : "Subscribe",
+                                style: AppTextStyle.textSm(
+                                  color: colorScheme.onPrimary,
+                                  weight: FontWeight.w700,
+                                ),
+                              ),
+                              const SizedBox(width: 6),
+                              Icon(
+                                Icons.arrow_forward_rounded,
+                                size: 18,
+                                color: colorScheme.onPrimary,
+                              ),
+                            ],
+                          ),
+                  ),
                 ),
             ],
           ),
