@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:loci/core/utils/app_error_messages.dart';
 
 import '../theme/app_colors.dart';
-
-
 
 class SnackbarService {
   // Debounce to prevent spam (500ms cooldown)
@@ -65,31 +64,28 @@ class SnackbarService {
     );
   }
 
-  static void error(
-      String message, {
-        String title = "Error",
-        VoidCallback? onRetry,
-      }) {
+  static void error(String message, {String? title, VoidCallback? onRetry}) {
+    final friendly = AppErrorMessages.sanitize(message);
     _show(
-      title: title,
-      message: message,
+      title: title ?? AppErrorMessages.titleFor(message: friendly),
+      message: friendly,
       backgroundColor: AppColors.danger,
-      icon: Icons.error,
+      icon: AppErrorMessages.iconFor(message: friendly),
       duration: const Duration(seconds: 5),
       mainButton: onRetry != null
           ? TextButton(
-        onPressed: () {
-          Get.back(); // Close snackbar first
-          Future.delayed(Duration.zero, onRetry); // Execute after frame
-        },
-        child: const Text(
-          "RETRY",
-          style: TextStyle(
-            color: Colors.yellow,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-      )
+              onPressed: () {
+                Get.back();
+                Future.delayed(Duration.zero, onRetry);
+              },
+              child: const Text(
+                "RETRY",
+                style: TextStyle(
+                  color: Colors.yellow,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            )
           : null,
     );
   }
@@ -97,7 +93,7 @@ class SnackbarService {
   static void warning(String message, {String title = "Warning"}) {
     _show(
       title: title,
-      message: message,
+      message: AppErrorMessages.sanitize(message),
       backgroundColor: Colors.orange,
       icon: Icons.warning,
     );
@@ -121,7 +117,7 @@ class SnackbarService {
     SnackPosition position = SnackPosition.BOTTOM,
     Duration duration = const Duration(seconds: 3),
     VoidCallback? onTap,
-    TextButton? mainButton, // ✅ Changed from Widget? to TextButton?
+    TextButton? mainButton,
   }) {
     _show(
       title: title ?? "",
@@ -131,7 +127,7 @@ class SnackbarService {
       position: position,
       duration: duration,
       onTap: onTap,
-      mainButton: mainButton, // ✅ Changed parameter name
+      mainButton: mainButton,
     );
   }
 
@@ -155,7 +151,7 @@ class SnackbarService {
       snackPosition: SnackPosition.BOTTOM,
       isDismissible: false,
       shouldIconPulse: false,
-      barBlur: 0, // Prevent blur on progress indicator
+      barBlur: 0,
     );
   }
 

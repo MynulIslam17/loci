@@ -1,70 +1,73 @@
 import 'package:get/get.dart';
-import 'package:loci/presentation/bindings/auth_bindings.dart';
-import 'package:loci/presentation/bindings/bottom_nav_binding.dart';
-import 'package:loci/presentation/bindings/browse_business_bindings.dart';
-import 'package:loci/presentation/bindings/community_binding.dart';
-import 'package:loci/presentation/bindings/drawer_bindings.dart';
-import 'package:loci/presentation/bindings/event_bindings.dart';
-import 'package:loci/presentation/bindings/my_business_bindings.dart';
-import 'package:loci/presentation/bindings/meetings_bindings.dart';
-import 'package:loci/presentation/bindings/refferrals_bindings.dart';
-import 'package:loci/presentation/pages/auth/forget_pass_screen.dart';
-import 'package:loci/presentation/pages/auth/login_screen.dart';
-import 'package:loci/presentation/pages/auth/otp_screen.dart';
-import 'package:loci/presentation/pages/auth/reset_pass_sceen.dart';
-import 'package:loci/presentation/pages/auth/signup_screen.dart';
-import 'package:loci/presentation/pages/browse/all_review_screen.dart';
-import 'package:loci/presentation/pages/clam_business/my_business_all_reviews_screen.dart';
-import 'package:loci/presentation/pages/browse/business_profile_screen.dart';
-import 'package:loci/presentation/pages/checkin/check_in_screen.dart';
-import 'package:loci/presentation/pages/clam_business/clam_my_business.dart';
-import 'package:loci/presentation/pages/clam_business/create_ad.dart';
-import 'package:loci/presentation/pages/clam_business/manual_claim_business.dart';
-import 'package:loci/presentation/pages/clam_business/my_buisness_profile.dart';
-import 'package:loci/presentation/pages/clam_business/search_my_business.dart';
-import 'package:loci/presentation/pages/communites/all_community_screen.dart';
-import 'package:loci/presentation/pages/communites/community_member_screen.dart';
-import 'package:loci/presentation/pages/communites/community_screen.dart';
-import 'package:loci/presentation/pages/communites/create_anouncement_screen.dart';
-import 'package:loci/presentation/pages/event/event_details.dart';
-import 'package:loci/presentation/pages/explore_activity/edit_event_screen.dart';
-import 'package:loci/presentation/pages/explore_activity/edit_raffles_screen.dart';
-import 'package:loci/presentation/pages/explore_activity/edit_routes_screen.dart';
-import 'package:loci/presentation/pages/explore_activity/explore_activity_screen.dart';
-import 'package:loci/presentation/pages/recent_activity/recent_activity.dart';
-import 'package:loci/presentation/pages/explore_activity/total_checkin_screen.dart';
-import 'package:loci/presentation/pages/explore_activity/total_rsvp_screen.dart';
-import 'package:loci/presentation/pages/explore_activity/view_event_screen.dart';
-import 'package:loci/presentation/pages/explore_activity/view_raffles_screen.dart';
-import 'package:loci/presentation/pages/explore_activity/view_route_screen.dart';
-import 'package:loci/presentation/pages/explore_routes/explore_routes_screen.dart';
-import 'package:loci/presentation/pages/explore_routes/route_details_screen.dart';
-import 'package:loci/presentation/pages/message/chat_list_screen.dart';
-import 'package:loci/presentation/pages/message/message_screen.dart';
-import 'package:loci/presentation/pages/my_qr_code/my_qr_code_screen.dart';
-import 'package:loci/presentation/pages/network/connection_screen.dart';
-import 'package:loci/presentation/pages/network/meetings/meeting_invitation_screen.dart';
-import 'package:loci/presentation/pages/network/meetings/metting_screen.dart';
-import 'package:loci/presentation/pages/network/referrals/referrals_screen.dart';
-import 'package:loci/presentation/pages/network/meetings/schedule_meeting_screen.dart';
-import 'package:loci/presentation/pages/network/referrals/send_new_referrals_screen.dart';
-import 'package:loci/presentation/pages/onboarding/onboarding_screen.dart';
-import 'package:loci/presentation/pages/profile/about_screen.dart';
-import 'package:loci/presentation/pages/profile/change_password_screen.dart';
-import 'package:loci/presentation/pages/profile/delete_account_screen.dart';
-import 'package:loci/presentation/pages/profile/terms_screen.dart';
-import 'package:loci/presentation/pages/raffles/active_raffles_screen.dart';
-import 'package:loci/presentation/pages/raffles/raffles_details_screen.dart';
-import 'package:loci/presentation/pages/splash/splash_screen.dart';
-import 'package:loci/presentation/pages/subscription/subscription_screen.dart';
-import 'package:loci/presentation/widgets/common/main_bottom_nav.dart';
+import 'package:loci/features/auth/presentation/bindings/auth_binding.dart';
+import 'package:loci/features/checkin/presentation/bindings/checkin_binding.dart';
+import 'package:loci/features/main_nav/presentation/bindings/bottom_nav_binding.dart';
+import 'package:loci/features/browse_business/presentation/bindings/browse_business_binding.dart';
+import 'package:loci/features/community/presentation/bindings/community_binding.dart';
+import 'package:loci/features/main_nav/presentation/bindings/drawer_binding.dart';
+import 'package:loci/features/event/presentation/bindings/event_binding.dart';
+import 'package:loci/features/my_business/presentation/bindings/my_business_binding.dart';
+import 'package:loci/features/network/presentation/bindings/meetings_binding.dart';
+import 'package:loci/features/network/presentation/bindings/referrals_binding.dart';
+import 'package:loci/features/auth/presentation/pages/forget_pass_screen.dart';
+import 'package:loci/features/auth/presentation/pages/login_screen.dart';
+import 'package:loci/features/auth/presentation/pages/otp_screen.dart';
+import 'package:loci/features/auth/presentation/pages/reset_pass_screen.dart';
+import 'package:loci/features/auth/presentation/pages/signup_screen.dart';
+import 'package:loci/features/browse_business/presentation/pages/all_review_screen.dart';
+import 'package:loci/features/my_business/presentation/pages/my_business_all_reviews_screen.dart';
+import 'package:loci/features/browse_business/presentation/pages/business_profile_screen.dart';
+import 'package:loci/features/checkin/presentation/pages/check_in_screen.dart';
+import 'package:loci/features/my_business/presentation/pages/claim_my_business_screen.dart';
+import 'package:loci/features/my_business/presentation/pages/create_ad_screen.dart';
+import 'package:loci/features/my_business/presentation/pages/manual_claim_business_screen.dart';
+import 'package:loci/features/my_business/presentation/pages/my_business_profile_screen.dart';
+import 'package:loci/features/my_business/presentation/pages/search_my_business_screen.dart';
+import 'package:loci/features/community/presentation/pages/all_community_screen.dart';
+import 'package:loci/features/community/presentation/pages/community_member_screen.dart';
+import 'package:loci/features/community/presentation/pages/community_screen.dart';
+import 'package:loci/features/community/presentation/pages/create_announcement_screen.dart';
+import 'package:loci/features/event/presentation/pages/event_details_screen.dart';
+import 'package:loci/features/explore_activity/presentation/pages/edit_event_screen.dart';
+import 'package:loci/features/explore_activity/presentation/pages/edit_raffles_screen.dart';
+import 'package:loci/features/explore_activity/presentation/pages/edit_routes_screen.dart';
+import 'package:loci/features/explore_activity/presentation/pages/explore_activity_screen.dart';
+import 'package:loci/features/recent_activity/presentation/pages/recent_activity_screen.dart';
+import 'package:loci/features/explore_activity/presentation/pages/total_checkin_screen.dart';
+import 'package:loci/features/explore_activity/presentation/pages/total_rsvp_screen.dart';
+import 'package:loci/features/explore_activity/presentation/pages/view_event_screen.dart';
+import 'package:loci/features/explore_activity/presentation/pages/view_raffles_screen.dart';
+import 'package:loci/features/explore_activity/presentation/pages/view_route_screen.dart';
+import 'package:loci/features/routes/presentation/pages/explore_routes_screen.dart';
+import 'package:loci/features/routes/presentation/pages/route_details_screen.dart';
+import 'package:loci/features/chat/presentation/pages/chat_list_screen.dart';
+import 'package:loci/features/chat/presentation/pages/message_screen.dart';
+import 'package:loci/features/qr_code/presentation/pages/my_qr_code_screen.dart';
+import 'package:loci/features/network/presentation/pages/connection_screen.dart';
+import 'package:loci/features/network/presentation/pages/meetings/meeting_invitation_screen.dart';
+import 'package:loci/features/network/presentation/pages/meetings/meeting_screen.dart';
+import 'package:loci/features/network/presentation/pages/referrals/referrals_screen.dart';
+import 'package:loci/features/network/presentation/pages/meetings/schedule_meeting_screen.dart';
+import 'package:loci/features/network/presentation/pages/referrals/send_new_referrals_screen.dart';
+import 'package:loci/features/onboarding/presentation/pages/onboarding_screen.dart';
+import 'package:loci/features/profile/presentation/pages/about_screen.dart';
+import 'package:loci/features/profile/presentation/pages/change_password_screen.dart';
+import 'package:loci/features/profile/presentation/pages/delete_account_screen.dart';
+import 'package:loci/features/profile/presentation/pages/terms_screen.dart';
+import 'package:loci/features/raffles/presentation/pages/active_raffles_screen.dart';
+import 'package:loci/features/raffles/presentation/pages/raffles_details_screen.dart';
+import 'package:loci/features/splash/presentation/pages/splash_screen.dart';
+import 'package:loci/features/subscription/presentation/pages/subscription_screen.dart';
+import 'package:loci/features/subscription/presentation/pages/my_subscription_screen.dart';
+import 'package:loci/features/subscription/presentation/bindings/my_subscription_binding.dart';
+import 'package:loci/features/main_nav/presentation/pages/main_bottom_nav_screen.dart';
 import 'package:loci/routes/app_routes.dart';
 
-import '../presentation/bindings/explore_activity_bindings.dart';
-import '../presentation/pages/browse/browse_businesses.dart';
-import '../presentation/pages/explore_activity/creat_activity_screen.dart';
-import '../presentation/pages/notification/notification_screen.dart';
-import '../presentation/pages/profile/settings_screen.dart';
+import 'package:loci/features/explore_activity/presentation/bindings/explore_activity_binding.dart';
+import 'package:loci/features/browse_business/presentation/pages/browse_businesses_screen.dart';
+import 'package:loci/features/explore_activity/presentation/pages/create_activity_screen.dart';
+import 'package:loci/features/notification/presentation/pages/notification_screen.dart';
+import 'package:loci/features/profile/presentation/pages/settings_screen.dart';
 
 abstract class AppPages {
   static const String initialRoutes = AppRoutes.splash;
@@ -90,21 +93,41 @@ abstract class AppPages {
       page: () => ForgetPassScreen(),
       binding: AuthBinding(),
     ),
-    GetPage(name: AppRoutes.otp, page: () => OtpScreen(),binding: AuthBinding()),
-    GetPage(name: AppRoutes.passReset, page: () => ResetPassScreen(),binding: AuthBinding()),
+    GetPage(
+      name: AppRoutes.otp,
+      page: () => OtpScreen(),
+      binding: AuthBinding(),
+    ),
+    GetPage(
+      name: AppRoutes.passReset,
+      page: () => ResetPassScreen(),
+      binding: AuthBinding(),
+    ),
 
     /// ==========================Bottom Nav=============================
-    GetPage(name: AppRoutes.bottomNav, page: () => MainBottomNav(),binding: BottomNavBinding()),
+    GetPage(
+      name: AppRoutes.bottomNav,
+      page: () => MainBottomNav(),
+      binding: BottomNavBinding(),
+    ),
 
     // ----- event details
-    GetPage(name: AppRoutes.eventDetails, page: () => EventDetails(),binding: EventBindings()),
+    GetPage(
+      name: AppRoutes.eventDetails,
+      page: () => EventDetails(),
+      binding: EventBindings(),
+    ),
 
     // ----- browse business
-    GetPage(name: AppRoutes.browseBusiness, page: () => BrowseBusinesses(),binding: BrowseBusinessBindings()),
+    GetPage(
+      name: AppRoutes.browseBusiness,
+      page: () => BrowseBusinesses(),
+      binding: BrowseBusinessBindings(),
+    ),
     GetPage(
       name: AppRoutes.businessProfile,
       page: () => BusinessProfileScreen(),
-      binding: BrowseBusinessBindings()
+      binding: BrowseBusinessBindings(),
     ),
 
     GetPage(
@@ -114,10 +137,26 @@ abstract class AppPages {
     ),
 
     // ----- Network
-    GetPage(name: AppRoutes.referral, page: () => ReferralsScreen(),binding: ReferralsBindings()),
-    GetPage(name: AppRoutes.meeting, page: () => MeetingScreen(),binding: MeetingsBindings()),
-    GetPage(name: AppRoutes.connection, page: () => ConnectionScreen(),binding: BottomNavBinding()),
-    GetPage(name: AppRoutes.sendReferral, page: () => SendNewReferralsScreen(),binding: ReferralsBindings()),
+    GetPage(
+      name: AppRoutes.referral,
+      page: () => ReferralsScreen(),
+      binding: ReferralsBindings(),
+    ),
+    GetPage(
+      name: AppRoutes.meeting,
+      page: () => MeetingScreen(),
+      binding: MeetingsBindings(),
+    ),
+    GetPage(
+      name: AppRoutes.connection,
+      page: () => ConnectionScreen(),
+      binding: BottomNavBinding(),
+    ),
+    GetPage(
+      name: AppRoutes.sendReferral,
+      page: () => SendNewReferralsScreen(),
+      binding: ReferralsBindings(),
+    ),
     GetPage(
       name: AppRoutes.scheduleMeeting,
       page: () => ScheduleMeetingScreen(),
@@ -130,23 +169,57 @@ abstract class AppPages {
     ),
 
     // ----- CheckIn
-    GetPage(name: AppRoutes.checkIn, page: () => CheckInScreen(),binding: BottomNavBinding()),
+    GetPage(
+      name: AppRoutes.checkIn,
+      page: () => CheckInScreen(),
+      binding: CheckinBinding(),
+    ),
     //----myQrcode
-    GetPage(name: AppRoutes.myQrCode, page: ()=>MyQrcodeScreen(),binding: DrawerBindings()),
+    GetPage(
+      name: AppRoutes.myQrCode,
+      page: () => MyQrcodeScreen(),
+      binding: DrawerBindings(),
+    ),
 
     //--explore routes
-    GetPage(name: AppRoutes.exploreRoutes, page: () => ExploreRoutesPage(),binding: BottomNavBinding()),
-    GetPage(name: AppRoutes.routeDetails, page: () => RouteDetailsScreen(),binding: BottomNavBinding()),
+    GetPage(
+      name: AppRoutes.exploreRoutes,
+      page: () => ExploreRoutesPage(),
+      binding: BottomNavBinding(),
+    ),
+    GetPage(
+      name: AppRoutes.routeDetails,
+      page: () => RouteDetailsScreen(),
+      binding: BottomNavBinding(),
+    ),
     //--raffles
-    GetPage(name: AppRoutes.activeRaffles, page: () => ActiveRafflesPage(),binding: BottomNavBinding()),
-    GetPage(name: AppRoutes.rafflesDetails, page: () => RafflesDetailsScreen(),binding: BottomNavBinding()),
-
-
+    GetPage(
+      name: AppRoutes.activeRaffles,
+      page: () => ActiveRafflesPage(),
+      binding: BottomNavBinding(),
+    ),
+    GetPage(
+      name: AppRoutes.rafflesDetails,
+      page: () => RafflesDetailsScreen(),
+      binding: BottomNavBinding(),
+    ),
 
     //---clam my business
-    GetPage(name: AppRoutes.searchBusiness, page: () => SearchMyBusiness(),binding: MyBusinessBindings()),
-    GetPage(name: AppRoutes.clamBusinessProfile, page: () => ClamMyBusiness(),binding: MyBusinessBindings()),
-    GetPage(name: AppRoutes.myBusinessProfile, page: () => MyBusinessProfile(),binding: MyBusinessBindings()),
+    GetPage(
+      name: AppRoutes.searchBusiness,
+      page: () => SearchMyBusiness(),
+      binding: MyBusinessBindings(),
+    ),
+    GetPage(
+      name: AppRoutes.clamBusinessProfile,
+      page: () => ClamMyBusiness(),
+      binding: MyBusinessBindings(),
+    ),
+    GetPage(
+      name: AppRoutes.myBusinessProfile,
+      page: () => MyBusinessProfile(),
+      binding: MyBusinessBindings(),
+    ),
     GetPage(
       name: AppRoutes.myBusinessAllReviews,
       page: () => const MyBusinessAllReviewsScreen(),
@@ -164,45 +237,75 @@ abstract class AppPages {
       page: () => ExploreActivityScreen(),
       binding: ExploreActivityBindings(),
     ),
-    GetPage(name: AppRoutes.createActivity, page: () => CreateActivityScreen(),binding: ExploreActivityBindings()),
-    GetPage(name: AppRoutes.editEvent, page: () => EditEventScreen(),binding: ExploreActivityBindings()),
-    GetPage(name: AppRoutes.editRaffles, page: () => EditRafflesScreen(),binding: ExploreActivityBindings()),
-    GetPage(name: AppRoutes.editRoutes, page: () => EditRoutesScreen(),binding: ExploreActivityBindings()),
+    GetPage(
+      name: AppRoutes.createActivity,
+      page: () => CreateActivityScreen(),
+      binding: ExploreActivityBindings(),
+    ),
+    GetPage(
+      name: AppRoutes.editEvent,
+      page: () => EditEventScreen(),
+      binding: ExploreActivityBindings(),
+    ),
+    GetPage(
+      name: AppRoutes.editRaffles,
+      page: () => EditRafflesScreen(),
+      binding: ExploreActivityBindings(),
+    ),
+    GetPage(
+      name: AppRoutes.editRoutes,
+      page: () => EditRoutesScreen(),
+      binding: ExploreActivityBindings(),
+    ),
 
-    GetPage(name: AppRoutes.viewEvent, page: () => ViewEventScreen(),binding: ExploreActivityBindings()),
-    GetPage(name: AppRoutes.viewRoutes, page: () => ViewRouteScreen(),binding: ExploreActivityBindings()),
-    GetPage(name: AppRoutes.viewRaffles, page: () => ViewRafflesScreen(),binding: ExploreActivityBindings()),
+    GetPage(
+      name: AppRoutes.viewEvent,
+      page: () => ViewEventScreen(),
+      binding: ExploreActivityBindings(),
+    ),
+    GetPage(
+      name: AppRoutes.viewRoutes,
+      page: () => ViewRouteScreen(),
+      binding: ExploreActivityBindings(),
+    ),
+    GetPage(
+      name: AppRoutes.viewRaffles,
+      page: () => ViewRafflesScreen(),
+      binding: ExploreActivityBindings(),
+    ),
 
     GetPage(name: AppRoutes.viewTotalCheckIn, page: () => TotalCheckInScreen()),
     GetPage(name: AppRoutes.viewTotalRSVP, page: () => TotalRsvpScreen()),
 
     //---create activity
-    GetPage(name: AppRoutes.recentActivity, page: () => RecentActivity(),binding: DrawerBindings()),
+    GetPage(
+      name: AppRoutes.recentActivity,
+      page: () => RecentActivity(),
+      binding: DrawerBindings(),
+    ),
 
     //---community
     GetPage(
       name: AppRoutes.communityMemberScreen,
       page: () => CommunityMemberScreen(),
-      binding: CommunityBinding()
+      binding: CommunityBinding(),
     ),
     GetPage(
       name: AppRoutes.createAnnouncement,
       page: () => CreateAnnouncementScreen(),
-      binding: CommunityBinding()
+      binding: CommunityBinding(),
     ),
 
     GetPage(
       name: AppRoutes.communityScreen,
       page: () => CommunityScreen(),
-      binding:CommunityBinding()
+      binding: CommunityBinding(),
     ),
-
 
     GetPage(
       name: AppRoutes.allCommunity,
       page: () => AllCommunityScreen(),
-      binding:CommunityBinding()
-
+      binding: CommunityBinding(),
     ),
 
     //----profile
@@ -215,8 +318,21 @@ abstract class AppPages {
     //appbar screen
     GetPage(name: AppRoutes.chatList, page: () => ChatListScreen()),
     GetPage(name: AppRoutes.message, page: () => MessageScreen()),
-    GetPage(name: AppRoutes.notification, page: () => NotificationScreen(),binding: BottomNavBinding()),
+    GetPage(
+      name: AppRoutes.notification,
+      page: () => NotificationScreen(),
+      binding: BottomNavBinding(),
+    ),
 
-    GetPage(name: AppRoutes.subscription, page: () => SubscriptionScreen(),binding: DrawerBindings()),
+    GetPage(
+      name: AppRoutes.subscription,
+      page: () => SubscriptionScreen(),
+      binding: DrawerBindings(),
+    ),
+    GetPage(
+      name: AppRoutes.mySubscription,
+      page: () => const MySubscriptionScreen(),
+      binding: MySubscriptionBinding(),
+    ),
   ];
 }
