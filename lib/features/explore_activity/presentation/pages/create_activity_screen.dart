@@ -1,0 +1,1045 @@
+import 'dart:convert';
+import 'dart:io';
+import 'package:file_picker/file_picker.dart';
+import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:get/get_core/src/get_main.dart';
+import 'package:get/get_instance/src/extension_instance.dart';
+import 'package:loci/core/constants/app_text_style.dart';
+import 'package:loci/core/constants/app_url.dart';
+import 'package:loci/core/theme/theme_extention.dart';
+import 'package:loci/core/utils/acitvity_validator.dart';
+import 'package:loci/features/explore_activity/data/models/task_model.dart';
+import 'package:loci/features/explore_activity/presentation/controllers/task_controller.dart';
+import 'package:loci/features/explore_activity/presentation/controllers/create_activity_controller.dart';
+import 'package:loci/features/my_business/presentation/controllers/get_my_business_list_controller.dart';
+import 'package:loci/features/my_business/presentation/widgets/my_business.dart';
+import 'package:loci/shared/widgets/custom_appbar.dart';
+import 'package:loci/shared/widgets/custom_dropdown.dart';
+import 'package:loci/shared/widgets/custom_imagepicker.dart';
+import 'package:loci/shared/widgets/task_card.dart';
+import 'package:loci/core/enums/routeType.dart';
+import 'package:loci/core/enums/activity_type.dart';
+import 'package:loci/core/utils/date_parser.dart';
+import 'package:loci/core/utils/show_snackbar.dart';
+import 'package:loci/core/utils/time_parser.dart';
+import '../widgets/coupon_upload_card.dart';
+import 'package:loci/shared/widgets/custom_button.dart';
+import 'package:loci/shared/widgets/custom_text_field.dart';
+
+class CreateActivityScreen extends StatefulWidget {
+  const CreateActivityScreen({super.key});
+
+  @override
+  State<CreateActivityScreen> createState() => _CreateActivityScreenState();
+}
+
+class _CreateActivityScreenState extends State<CreateActivityScreen> {
+  final TextEditingController dateTEController = TextEditingController();
+  final TextEditingController timeTEController = TextEditingController();
+  final TextEditingController titleController = TextEditingController();
+  final TextEditingController detailsController = TextEditingController();
+  final TextEditingController personController = TextEditingController();
+  final TextEditingController locationController = TextEditingController();
+  final TextEditingController urlController = TextEditingController();
+  final TextEditingController maxSupplyController = TextEditingController();
+  final TextEditingController raffleDateController = TextEditingController();
+  final TextEditingController couponTitleController = TextEditingController();
+
+  //---get x controller
+  final createActivityController = Get.find<CreateActivityController>();
+  final taskController = Get.find<TaskController>();
+
+  final _formKey = GlobalKey<FormState>();
+
+  // EVENT
+  final eventDate = Rxn<DateTime>();
+  final eventTime = Rxn<TimeOfDay>();
+
+  // ROUTE
+  final routeOpeningTime = Rxn<TimeOfDay>();
+
+  // RAFFLE (range)
+  final raffleRange = Rxn<DateTimeRange>();
+
+  final bannerImage = Rxn<File>();
+  final rafflePrizeImage = Rxn<File>();
+
+  final tasks = <TaskModel>[].obs;
+
+  final selectedCategory = ActivityType.event.obs;
+  final selectedRouteCondition = Rxn<RouteType>();
+  final isPublic = false.obs;
+
+  late final String businessId;
+  late final String businessName;
+
+  List<Map<String, dynamic>> tasksPayload = [];
+
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+
+    final args = Get.arguments as Map<String, dynamic>?;
+
+    businessId = args?["businessId"] ?? "";
+    businessName = args?["businessName"] ?? "";
+  }
+
+  @override
+  void dispose() {
+    dateTEController.dispose();
+    timeTEController.dispose();
+    titleController.dispose();
+    detailsController.dispose();
+    personController.dispose();
+    locationController.dispose();
+    raffleDateController.dispose();
+    urlController.dispose();
+    maxSupplyController.dispose();
+    couponTitleController.dispose();
+    super.dispose();
+  }
+
+  //-----------------date picker-----------
+  void showCalendar() async {
+    DateTime? pickedDate = await showDatePicker(
+      context: context,
+      firstDate: DateTime.now(),
+      initialDate: DateTime.now(),
+      lastDate: DateTime(2049),
+    );
+
+    if (pickedDate == null) return;
+
+    if (selectedCategory.value == ActivityType.event) {
+      eventDate.value = pickedDate;
+      dateTEController.text = DateParserHelper.toFriendlyDate(pickedDate);
+    }
+
+    if (selectedCategory.value == ActivityType.raffles) {}
+  }
+
+  //--------------------date range ---------------
+  void pickRaffleRange() async {
+    final picked = await showDateRangePicker(
+      context: context,
+      firstDate: DateTime.now(),
+      lastDate: DateTime(2049),
+    );
+
+    if (picked == null) return;
+
+    raffleRange.value = picked;
+
+    raffleDateController.text =
+        "${DateParserHelper.shortDate(picked.start)} → "
+        "${DateParserHelper.shortDate(picked.end)}";
+  }
+
+  //------------time picker-------------
+  void showTime() async {
+    TimeOfDay? pickedTime = await showTimePicker(
+      context: context,
+      initialTime: TimeOfDay.now(),
+      builder: (context, child) {
+        return MediaQuery(
+          data: MediaQuery.of(context).copyWith(alwaysUse24HourFormat: false),
+          child: child!,
+        );
+      },
+    );
+
+    if (pickedTime == null) return;
+
+    if (selectedCategory.value == ActivityType.event) {
+      eventTime.value = pickedTime;
+    }
+
+    if (selectedCategory.value == ActivityType.routes) {
+      routeOpeningTime.value = pickedTime;
+    }
+
+    timeTEController.text = pickedTime.format(context);
+  }
+
+  //--------------pick file------------------------
+
+  Future<void> _pickCoupon() async {
+    final result = await FilePicker.platform.pickFiles(
+      type: FileType.custom,
+      allowedExtensions: ['jpg', 'jpeg', 'png', 'pdf'],
+    );
+
+    if (result == null) return;
+
+    final path = result.files.single.path;
+    if (path == null) return;
+
+    rafflePrizeImage.value = File(path);
+  }
+
+  //------task add method---------------
+  void _addTask(TaskModel item) {
+    // 1. Check if the task ID already exists in your main 'tasks' list
+    final bool isDuplicate = tasks.any((element) => element.id == item.id);
+
+    if (!isDuplicate) {
+      tasks.add(item);
+      Navigator.pop(context); // Closes the bottom sheet
+    } else {
+      SnackbarService.warning("Task already added");
+    }
+  }
+
+  void _removeTask(int index) {
+    tasks.removeAt(index);
+  }
+
+  // clear data when do switch category
+  void _clearCategoryData() {
+    dateTEController.clear();
+    timeTEController.clear();
+    titleController.clear();
+    detailsController.clear();
+    personController.clear();
+    locationController.clear();
+    urlController.clear();
+    maxSupplyController.clear();
+    raffleDateController.clear();
+
+    bannerImage.value = null;
+    rafflePrizeImage.value = null;
+
+    tasks.clear();
+
+    selectedRouteCondition.value = null;
+    isPublic.value = false;
+
+    // reset dates/times
+    eventDate.value = null;
+    eventTime.value = null;
+    routeOpeningTime.value = null;
+    raffleRange.value = null;
+  }
+
+  //------------acitivity create handler--------------
+
+  void _publishHandler() async {
+    final error = ActivityValidator.validateAll(
+      formKey: _formKey,
+      bannerPath: bannerImage.value?.path,
+      category: selectedCategory.value,
+
+      // EVENT
+      eventDate: eventDate.value,
+      eventTime: eventTime.value,
+
+      // ROUTE
+      routeOpeningTime: routeOpeningTime.value,
+      routeType: selectedRouteCondition.value,
+
+      // RAFFLE
+      raffleRange: raffleRange.value,
+
+      hasCoupon: rafflePrizeImage.value != null,
+      hasTasks: tasks.isNotEmpty,
+    );
+
+    //----show the error  ---------------
+    if (error != null) {
+      if (error != "FORM_INVALID") {
+        SnackbarService.warning(error);
+      }
+      return;
+    }
+
+    /// =========================
+    /// BUILD BODY (CLEAN & SAFE)
+    /// =========================
+    final Map<String, String> body = {
+      "activityType": selectedCategory.value.toJson,
+      "title": titleController.text.trim(),
+      "details": detailsController.text.trim(),
+      "isPublic": isPublic.value.toString(),
+    };
+
+    if (selectedCategory.value == ActivityType.raffles) {
+      body["sponsor"] = businessId;
+    } else {
+      body["organizerBusiness"] = businessId;
+    }
+
+    /// EVENT payload
+    if (selectedCategory.value == ActivityType.event) {
+      body.addAll({
+        "eventDate": combineToUtcIso(eventDate.value!, eventTime.value!),
+        "eventTime": eventTime.value!.format(context),
+        "maxParticipants": personController.text.trim(),
+        "location": locationController.text.trim(),
+        "url": urlController.text.trim(),
+      });
+    }
+
+    /// ROUTE payload
+    if (selectedCategory.value == ActivityType.routes) {
+      body.addAll({
+        "openingTime": routeOpeningTime.value!.format(context),
+        "availabilityType": selectedRouteCondition.value?.apiValue ?? '',
+        "location": locationController.text.trim(),
+        "url": urlController.text.trim(),
+      });
+    }
+
+    /// RAFFLE payload
+    /// RAFFLE payload
+    if (selectedCategory.value == ActivityType.raffles) {
+      // Build task payload exactly as backend expects
+      List<Map<String, dynamic>> tasksPayload = [];
+
+      for (int i = 0; i < tasks.length; i++) {
+        bool isRoute = tasks[i].activityType.toLowerCase().contains("route");
+
+        tasksPayload.add({
+          isRoute ? "routeActivity" : "eventActivity": tasks[i].id,
+          "order": i + 1,
+        });
+      }
+
+      body.addAll({
+        "startDate": raffleRange.value!.start.toUtc().toIso8601String(),
+        "endDate": raffleRange.value!.end.toUtc().toIso8601String(),
+        "maxSupply": maxSupplyController.text.trim(),
+        "raffleBundleName": couponTitleController.text.trim(),
+        "tasks": jsonEncode(tasksPayload),
+      });
+    }
+
+    /// =========================
+    /// API CALL
+    /// =========================
+
+    final String url = selectedCategory.value == ActivityType.event
+        ? AppUrl.createEvent
+        : selectedCategory.value == ActivityType.routes
+        ? AppUrl.createRoute
+        : AppUrl.raffles;
+
+    final success = await createActivityController.createActivity(
+      url: url,
+      body: body,
+      files: {
+        "banner": bannerImage.value!,
+        if (rafflePrizeImage.value != null)
+          "rafflePrizeImage": rafflePrizeImage.value!,
+      },
+    );
+
+    if (success) {
+      Get.back();
+      SnackbarService.success(createActivityController.message.value);
+    } else {
+      SnackbarService.error(createActivityController.message.value);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: context.colorScheme.surface,
+      appBar: const CustomAppbar(title: "Create Activity"),
+      body: SingleChildScrollView(
+        child: Form(
+          key: _formKey,
+          child: Padding(
+            padding: const EdgeInsets.all(12),
+            child: Column(
+              children: [
+                Obx(() => _bannerImagePicker()),
+                const SizedBox(height: 16),
+                Obx(() => _topFields()),
+                Obx(() => _middleField()),
+                Obx(() => _bottomFields()),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _bannerImagePicker() {
+    final colorScheme = context.colorScheme;
+    return CustomImagePicker(
+      backgroundColor: context.colorScheme.surfaceContainerHigh,
+      selectedImage: bannerImage.value,
+      height: 200,
+      onImageSelected: (file) => bannerImage.value = file,
+      placeholder: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.cloud_upload_outlined,
+              color: colorScheme.onSurface,
+              size: 30,
+            ),
+            Text(
+              "Browse image",
+              style: AppTextStyle.textMd(
+                color: colorScheme.onSurface,
+                weight: FontWeight.w600,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _topFields() {
+    final colorScheme = context.colorScheme;
+    return Column(
+      children: [
+        CustomDropdown<ActivityType>(
+          value: selectedCategory.value,
+          hintText: "Select Category",
+          dropdownColor: colorScheme.surfaceContainerHigh,
+          borderColor: colorScheme.outline,
+          hintColor: colorScheme.onSurfaceVariant,
+          textColor: colorScheme.onSurface,
+          textFontSize: 14,
+          hintFontSize: 14,
+          items: ActivityType.values.map((type) {
+            return DropdownMenuItem<ActivityType>(
+              value: type,
+              child: Text(type.label),
+            );
+          }).toList(),
+          onChanged: (value) {
+            if (value != selectedCategory.value) {
+              _clearCategoryData();
+            }
+            selectedCategory.value = value!;
+          },
+        ),
+        const SizedBox(height: 16),
+        CustomTextField(
+          controller: titleController,
+          title: "Title",
+          hintText: "Enter title",
+          borderColor: colorScheme.outline,
+          textColor: colorScheme.onSurface,
+          validator: (value) {
+            if (value == null || value.trim().isEmpty) {
+              return "Title is required";
+            }
+            if (value.length < 3) {
+              return "Title should be at least 3 characters";
+            }
+            return null;
+          },
+        ),
+        const SizedBox(height: 16),
+        CustomTextField(
+          controller: detailsController,
+          title: "Details",
+          hintText: "Enter details",
+          maxLine: 5,
+          validator: (value) {
+            if (value == null || value.trim().isEmpty) {
+              return "Details are required";
+            }
+
+            if (value.trim().length > 200) {
+              return "Details must be under 200 characters";
+            }
+
+            return null;
+          },
+          borderColor: colorScheme.outline,
+          textColor: colorScheme.onSurface,
+        ),
+        const SizedBox(height: 16),
+      ],
+    );
+  }
+
+  Widget _middleField() {
+    switch (selectedCategory.value) {
+      case ActivityType.event:
+        return _eventFields();
+      case ActivityType.routes:
+        return _routeFields();
+      case ActivityType.raffles:
+        return _raffleFields();
+    }
+  }
+
+  Widget _eventFields() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          "Event Schedule and Seats",
+          style: AppTextStyle.textSm(weight: FontWeight.w700),
+        ),
+        const SizedBox(height: 12),
+        Row(
+          children: [
+            Expanded(
+              child: CustomTextField(
+                controller: dateTEController,
+                readOnly: true,
+                onTap: showCalendar,
+                hintText: "Select date",
+                suffixIcon: Icon(
+                  Icons.calendar_today_outlined,
+                  size: 18,
+                  color: context.colorScheme.onSurfaceVariant,
+                ),
+                borderColor: context.colorScheme.outline,
+                textColor: context.colorScheme.onSurface,
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return "required date";
+                  }
+                  return null;
+                },
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: CustomTextField(
+                controller: timeTEController,
+                readOnly: true,
+                onTap: showTime,
+                hintText: "Select time",
+                suffixIcon: Icon(
+                  Icons.access_time,
+                  size: 18,
+                  color: context.colorScheme.onSurfaceVariant,
+                ),
+                borderColor: context.colorScheme.outline,
+                textColor: context.colorScheme.onSurface,
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return "required time";
+                  }
+                  return null;
+                },
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: CustomTextField(
+                controller: personController,
+                hintText: "Person",
+                keyboardType: TextInputType.number,
+                suffixIcon: Icon(
+                  Icons.person_outline,
+                  size: 18,
+                  color: context.colorScheme.onSurfaceVariant,
+                ),
+                validator: (value) {
+                  if (value == null || value.trim().isEmpty) {
+                    return "Person is required";
+                  }
+                  return null;
+                },
+                borderColor: context.colorScheme.outline,
+                textColor: context.colorScheme.onSurface,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+      ],
+    );
+  }
+
+  Widget _routeFields() {
+    final colorScheme = context.colorScheme;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          "Route Details",
+          style: AppTextStyle.textSm(weight: FontWeight.w700),
+        ),
+        const SizedBox(height: 12),
+        Row(
+          children: [
+            Expanded(
+              child: CustomTextField(
+                controller: timeTEController,
+                readOnly: true,
+                title: "Opening",
+                onTap: showTime,
+                hintText: "Select time",
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return "Required opening time";
+                  }
+                  return null;
+                },
+                suffixIcon: Icon(
+                  Icons.access_time,
+                  size: 18,
+                  color: context.colorScheme.onSurfaceVariant,
+                ),
+                borderColor: context.colorScheme.outline,
+                textColor: context.colorScheme.onSurface,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Expanded(
+                child: CustomDropdown<RouteType>(
+                  dropdownColor: colorScheme.surfaceContainerHigh,
+                  borderColor: colorScheme.outline,
+                  hintColor: colorScheme.onSurfaceVariant,
+                  textColor: colorScheme.onSurface,
+                  textFontSize: 14,
+                  hintFontSize: 14,
+                  title: "Availability types",
+                  value: selectedRouteCondition.value,
+                  hintText: "Route type",
+
+                  items: RouteType.values.map((type) {
+                    return DropdownMenuItem<RouteType>(
+                      value: type,
+                      child: Text(type.label),
+                    );
+                  }).toList(),
+
+                  onChanged: (value) {
+                    selectedRouteCondition.value = value;
+                  },
+
+                  validator: (value) {
+                    if (value == null) {
+                      return "Required Availability type";
+                    }
+                    return null;
+                  },
+                ),
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _raffleFields() {
+    final colorScheme = context.colorScheme;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Expanded(
+              child: CustomTextField(
+                controller: raffleDateController,
+                title: "Entry Period",
+                readOnly: true,
+                onTap: pickRaffleRange,
+                hintText: "Select date range",
+                suffixIcon: Icon(
+                  Icons.calendar_today_outlined,
+                  size: 18,
+                  color: context.colorScheme.onSurfaceVariant,
+                ),
+                borderColor: context.colorScheme.outline,
+                textColor: context.colorScheme.onSurface,
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return "required date";
+                  }
+                  return null;
+                },
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: CustomTextField(
+                controller: maxSupplyController,
+                textInputAction: TextInputAction.next,
+                title: "Max Supply",
+                hintText: "Enter supply",
+                keyboardType: TextInputType.number,
+                suffixIcon: Icon(
+                  Icons.person_outline,
+                  size: 18,
+                  color: context.colorScheme.onSurfaceVariant,
+                ),
+                borderColor: context.colorScheme.outline,
+                textColor: context.colorScheme.onSurface,
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return "required supply";
+                  }
+                  return null;
+                },
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 16),
+
+        CustomTextField(
+          controller: couponTitleController,
+          title: "coupon",
+          hintText: "Enter coupon title",
+          prefixIcon: const Icon(Icons.card_giftcard),
+          borderColor: context.colorScheme.outline,
+          textColor: context.colorScheme.onSurface,
+          validator: (value) {
+            if (value == null || value.trim().isEmpty) {
+              return "Coupon title is required";
+            }
+            return null;
+          },
+        ),
+
+        const SizedBox(height: 12),
+        CouponUploadCard(
+          file: rafflePrizeImage.value,
+          onTap: _pickCoupon,
+          onDelete: () {
+            rafflePrizeImage.value = null;
+          },
+        ),
+        const SizedBox(height: 16),
+
+        Card(
+          elevation: 2,
+          margin: EdgeInsets.zero,
+          color: colorScheme.surfaceContainer,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(12.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                RichText(
+                  text: TextSpan(
+                    children: [
+                      TextSpan(
+                        text: 'Tasks required ',
+                        style: AppTextStyle.textSm(
+                          weight: FontWeight.w700,
+                          color: colorScheme.onSurface,
+                        ),
+                      ),
+                      TextSpan(
+                        text: '(Check-in):',
+                        style: AppTextStyle.textXs(
+                          weight: FontWeight.w400,
+                          color: colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 12),
+
+                if (tasks.isNotEmpty)
+                  ListView.builder(
+                    shrinkWrap: true,
+                    padding: EdgeInsets.zero,
+                    physics: const NeverScrollableScrollPhysics(),
+                    itemCount: tasks.length,
+                    itemBuilder: (context, index) {
+                      final task = tasks[index];
+                      return TaskCard(
+                        id: task.id,
+                        title: task.title,
+                        description: task.details,
+                        imageUrl: task.banner,
+                        onRemove: () => _removeTask(index),
+                      );
+                    },
+                  ),
+                const SizedBox(height: 12),
+                CustomButton(
+                  backgroundColor: colorScheme.surface,
+                  side: BorderSide(color: colorScheme.primary),
+                  onPressed: _showBottomSheet,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.add, color: colorScheme.primary, size: 22),
+                      const SizedBox(width: 8),
+                      Text(
+                        "Add requirement",
+                        style: AppTextStyle.textMd(
+                          color: colorScheme.primary,
+                          weight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _bottomFields() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (selectedCategory.value != ActivityType.raffles) ...[
+          CustomTextField(
+            controller: locationController,
+            title: "Location",
+            hintText: "Enter location",
+            prefixIcon: const Icon(Icons.location_on),
+            borderColor: context.colorScheme.outline,
+            textColor: context.colorScheme.onSurface,
+            validator: (value) {
+              if (value == null || value.trim().isEmpty) {
+                return "Location is required";
+              }
+              return null;
+            },
+          ),
+          const SizedBox(height: 16),
+
+          CustomTextField(
+            controller: urlController,
+            title: "Map Url",
+            hintText: "Enter url",
+            prefixIcon: const Icon(Icons.location_disabled),
+            borderColor: context.colorScheme.outline,
+            textColor: context.colorScheme.onSurface,
+            validator: (value) {
+              if (value == null || value.trim().isEmpty) {
+                return "Location url is required";
+              }
+              return null;
+            },
+          ),
+          const SizedBox(height: 16),
+        ],
+
+        _organizerToggle(),
+        const SizedBox(height: 10),
+
+        MyOwnBusiness(businessName: businessName),
+
+        const SizedBox(height: 10),
+        Obx(() {
+          final controller = Get.find<CreateActivityController>();
+          return CustomButton(
+            isLoading: controller.isLoading.value,
+            text: "Publish",
+            backgroundColor: context.colorScheme.primary,
+            textColor: context.colorScheme.onPrimary,
+            onPressed: _publishHandler,
+          );
+        }),
+      ],
+    );
+  }
+
+  Widget _organizerToggle() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Row(
+        children: [
+          Text(
+            "Organizer",
+            style: AppTextStyle.textMd(
+              weight: FontWeight.w700,
+              color: context.colorScheme.onSurface,
+            ),
+          ),
+          const Spacer(),
+          Text(
+            isPublic.value ? "Public" : "Private",
+            style: AppTextStyle.textSm(
+              weight: FontWeight.w700,
+              color: context.colorScheme.onSurfaceVariant,
+            ),
+          ),
+          const SizedBox(width: 8),
+          Switch(
+            value: isPublic.value,
+            activeColor: context.colorScheme.primary,
+            onChanged: (value) => isPublic.value = value,
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showBottomSheet() {
+    final colorScheme = context.colorScheme;
+
+    // Clear previous data before showing
+    taskController.reset();
+
+    showModalBottomSheet(
+      backgroundColor: colorScheme.surface,
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) {
+        return Padding(
+          padding: EdgeInsets.only(
+            left: 20,
+            right: 20,
+            top: 20,
+            bottom: MediaQuery.of(context).viewInsets.bottom + 20,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    "Add Requirement",
+                    style: AppTextStyle.textLg(
+                      weight: FontWeight.w600,
+                      color: colorScheme.onSurface,
+                    ),
+                  ),
+                  IconButton(
+                    onPressed: () => Navigator.pop(context),
+                    icon: Icon(Icons.cancel, color: colorScheme.onSurface),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 20),
+
+              // --- SEARCH FIELD ---
+              CustomTextField(
+                hintText: "Search for raffles task...",
+                borderColor: colorScheme.outline,
+                fontSize: 14,
+                textColor: colorScheme.onSurface,
+                hintTextColor: colorScheme.onSurfaceVariant,
+                suffixIcon: Icon(
+                  Icons.search,
+                  color: colorScheme.onSurfaceVariant,
+                ),
+                // Use onChanged for real-time searching
+                onChanged: (value) {
+                  if (value.isNotEmpty) {
+                    taskController.fetchTasks(
+                      query: value,
+                      isRefresh: true,
+                      businessId: businessId,
+                    );
+                  }
+                },
+              ),
+
+              const SizedBox(height: 10),
+
+              // --- SEARCH RESULTS ---
+              ConstrainedBox(
+                constraints: BoxConstraints(
+                  maxHeight: MediaQuery.of(context).size.height * 0.4,
+                ),
+                child: Obx(() {
+                  final controller = Get.find<TaskController>();
+                  if (controller.isLoading.value) {
+                    return const Center(
+                      child: Padding(
+                        padding: EdgeInsets.all(20.0),
+                        child: CircularProgressIndicator(),
+                      ),
+                    );
+                  }
+
+                  if (controller.taskList.isEmpty) {
+                    return const Center(
+                      child: Padding(
+                        padding: EdgeInsets.all(20.0),
+                        child: Text("Search for activities to add"),
+                      ),
+                    );
+                  }
+
+                  return NotificationListener<ScrollNotification>(
+                    onNotification: (ScrollNotification scrollNotify) {
+                      if (scrollNotify.metrics.pixels >=
+                          scrollNotify.metrics.maxScrollExtent - 200) {
+                        if (!controller.isPaginationLoading.value &&
+                            controller.hasMore.value) {
+                          controller.loadMoreTasks(businessId: businessId);
+                        }
+                      }
+
+                      return false;
+                    },
+
+                    child: ListView.builder(
+                      shrinkWrap: true,
+                      itemCount: controller.taskList.length + 1,
+                      itemBuilder: (context, index) {
+                        //-------pagination loader on last index-------------
+
+                        if (index == controller.taskList.length) {
+                          //----loader
+                          if (controller.isPaginationLoading.value) {
+                            return Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 16),
+                              child: Center(
+                                child: SizedBox(
+                                  width: 20,
+                                  height: 20,
+                                  child: CircularProgressIndicator(),
+                                ),
+                              ),
+                            );
+                          }
+
+                          //--if  no more data
+                          if (!controller.hasMore.value) {
+                            return const Padding(
+                              padding: EdgeInsets.symmetric(vertical: 16),
+                              child: Center(child: Text("No more activity")),
+                            );
+                          }
+
+                          return const SizedBox.shrink(); // nothing to show
+                        }
+
+                        final item = controller.taskList[index];
+
+                        return ListTile(
+                          title: Text(item.title),
+                          subtitle: Text(item.activityType),
+                          trailing: Icon(
+                            Icons.add_circle,
+                            color: colorScheme.primary,
+                          ),
+                          onTap: () => _addTask(item),
+                        );
+                      },
+                    ),
+                  );
+                }),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+}

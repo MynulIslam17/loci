@@ -122,6 +122,7 @@ static String   addReviews(String businessId)=>"$baseUrl/reviews/$businessId";
 
   static const String  community="$baseUrl/communities/me";
   static String  singleCommunity(String communityId)=>"$baseUrl/communities/$communityId";
+  static String  communityQr(String communityId)=>"$baseUrl/communities/$communityId/qr";
   static const String  joinCommunity="$baseUrl/communities/join";
   static const String  announcementList="$baseUrl/community-announcements";
 

@@ -1,0 +1,110 @@
+import 'dart:async';
+
+import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:loci/shared/models/pagination_model.dart';
+import 'package:loci/features/network/data/models/referral/referral_response_model.dart';
+import 'package:loci/features/network/domain/services/network_service.dart';
+
+class ReceivedReferralsController extends GetxController {
+  ReceivedReferralsController(this._service);
+
+  final NetworkService _service;
+
+  final RxBool _isLoading = false.obs;
+  final RxBool _isLoadingMore = false.obs;
+  final Rxn<String> _errorMessage = Rxn<String>();
+
+  final RxList<ReferralModel> _referrals = <ReferralModel>[].obs;
+  final Rxn<PaginationMeta> _meta = Rxn<PaginationMeta>();
+
+  bool get isLoading => _isLoading.value;
+  bool get isLoadingMore => _isLoadingMore.value;
+  String? get errorMessage => _errorMessage.value;
+  List<ReferralModel> get referrals => _referrals;
+  PaginationMeta? get meta => _meta.value;
+
+  int _currentPage = 1;
+  static const int _limit = 10;
+  String _searchTerm = '';
+  Timer? _debounce;
+
+  final ScrollController scrollController = ScrollController();
+
+  bool get hasNextPage => meta?.hasNextPage ?? false;
+  String get searchTerm => _searchTerm;
+
+  @override
+  void onInit() {
+    super.onInit();
+    fetchReceivedReferrals();
+    scrollController.addListener(_onScroll);
+  }
+
+  @override
+  void onClose() {
+    _debounce?.cancel();
+    scrollController.dispose();
+    super.onClose();
+  }
+
+  void _onScroll() {
+    final pos = scrollController.position;
+    if (pos.pixels >= pos.maxScrollExtent - 200 &&
+        !isLoadingMore &&
+        hasNextPage) {
+      loadMore();
+    }
+  }
+
+  void onSearchChanged(String query) {
+    _debounce?.cancel();
+    _debounce = Timer(const Duration(milliseconds: 400), () {
+      _searchTerm = query.trim();
+      fetchReceivedReferrals();
+    });
+  }
+
+  void clearSearch() {
+    _debounce?.cancel();
+    _searchTerm = '';
+    fetchReceivedReferrals();
+  }
+
+  Future<void> fetchReceivedReferrals() async {
+    _isLoading.value = true;
+    _errorMessage.value = null;
+    _currentPage = 1;
+    _referrals.clear();
+
+    await _loadPage(_currentPage);
+
+    _isLoading.value = false;
+  }
+
+  Future<void> loadMore() async {
+    if (isLoadingMore || !hasNextPage) return;
+
+    _isLoadingMore.value = true;
+    _currentPage++;
+
+    await _loadPage(_currentPage);
+
+    _isLoadingMore.value = false;
+  }
+
+  Future<void> _loadPage(int page) async {
+    try {
+      final result = await _service.getReceivedReferrals(
+        page: page,
+        limit: _limit,
+        searchTerm: _searchTerm,
+      );
+      _referrals.addAll(result.data);
+      _meta.value = result.meta;
+    } catch (e) {
+      _errorMessage.value = e.toString().replaceFirst('Exception: ', '');
+      if (page > 1) _currentPage--;
+    }
+  }
+}
