@@ -12,9 +12,7 @@ import 'package:loci/presentation/widgets/custom_appbar.dart';
 import 'package:loci/routes/app_routes.dart';
 
 import '../../../core/constants/app_text_style.dart';
-import '../../controllers/event/event_list_controller.dart';
 import '../../controllers/explore_acitivity/business_route_list_controller.dart';
-import '../../controllers/routes/route_list_controller.dart';
 import '../../widgets/custom_button.dart';
 import '../../widgets/custom_text_field.dart';
 

@@ -119,8 +119,6 @@ class _EventDetailsState extends State<EventDetails> {
           // --- Content state
           final event = controller.eventDetails?.eventModel;
           final business = controller.eventDetails?.organizerBusiness;
-          final lat = controller.eventDetails?.lat;
-          final lng = controller.eventDetails?.lng;
 
           return SingleChildScrollView(
             padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 12),

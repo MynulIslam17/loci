@@ -1,7 +1,6 @@
 import 'package:get/get.dart';
 import 'package:loci/core/constants/app_url.dart';
 import 'package:loci/core/network/network_caller.dart';
-import 'package:loci/core/utils/show_snackbar.dart';
 
 import '../../../data/models/busniess/my_business_list_model.dart';
 import '../auth/auth_controller.dart';

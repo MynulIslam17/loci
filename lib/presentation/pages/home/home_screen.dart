@@ -3,7 +3,6 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
 import 'package:loci/core/constants/app_text_style.dart';
 import 'package:loci/core/enums/category_enum.dart';
-import 'package:loci/core/theme/app_colors.dart';
 import 'package:loci/core/theme/theme_extention.dart';
 import 'package:loci/core/utils/show_snackbar.dart';
 import 'package:loci/data/models/busniess/browse_business_model.dart';
@@ -20,14 +19,12 @@ import 'package:loci/presentation/pages/raffles/active_raffles_screen.dart';
 import 'package:loci/presentation/widgets/app_skeleton.dart';
 import 'package:loci/presentation/widgets/empty_state.dart';
 import 'package:loci/presentation/widgets/pagination_loading.dart';
-import 'package:percent_indicator/linear_percent_indicator.dart';
 import '../../../gen/assets.gen.dart';
 import '../../../routes/app_routes.dart';
 import '../../controllers/auth/auth_controller.dart';
 import '../../controllers/home/post_question_controller.dart';
 import '../../controllers/home/question_list_controller.dart';
 import '../../controllers/nav_controller.dart';
-import '../../widgets/custom_image_container.dart';
 import '../communites/widgets/poll_bottom_sheet.dart';
 import '../communites/widgets/post_comment_section.dart';
 import '../communites/widgets/post_card.dart';
@@ -49,8 +46,6 @@ class _HomeScreenState extends State<HomeScreen> {
   final questionListController = Get.find<QuestionListController>();
   final _adListController = Get.find<AdListController>();
   final _authController = Get.find<AuthController>();
-
-  String? _expandedPostId;
 
   // --- Search bar controls ---
   final TextEditingController _postController = TextEditingController();

@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:loci/core/constants/app_text_style.dart';
 import 'package:loci/core/theme/theme_extention.dart';
 import 'package:get/get.dart';
-import 'package:loci/presentation/widgets/custom_button.dart';
 import 'package:loci/presentation/widgets/error_state.dart';
 import 'package:loci/routes/app_routes.dart';
 import '../../../core/enums/checkin_status.dart';

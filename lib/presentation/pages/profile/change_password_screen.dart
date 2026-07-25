@@ -105,11 +105,6 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
   /// HANDLE PASSWORD CHANGE
   /// -------------------------------
   void _handleChangePassword() {
-    final current = currentPassController.text.trim();
-    final newPass = newPassController.text.trim();
-    final confirm = confirmPassController.text.trim();
-
-
         if(_formKey.currentState!.validate()){
           SnackbarService.success("success");
         }else{

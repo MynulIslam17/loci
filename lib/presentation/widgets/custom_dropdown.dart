@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../../../core/constants/app_text_style.dart';
 
 class CustomDropdown<T> extends StatelessWidget {
   final String? title;

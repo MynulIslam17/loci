@@ -2,7 +2,6 @@ import 'package:get/get.dart';
 import 'package:loci/core/network/network_response.dart';
 
 import '../../../core/constants/app_url.dart';
-import '../../../core/enums/checkin_status.dart';
 import '../../../core/network/network_caller.dart';
 import '../../../data/models/routes/route_details_model.dart';
 

@@ -11,7 +11,6 @@ import '../../../gen/assets.gen.dart';
 import '../../../routes/app_routes.dart';
 import '../../controllers/auth/verify_email_controller.dart';
 import '../../widgets/custom_button.dart';
-import '../../widgets/custom_rich_text.dart';
 
 class OtpScreen extends StatefulWidget {
   const OtpScreen({super.key});

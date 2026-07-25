@@ -10,7 +10,6 @@ import 'package:loci/presentation/widgets/custom_image_container.dart';
 import 'package:loci/routes/app_routes.dart';
 
 import '../../../gen/assets.gen.dart';
-import '../../controllers/event/event_details_controller.dart';
 import '../../widgets/qrcode_maker.dart';
 import '../event/widgets/event_card.dart';
 

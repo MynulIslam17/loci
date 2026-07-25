@@ -1,5 +1,4 @@
 import 'package:loci/core/enums/acitivty_ref_type.dart';
-import 'package:loci/core/enums/activity_type.dart';
 import 'package:loci/core/enums/question_type.dart';
 
 import '../../../core/enums/announcement_type.dart';

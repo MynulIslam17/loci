@@ -17,7 +17,6 @@ class DeleteAccountScreen extends StatefulWidget {
 
 class _DeleteAccountScreenState extends State<DeleteAccountScreen> {
   final TextEditingController _passwordController = TextEditingController();
-  bool _isObscured = true;
 
   @override
   void dispose() {
