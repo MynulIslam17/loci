@@ -64,6 +64,29 @@ class SubscriptionCheckoutController extends GetxController {
         return;
       }
 
+      // 2b. Downgrade to a cheaper paid plan — deferred to period end by the
+      // backend (a Stripe Subscription Schedule), nothing charged now, so
+      // there's no PaymentSheet to show. The current plan keeps running.
+      if (checkout.scheduled) {
+        await fetchMySubscription();
+        final when = _formatDate(checkout.effectiveDate);
+        SnackbarService.success(
+          'Switching to ${checkout.pendingPlanName ?? 'the new plan'}'
+          '${when != null ? ' on $when' : ' at your next renewal'}. '
+          'Your current plan stays active until then.',
+        );
+        return;
+      }
+
+      // 2c. Upgrade applied immediately in place (existing Stripe subscription
+      // updated, not a new one) — if Stripe could already charge the prorated
+      // difference automatically, there's nothing left to confirm here.
+      if (checkout.switched && !checkout.canPresentSheet) {
+        await fetchMySubscription();
+        SnackbarService.success('Plan upgraded — enjoy your new plan!');
+        return;
+      }
+
       if (kIsWeb) {
         SnackbarService.info(
           'Subscriptions can be purchased from the Loci mobile app (iOS/Android).',
@@ -173,5 +196,16 @@ class SubscriptionCheckoutController extends GetxController {
       await service.init();
     }
     return service.isReady;
+  }
+
+  String? _formatDate(String? iso) {
+    if (iso == null || iso.isEmpty) return null;
+    final date = DateTime.tryParse(iso);
+    if (date == null) return null;
+    const months = [
+      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+    ];
+    return '${months[date.month - 1]} ${date.day}, ${date.year}';
   }
 }

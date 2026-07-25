@@ -12,6 +12,11 @@ class MySubscriptionModel {
   final String? stripePriceId;
   final String? planId;
   final String? planName;
+
+  /// Set while a downgrade is scheduled to take effect at [currentPeriodEnd]
+  /// instead of right away — null means no switch is pending.
+  final String? pendingPlanId;
+  final String? pendingPlanName;
   final String? billingType; // monthly | yearly ...
   final int amount; // minor units (cents)
   final String? currency; // usd ...
@@ -27,6 +32,8 @@ class MySubscriptionModel {
     this.stripePriceId,
     this.planId,
     this.planName,
+    this.pendingPlanId,
+    this.pendingPlanName,
     this.billingType,
     this.amount = 0,
     this.currency,
@@ -72,6 +79,8 @@ class MySubscriptionModel {
       stripePriceId: json['stripePriceId'],
       planId: json['planId']?.toString(),
       planName: json['planName']?.toString(),
+      pendingPlanId: json['pendingPlanId']?.toString(),
+      pendingPlanName: json['pendingPlanName']?.toString(),
       billingType: json['billingType']?.toString(),
       amount: json['amount'] ?? 0,
       currency: json['currency']?.toString(),
