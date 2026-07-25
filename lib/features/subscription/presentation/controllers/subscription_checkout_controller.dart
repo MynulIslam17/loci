@@ -54,9 +54,11 @@ class SubscriptionCheckoutController extends GetxController {
 
       if (checkout.isFree) {
         await fetchMySubscription();
-        if (mySubscription?.isActive == true && mySubscription?.amount == 0) {
-          SnackbarService.success('Plan activated.');
-        } else {
+        // Success shows itself: the plan card flips to "Current Plan". Only
+        // speak up when the switch didn't actually take.
+        final activated =
+            mySubscription?.isActive == true && mySubscription?.amount == 0;
+        if (!activated) {
           SnackbarService.error(
             'Could not switch to the Free plan. Please try again.',
           );
@@ -82,8 +84,8 @@ class SubscriptionCheckoutController extends GetxController {
       // updated, not a new one) — if Stripe could already charge the prorated
       // difference automatically, there's nothing left to confirm here.
       if (checkout.switched && !checkout.canPresentSheet) {
+        // Applied in place — the plan card reflects the new plan, no toast.
         await fetchMySubscription();
-        SnackbarService.success('Plan upgraded — enjoy your new plan!');
         return;
       }
 
@@ -132,9 +134,9 @@ class SubscriptionCheckoutController extends GetxController {
       }
 
       final active = await _pollForActive();
-      if (active) {
-        SnackbarService.success('Subscription active. Enjoy your plan!');
-      } else {
+      // On success the plan card flips to "Current Plan"; only surface a note
+      // when the backend hasn't caught up to the payment yet.
+      if (!active) {
         SnackbarService.info(
           'Payment received — activating shortly. We\'ll update it soon.',
         );
