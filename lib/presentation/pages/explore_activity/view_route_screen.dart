@@ -113,14 +113,14 @@ class _ViewRouteScreenState extends State<ViewRouteScreen> {
 
                 _buildInfoRow(
                   Icons.access_time,
-                  route.openingTime ?? "N/A",
+                  route.openingTime,
                   colorScheme,
                 ),
                 const SizedBox(height: 8),
 
                 _buildInfoRow(
                   Icons.speed,
-                  route.activityType ?? "N/A",
+                  route.activityType,
                   colorScheme,
                 ),
 

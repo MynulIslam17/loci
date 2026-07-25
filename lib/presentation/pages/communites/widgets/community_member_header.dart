@@ -1,8 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
-import 'package:loci/routes/app_routes.dart';
 import '../../../../core/constants/app_text_style.dart';
-import '../../../../core/theme/theme_extention.dart';
 import '../../../widgets/custom_image_container.dart';
 
 class CommunityMemberHeader extends StatelessWidget {
@@ -10,8 +7,6 @@ class CommunityMemberHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = context.colorScheme;
-
     return Column(
       children: [
         // ---- Top Image Card ----

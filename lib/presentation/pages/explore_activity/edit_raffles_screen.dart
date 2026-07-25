@@ -6,38 +6,13 @@ import 'package:loci/core/constants/app_text_style.dart';
 import 'package:loci/core/theme/theme_extention.dart';
 import 'package:loci/core/utils/show_snackbar.dart';
 import 'package:loci/data/models/raffles/raffles_details_model.dart';
-import 'package:loci/data/models/raffles/raffles_model.dart';
 import 'package:loci/presentation/controllers/explore_acitivity/business_raffle_detils_controller.dart';
 import 'package:loci/presentation/pages/explore_activity/widgets/coupon_card.dart';
 import 'package:loci/presentation/widgets/custom_appbar.dart';
 import 'package:loci/presentation/widgets/custom_imagepicker.dart';
 
-import '../../../core/theme/app_colors.dart';
-import '../../../core/utils/date_parser.dart';
-import '../../../data/models/explore_activity/raffle_update_request_model.dart';
-import '../../../data/models/task_model.dart';
-import '../../../gen/assets.gen.dart';
 import '../../controllers/explore_acitivity/raffle_edit_controller.dart';
 import '../../controllers/explore_acitivity/task_controller.dart';
-import '../../widgets/common/company_info_card.dart';
-import '../../widgets/custom_button.dart';
-import '../../widgets/custom_text_field.dart';
-import '../../widgets/task_card.dart';
-
-import 'dart:io';
-import 'package:file_picker/file_picker.dart';
-import 'package:flutter/material.dart';
-import 'package:get/get.dart';
-import 'package:loci/core/constants/app_text_style.dart';
-import 'package:loci/core/theme/theme_extention.dart';
-import 'package:loci/data/models/raffles/raffles_model.dart';
-import 'package:loci/presentation/controllers/explore_acitivity/business_raffle_detils_controller.dart';
-import 'package:loci/presentation/pages/explore_activity/widgets/coupon_card.dart';
-import 'package:loci/presentation/widgets/custom_appbar.dart';
-import 'package:loci/presentation/widgets/custom_imagepicker.dart';
-
-import '../../../core/utils/date_parser.dart';
-import '../../../data/models/raffles/raffles_details_model.dart';
 import '../../widgets/common/company_info_card.dart';
 import '../../widgets/custom_button.dart';
 import '../../widgets/custom_text_field.dart';

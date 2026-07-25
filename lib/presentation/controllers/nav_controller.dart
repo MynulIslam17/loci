@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:loci/presentation/pages/home/home_screen.dart';
 
 import '../pages/home/home navigator.dart';
 

@@ -11,9 +11,9 @@ class CommunitySkeleton {
 
     return Card(
       elevation: 1,
+      color: color,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
-
       ),
       child: Padding(
         padding: const EdgeInsets.all(12),

@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:loci/core/constants/app_text_style.dart';
 import 'package:loci/core/enums/category_enum.dart';
-import 'package:loci/core/utils/show_snackbar.dart';
 import 'package:loci/presentation/controllers/browse_business/browse_business_controller.dart';
 import 'package:loci/presentation/pages/browse/widgets/browse_business_card.dart';
 import 'package:loci/presentation/pages/browse/widgets/browse_shimmer.dart';
@@ -196,6 +195,6 @@ class _BrowseBusinessesState extends State<BrowseBusinesses> {
   }
 
   void _addToListHandler(String businessId) async {
-    bool success = await saveController.saveBusiness(businessId);
+    await saveController.saveBusiness(businessId);
   }
 }

@@ -1,7 +1,6 @@
 import 'package:get/get.dart';
 import 'package:loci/presentation/controllers/common/check_in_controller.dart';
 import 'package:loci/presentation/controllers/common/manual_checkin.dart';
-import 'package:loci/presentation/controllers/event/rsvp_controller.dart';
 import 'package:loci/presentation/controllers/home/ad_list_controller.dart';
 import 'package:loci/presentation/controllers/home/question_list_controller.dart';
 import 'package:loci/presentation/controllers/profile/profile_controller.dart';

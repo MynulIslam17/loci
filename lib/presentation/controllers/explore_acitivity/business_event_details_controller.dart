@@ -1,10 +1,8 @@
 import 'package:get/get.dart';
 import 'package:loci/core/constants/app_url.dart';
-import 'package:loci/core/enums/checkin_status.dart';
 import 'package:loci/core/network/network_caller.dart';
 import 'package:loci/core/network/network_response.dart';
 
-import '../../../core/enums/rsvp_status.dart';
 import '../../../data/models/event/event_details_model.dart';
 
 class BusinessEventDetailsController extends GetxController {

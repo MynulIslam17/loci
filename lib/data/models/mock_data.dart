@@ -1,10 +1,7 @@
 import 'package:loci/data/models/community/announcement_model.dart';
-import 'package:loci/data/models/poll.dart';
 import 'package:loci/data/models/post_model.dart';
 
 import '../../../gen/assets.gen.dart';
-
-import '../../../presentation/widgets/common/post_comment_section.dart';
 
 /// Polls
 final List<PollOption> mockPolls = [

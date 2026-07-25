@@ -8,8 +8,6 @@ import 'package:loci/core/theme/theme_extention.dart';
 import 'package:loci/presentation/widgets/custom_appbar.dart';
 import 'package:loci/routes/app_routes.dart';
 
-import '../../../core/utils/dialog_helper.dart';
-
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
 
@@ -75,12 +73,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
         separatorBuilder: (_, __) => const SizedBox(height: 12),
         itemBuilder: (context, index) {
           final item = settingsItems[index];
-
-          // Determine toggle text (On/Off)
-          String toggleText = "";
-          if (item["hasToggle"] == true) {
-            toggleText = item["isEnabled"] ? " (On)" : " (Off)";
-          }
 
           return Container(
             decoration: BoxDecoration(

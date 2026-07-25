@@ -1,9 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:intl/intl.dart';
-import 'package:loci/core/constants/app_text_style.dart';
-import 'package:loci/core/theme/theme_extention.dart';
-import 'package:loci/data/models/notification/notification_model.dart';
 import 'package:loci/presentation/controllers/notification/notification_controller.dart';
 import 'package:loci/presentation/pages/notification/widgets/notification_card.dart';
 import 'package:loci/presentation/widgets/app_skeleton.dart';

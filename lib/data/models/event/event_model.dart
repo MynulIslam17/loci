@@ -1,4 +1,3 @@
-import 'package:loci/core/utils/date_parser.dart';
 import 'package:loci/data/models/common/paginatation_model.dart';
 
 import '../../../core/enums/rsvp_status.dart';

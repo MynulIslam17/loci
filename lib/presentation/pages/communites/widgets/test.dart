@@ -4,7 +4,6 @@ import 'package:loci/core/constants/app_text_style.dart';
 import 'package:loci/core/theme/app_colors.dart';
 import 'package:loci/core/theme/theme_extention.dart';
 import 'package:loci/core/utils/time_parser.dart';
-import 'package:loci/presentation/pages/home/widgets/user_post_header.dart';
 import 'package:loci/presentation/pages/home/widgets/post_interaction_bar.dart';
 import 'package:loci/presentation/widgets/custom_image_container.dart';
 

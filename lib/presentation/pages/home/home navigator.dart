@@ -5,7 +5,6 @@ import '../../../routes/app_routes.dart';
 import '../../bindings/community_binding.dart';
 import '../communites/all_community_screen.dart';
 import '../communites/community_screen.dart';
-import '../communites/create_anouncement_screen.dart';
 import 'home_screen.dart';
 
 class HomeNavigator extends StatelessWidget {

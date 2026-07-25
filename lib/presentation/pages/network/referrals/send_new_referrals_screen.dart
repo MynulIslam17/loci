@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:loci/core/enums/network_type.dart';
 import 'package:loci/core/utils/show_snackbar.dart';
-import 'package:loci/presentation/controllers/network_dash/connection_controller.dart';
 import 'package:loci/presentation/controllers/network_dash/send_new_referrals_controller.dart';
 import 'package:loci/presentation/widgets/custom_text_field.dart';
 import 'package:loci/presentation/widgets/custom_button.dart';

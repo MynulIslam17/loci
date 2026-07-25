@@ -1,5 +1,3 @@
-import 'package:loci/data/models/poll.dart';
-
 class PostModel {
   final String id;
   final String userName;

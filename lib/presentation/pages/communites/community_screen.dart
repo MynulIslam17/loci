@@ -309,8 +309,6 @@ class _CommunityHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = context.colorScheme;
-
     return SliverToBoxAdapter(
       child: Padding(
         padding: const EdgeInsets.all(12),
