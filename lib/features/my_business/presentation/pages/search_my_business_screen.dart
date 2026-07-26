@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:loci/core/enums/category_enum.dart';
 import 'package:loci/core/theme/theme_extention.dart';
 import 'package:loci/core/utils/show_snackbar.dart';
+import 'package:loci/features/my_business/data/models/business_profile_model.dart';
 import 'package:loci/features/my_business/data/models/find_business_response.dart';
 import 'package:loci/features/my_business/presentation/controllers/find_google_business_controller.dart';
 import 'package:loci/features/my_business/presentation/widgets/business_search_result_widget.dart';
@@ -110,10 +111,18 @@ class _SearchMyBusinessState extends State<SearchMyBusiness> {
     required String businessId,
     required String businessName,
   }) async {
-    await Get.toNamed(
+    final result = await Get.toNamed(
       AppRoutes.myBusinessProfile,
-      arguments: {"businessId": businessId, "businessName": businessName},
+      arguments: {'businessId': businessId, 'businessName': businessName},
     );
+
+    if (!mounted) return;
+    if (result is! Map || result['updated'] != true) return;
+
+    final profile = result['profile'];
+    if (profile is BusinessProfileModel) {
+      myBusinessController.applyProfileSnapshot(profile);
+    }
   }
 
   @override
