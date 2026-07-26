@@ -29,8 +29,10 @@ class ToggleItem extends StatelessWidget {
           child: AnimatedDefaultTextStyle(
             duration: const Duration(milliseconds: 220),
             style: AppTextStyle.textSm(
+              // onPrimary reads clearly against the brand-coloured selected
+              // pill; unselected stays muted on the track.
               color: isSelected
-                  ? colorScheme.primary
+                  ? colorScheme.onPrimary
                   : colorScheme.onSurfaceVariant,
               weight: FontWeight.w600,
             ),

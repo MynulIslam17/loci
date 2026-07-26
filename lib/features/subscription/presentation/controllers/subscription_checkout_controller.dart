@@ -70,13 +70,8 @@ class SubscriptionCheckoutController extends GetxController {
       // backend (a Stripe Subscription Schedule), nothing charged now, so
       // there's no PaymentSheet to show. The current plan keeps running.
       if (checkout.scheduled) {
+        // The plan card shows the "Scheduled" state — no toast needed.
         await fetchMySubscription();
-        final when = _formatDate(checkout.effectiveDate);
-        SnackbarService.success(
-          'Switching to ${checkout.pendingPlanName ?? 'the new plan'}'
-          '${when != null ? ' on $when' : ' at your next renewal'}. '
-          'Your current plan stays active until then.',
-        );
         return;
       }
 
@@ -122,25 +117,18 @@ class SubscriptionCheckoutController extends GetxController {
       try {
         await Stripe.instance.presentPaymentSheet();
       } on StripeException catch (e) {
-        final msg = e.error.localizedMessage;
-        if (e.error.code == FailureCode.Canceled) {
-          SnackbarService.info(msg ?? 'Payment cancelled.');
-        } else {
+        // User dismissing the sheet is not an error — stay silent. Only a real
+        // payment failure warrants a message.
+        if (e.error.code != FailureCode.Canceled) {
           SnackbarService.error(
-            msg ?? 'Payment failed. Please try another card.',
+            e.error.localizedMessage ?? 'Payment failed. Please try another card.',
           );
         }
         return;
       }
 
-      final active = await _pollForActive();
-      // On success the plan card flips to "Current Plan"; only surface a note
-      // when the backend hasn't caught up to the payment yet.
-      if (!active) {
-        SnackbarService.info(
-          'Payment received — activating shortly. We\'ll update it soon.',
-        );
-      }
+      // Success reflects itself on the plan card once the backend catches up.
+      await _pollForActive();
     } catch (e) {
       SnackbarService.error('Something went wrong. Please try again.');
     } finally {
@@ -170,8 +158,8 @@ class SubscriptionCheckoutController extends GetxController {
     _isCancelling.value = true;
     try {
       await _service.cancelSubscription();
+      // The banner reflects the cancellation — no toast on success.
       await fetchMySubscription();
-      SnackbarService.success('Subscription cancelled.');
     } catch (e) {
       SnackbarService.error(e.toString().replaceFirst('Exception: ', ''));
     } finally {
@@ -198,16 +186,5 @@ class SubscriptionCheckoutController extends GetxController {
       await service.init();
     }
     return service.isReady;
-  }
-
-  String? _formatDate(String? iso) {
-    if (iso == null || iso.isEmpty) return null;
-    final date = DateTime.tryParse(iso);
-    if (date == null) return null;
-    const months = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
-    ];
-    return '${months[date.month - 1]} ${date.day}, ${date.year}';
   }
 }

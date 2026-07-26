@@ -44,12 +44,11 @@ class MySubscriptionController extends GetxController {
     _isCancelling.value = true;
     try {
       final updated = await _service.cancelSubscription();
+      // The screen reflects the new state directly — no success toast.
       if (updated != null && updated.cancelAtPeriodEnd) {
         _subscription.value = updated;
-        SnackbarService.success('Your plan stays active until it ends.');
       } else {
         _subscription.value = null;
-        SnackbarService.success('Subscription cancelled');
       }
     } catch (e) {
       SnackbarService.error(e.toString().replaceFirst('Exception: ', ''));
