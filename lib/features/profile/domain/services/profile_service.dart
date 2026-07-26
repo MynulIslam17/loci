@@ -43,10 +43,12 @@ class ProfileService {
   Future<String> changePassword({
     required String currentPassword,
     required String newPassword,
+    required String confirmPassword,
   }) async {
     final body = await _repository.changePassword(
       currentPassword: currentPassword,
       newPassword: newPassword,
+      confirmPassword: confirmPassword,
     );
     return body['message']?.toString() ?? 'Password changed successfully';
   }

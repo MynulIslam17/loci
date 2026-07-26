@@ -15,6 +15,7 @@ class ChangePasswordController extends GetxController {
   Future<bool> changePassword({
     required String currentPassword,
     required String newPassword,
+    required String confirmPassword,
   }) async {
     if (_isLoading.value) return false;
     _isLoading.value = true;
@@ -22,6 +23,7 @@ class ChangePasswordController extends GetxController {
       final message = await _service.changePassword(
         currentPassword: currentPassword,
         newPassword: newPassword,
+        confirmPassword: confirmPassword,
       );
       SnackbarService.success(message);
       return true;

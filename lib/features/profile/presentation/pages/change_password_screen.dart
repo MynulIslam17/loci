@@ -111,6 +111,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
     final success = await _controller.changePassword(
       currentPassword: currentPassController.text.trim(),
       newPassword: newPassController.text.trim(),
+      confirmPassword: confirmPassController.text.trim(),
     );
 
     if (success && mounted) Get.back();
