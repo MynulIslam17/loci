@@ -12,11 +12,15 @@ class PlansController extends GetxController {
   final Rxn<String> _errorMessage = Rxn<String>();
 
   final RxList<PlanModel> _plans = <PlanModel>[].obs;
-  BillingType? currentType;
+
+  // Plans cached per billing type, so switching Monthly <-> One-time reuses
+  // what was already fetched instead of hitting the network (and flashing the
+  // shimmer) on every toggle.
+  final Map<BillingType, List<PlanModel>> _cache = {};
 
   // Billing toggle + expanded card are UI state that belongs to this screen's
   // controller so there is a single source of truth (previously duplicated in
-  // the widget as local Rx values, which could drift from [currentType]).
+  // the widget as local Rx values, which could drift from the fetched type).
   final RxBool _isMonthly = true.obs;
   final RxnInt _expandedIndex = RxnInt();
 
@@ -36,14 +40,21 @@ class PlansController extends GetxController {
   }
 
   Future<void> fetchPlans(BillingType billingType) async {
-    if (currentType == billingType && _plans.isNotEmpty) return;
+    // Serve from cache instantly — no loader, no refetch on tab switch.
+    final cached = _cache[billingType];
+    if (cached != null) {
+      _errorMessage.value = null;
+      _plans.assignAll(cached);
+      return;
+    }
 
     try {
       _isLoading.value = true;
       _errorMessage.value = null;
 
-      _plans.assignAll(await _service.getPlans(billingType));
-      currentType = billingType;
+      final result = await _service.getPlans(billingType);
+      _cache[billingType] = result;
+      _plans.assignAll(result);
     } catch (e) {
       _errorMessage.value = e.toString().replaceFirst('Exception: ', '');
     } finally {
@@ -52,7 +63,7 @@ class PlansController extends GetxController {
   }
 
   Future<void> refreshPlans() async {
-    currentType = null;
+    _cache.clear();
     await fetchPlans(_selectedType);
   }
 
