@@ -88,6 +88,15 @@ class _CustomTextFieldState extends State<CustomTextField> {
   Widget build(BuildContext context) {
     final themeColors = Theme.of(context).colorScheme;
 
+    // When there's no separate [title] above the field, promote the hint to a
+    // floating label so the field stays identified while the user types
+    // (a plain hint disappears the moment you start typing).
+    final bool floatHint = widget.title == null;
+    final String? effectiveLabel =
+        widget.labelText ?? (floatHint ? widget.hintText : null);
+    final String? effectiveHint = floatHint ? null : widget.hintText;
+    final Color hintColor = widget.hintTextColor ?? themeColors.onSurfaceVariant;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
@@ -134,7 +143,7 @@ class _CustomTextFieldState extends State<CustomTextField> {
             ),
             filled: true,
             fillColor: widget.fillColor ??
-                themeColors.surfaceVariant.withOpacity(0.3),
+                themeColors.surfaceContainerHighest.withValues(alpha: 0.3),
 
             // ✅ Cleaner prefix icon spacing
             prefixIcon: widget.prefixIcon,
@@ -150,11 +159,17 @@ class _CustomTextFieldState extends State<CustomTextField> {
               minHeight: 36,
             ),
 
-            labelText: widget.labelText,
-            hintText: widget.hintText,
+            labelText: effectiveLabel,
+            hintText: effectiveHint,
+            // Resting label matches the old hint; it turns primary once it
+            // floats up on focus.
+            labelStyle: TextStyle(
+              color: hintColor,
+              fontSize: widget.fontSize ?? 14,
+            ),
+            floatingLabelStyle: TextStyle(color: themeColors.primary),
             hintStyle: TextStyle(
-              color: widget.hintTextColor ??
-                  themeColors.onSurfaceVariant,
+              color: hintColor,
               fontSize: widget.fontSize ?? 14,
             ),
 
