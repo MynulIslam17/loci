@@ -44,12 +44,16 @@ class MySubscriptionModel {
 
   bool get isPastDue => status == 'past_due';
 
-  /// Price shown exactly as the backend sends it (no unit conversion),
-  /// e.g. amount 7500 → "$7500". Empty when there's no amount.
+  /// `amount` is in cents (Stripe convention), so convert to the charged
+  /// value — e.g. 7500 → "$75", matching what Stripe bills. Empty when zero.
   String get formattedAmount {
     if (amount <= 0) return '';
     final String symbol = _currencySymbol(currency);
-    return '$symbol$amount';
+    final double value = amount / 100;
+    final String formatted = value == value.roundToDouble()
+        ? value.toStringAsFixed(0)
+        : value.toStringAsFixed(2);
+    return '$symbol$formatted';
   }
 
   static String _currencySymbol(String? currency) {
