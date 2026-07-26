@@ -1,0 +1,150 @@
+import 'dart:io';
+
+import 'package:loci/core/constants/app_url.dart';
+import 'package:loci/core/network/network_caller.dart';
+
+/// Explore Activity data layer: remote HTTP via [NetworkCaller].
+class ExploreActivityRepository {
+  final NetworkCaller _network;
+
+  ExploreActivityRepository(this._network);
+
+  Future<Map<String, dynamic>> getEvents({
+    required int page,
+    required int limit,
+    required String businessId,
+  }) async {
+    final res = await _network.getRequest(
+      url: AppUrl.eventList,
+      queryParams: {'page': page, 'limit': limit, 'businessId': businessId},
+    );
+    if (!res.isSuccess || res.body == null) {
+      throw Exception(res.errorMessage ?? 'Failed to load events');
+    }
+    return res.body!;
+  }
+
+  Future<Map<String, dynamic>> getRoutes({
+    required int page,
+    required int limit,
+    required String businessId,
+  }) async {
+    final res = await _network.getRequest(
+      url: AppUrl.routeList,
+      queryParams: {'page': page, 'limit': limit, 'businessId': businessId},
+    );
+    if (!res.isSuccess || res.body == null) {
+      throw Exception(res.errorMessage ?? 'Failed to load routes');
+    }
+    return res.body!;
+  }
+
+  Future<Map<String, dynamic>> getRaffles({
+    required int page,
+    required int limit,
+    required String businessId,
+  }) async {
+    final res = await _network.getRequest(
+      url: AppUrl.raffles,
+      queryParams: {'page': page, 'limit': limit, 'businessId': businessId},
+    );
+    if (!res.isSuccess || res.body == null) {
+      throw Exception(res.errorMessage ?? 'Failed to load raffles');
+    }
+    return res.body!;
+  }
+
+  Future<Map<String, dynamic>> getEventDetails(String eventId) async {
+    final res = await _network.getRequest(url: AppUrl.eventDetails(eventId));
+    if (!res.isSuccess || res.body == null) {
+      throw Exception(res.errorMessage ?? 'Failed to load event details');
+    }
+    return res.body!;
+  }
+
+  Future<Map<String, dynamic>> getRouteDetails(String routeId) async {
+    final res = await _network.getRequest(url: AppUrl.routeDetails(routeId));
+    if (!res.isSuccess || res.body == null) {
+      throw Exception(res.errorMessage ?? 'Failed to fetch route details');
+    }
+    return res.body!;
+  }
+
+  Future<Map<String, dynamic>> getRaffleDetails(String raffleId) async {
+    final res = await _network.getRequest(url: AppUrl.rafflesDetails(raffleId));
+    if (!res.isSuccess || res.body == null) {
+      throw Exception(res.errorMessage ?? 'Failed to fetch raffle details');
+    }
+    return res.body!;
+  }
+
+  Future<Map<String, dynamic>> searchTasks({
+    required String query,
+    required int page,
+    required int limit,
+    String? businessId,
+  }) async {
+    final queryParams = <String, dynamic>{
+      'q': query,
+      'page': page,
+      'limit': limit,
+      'businessId': ?businessId,
+    };
+    final res = await _network.getRequest(
+      url: AppUrl.searchTask,
+      queryParams: queryParams,
+    );
+    if (!res.isSuccess || res.body == null) {
+      throw Exception(res.errorMessage ?? 'Failed to load tasks');
+    }
+    return res.body!;
+  }
+
+  Future<void> updateEvent({
+    required String eventId,
+    Map<String, String>? fields,
+    Map<String, File>? files,
+  }) async {
+    final res = await _network.multipartRequest(
+      url: AppUrl.eventDetails(eventId),
+      method: 'PATCH',
+      fields: fields,
+      files: files,
+    );
+    if (!res.isSuccess) {
+      throw Exception(res.errorMessage ?? 'Update failed');
+    }
+  }
+
+  Future<void> updateRoute({
+    required String routeId,
+    Map<String, String>? fields,
+    Map<String, File>? files,
+  }) async {
+    final res = await _network.multipartRequest(
+      url: AppUrl.routeDetails(routeId),
+      method: 'PATCH',
+      fields: fields,
+      files: files,
+    );
+    if (!res.isSuccess) {
+      throw Exception(res.errorMessage ?? 'Update failed');
+    }
+  }
+
+  Future<void> updateRaffle({
+    required String raffleId,
+    Map<String, String>? fields,
+    Map<String, File>? files,
+  }) async {
+    final res = await _network.multipartRequest(
+      url: AppUrl.rafflesDetails(raffleId),
+      method: 'PATCH',
+      fields: fields,
+      files: files,
+    );
+    if (!res.isSuccess) {
+      throw Exception(res.errorMessage ?? 'Update failed');
+    }
+  }
+}
