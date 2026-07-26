@@ -545,19 +545,13 @@ class _PriceRow extends StatelessWidget {
       );
     }
 
-    // `amount` is in cents (Stripe convention) — matches how the admin
-    // dashboard formats it. Displaying it raw showed "$5000" for a $50 plan.
-    final dollars = amount / 100;
-    final formatted = dollars == dollars.roundToDouble()
-        ? dollars.toStringAsFixed(0)
-        : dollars.toStringAsFixed(2);
-
+    // Show `amount` exactly as the backend sends it — no cents conversion.
     return Row(
       crossAxisAlignment: CrossAxisAlignment.baseline,
       textBaseline: TextBaseline.alphabetic,
       children: [
         Text(
-          '\$$formatted',
+          '\$$amount',
           style: AppTextStyle.displayXs(
             color: colorScheme.onSurface,
             weight: FontWeight.w800,
