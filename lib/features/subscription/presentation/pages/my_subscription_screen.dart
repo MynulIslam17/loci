@@ -270,29 +270,32 @@ class _CancelButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      width: double.infinity,
-      height: 48,
-      child: OutlinedButton(
-        style: OutlinedButton.styleFrom(
-          foregroundColor: colorScheme.error,
-          side: BorderSide(color: colorScheme.error.withValues(alpha: 0.4)),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
+    // Own Obx so tapping cancel rebuilds *this* button (the screen's outer Obx
+    // doesn't read isCancelling, so without this the loader never shows).
+    return Obx(() {
+      final isCancelling = controller.isCancelling;
+      return SizedBox(
+        width: double.infinity,
+        height: 48,
+        child: OutlinedButton(
+          style: OutlinedButton.styleFrom(
+            foregroundColor: colorScheme.error,
+            side: BorderSide(color: colorScheme.error.withValues(alpha: 0.4)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
           ),
+          onPressed: isCancelling ? null : () => _confirmCancel(context),
+          child: isCancelling
+              ? const SizedBox(
+                  height: 20,
+                  width: 20,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              : const Text('Cancel subscription'),
         ),
-        onPressed: controller.isCancelling
-            ? null
-            : () => _confirmCancel(context),
-        child: controller.isCancelling
-            ? const SizedBox(
-                height: 20,
-                width: 20,
-                child: CircularProgressIndicator(strokeWidth: 2),
-              )
-            : const Text('Cancel subscription'),
-      ),
-    );
+      );
+    });
   }
 
   void _confirmCancel(BuildContext context) {

@@ -15,10 +15,21 @@ class DrawerBindings extends Bindings {
     Get.lazyPut(
       () => RecentActivityController(Get.find<RecentActivityService>()),
     );
-    Get.lazyPut(() => PlansController(Get.find<SubscriptionService>()));
-    Get.lazyPut(
-      () => SubscriptionCheckoutController(Get.find<SubscriptionService>()),
-    );
+    // Permanent (guarded so they're built once) so plans + subscription stay
+    // cached across navigation — revisiting the subscription page no longer
+    // refetches and reshows the shimmer. Pull-to-refresh still forces a reload.
+    if (!Get.isRegistered<PlansController>()) {
+      Get.put(
+        PlansController(Get.find<SubscriptionService>()),
+        permanent: true,
+      );
+    }
+    if (!Get.isRegistered<SubscriptionCheckoutController>()) {
+      Get.put(
+        SubscriptionCheckoutController(Get.find<SubscriptionService>()),
+        permanent: true,
+      );
+    }
     Get.lazyPut(
       () => RemoveSavedBusinessController(Get.find<BrowseBusinessService>()),
     );
