@@ -17,8 +17,9 @@ class MySubscriptionScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = context.colorScheme;
-    final controller = Get.find<MySubscriptionController>();
+    final ColorScheme colorScheme = context.colorScheme;
+    final MySubscriptionController controller =
+        Get.find<MySubscriptionController>();
 
     return Scaffold(
       backgroundColor: colorScheme.surface,
@@ -35,7 +36,7 @@ class MySubscriptionScreen extends StatelessWidget {
           );
         }
 
-        final sub = controller.subscription;
+        final MySubscriptionModel? sub = controller.subscription;
         if (sub == null) {
           return _NoSubscription(colorScheme: colorScheme);
         }
@@ -49,10 +50,7 @@ class MySubscriptionScreen extends StatelessWidget {
               _PlanCard(sub: sub, colorScheme: colorScheme),
               if (sub.credits != null) ...[
                 const SizedBox(height: 16),
-                _CreditsCard(
-                  credits: sub.credits!,
-                  colorScheme: colorScheme,
-                ),
+                _CreditsCard(credits: sub.credits!, colorScheme: colorScheme),
               ],
               const SizedBox(height: 16),
               _BillingCard(sub: sub, colorScheme: colorScheme),
@@ -80,7 +78,7 @@ class _PlanCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final accent = _statusColor(colorScheme, sub.status);
+    final Color accent = _statusColor(colorScheme, sub.status);
 
     return Container(
       padding: const EdgeInsets.all(20),
@@ -201,7 +199,9 @@ class _CreditsCard extends StatelessWidget {
             child: LinearProgressIndicator(
               value: credits.remainingFraction,
               minHeight: 8,
-              backgroundColor: colorScheme.surfaceContainerHighest,
+              // Neutral track that contrasts with the card in both themes; the
+              // primary fill reads as "remaining".
+              backgroundColor: colorScheme.onSurface.withValues(alpha: 0.1),
               valueColor: AlwaysStoppedAnimation(colorScheme.primary),
             ),
           ),
@@ -225,7 +225,7 @@ class _BillingCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final renewLabel = sub.cancelAtPeriodEnd ? 'Ends on' : 'Renews on';
+    final String renewLabel = sub.cancelAtPeriodEnd ? 'Ends on' : 'Renews on';
 
     return _SectionCard(
       colorScheme: colorScheme,
@@ -273,7 +273,7 @@ class _CancelButton extends StatelessWidget {
     // Own Obx so tapping cancel rebuilds *this* button (the screen's outer Obx
     // doesn't read isCancelling, so without this the loader never shows).
     return Obx(() {
-      final isCancelling = controller.isCancelling;
+      final bool isCancelling = controller.isCancelling;
       return SizedBox(
         width: double.infinity,
         height: 48,
@@ -372,9 +372,19 @@ class _SectionCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: colorScheme.surfaceContainer,
+        // surfaceContainer is nearly identical to the scaffold surface on this
+        // theme, so a solid outline + soft shadow (like the plan cards) is what
+        // makes the container read in both light and dark.
+        color: colorScheme.surfaceContainerHigh,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: colorScheme.outlineVariant.withValues(alpha: 0.5)),
+        border: Border.all(color: colorScheme.outline),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.06),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: child,
     );
@@ -494,7 +504,7 @@ String _billingLabel(String billingType) {
 
 String? _formatDate(String? isoDate) {
   if (isoDate == null || isoDate.isEmpty) return null;
-  final parsed = DateTime.tryParse(isoDate);
+  final DateTime? parsed = DateTime.tryParse(isoDate);
   if (parsed == null) return null;
   return DateFormat('MMM d, yyyy').format(parsed.toLocal());
 }

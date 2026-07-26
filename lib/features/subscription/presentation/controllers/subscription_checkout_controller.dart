@@ -3,6 +3,8 @@ import 'package:flutter_stripe/flutter_stripe.dart';
 import 'package:get/get.dart';
 import 'package:loci/core/services/stripe_service.dart';
 import 'package:loci/core/utils/show_snackbar.dart';
+import 'package:loci/features/my_business/data/models/my_business_list_model.dart';
+import 'package:loci/features/subscription/data/models/checkout_response_model.dart';
 import 'package:loci/features/subscription/data/models/my_subscription_model.dart';
 import 'package:loci/features/subscription/domain/services/subscription_service.dart';
 
@@ -39,7 +41,7 @@ class SubscriptionCheckoutController extends GetxController {
     _setProcessing(planId);
 
     try {
-      final businessId = await _resolveBusinessId();
+      final String? businessId = await _resolveBusinessId();
       if (businessId == null) {
         SnackbarService.error(
           'You need a business before subscribing. Please claim or create one first.',
@@ -47,7 +49,7 @@ class SubscriptionCheckoutController extends GetxController {
         return;
       }
 
-      final checkout = await _service.checkout(
+      final CheckoutModel checkout = await _service.checkout(
         planId: planId,
         businessId: businessId,
       );
@@ -56,7 +58,7 @@ class SubscriptionCheckoutController extends GetxController {
         await fetchMySubscription();
         // Success shows itself: the plan card flips to "Current Plan". Only
         // speak up when the switch didn't actually take.
-        final activated =
+        final bool activated =
             mySubscription?.isActive == true && mySubscription?.amount == 0;
         if (!activated) {
           SnackbarService.error(
@@ -121,7 +123,8 @@ class SubscriptionCheckoutController extends GetxController {
         // payment failure warrants a message.
         if (e.error.code != FailureCode.Canceled) {
           SnackbarService.error(
-            e.error.localizedMessage ?? 'Payment failed. Please try another card.',
+            e.error.localizedMessage ??
+                'Payment failed. Please try another card.',
           );
         }
         return;
@@ -137,7 +140,7 @@ class SubscriptionCheckoutController extends GetxController {
   }
 
   Future<bool> _pollForActive() async {
-    for (var i = 0; i < 8; i++) {
+    for (int i = 0; i < 8; i++) {
       await fetchMySubscription();
       if (mySubscription?.isActive ?? false) return true;
       await Future.delayed(const Duration(seconds: 1));
@@ -171,7 +174,7 @@ class SubscriptionCheckoutController extends GetxController {
     if (_businessId != null && _businessId!.isNotEmpty) return _businessId;
 
     try {
-      final businesses = await _service.getMyBusinesses();
+      final List<BusinessModel> businesses = await _service.getMyBusinesses();
       if (businesses.isEmpty) return null;
       _businessId = businesses.first.id;
       return _businessId;
@@ -181,7 +184,7 @@ class SubscriptionCheckoutController extends GetxController {
   }
 
   Future<bool> _ensureStripeReady() async {
-    final service = Get.find<StripeService>();
+    final StripeService service = Get.find<StripeService>();
     if (!service.isReady) {
       await service.init();
     }

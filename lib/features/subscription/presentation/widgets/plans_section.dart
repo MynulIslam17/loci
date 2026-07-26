@@ -14,7 +14,7 @@ class PlansSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final controller = Get.find<PlansController>();
+    final PlansController controller = Get.find<PlansController>();
 
     return Obx(() {
       if (controller.isLoading) {

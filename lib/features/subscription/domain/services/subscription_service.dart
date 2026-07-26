@@ -13,19 +13,19 @@ class SubscriptionService {
   SubscriptionService(this._repository);
 
   Future<SubscriptionConfigModel> getConfig() async {
-    final body = await _repository.getConfig();
+    final Map<String, dynamic> body = await _repository.getConfig();
     return SubscriptionConfigModel.fromJson(body);
   }
 
   Future<List<PlanModel>> getPlans(BillingType billingType) async {
-    final body = await _repository.getPlans(billingType);
+    final Map<String, dynamic> body = await _repository.getPlans(billingType);
     return PlanResponseModel.fromJson(body).data;
   }
 
   Future<MySubscriptionModel?> getMySubscription() async {
-    final body = await _repository.getMySubscription();
+    final Map<String, dynamic>? body = await _repository.getMySubscription();
     if (body == null) return null;
-    final data = body['data'];
+    final dynamic data = body['data'];
     if (data is Map<String, dynamic>) {
       return MySubscriptionModel.fromJson(data);
     }
@@ -36,17 +36,17 @@ class SubscriptionService {
     required String planId,
     required String businessId,
   }) async {
-    final body = await _repository.checkout(
+    final Map<String, dynamic> body = await _repository.checkout(
       planId: planId,
       businessId: businessId,
     );
-    final data = body['data'];
+    final dynamic data = body['data'];
     return CheckoutModel.fromJson(data is Map<String, dynamic> ? data : body);
   }
 
   Future<MySubscriptionModel?> cancelSubscription() async {
-    final body = await _repository.cancelSubscription();
-    final data = body?['data'];
+    final Map<String, dynamic>? body = await _repository.cancelSubscription();
+    final dynamic data = body?['data'];
     if (data is Map<String, dynamic>) {
       return MySubscriptionModel.fromJson(data);
     }
@@ -54,7 +54,7 @@ class SubscriptionService {
   }
 
   Future<List<BusinessModel>> getMyBusinesses() async {
-    final body = await _repository.getMyBusinesses();
+    final Map<String, dynamic> body = await _repository.getMyBusinesses();
     return MyBusinessResponseModel.fromJson(body).data;
   }
 }

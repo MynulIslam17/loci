@@ -48,7 +48,7 @@ class MySubscriptionModel {
   /// e.g. amount 7500 → "$7500". Empty when there's no amount.
   String get formattedAmount {
     if (amount <= 0) return '';
-    final symbol = _currencySymbol(currency);
+    final String symbol = _currencySymbol(currency);
     return '$symbol$amount';
   }
 
@@ -68,7 +68,7 @@ class MySubscriptionModel {
   }
 
   factory MySubscriptionModel.fromJson(Map<String, dynamic> json) {
-    final credits = json['credits'];
+    final dynamic credits = json['credits'];
     return MySubscriptionModel(
       status: json['status'] ?? '',
       heroSpotlightCredits: json['heroSpotlightCredits'] ?? 0,

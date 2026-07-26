@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:loci/core/theme/theme_extention.dart';
 import 'package:loci/core/constants/app_text_style.dart';
+import 'package:loci/features/subscription/data/models/my_subscription_model.dart';
 import 'package:loci/features/subscription/data/models/plan_response_model.dart';
 import 'package:loci/features/subscription/presentation/controllers/subscription_checkout_controller.dart';
 
@@ -23,36 +24,37 @@ class PlanCard extends StatelessWidget {
   /// compared against both the stable slug id and the live Stripe product id,
   /// since `Subscription.planId` may be stored as either (see backend
   /// `getMySubscription`).
-  bool _isCurrentPlan(dynamic sub) {
-    if (sub == null || !(sub.isActive as bool)) return false;
-    if (plan.amount == 0) return (sub.amount as int) == 0;
-    final subPlanId = sub.planId as String?;
+  bool _isCurrentPlan(MySubscriptionModel? sub) {
+    if (sub == null || !sub.isActive) return false;
+    if (plan.amount == 0) return sub.amount == 0;
+    final String? subPlanId = sub.planId;
     return subPlanId != null &&
         (subPlanId == plan.id || subPlanId == plan.realProductId);
   }
 
   /// True when this plan is a scheduled (not-yet-applied) downgrade — the
   /// caller's current plan keeps running until `currentPeriodEnd`.
-  bool _isPendingPlan(dynamic sub) {
+  bool _isPendingPlan(MySubscriptionModel? sub) {
     if (sub == null) return false;
-    final pendingId = sub.pendingPlanId as String?;
+    final String? pendingId = sub.pendingPlanId;
     return pendingId != null && pendingId == plan.id;
   }
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = context.colorScheme;
-    final isFree = plan.amount == 0;
+    final ColorScheme colorScheme = context.colorScheme;
+    final bool isFree = plan.amount == 0;
 
     return Obx(() {
-      final checkout = Get.find<SubscriptionCheckoutController>();
-      final isCurrentPlan = _isCurrentPlan(checkout.mySubscription);
-      final isPendingPlan = _isPendingPlan(checkout.mySubscription);
+      final SubscriptionCheckoutController checkout =
+          Get.find<SubscriptionCheckoutController>();
+      final bool isCurrentPlan = _isCurrentPlan(checkout.mySubscription);
+      final bool isPendingPlan = _isPendingPlan(checkout.mySubscription);
       // Read these here (inside the Obx builder) so the observable is tracked —
       // if read lazily inside a nested Builder callback the loader never shows
       // because Obx doesn't register the dependency and won't rebuild.
-      final isProcessing = checkout.isProcessing(plan.id);
-      final anyProcessing = checkout.processingPlanId != null;
+      final bool isProcessing = checkout.isProcessing(plan.id);
+      final bool anyProcessing = checkout.processingPlanId != null;
 
       return AnimatedContainer(
         duration: const Duration(milliseconds: 250),
@@ -201,7 +203,7 @@ class PlanCard extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: plan.features
                         .map(
-                          (e) => Padding(
+                          (String e) => Padding(
                             padding: const EdgeInsets.only(bottom: 10),
                             child: Row(
                               crossAxisAlignment: CrossAxisAlignment.start,
@@ -451,7 +453,7 @@ class _ScheduledBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = context.colorScheme;
+    final ColorScheme colorScheme = context.colorScheme;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
@@ -475,7 +477,7 @@ class _CurrentPlanBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = context.colorScheme;
+    final ColorScheme colorScheme = context.colorScheme;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(

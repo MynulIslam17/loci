@@ -32,7 +32,7 @@ class BillingTogglePinnedHeader extends SliverPersistentHeaderDelegate {
     double shrinkOffset,
     bool overlapsContent,
   ) {
-    final controller = Get.find<PlansController>();
+    final PlansController controller = Get.find<PlansController>();
 
     return AnimatedContainer(
       duration: const Duration(milliseconds: 150),

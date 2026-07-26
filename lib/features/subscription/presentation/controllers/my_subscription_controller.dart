@@ -11,10 +11,10 @@ class MySubscriptionController extends GetxController {
 
   final SubscriptionService _service;
 
-  final _isLoading = false.obs;
-  final _isCancelling = false.obs;
-  final _errorMessage = RxnString();
-  final _subscription = Rxn<MySubscriptionModel>();
+  final RxBool _isLoading = false.obs;
+  final RxBool _isCancelling = false.obs;
+  final RxnString _errorMessage = RxnString();
+  final Rxn<MySubscriptionModel> _subscription = Rxn<MySubscriptionModel>();
 
   bool get isLoading => _isLoading.value;
   bool get isCancelling => _isCancelling.value;
@@ -43,7 +43,7 @@ class MySubscriptionController extends GetxController {
     if (_isCancelling.value) return;
     _isCancelling.value = true;
     try {
-      final updated = await _service.cancelSubscription();
+      final MySubscriptionModel? updated = await _service.cancelSubscription();
       // The screen reflects the new state directly — no success toast.
       if (updated != null && updated.cancelAtPeriodEnd) {
         _subscription.value = updated;

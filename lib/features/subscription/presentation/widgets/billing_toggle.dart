@@ -4,7 +4,7 @@ import 'toggle_item.dart';
 
 class BillingToggleSection extends StatelessWidget {
   final bool isMonthly;
-  final Function(bool) onChanged;
+  final ValueChanged<bool> onChanged;
 
   const BillingToggleSection({
     super.key,
@@ -16,7 +16,7 @@ class BillingToggleSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = context.colorScheme;
+    final ColorScheme colorScheme = context.colorScheme;
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -36,8 +36,8 @@ class BillingToggleSection extends StatelessWidget {
         // there is always exactly one clean highlight — no cross-fade blend
         // between the outgoing/incoming tab while switching.
         child: LayoutBuilder(
-          builder: (context, constraints) {
-            final pillWidth = constraints.maxWidth / 2;
+          builder: (BuildContext context, BoxConstraints constraints) {
+            final double pillWidth = constraints.maxWidth / 2;
 
             return SizedBox(
               height: _itemHeight,

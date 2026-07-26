@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:loci/core/constants/app_text_style.dart';
 import 'package:loci/core/theme/theme_extention.dart';
+import 'package:loci/features/subscription/data/models/my_subscription_model.dart';
 import 'package:loci/features/subscription/presentation/controllers/subscription_checkout_controller.dart';
 
 /// Banner shown at the top of the Subscription screen when the user already has
@@ -13,16 +14,17 @@ class ActivePlanBanner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = context.colorScheme;
+    final ColorScheme colorScheme = context.colorScheme;
 
     return Obx(() {
-      final checkout = Get.find<SubscriptionCheckoutController>();
-      final sub = checkout.mySubscription;
+      final SubscriptionCheckoutController checkout =
+          Get.find<SubscriptionCheckoutController>();
+      final MySubscriptionModel? sub = checkout.mySubscription;
       if (sub == null) return const SizedBox.shrink();
 
-      final isPastDue = sub.status == 'past_due';
-      final accent = isPastDue ? colorScheme.error : colorScheme.primary;
-      final periodText = _periodText(
+      final bool isPastDue = sub.status == 'past_due';
+      final Color accent = isPastDue ? colorScheme.error : colorScheme.primary;
+      final String? periodText = _periodText(
         sub.cancelAtPeriodEnd,
         sub.currentPeriodEnd,
       );
@@ -176,14 +178,14 @@ class ActivePlanBanner extends StatelessWidget {
   /// "Renews on …" for a recurring plan, or "Ends on …" when cancellation is
   /// scheduled. Returns null for one-time packs (no period end).
   String? _periodText(bool cancelAtPeriodEnd, String? isoDate) {
-    final date = _formatDate(isoDate);
+    final String? date = _formatDate(isoDate);
     if (date == null) return null;
     return cancelAtPeriodEnd ? 'Ends on $date' : 'Renews on $date';
   }
 
   String? _formatDate(String? isoDate) {
     if (isoDate == null || isoDate.isEmpty) return null;
-    final parsed = DateTime.tryParse(isoDate);
+    final DateTime? parsed = DateTime.tryParse(isoDate);
     if (parsed == null) return null;
     return DateFormat('MMM d, yyyy').format(parsed.toLocal());
   }

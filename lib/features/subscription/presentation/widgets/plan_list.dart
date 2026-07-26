@@ -6,7 +6,7 @@ class PlansList extends StatelessWidget {
   final List<PlanModel> plans;
   final bool isMonthly;
   final int? expandedIndex;
-  final Function(int) onExpand;
+  final ValueChanged<int> onExpand;
 
   const PlansList({
     super.key,
@@ -24,7 +24,7 @@ class PlansList extends StatelessWidget {
       padding: const EdgeInsets.all(16),
       child: Column(
         children: [
-          for (var index = 0; index < plans.length; index++)
+          for (int index = 0; index < plans.length; index++)
             PlanCard(
               plan: plans[index],
               isMonthly: isMonthly,

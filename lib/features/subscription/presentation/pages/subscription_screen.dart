@@ -12,8 +12,8 @@ class SubscriptionScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = context.colorScheme;
-    final controller = Get.find<PlansController>();
+    final ColorScheme colorScheme = context.colorScheme;
+    final PlansController controller = Get.find<PlansController>();
 
     return Scaffold(
       backgroundColor: colorScheme.surface,
@@ -32,7 +32,6 @@ class SubscriptionScreen extends StatelessWidget {
               pinned: true,
               delegate: BillingTogglePinnedHeader(
                 backgroundColor: colorScheme.surface,
-
               ),
             ),
             const SliverToBoxAdapter(child: PlansSection()),

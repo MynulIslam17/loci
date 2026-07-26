@@ -5,7 +5,7 @@ import 'package:loci/features/subscription/presentation/controllers/my_subscript
 class MySubscriptionBinding extends Bindings {
   @override
   void dependencies() {
-    Get.lazyPut(
+    Get.lazyPut<MySubscriptionController>(
       () => MySubscriptionController(Get.find<SubscriptionService>()),
     );
   }
