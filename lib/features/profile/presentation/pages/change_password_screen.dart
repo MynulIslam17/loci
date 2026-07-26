@@ -3,7 +3,6 @@ import 'package:get/get.dart';
 import 'package:loci/core/constants/app_text_style.dart';
 import 'package:loci/core/theme/theme_extention.dart';
 import 'package:loci/core/utils/validators.dart';
-import 'package:loci/features/profile/domain/services/profile_service.dart';
 import 'package:loci/features/profile/presentation/controllers/change_password_controller.dart';
 import 'package:loci/shared/widgets/custom_button.dart';
 import 'package:loci/shared/widgets/custom_text_field.dart';
@@ -23,16 +22,13 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
 
   final _formKey = GlobalKey<FormState>();
 
-  late final ChangePasswordController _controller = Get.put(
-    ChangePasswordController(Get.find<ProfileService>()),
-  );
+  final ChangePasswordController _controller = Get.find<ChangePasswordController>();
 
   @override
   void dispose() {
     currentPassController.dispose();
     newPassController.dispose();
     confirmPassController.dispose();
-    Get.delete<ChangePasswordController>();
     super.dispose();
   }
 
