@@ -20,7 +20,7 @@ class SubscriptionStatusBanner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = context.colorScheme;
+    final ColorScheme colorScheme = context.colorScheme;
 
     if (isLoading) {
       return const Padding(
@@ -43,11 +43,11 @@ class SubscriptionStatusBanner extends StatelessWidget {
       );
     }
 
-    final sub = subscription!;
-    final periodEnd = sub.currentPeriodEnd != null
+    final MySubscriptionModel sub = subscription!;
+    final DateTime? periodEnd = sub.currentPeriodEnd != null
         ? DateTime.tryParse(sub.currentPeriodEnd!)
         : null;
-    final dateLabel = periodEnd != null
+    final String? dateLabel = periodEnd != null
         ? DateFormat.yMMMd().format(periodEnd)
         : null;
 
@@ -66,7 +66,7 @@ class SubscriptionStatusBanner extends StatelessWidget {
     }
 
     if (sub.isActive) {
-      final renewalText = sub.cancelAtPeriodEnd && dateLabel != null
+      final String renewalText = sub.cancelAtPeriodEnd && dateLabel != null
           ? 'Ends on $dateLabel'
           : dateLabel != null
           ? 'Renews on $dateLabel'

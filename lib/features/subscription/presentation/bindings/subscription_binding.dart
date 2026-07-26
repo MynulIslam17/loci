@@ -7,9 +7,14 @@ import 'package:loci/features/subscription/presentation/controllers/subscription
 class SubscriptionBinding extends Bindings {
   @override
   void dependencies() {
-    final service = Get.find<SubscriptionService>();
-    Get.lazyPut(() => PlansController(service));
-    Get.lazyPut(() => SubscriptionCheckoutController(service));
-    Get.lazyPut(() => SubscriptionController(service), fenix: true);
+    final SubscriptionService service = Get.find<SubscriptionService>();
+    Get.lazyPut<PlansController>(() => PlansController(service));
+    Get.lazyPut<SubscriptionCheckoutController>(
+      () => SubscriptionCheckoutController(service),
+    );
+    Get.lazyPut<SubscriptionController>(
+      () => SubscriptionController(service),
+      fenix: true,
+    );
   }
 }

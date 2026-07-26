@@ -1,6 +1,7 @@
 import 'package:loci/core/constants/app_url.dart';
 import 'package:loci/core/enums/billing_type_enum.dart';
 import 'package:loci/core/network/network_caller.dart';
+import 'package:loci/core/network/network_response.dart';
 
 /// Subscription data layer: remote HTTP via [NetworkCaller].
 class SubscriptionRepository {
@@ -9,7 +10,9 @@ class SubscriptionRepository {
   SubscriptionRepository(this._network);
 
   Future<Map<String, dynamic>> getConfig() async {
-    final res = await _network.getRequest(url: AppUrl.subscriptionConfig);
+    final NetworkResponse res = await _network.getRequest(
+      url: AppUrl.subscriptionConfig,
+    );
     if (!res.isSuccess || res.body == null) {
       throw Exception(res.errorMessage ?? 'Failed to load payment config');
     }
@@ -17,7 +20,7 @@ class SubscriptionRepository {
   }
 
   Future<Map<String, dynamic>> getPlans(BillingType billingType) async {
-    final res = await _network.getRequest(
+    final NetworkResponse res = await _network.getRequest(
       url: '${AppUrl.subscriptionPlans}?billingType=${billingType.toJson}',
     );
     if (!res.isSuccess || res.body == null) {
@@ -27,7 +30,9 @@ class SubscriptionRepository {
   }
 
   Future<Map<String, dynamic>?> getMySubscription() async {
-    final res = await _network.getRequest(url: AppUrl.mySubscription);
+    final NetworkResponse res = await _network.getRequest(
+      url: AppUrl.mySubscription,
+    );
     if (!res.isSuccess) {
       throw Exception(res.errorMessage ?? 'Failed to load subscription');
     }
@@ -38,7 +43,7 @@ class SubscriptionRepository {
     required String planId,
     required String businessId,
   }) async {
-    final res = await _network.postRequest(
+    final NetworkResponse res = await _network.postRequest(
       url: AppUrl.subscriptionCheckout,
       body: {'planId': planId, 'businessId': businessId},
     );
@@ -49,7 +54,9 @@ class SubscriptionRepository {
   }
 
   Future<Map<String, dynamic>?> cancelSubscription() async {
-    final res = await _network.deleteRequest(url: AppUrl.mySubscription);
+    final NetworkResponse res = await _network.deleteRequest(
+      url: AppUrl.mySubscription,
+    );
     if (!res.isSuccess) {
       throw Exception(res.errorMessage ?? 'Failed to cancel subscription');
     }
@@ -57,7 +64,9 @@ class SubscriptionRepository {
   }
 
   Future<Map<String, dynamic>> getMyBusinesses() async {
-    final res = await _network.getRequest(url: AppUrl.myBusiness);
+    final NetworkResponse res = await _network.getRequest(
+      url: AppUrl.myBusiness,
+    );
     if (!res.isSuccess || res.body == null) {
       throw Exception(
         res.errorMessage ?? 'You need a business profile before subscribing.',

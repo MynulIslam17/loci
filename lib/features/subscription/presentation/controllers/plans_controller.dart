@@ -16,7 +16,8 @@ class PlansController extends GetxController {
   // Plans cached per billing type, so switching Monthly <-> One-time reuses
   // what was already fetched instead of hitting the network (and flashing the
   // shimmer) on every toggle.
-  final Map<BillingType, List<PlanModel>> _cache = {};
+  final Map<BillingType, List<PlanModel>> _cache =
+      <BillingType, List<PlanModel>>{};
 
   // Billing toggle + expanded card are UI state that belongs to this screen's
   // controller so there is a single source of truth (previously duplicated in
@@ -41,7 +42,7 @@ class PlansController extends GetxController {
 
   Future<void> fetchPlans(BillingType billingType) async {
     // Serve from cache instantly — no loader, no refetch on tab switch.
-    final cached = _cache[billingType];
+    final List<PlanModel>? cached = _cache[billingType];
     if (cached != null) {
       _errorMessage.value = null;
       _plans.assignAll(cached);
@@ -52,7 +53,7 @@ class PlansController extends GetxController {
       _isLoading.value = true;
       _errorMessage.value = null;
 
-      final result = await _service.getPlans(billingType);
+      final List<PlanModel> result = await _service.getPlans(billingType);
       _cache[billingType] = result;
       _plans.assignAll(result);
     } catch (e) {

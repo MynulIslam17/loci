@@ -19,7 +19,7 @@ class ToggleItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = context.colorScheme;
+    final ColorScheme colorScheme = context.colorScheme;
 
     return Expanded(
       child: GestureDetector(

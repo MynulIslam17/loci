@@ -9,6 +9,7 @@ import 'package:loci/features/auth/presentation/controllers/auth_controller.dart
 import 'package:loci/features/subscription/data/models/checkout_response_model.dart';
 import 'package:loci/features/subscription/data/models/my_subscription_model.dart';
 import 'package:loci/features/subscription/data/models/plan_response_model.dart';
+import 'package:loci/features/subscription/data/models/subscription_config_model.dart';
 import 'package:loci/features/subscription/domain/services/subscription_service.dart';
 
 /// Handles the Stripe subscription flow described in PAYMENT_FLOW.pdf:
@@ -50,7 +51,7 @@ class SubscriptionController extends GetxController {
     if (kIsWeb || defaultTargetPlatform == TargetPlatform.windows) return;
     if (_stripeConfigured) return;
 
-    final auth = Get.find<AuthController>();
+    final AuthController auth = Get.find<AuthController>();
     if (!auth.isLoggedIn) return;
 
     _stripeInitFuture ??= _performStripeInit();
@@ -62,7 +63,7 @@ class SubscriptionController extends GetxController {
     _stripeInitError = null;
 
     try {
-      final config = await _service.getConfig();
+      final SubscriptionConfigModel config = await _service.getConfig();
       if (config.publishableKey.isEmpty) {
         throw Exception('Payment service returned an invalid key');
       }
@@ -108,13 +109,13 @@ class SubscriptionController extends GetxController {
         return;
       }
 
-      final businessId = await _resolveBusinessId();
+      final String? businessId = await _resolveBusinessId();
       if (businessId == null) {
         _isProcessingPurchase.value = false;
         return;
       }
 
-      final checkout = await _service.checkout(
+      final CheckoutModel checkout = await _service.checkout(
         planId: plan.id,
         businessId: businessId,
       );
@@ -132,7 +133,7 @@ class SubscriptionController extends GetxController {
 
       await _presentPaymentSheet(checkout);
 
-      final activated = await _waitForActive();
+      final bool activated = await _waitForActive();
       if (activated) {
         SnackbarService.success('Subscription activated');
         await fetchMySubscription();
@@ -144,7 +145,7 @@ class SubscriptionController extends GetxController {
         await fetchMySubscription();
       }
     } on StripeException catch (e) {
-      final message = e.error.localizedMessage ?? 'Payment cancelled';
+      final String message = e.error.localizedMessage ?? 'Payment cancelled';
       if (e.error.code != FailureCode.Canceled) {
         SnackbarService.error(message);
       }
@@ -163,7 +164,7 @@ class SubscriptionController extends GetxController {
     try {
       _mySubscription.value = await _service.cancelSubscription();
 
-      final endDate = mySubscription?.currentPeriodEnd;
+      final String? endDate = mySubscription?.currentPeriodEnd;
       if (endDate != null && mySubscription?.cancelAtPeriodEnd == true) {
         SnackbarService.success(
           'Your plan stays active until ${_formatDate(endDate)}.',
@@ -181,7 +182,7 @@ class SubscriptionController extends GetxController {
 
   Future<String?> _resolveBusinessId() async {
     try {
-      final businesses = await _service.getMyBusinesses();
+      final List<BusinessModel> businesses = await _service.getMyBusinesses();
 
       if (businesses.isEmpty) {
         SnackbarService.error(
@@ -192,7 +193,7 @@ class SubscriptionController extends GetxController {
 
       if (businesses.length == 1) return businesses.first.id;
 
-      final selected = await Get.dialog<BusinessModel>(
+      final BusinessModel? selected = await Get.dialog<BusinessModel>(
         AlertDialog(
           title: const Text('Choose a business'),
           content: SizedBox(
@@ -200,8 +201,8 @@ class SubscriptionController extends GetxController {
             child: ListView.builder(
               shrinkWrap: true,
               itemCount: businesses.length,
-              itemBuilder: (context, index) {
-                final business = businesses[index];
+              itemBuilder: (BuildContext context, int index) {
+                final BusinessModel business = businesses[index];
                 return ListTile(
                   title: Text(business.name),
                   onTap: () => Get.back(result: business),
@@ -234,9 +235,9 @@ class SubscriptionController extends GetxController {
   }
 
   Future<bool> _waitForActive({int attempts = 8}) async {
-    for (var i = 0; i < attempts; i++) {
+    for (int i = 0; i < attempts; i++) {
       try {
-        final sub = await _service.getMySubscription();
+        final MySubscriptionModel? sub = await _service.getMySubscription();
         if (sub?.isActive == true) {
           _mySubscription.value = sub;
           return true;
@@ -248,7 +249,7 @@ class SubscriptionController extends GetxController {
   }
 
   String _formatDate(String isoDate) {
-    final date = DateTime.tryParse(isoDate);
+    final DateTime? date = DateTime.tryParse(isoDate);
     if (date == null) return isoDate;
     return '${date.month}/${date.day}/${date.year}';
   }
