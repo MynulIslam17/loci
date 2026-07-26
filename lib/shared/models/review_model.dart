@@ -20,10 +20,18 @@ class ReviewModel {
   });
 
   factory ReviewModel.fromJson(Map<String, dynamic> json) {
+    final dynamic author = json['author'];
+    final dynamic business = json['business'];
     return ReviewModel(
       id: json['_id'] ?? '',
-      author: ReviewAuthor.fromJson(json['author'] ?? {}),
-      businessId: json['business'] ?? '',
+      // `author` is a populated object on the list endpoint but a bare id
+      // string on the create-review response — handle both without crashing.
+      author: author is Map
+          ? ReviewAuthor.fromJson(Map<String, dynamic>.from(author))
+          : ReviewAuthor(id: author?.toString() ?? '', name: '', avatar: ''),
+      businessId: business is Map
+          ? (business['_id']?.toString() ?? '')
+          : (business?.toString() ?? ''),
       rating: (json['rating'] ?? 0).toDouble(),
       content: json['content'] ?? '',
       createdAt: json['createdAt'] ?? '',
