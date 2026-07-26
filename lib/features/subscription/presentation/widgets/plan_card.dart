@@ -547,13 +547,19 @@ class _PriceRow extends StatelessWidget {
       );
     }
 
-    // Show `amount` exactly as the backend sends it — no cents conversion.
+    // `amount` is in cents (Stripe convention) — e.g. 5000 = $50, which is
+    // exactly what Stripe charges. Show whole dollars when even, else 2dp.
+    final double dollars = amount / 100;
+    final String formatted = dollars == dollars.roundToDouble()
+        ? dollars.toStringAsFixed(0)
+        : dollars.toStringAsFixed(2);
+
     return Row(
       crossAxisAlignment: CrossAxisAlignment.baseline,
       textBaseline: TextBaseline.alphabetic,
       children: [
         Text(
-          '\$$amount',
+          '\$$formatted',
           style: AppTextStyle.displayXs(
             color: colorScheme.onSurface,
             weight: FontWeight.w800,
