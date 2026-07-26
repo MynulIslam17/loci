@@ -23,8 +23,14 @@ class BillingToggleSection extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(4),
         decoration: BoxDecoration(
-          color: colorScheme.surfaceContainer,
+          // surfaceContainerHighest + a border keeps the track distinct from
+          // the surface behind it in dark mode, where surfaceContainer would
+          // blend in and the whole toggle looked invisible.
+          color: colorScheme.surfaceContainerHighest,
           borderRadius: BorderRadius.circular(10),
+          border: Border.all(
+            color: colorScheme.outlineVariant.withValues(alpha: 0.5),
+          ),
         ),
         // One solid highlight pill that slides between the two segments, so
         // there is always exactly one clean highlight — no cross-fade blend
@@ -47,13 +53,16 @@ class BillingToggleSection extends StatelessWidget {
                     width: pillWidth,
                     child: Container(
                       decoration: BoxDecoration(
-                        color: colorScheme.surface,
+                        // Brand-coloured selected pill — clearly visible in
+                        // both light and dark, unlike the old surface pill that
+                        // matched the background in dark mode.
+                        color: colorScheme.primary,
                         borderRadius: BorderRadius.circular(8),
-                        boxShadow: const [
+                        boxShadow: [
                           BoxShadow(
-                            color: Colors.black12,
-                            blurRadius: 4,
-                            offset: Offset(0, 2),
+                            color: colorScheme.primary.withValues(alpha: 0.3),
+                            blurRadius: 6,
+                            offset: const Offset(0, 2),
                           ),
                         ],
                       ),

@@ -32,6 +32,7 @@ class SubscriptionScreen extends StatelessWidget {
               pinned: true,
               delegate: BillingTogglePinnedHeader(
                 backgroundColor: colorScheme.surface,
+
               ),
             ),
             const SliverToBoxAdapter(child: PlansSection()),
