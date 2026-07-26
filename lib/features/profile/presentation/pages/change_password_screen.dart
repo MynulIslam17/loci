@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:loci/core/constants/app_text_style.dart';
 import 'package:loci/core/theme/theme_extention.dart';
-import 'package:loci/core/utils/show_snackbar.dart';
 import 'package:loci/core/utils/validators.dart';
+import 'package:loci/features/profile/domain/services/profile_service.dart';
+import 'package:loci/features/profile/presentation/controllers/change_password_controller.dart';
 import 'package:loci/shared/widgets/custom_button.dart';
 import 'package:loci/shared/widgets/custom_text_field.dart';
 import 'package:loci/shared/widgets/custom_appbar.dart';
@@ -15,21 +17,22 @@ class ChangePasswordScreen extends StatefulWidget {
 }
 
 class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
-  /// -------------------------------
-  /// TEXT EDITING CONTROLLERS
-  /// -------------------------------
   final TextEditingController currentPassController = TextEditingController();
   final TextEditingController newPassController = TextEditingController();
   final TextEditingController confirmPassController = TextEditingController();
 
   final _formKey = GlobalKey<FormState>();
 
+  late final ChangePasswordController _controller = Get.put(
+    ChangePasswordController(Get.find<ProfileService>()),
+  );
+
   @override
   void dispose() {
-    // Dispose controllers to free memory
     currentPassController.dispose();
     newPassController.dispose();
     confirmPassController.dispose();
+    Get.delete<ChangePasswordController>();
     super.dispose();
   }
 
@@ -49,9 +52,9 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
               children: [
                 const SizedBox(height: 10),
 
-                // Password instruction
                 Text(
-                  "Your password must be at least 6 characters and should include raffles combination of numbers, letters, and special characters (!\$@%)",
+                  "Your password must be at least 8 characters and include a "
+                  "combination of uppercase, lowercase letters and numbers.",
                   style: AppTextStyle.textXs(
                     color: colorScheme.onSurfaceVariant,
                   ),
@@ -64,7 +67,10 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                   hintText: "Current password",
                   isPassword: true,
                   borderColor: colorScheme.outline,
-                  validator: (value) => validatePassword(value),
+                  validator: (value) =>
+                      (value == null || value.trim().isEmpty)
+                      ? "Current password is required"
+                      : null,
                 ),
                 const SizedBox(height: 20),
 
@@ -78,24 +84,25 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                 ),
                 const SizedBox(height: 20),
 
-                // Confirm Password
+                // Confirm Password — compared against the NEW password.
                 CustomTextField(
                   controller: confirmPassController,
                   hintText: "Confirm password",
                   isPassword: true,
                   borderColor: colorScheme.outline,
-                  validator: (value) => validateConfirmPassword(
-                    value,
-                    confirmPassController.text,
-                  ),
+                  validator: (value) =>
+                      validateConfirmPassword(value, newPassController.text),
                 ),
                 const SizedBox(height: 50),
 
                 // Submit Button
-                CustomButton(
-                  text: "Change Password",
-                  textColor: colorScheme.onPrimary,
-                  onPressed: _handleChangePassword,
+                Obx(
+                  () => CustomButton(
+                    text: "Change Password",
+                    textColor: colorScheme.onPrimary,
+                    isLoading: _controller.isLoading,
+                    onPressed: _handleChangePassword,
+                  ),
                 ),
               ],
             ),
@@ -105,18 +112,14 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
     );
   }
 
-  /// -------------------------------
-  /// HANDLE PASSWORD CHANGE
-  /// -------------------------------
-  void _handleChangePassword() {
-    final current = currentPassController.text.trim();
-    final newPass = newPassController.text.trim();
-    final confirm = confirmPassController.text.trim();
+  Future<void> _handleChangePassword() async {
+    if (!_formKey.currentState!.validate()) return;
 
-    if (_formKey.currentState!.validate()) {
-      SnackbarService.success("success");
-    } else {
-      SnackbarService.error("error");
-    }
+    final success = await _controller.changePassword(
+      currentPassword: currentPassController.text.trim(),
+      newPassword: newPassController.text.trim(),
+    );
+
+    if (success && mounted) Get.back();
   }
 }

@@ -39,4 +39,31 @@ class ProfileRepository {
     }
     return res.body!;
   }
+
+  Future<Map<String, dynamic>> changePassword({
+    required String currentPassword,
+    required String newPassword,
+  }) async {
+    final res = await _network.patchRequest(
+      url: AppUrl.changePassword,
+      body: {
+        'currentPassword': currentPassword,
+        'newPassword': newPassword,
+      },
+    );
+    if (!res.isSuccess) {
+      throw Exception(res.errorMessage ?? 'Failed to change password');
+    }
+    return res.body ?? const {};
+  }
+
+  Future<void> deleteAccount(String password) async {
+    final res = await _network.deleteRequest(
+      url: AppUrl.deleteAccount,
+      body: {'password': password},
+    );
+    if (!res.isSuccess) {
+      throw Exception(res.errorMessage ?? 'Failed to delete account');
+    }
+  }
 }

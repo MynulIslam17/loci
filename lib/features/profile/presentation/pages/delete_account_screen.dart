@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:loci/core/constants/app_text_style.dart';
 import 'package:loci/core/theme/theme_extention.dart';
+import 'package:loci/features/auth/presentation/controllers/auth_controller.dart';
+import 'package:loci/features/profile/domain/services/profile_service.dart';
+import 'package:loci/features/profile/presentation/controllers/delete_account_controller.dart';
 import 'package:loci/shared/widgets/custom_appbar.dart';
-
 import 'package:loci/core/utils/dialog_helper.dart';
-import 'package:loci/core/utils/validators.dart';
 import 'package:loci/shared/widgets/custom_button.dart';
 import 'package:loci/shared/widgets/custom_text_field.dart';
 
@@ -17,12 +19,33 @@ class DeleteAccountScreen extends StatefulWidget {
 
 class _DeleteAccountScreenState extends State<DeleteAccountScreen> {
   final TextEditingController _passwordController = TextEditingController();
-  bool _isObscured = true;
+  final _formKey = GlobalKey<FormState>();
+
+  late final DeleteAccountController _controller = Get.put(
+    DeleteAccountController(
+      Get.find<ProfileService>(),
+      Get.find<AuthController>(),
+    ),
+  );
 
   @override
   void dispose() {
     _passwordController.dispose();
+    Get.delete<DeleteAccountController>();
     super.dispose();
+  }
+
+  void _confirmDelete() {
+    if (!_formKey.currentState!.validate()) return;
+
+    showDeleteDialog(
+      context: context,
+      title: "Delete Account",
+      message:
+          "Are you sure you want to delete your account? This action cannot be undone.",
+      onDelete: () =>
+          _controller.deleteAccount(_passwordController.text.trim()),
+    );
   }
 
   @override
@@ -40,69 +63,67 @@ class _DeleteAccountScreenState extends State<DeleteAccountScreen> {
                 minHeight: constraints.maxHeight - 48,
               ),
               child: IntrinsicHeight(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    /// --- Instruction Text ---
-                    Text(
-                      "Please enter your password to confirm account removal",
-                      style: AppTextStyle.textSm(
-                        color: colorScheme.onSurfaceVariant,
+                child: Form(
+                  key: _formKey,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      /// --- Instruction Text ---
+                      Text(
+                        "Please enter your password to confirm account removal",
+                        style: AppTextStyle.textSm(
+                          color: colorScheme.onSurfaceVariant,
+                        ),
                       ),
-                    ),
 
-                    const SizedBox(height: 16),
+                      const SizedBox(height: 16),
 
-                    /// --- Password Field ---
-                    CustomTextField(
-                      controller: _passwordController,
-                      hintText: "Current password",
-                      isPassword: true,
-                      borderColor: colorScheme.outline,
-                      validator: (value) => validatePassword(value),
-                    ),
+                      /// --- Password Field ---
+                      CustomTextField(
+                        controller: _passwordController,
+                        hintText: "Current password",
+                        isPassword: true,
+                        borderColor: colorScheme.outline,
+                        validator: (value) =>
+                            (value == null || value.trim().isEmpty)
+                            ? "Password is required"
+                            : null,
+                      ),
 
-                    const Spacer(),
+                      const Spacer(),
 
-                    /// --- Warning Text ---
-                    Align(
-                      alignment: Alignment.center,
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 20),
-                        child: Text(
-                          "This will permanently delete your account and all personal data from our system. This action cannot be undone.",
-                          textAlign: TextAlign.center,
-                          style: AppTextStyle.textXs(
-                            color: colorScheme.onSurfaceVariant,
-                            weight: FontWeight.w500,
+                      /// --- Warning Text ---
+                      Align(
+                        alignment: Alignment.center,
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 20),
+                          child: Text(
+                            "This will permanently delete your account and all personal data from our system. This action cannot be undone.",
+                            textAlign: TextAlign.center,
+                            style: AppTextStyle.textXs(
+                              color: colorScheme.onSurfaceVariant,
+                              weight: FontWeight.w500,
+                            ),
                           ),
                         ),
                       ),
-                    ),
 
-                    const SizedBox(height: 20),
+                      const SizedBox(height: 20),
 
-                    /// --- Delete Button ---
-                    CustomButton(
-                      text: "Change Password",
-                      textColor: colorScheme.onPrimary,
-                      backgroundColor: colorScheme.error,
-                      onPressed: () {
-                        showDeleteDialog(
-                          context: context,
-                          title: "Delete Account",
-                          message:
-                              "Are you sure you want to delete your account? This action cannot be undone.",
-                          onDelete: () {
-                            // Add your delete account logic here
-                            print("Account deleted");
-                          },
-                        );
-                      },
-                    ),
+                      /// --- Delete Button ---
+                      Obx(
+                        () => CustomButton(
+                          text: "Delete Account",
+                          textColor: colorScheme.onPrimary,
+                          backgroundColor: colorScheme.error,
+                          isLoading: _controller.isLoading,
+                          onPressed: _confirmDelete,
+                        ),
+                      ),
 
-                    const SizedBox(height: 20),
-                  ],
+                      const SizedBox(height: 20),
+                    ],
+                  ),
                 ),
               ),
             ),
