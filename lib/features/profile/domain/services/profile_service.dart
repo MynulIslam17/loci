@@ -39,4 +39,18 @@ class ProfileService {
     final body = await _repository.updateAvatar(file);
     return body['data']?['avatar']?.toString();
   }
+
+  Future<String> changePassword({
+    required String currentPassword,
+    required String newPassword,
+  }) async {
+    final body = await _repository.changePassword(
+      currentPassword: currentPassword,
+      newPassword: newPassword,
+    );
+    return body['message']?.toString() ?? 'Password changed successfully';
+  }
+
+  Future<void> deleteAccount(String password) =>
+      _repository.deleteAccount(password);
 }

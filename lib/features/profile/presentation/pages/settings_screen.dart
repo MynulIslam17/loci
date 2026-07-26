@@ -15,14 +15,8 @@ class SettingsScreen extends StatefulWidget {
 }
 
 class _SettingsScreenState extends State<SettingsScreen> {
-  final RxBool _notificationEnabled = false.obs;
   late final RxBool _themeEnabled;
   static const _settingsItems = [
-    _SettingsItem(
-      icon: CupertinoIcons.bell,
-      title: "Notification",
-      hasToggle: true,
-    ),
     _SettingsItem(icon: Icons.sync, title: "Theme", hasToggle: true),
     _SettingsItem(
       icon: Icons.workspace_premium_outlined,
@@ -52,8 +46,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   bool _isToggleEnabled(String title) {
     switch (title) {
-      case 'Notification':
-        return _notificationEnabled.value;
       case 'Theme':
         return _themeEnabled.value;
       default:
@@ -77,9 +69,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   void _onToggleChanged(String title, bool newValue) {
     switch (title) {
-      case 'Notification':
-        _notificationEnabled.value = newValue;
-        break;
       case 'Theme':
         _themeEnabled.value = newValue;
         Get.changeThemeMode(newValue ? ThemeMode.dark : ThemeMode.light);
