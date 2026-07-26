@@ -43,12 +43,14 @@ class ProfileRepository {
   Future<Map<String, dynamic>> changePassword({
     required String currentPassword,
     required String newPassword,
+    required String confirmPassword,
   }) async {
     final res = await _network.patchRequest(
       url: AppUrl.changePassword,
       body: {
         'currentPassword': currentPassword,
         'newPassword': newPassword,
+        'confirmPassword': confirmPassword,
       },
     );
     if (!res.isSuccess) {
