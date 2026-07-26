@@ -17,6 +17,7 @@ import 'package:loci/routes/app_routes.dart';
 import 'package:loci/core/utils/show_snackbar.dart';
 import 'package:loci/features/browse_business/presentation/controllers/business_profile_controller.dart';
 import 'package:loci/shared/widgets/custom_appbar.dart';
+import 'package:loci/shared/widgets/empty_state.dart';
 import 'package:loci/shared/widgets/error_state.dart';
 
 class BusinessProfileScreen extends StatefulWidget {
@@ -45,12 +46,21 @@ class _BusinessProfileScreenState extends State<BusinessProfileScreen> {
     reviewController.fetchReviews(businessId);
   }
 
+  Future<void> _refresh() async {
+    await Future.wait([
+      profileController.getBusinessProfile(businessId),
+      reviewController.fetchReviews(businessId),
+    ]);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: context.colorScheme.surface,
       appBar: CustomAppbar(title: "Business Profile"),
-      body: Obx(() {
+      body: RefreshIndicator(
+        onRefresh: _refresh,
+        child: Obx(() {
         if (profileController.isLoading.value) {
           return BusinessProfileShimmer();
         }
@@ -64,10 +74,21 @@ class _BusinessProfileScreenState extends State<BusinessProfileScreen> {
 
         final business = profileController.business.value;
         if (business == null) {
-          return const Center(child: Text("No data found"));
+          return ListView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            children: const [
+              SizedBox(height: 100),
+              EmptyState(
+                icon: Icons.storefront_outlined,
+                title: "Business not found",
+                subtitle: "It may have been removed. Pull to refresh.",
+              ),
+            ],
+          );
         }
 
         return SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
           child: Column(
             children: [
@@ -133,7 +154,11 @@ class _BusinessProfileScreenState extends State<BusinessProfileScreen> {
                 final reviews = reviewController.getLimited(3);
 
                 if (reviews.isEmpty) {
-                  return const Text("No reviews yet");
+                  return const EmptyState(
+                    icon: Icons.reviews_outlined,
+                    title: "No reviews yet",
+                    subtitle: "Be the first to leave a review.",
+                  );
                 }
 
                 return ReviewList(reviews: reviews);
@@ -141,7 +166,8 @@ class _BusinessProfileScreenState extends State<BusinessProfileScreen> {
             ],
           ),
         );
-      }),
+        }),
+      ),
     );
   }
 

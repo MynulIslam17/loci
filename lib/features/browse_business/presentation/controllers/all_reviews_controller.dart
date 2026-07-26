@@ -47,7 +47,7 @@ class AllReviewsController extends GetxController {
   }
 
   Future<void> loadMore() async {
-    if (!hasMore.value || isPaginationLoading.value) return;
+    if (!hasMore.value || isPaginationLoading.value || isLoading.value) return;
 
     isPaginationLoading.value = true;
 

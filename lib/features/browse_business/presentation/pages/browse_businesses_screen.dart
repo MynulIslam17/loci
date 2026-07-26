@@ -13,6 +13,7 @@ import 'package:loci/routes/app_routes.dart';
 import 'package:loci/features/browse_business/presentation/controllers/save_business_controller.dart';
 import 'package:loci/shared/widgets/custom_appbar.dart';
 import 'package:loci/shared/widgets/custom_text_field.dart';
+import 'package:loci/shared/widgets/empty_state.dart';
 import 'package:loci/shared/widgets/error_state.dart';
 
 class BrowseBusinesses extends StatefulWidget {
@@ -67,11 +68,14 @@ class _BrowseBusinessesState extends State<BrowseBusinesses> {
 
     return Scaffold(
       appBar: CustomAppbar(title: "Browse business"),
-      body: Obx(() {
+      body: RefreshIndicator(
+        onRefresh: browseBusinessController.refreshData,
+        child: Obx(() {
         final controller = browseBusinessController;
         return SingleChildScrollView(
           controller: _scrollController,
           scrollDirection: Axis.vertical,
+          physics: const AlwaysScrollableScrollPhysics(),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -143,18 +147,18 @@ class _BrowseBusinessesState extends State<BrowseBusinesses> {
                   ),
                 )
               else if (controller.businesses.isEmpty)
-                const Center(
-                  child: Padding(
-                    padding: EdgeInsets.only(top: 50),
-                    child: Text("No businesses found"),
-                  ),
+                const EmptyState(
+                  icon: Icons.storefront_outlined,
+                  title: "No businesses found",
+                  subtitle: "Try a different category or pull to refresh.",
                 )
               else
                 _buildBusiness(controller),
             ],
           ),
         );
-      }),
+        }),
+      ),
     );
   }
 
@@ -203,7 +207,8 @@ class _BrowseBusinessesState extends State<BrowseBusinesses> {
     );
   }
 
-  void _addToListHandler(String businessId) async {
-    bool success = await saveController.saveBusiness(businessId);
+  void _addToListHandler(String businessId) {
+    // SaveBusinessController surfaces its own success/error snackbar.
+    saveController.saveBusiness(businessId);
   }
 }
