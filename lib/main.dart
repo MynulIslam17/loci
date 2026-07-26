@@ -4,7 +4,7 @@ import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:loci/core/theme/app_theme.dart';
 import 'package:loci/core/utils/system_ui_config.dart';
-import 'package:loci/presentation/bindings/app_bindings.dart';
+import 'package:loci/core/di/bindings/app_bindings.dart';
 import 'package:loci/routes/app_pages.dart';
 
 void main() async {

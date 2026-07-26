@@ -98,6 +98,7 @@ static const String meetingInvitation="/meetingInvitation";
   //----subscription
 
 static const subscription="/subscription";
+static const mySubscription="/mySubscription";
 
 
 
