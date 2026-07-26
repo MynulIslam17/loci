@@ -2,8 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:loci/core/constants/app_text_style.dart';
 import 'package:loci/core/theme/theme_extention.dart';
-import 'package:loci/features/auth/presentation/controllers/auth_controller.dart';
-import 'package:loci/features/profile/domain/services/profile_service.dart';
 import 'package:loci/features/profile/presentation/controllers/delete_account_controller.dart';
 import 'package:loci/shared/widgets/custom_appbar.dart';
 import 'package:loci/core/utils/dialog_helper.dart';
@@ -21,17 +19,11 @@ class _DeleteAccountScreenState extends State<DeleteAccountScreen> {
   final TextEditingController _passwordController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
 
-  late final DeleteAccountController _controller = Get.put(
-    DeleteAccountController(
-      Get.find<ProfileService>(),
-      Get.find<AuthController>(),
-    ),
-  );
+  final DeleteAccountController _controller = Get.find<DeleteAccountController>();
 
   @override
   void dispose() {
     _passwordController.dispose();
-    Get.delete<DeleteAccountController>();
     super.dispose();
   }
 

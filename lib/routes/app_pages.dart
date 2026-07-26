@@ -68,6 +68,7 @@ import 'package:loci/features/browse_business/presentation/pages/browse_business
 import 'package:loci/features/explore_activity/presentation/pages/create_activity_screen.dart';
 import 'package:loci/features/notification/presentation/pages/notification_screen.dart';
 import 'package:loci/features/profile/presentation/pages/settings_screen.dart';
+import 'package:loci/features/profile/presentation/bindings/profile_binding.dart';
 
 abstract class AppPages {
   static const String initialRoutes = AppRoutes.splash;
@@ -309,11 +310,19 @@ abstract class AppPages {
     ),
 
     //----profile
-    GetPage(name: AppRoutes.changePassword, page: () => ChangePasswordScreen()),
+    GetPage(
+      name: AppRoutes.changePassword,
+      page: () => ChangePasswordScreen(),
+      binding: ProfileBinding(),
+    ),
     GetPage(name: AppRoutes.about, page: () => AboutScreen()),
     GetPage(name: AppRoutes.settings, page: () => SettingsScreen()),
     GetPage(name: AppRoutes.terms, page: () => TermsScreen()),
-    GetPage(name: AppRoutes.deleteAccount, page: () => DeleteAccountScreen()),
+    GetPage(
+      name: AppRoutes.deleteAccount,
+      page: () => DeleteAccountScreen(),
+      binding: ProfileBinding(),
+    ),
 
     //appbar screen
     GetPage(name: AppRoutes.chatList, page: () => ChatListScreen()),
