@@ -5,8 +5,8 @@ import 'package:logger/logger.dart';
 import 'package:socket_io_client/socket_io_client.dart' as io;
 
 import '../constants/app_url.dart';
-import '../../data/models/chat/chat_message_model.dart';
-import '../../presentation/controllers/auth/auth_controller.dart';
+import 'package:loci/features/chat/data/models/chat_message_model.dart';
+import 'package:loci/features/auth/presentation/controllers/auth_controller.dart';
 
 /// Socket.io event names — must mirror the backend `ChatEvent` enum
 /// (`src/sockets/chat.events.ts`).

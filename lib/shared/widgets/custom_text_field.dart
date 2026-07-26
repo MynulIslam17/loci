@@ -1,0 +1,214 @@
+import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+
+class CustomTextField extends StatefulWidget {
+  final AutovalidateMode? autoValidateMode;
+  final TextEditingController? controller;
+  final TextInputType? keyboardType;
+  final bool isObscureText;
+  final String obscuringCharacter;
+  final int? maxLength;
+  final Color? fillColor;
+  final Color? borderColor;
+  final Color? focusBorderColor;
+  final Color? hintTextColor;
+  final Widget? prefixIcon;
+  final String? labelText;
+  final String? hintText;
+  final double? contentPaddingHorizontal;
+  final double? contentPaddingVertical;
+  final int? maxLine;
+  final double? fontSize;
+  final Widget? suffixIcon;
+  final FormFieldValidator<String>? validator;
+  final bool isPassword;
+  final bool readOnly;
+  final double? borderRadius;
+  final VoidCallback? onTap;
+  final ValueChanged<String>? onChanged;
+  final TextInputAction? textInputAction;
+  final String? title;
+  final TextStyle? titleStyle;
+  final FocusNode? focusNode;
+  final String? errorText;
+  final Color? textColor;
+
+  const CustomTextField({
+    super.key,
+    this.contentPaddingHorizontal,
+    this.contentPaddingVertical,
+    this.hintText,
+    this.textInputAction,
+    this.prefixIcon,
+    this.suffixIcon,
+    this.maxLine,
+    this.maxLength,
+    this.validator,
+    this.hintTextColor,
+    this.borderColor,
+    this.focusBorderColor,
+    this.controller,
+    this.keyboardType = TextInputType.text,
+    this.isObscureText = false,
+    this.obscuringCharacter = '•',
+    this.fillColor,
+    this.fontSize,
+    this.labelText,
+    this.isPassword = false,
+    this.readOnly = false,
+    this.borderRadius,
+    this.onTap,
+    this.onChanged,
+    this.title,
+    this.titleStyle,
+    this.focusNode,
+    this.errorText,
+    this.autoValidateMode,
+    this.textColor,
+  });
+
+  @override
+  State<CustomTextField> createState() => _CustomTextFieldState();
+}
+
+class _CustomTextFieldState extends State<CustomTextField> {
+  late final RxBool _obscureText;
+
+  @override
+  void initState() {
+    super.initState();
+    _obscureText = (widget.isPassword ? true : widget.isObscureText).obs;
+  }
+
+  void _toggleObscureText() {
+    _obscureText.value = !_obscureText.value;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final themeColors = Theme.of(context).colorScheme;
+
+    // When there's no separate [title] above the field, promote the hint to a
+    // floating label so the field stays identified while the user types
+    // (a plain hint disappears the moment you start typing).
+    final bool floatHint = widget.title == null;
+    final String? effectiveLabel =
+        widget.labelText ?? (floatHint ? widget.hintText : null);
+    final String? effectiveHint = floatHint ? null : widget.hintText;
+    final Color hintColor = widget.hintTextColor ?? themeColors.onSurfaceVariant;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        if (widget.title != null) ...[
+          Text(
+            widget.title!,
+            style: widget.titleStyle ??
+                TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                  color: themeColors.onSurface,
+                ),
+          ),
+          const SizedBox(height: 10),
+        ],
+
+        Obx(
+          () => TextFormField(
+          maxLength: widget.maxLength,
+          onChanged: widget.onChanged,
+          onTap: widget.onTap,
+          focusNode: widget.focusNode,
+          readOnly: widget.readOnly,
+          controller: widget.controller,
+          keyboardType: widget.keyboardType,
+          obscuringCharacter: widget.obscuringCharacter,
+          autovalidateMode:
+          widget.autoValidateMode ?? AutovalidateMode.disabled,
+          maxLines: widget.maxLine ?? 1,
+          textInputAction: widget.textInputAction,
+          validator: widget.validator,
+          cursorColor: themeColors.primary,
+          obscureText: _obscureText.value,
+          style: TextStyle(
+            color: widget.textColor ?? themeColors.onSurface,
+            fontSize: widget.fontSize ?? 14,
+          ),
+          decoration: InputDecoration(
+            isDense: true,
+            contentPadding: EdgeInsets.symmetric(
+              horizontal: widget.contentPaddingHorizontal ?? 14,
+              vertical: widget.contentPaddingVertical ?? 14,
+            ),
+            filled: true,
+            fillColor: widget.fillColor ??
+                themeColors.surfaceContainerHighest.withValues(alpha: 0.3),
+
+            // ✅ Cleaner prefix icon spacing
+            prefixIcon: widget.prefixIcon,
+            prefixIconConstraints: const BoxConstraints(
+              minWidth: 36,
+              minHeight: 36,
+            ),
+
+            // ✅ Cleaner suffix icon spacing
+            suffixIcon: _buildSuffixIcon(_obscureText.value),
+            suffixIconConstraints: const BoxConstraints(
+              minWidth: 36,
+              minHeight: 36,
+            ),
+
+            labelText: effectiveLabel,
+            hintText: effectiveHint,
+            // Resting label matches the old hint; it turns primary once it
+            // floats up on focus.
+            labelStyle: TextStyle(
+              color: hintColor,
+              fontSize: widget.fontSize ?? 14,
+            ),
+            floatingLabelStyle: TextStyle(color: themeColors.primary),
+            hintStyle: TextStyle(
+              color: hintColor,
+              fontSize: widget.fontSize ?? 14,
+            ),
+
+            focusedBorder:
+            _buildBorder(widget.focusBorderColor ?? themeColors.primary),
+            enabledBorder:
+            _buildBorder(widget.borderColor ?? themeColors.outlineVariant),
+            errorBorder: _buildBorder(themeColors.error),
+            focusedErrorBorder: _buildBorder(themeColors.error),
+
+            errorText: widget.errorText,
+            errorStyle:
+            TextStyle(fontSize: 12, color: themeColors.error),
+          ),
+        ),
+        ),
+      ],
+    );
+  }
+
+  Widget? _buildSuffixIcon(bool obscure) {
+    if (widget.isPassword) {
+      return IconButton(
+        onPressed: _toggleObscureText,
+        icon: Icon(
+          obscure
+              ? Icons.visibility_off_outlined
+              : Icons.visibility_outlined,
+          size: 20,
+        ),
+      );
+    }
+    return widget.suffixIcon;
+  }
+
+  OutlineInputBorder _buildBorder(Color color) {
+    return OutlineInputBorder(
+      borderRadius: BorderRadius.circular(widget.borderRadius ?? 12),
+      borderSide: BorderSide(color: color, width: 1.2),
+    );
+  }
+}

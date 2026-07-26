@@ -1,22 +1,35 @@
-
-
-
-
-import 'package:get/get_core/src/get_main.dart';
-import 'package:get/get_instance/src/extension_instance.dart';
-import 'package:get/get_navigation/src/extension_navigation.dart';
+import 'package:get/get.dart';
+import 'package:loci/features/auth/presentation/controllers/auth_controller.dart';
 import 'package:loci/routes/app_routes.dart';
 
-import '../../presentation/controllers/auth/auth_controller.dart';
 import 'network_caller.dart';
 
 NetworkCaller setUpNetworkClient() {
   return NetworkCaller(
-      onUnAuthorize: _onUnAuthorize,
-      accessToken: () => Get.find<AuthController>().accessToken ?? ""
+    onUnAuthorize: _onUnAuthorize,
+    accessToken: _readAccessToken,
   );
 }
 
+String _readAccessToken() {
+  if (!Get.isRegistered<AuthController>()) return '';
+  return Get.find<AuthController>().accessToken ?? '';
+}
+
+/// Fires on any 401 when a token was sent. Clears the local session and
+/// sends the user back to login so they can re-authenticate.
+bool _isHandlingUnauthorized = false;
+
 Future<void> _onUnAuthorize() async {
-  Get.offAllNamed(AppRoutes.login); // Go to login if token invalid
+  if (_isHandlingUnauthorized) return;
+  _isHandlingUnauthorized = true;
+  try {
+    if (Get.isRegistered<AuthController>()) {
+      await Get.find<AuthController>().logout();
+    } else {
+      Get.offAllNamed(AppRoutes.login);
+    }
+  } finally {
+    _isHandlingUnauthorized = false;
+  }
 }

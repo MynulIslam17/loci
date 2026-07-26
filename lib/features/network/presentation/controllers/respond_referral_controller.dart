@@ -1,0 +1,44 @@
+import 'package:get/get.dart';
+import 'package:loci/features/network/domain/services/network_service.dart';
+import 'package:loci/features/network/presentation/controllers/received_referrals_controller.dart';
+
+class RespondReferralController extends GetxController {
+  RespondReferralController(this._service);
+
+  final NetworkService _service;
+
+  final RxMap<String, String?> _loadingMap = <String, String?>{}.obs;
+
+  bool isAccepting(String referralId) => _loadingMap[referralId] == 'accept';
+  bool isRejecting(String referralId) => _loadingMap[referralId] == 'reject';
+  bool isResponding(String referralId) => _loadingMap[referralId] != null;
+
+  Future<void> respond(String referralId, String action) async {
+    _loadingMap[referralId] = action;
+
+    try {
+      final updated = await _service.respondReferral(
+        referralId: referralId,
+        action: action,
+      );
+
+      if (updated != null && Get.isRegistered<ReceivedReferralsController>()) {
+        final receivedController = Get.find<ReceivedReferralsController>();
+        final index = receivedController.referrals.indexWhere(
+          (r) => r.id == referralId,
+        );
+        if (index != -1) {
+          receivedController.referrals[index] = updated;
+        }
+      }
+    } catch (e) {
+      Get.snackbar(
+        'Error',
+        e.toString().replaceFirst('Exception: ', ''),
+        snackPosition: SnackPosition.BOTTOM,
+      );
+    } finally {
+      _loadingMap[referralId] = null;
+    }
+  }
+}
