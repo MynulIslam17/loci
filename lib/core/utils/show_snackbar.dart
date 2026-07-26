@@ -5,6 +5,11 @@ import 'package:loci/core/utils/app_error_messages.dart';
 import '../theme/app_colors.dart';
 
 class SnackbarService {
+  /// App-level hook run before an error snackbar is shown. Return true to
+  /// swallow the snackbar (e.g. the subscription paywall sheet handled it).
+  /// Wired in AppBindings so this core service stays feature-agnostic.
+  static bool Function(String message)? errorInterceptor;
+
   // Debounce to prevent spam (500ms cooldown)
   static final Duration _debounceDuration = Duration(milliseconds: 500);
   static DateTime _lastShown = DateTime.fromMillisecondsSinceEpoch(0);
@@ -66,6 +71,11 @@ class SnackbarService {
 
   static void error(String message, {String? title, VoidCallback? onRetry}) {
     final friendly = AppErrorMessages.sanitize(message);
+
+    // Give the app a chance to replace the snackbar with richer UI (e.g. the
+    // upgrade-required paywall for plan-entitlement rejections).
+    if (errorInterceptor?.call(friendly) ?? false) return;
+
     _show(
       title: title ?? AppErrorMessages.titleFor(message: friendly),
       message: friendly,

@@ -54,8 +54,9 @@ class MyBusinessProfileController extends GetxController {
     required Map<String, dynamic> body,
     bool silentSync = true,
   }) async {
+    if (body.isEmpty) return true;
+
     try {
-      isUpdating.value = true;
       errorMessage.value = null;
 
       final data = await _service.updateBusinessText(
@@ -79,8 +80,6 @@ class MyBusinessProfileController extends GetxController {
     } catch (e) {
       errorMessage.value = e.toString().replaceFirst('Exception: ', '');
       return false;
-    } finally {
-      isUpdating.value = false;
     }
   }
 

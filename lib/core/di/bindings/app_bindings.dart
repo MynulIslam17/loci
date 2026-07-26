@@ -4,6 +4,8 @@ import 'package:loci/core/network/network_setup.dart';
 import 'package:loci/core/services/chat_socket_service.dart';
 import 'package:loci/core/services/stripe_service.dart';
 import 'package:loci/core/storage/local_storage_service.dart';
+import 'package:loci/core/utils/show_snackbar.dart';
+import 'package:loci/features/subscription/presentation/widgets/upgrade_required_sheet.dart';
 import 'package:loci/features/auth/data/repositories/auth_repository.dart';
 import 'package:loci/features/auth/domain/services/auth_service.dart';
 import 'package:loci/features/auth/presentation/controllers/auth_controller.dart';
@@ -54,6 +56,10 @@ import 'package:loci/features/main_nav/presentation/controllers/nav_controller.d
 class AppBindings extends Bindings {
   @override
   void dependencies() {
+    // Plan-entitlement errors (create event/route/raffle without the right
+    // plan, credit limits…) open the upgrade paywall instead of a snackbar.
+    SnackbarService.errorInterceptor = UpgradeRequiredSheet.maybeIntercept;
+
     // Storage
     Get.put<LocalStorageService>(LocalStorageService(), permanent: true);
 

@@ -46,4 +46,20 @@ class BusinessModel {
       logo: json['logo'], // nullable
     );
   }
+
+  BusinessModel copyWith({
+    String? id,
+    String? name,
+    String? category,
+    String? description,
+    String? logo,
+  }) {
+    return BusinessModel(
+      id: id ?? this.id,
+      name: name ?? this.name,
+      category: category ?? this.category,
+      description: description ?? this.description,
+      logo: logo ?? this.logo,
+    );
+  }
 }
