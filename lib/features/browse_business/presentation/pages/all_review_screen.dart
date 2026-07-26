@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:loci/features/browse_business/presentation/controllers/all_reviews_controller.dart';
 import 'package:loci/features/browse_business/presentation/widgets/business_profile/review_list.dart';
 import 'package:loci/features/browse_business/presentation/widgets/business_profile/reviews_shimmer.dart';
+import 'package:loci/shared/widgets/empty_state.dart';
 
 class AllReviewsScreen extends StatefulWidget {
   const AllReviewsScreen({super.key});
@@ -34,7 +35,11 @@ class _AllReviewsScreenState extends State<AllReviewsScreen> {
         }
 
         if (ctrl.reviews.isEmpty) {
-          return const Center(child: Text("No reviews yet"));
+          return const EmptyState(
+            icon: Icons.reviews_outlined,
+            title: "No reviews yet",
+            subtitle: "Be the first to leave a review.",
+          );
         }
 
         return NotificationListener<ScrollNotification>(

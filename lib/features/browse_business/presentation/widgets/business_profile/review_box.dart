@@ -176,8 +176,16 @@ class _ReviewBoxState extends State<ReviewBox> {
                 Positioned(
                   bottom: 8,
                   right: 8,
-                  child: Obx(
-                    () => GestureDetector(
+                  child: Obx(() {
+                    // Touch BOTH observables up front so the button re-evaluates
+                    // on a rating change OR a text change. Reading _canSubmit
+                    // alone isn't enough: its && short-circuits, so setting the
+                    // star first would skip subscribing to _textRevision and the
+                    // colour wouldn't update when text is typed afterwards.
+                    _rating.value;
+                    _textRevision.value;
+                    final canSubmit = _canSubmit;
+                    return GestureDetector(
                       onTap: _submit,
                       child: AnimatedContainer(
                         duration: const Duration(milliseconds: 150),
@@ -185,7 +193,7 @@ class _ReviewBoxState extends State<ReviewBox> {
                         height: 32,
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
-                          color: _canSubmit
+                          color: canSubmit
                               ? _purple
                               : colors.outline.withOpacity(0.3),
                         ),
@@ -203,8 +211,8 @@ class _ReviewBoxState extends State<ReviewBox> {
                                 color: Colors.white,
                               ),
                       ),
-                    ),
-                  ),
+                    );
+                  }),
                 ),
               ],
             ),

@@ -70,7 +70,11 @@ class BrowseBusinessController extends GetxController {
 
   // ================= LOAD MORE =================
   Future<void> loadMore() async {
-    if (!hasNextPage.value || isPaginationLoading.value) return;
+    // Also guard on isLoading so a scroll during the first/refresh load can't
+    // kick off page 2 before page 1 has arrived.
+    if (!hasNextPage.value || isPaginationLoading.value || isLoading.value) {
+      return;
+    }
 
     try {
       isPaginationLoading.value = true;
