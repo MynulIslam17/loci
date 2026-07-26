@@ -57,16 +57,13 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                 ),
                 const SizedBox(height: 20),
 
-                // Current Password
+                // Current Password — same rules as account creation.
                 CustomTextField(
                   controller: currentPassController,
                   hintText: "Current password",
                   isPassword: true,
                   borderColor: colorScheme.outline,
-                  validator: (value) =>
-                      (value == null || value.trim().isEmpty)
-                      ? "Current password is required"
-                      : null,
+                  validator: validatePassword,
                 ),
                 const SizedBox(height: 20),
 
@@ -76,7 +73,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                   hintText: "New password",
                   isPassword: true,
                   borderColor: colorScheme.outline,
-                  validator: (value) => validatePassword(value),
+                  validator: validatePassword,
                 ),
                 const SizedBox(height: 20),
 
