@@ -8,8 +8,45 @@ when a feature isn't covered by the current plan.
 
 ## 1. Who can subscribe
 
-Subscriptions are for **business owners**. A user must have at least one
-business (claimed or created) before checkout — `subscribe()` resolves the
+Subscriptions are for **business owners** only. Access is gated on the user's
+**role**, not just whether they own a business.
+
+### Role gate
+
+| Role | Can access subscriptions? |
+|------|---------------------------|
+| `business_owner` | ✅ yes |
+| `admin` | ✅ yes |
+| `user` (member) | ❌ no |
+
+The single source of truth is `AuthController.canAccessSubscription`
+(`role ∈ {business_owner, admin}`). Because it reads the reactive `role`, any
+`Obx` that calls it re-evaluates the instant the role changes.
+
+Entry points hidden from members (role `user`):
+
+- **Drawer → Subscription** — the menu item is filtered out
+  (`AppNavigationDrawer`, `requiresSubscription` flag).
+- **Settings → My Subscription** — the row is filtered out inside an `Obx`
+  (`SettingsScreen`, `_SettingsItem.requiresSubscription`).
+
+The plan page's own "Business Profiles"/business flows are unaffected — those
+are how a member *becomes* an owner (below).
+
+### Members are promoted by claiming a business
+
+A member can't subscribe directly. The path is: **claim/create a business →
+backend promotes them to `business_owner` → subscription features unlock.**
+
+To reflect the new role without forcing a re-login, `_handleClaimResult`
+(search-my-business screen) calls `AuthController.refreshUser()` after a
+successful claim. That hits `GET /auth/me` (`AuthService.getMe`), updates the
+reactive `role`/`userModel`, and persists it — so the drawer/settings entries
+appear immediately on the next open.
+
+### Business requirement at checkout
+
+Even for an owner, checkout still needs a business: `subscribe()` resolves the
 caller's first business via `GET /businesses/me` and sends its id with the
 checkout. Without a business the app shows:
 *"You need a business before subscribing. Please claim or create one first."*
@@ -17,8 +54,8 @@ checkout. Without a business the app shows:
 ## 2. Plan catalog
 
 Served by `GET /subscriptions/plans?billingType=monthly|one_time`.
-Amounts are displayed **exactly as the backend sends them** (no cents
-conversion — `5000` renders as `$5000`).
+`amount` is in **cents** (Stripe convention), so it's divided by 100 for
+display — `5000` renders as `$50`, matching what Stripe actually charges.
 
 ### Monthly (recurring)
 
