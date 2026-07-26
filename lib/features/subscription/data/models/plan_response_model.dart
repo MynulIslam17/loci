@@ -61,7 +61,4 @@ class PlanModel {
           [],
     );
   }
-
-  /// API amounts are in cents.
-  double get priceInDollars => amount / 100;
 }

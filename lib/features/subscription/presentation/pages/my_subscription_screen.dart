@@ -56,7 +56,10 @@ class MySubscriptionScreen extends StatelessWidget {
               ],
               const SizedBox(height: 16),
               _BillingCard(sub: sub, colorScheme: colorScheme),
-              if (sub.status == 'active' && !sub.cancelAtPeriodEnd) ...[
+              // Offer cancel for any active plan (free included). When it's
+              // already set to end, the button is hidden in favour of the
+              // "Ends on …" billing row above.
+              if (sub.isActive && !sub.cancelAtPeriodEnd) ...[
                 const SizedBox(height: 24),
                 _CancelButton(controller: controller, colorScheme: colorScheme),
               ],

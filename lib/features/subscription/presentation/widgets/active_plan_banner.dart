@@ -124,8 +124,9 @@ class ActivePlanBanner extends StatelessWidget {
               ],
             ),
 
-            // Only offer cancel while the plan is still running.
-            if (sub.status == 'active' && !sub.cancelAtPeriodEnd) ...[
+            // Offer cancel for any active plan (free included). Hidden once the
+            // plan is already set to end — the "Ends on …" line covers that.
+            if (sub.isActive && !sub.cancelAtPeriodEnd) ...[
               const SizedBox(height: 14),
               SizedBox(
                 width: double.infinity,
