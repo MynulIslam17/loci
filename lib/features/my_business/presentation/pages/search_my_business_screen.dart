@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:loci/core/enums/category_enum.dart';
 import 'package:loci/core/theme/theme_extention.dart';
 import 'package:loci/core/utils/show_snackbar.dart';
+import 'package:loci/features/auth/presentation/controllers/auth_controller.dart';
 import 'package:loci/features/my_business/data/models/business_profile_model.dart';
 import 'package:loci/features/my_business/data/models/find_business_response.dart';
 import 'package:loci/features/my_business/presentation/controllers/find_google_business_controller.dart';
@@ -87,6 +88,10 @@ class _SearchMyBusinessState extends State<SearchMyBusiness> {
     if (message != null && message.isNotEmpty) {
       SnackbarService.success(message);
     }
+
+    // Claiming a business promotes a member to business_owner on the backend —
+    // refresh the session so subscription features unlock without a re-login.
+    Get.find<AuthController>().refreshUser();
 
     // Reload so the freshly claimed business appears in the list.
     myBusinessController.getMyBusinesses(
@@ -304,10 +309,12 @@ class _SearchMyBusinessState extends State<SearchMyBusiness> {
     if (!controller.isBusinessOwner.value) {
       return const SliverFillRemaining(
         hasScrollBody: false,
-        child: EmptyState(
-          icon: Icons.lock_outline,
-          title: "You are not a business owner",
-          subtitle: "Claim a business to manage it here.",
+        child: Center(
+          child: EmptyState(
+            icon: Icons.lock_outline,
+            title: 'You are not a business owner',
+            subtitle: 'Claim a business to manage it here.',
+          ),
         ),
       );
     }
@@ -324,9 +331,11 @@ class _SearchMyBusinessState extends State<SearchMyBusiness> {
     if (controller.errorMessage.value != null) {
       return SliverFillRemaining(
         hasScrollBody: false,
-        child: ErrorStateWidget(
-          message: controller.errorMessage.value!,
-          onRetry: _retry,
+        child: Center(
+          child: ErrorStateWidget(
+            message: controller.errorMessage.value!,
+            onRetry: _retry,
+          ),
         ),
       );
     }
@@ -335,16 +344,18 @@ class _SearchMyBusinessState extends State<SearchMyBusiness> {
       final isFiltering = selectedCategory.value != null;
       return SliverFillRemaining(
         hasScrollBody: false,
-        child: EmptyState(
-          icon: isFiltering
-              ? Icons.search_off_outlined
-              : Icons.storefront_outlined,
-          title: isFiltering
-              ? "No businesses in this category"
-              : "No business claimed yet",
-          subtitle: isFiltering
-              ? "Try a different category or clear the filter."
-              : "Use the search above to claim your first business.",
+        child: Center(
+          child: EmptyState(
+            icon: isFiltering
+                ? Icons.search_off_outlined
+                : Icons.storefront_outlined,
+            title: isFiltering
+                ? 'No businesses in this category'
+                : 'No business claimed yet',
+            subtitle: isFiltering
+                ? 'Try a different category or clear the filter.'
+                : 'Use the search above to claim your first business.',
+          ),
         ),
       );
     }

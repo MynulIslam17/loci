@@ -27,7 +27,7 @@ class AppNavigationDrawer extends StatelessWidget {
     {'title': 'Active Raffles', 'icon': 'rafel'},
     {'title': 'Recent Activity', 'icon': 'paper'},
     {'title': 'Business Profiles', 'icon': 'building'},
-    {'title': 'Subscription', 'icon': 'qrown'},
+    {'title': 'Subscription', 'icon': 'qrown', 'requiresSubscription': true},
     {'title': 'About App', 'icon': 'about'},
     {'title': 'Settings', 'icon': 'setting'},
     {'title': 'Terms & Conditions', 'icon': 'paper'},
@@ -36,9 +36,16 @@ class AppNavigationDrawer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Members (role `user`) can't use subscriptions — hide that entry until a
+    // business claim promotes them to business_owner.
+    final canSubscribe = Get.find<AuthController>().canAccessSubscription;
+
     /// Everything except the pinned danger action (Sign Out) scrolls.
     final scrollableItems = _menuItems
         .where((item) => item['isDanger'] != true)
+        .where(
+          (item) => item['requiresSubscription'] != true || canSubscribe,
+        )
         .toList();
     final pinnedItems = _menuItems
         .where((item) => item['isDanger'] == true)

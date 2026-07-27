@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:loci/features/event/data/models/event_details_model.dart';
 import 'package:loci/features/event/data/models/event_model.dart';
 import 'package:loci/features/raffles/data/models/raffles_details_model.dart';
@@ -119,5 +121,18 @@ class ExploreActivityService {
       fields: fields.isNotEmpty ? fields : null,
       files: files.isNotEmpty ? files : null,
     );
+  }
+
+  Future<String> createActivity({
+    required String url,
+    required Map<String, String> body,
+    Map<String, File>? files,
+  }) async {
+    final res = await _repository.createActivity(
+      url: url,
+      body: body,
+      files: files,
+    );
+    return res['message']?.toString() ?? 'Created successfully';
   }
 }

@@ -61,6 +61,7 @@ abstract class AppUrl {
   ///-------ads
   static const String submitAd = "$baseUrl/admin/ads/submit";
   static const String adsList = "$baseUrl/ads";
+  static const String myAds = "$baseUrl/ads/my";
 
 
 
@@ -103,7 +104,7 @@ abstract class AppUrl {
   static const String subscriptionPlans="$baseUrl/subscriptions/plans";
   static const String subscriptionConfig="$baseUrl/subscriptions/config";
   static const String subscriptionCheckout="$baseUrl/subscriptions/checkout";
-  static const String mySubscription="$baseUrl/subscriptions/my"; // GET current + DELETE to cancel
+  static const String mySubscription="$baseUrl/subscriptions/my"; // GET current + DELETE to cancel; both require ?businessId=
 
   //------chat / messaging
   static const String conversations="$baseUrl/conversations"; // GET my list, POST create

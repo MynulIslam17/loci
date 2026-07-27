@@ -80,12 +80,12 @@ class SubscriptionController extends GetxController {
     }
   }
 
-  Future<void> fetchMySubscription() async {
+  Future<void> fetchMySubscription(String businessId) async {
     _isLoadingSubscription.value = true;
     _errorMessage.value = null;
 
     try {
-      _mySubscription.value = await _service.getMySubscription();
+      _mySubscription.value = await _service.getMySubscription(businessId);
     } catch (e) {
       _errorMessage.value = e.toString().replaceFirst('Exception: ', '');
     } finally {
@@ -122,7 +122,7 @@ class SubscriptionController extends GetxController {
 
       if (checkout.isFree) {
         SnackbarService.success('Plan activated');
-        await fetchMySubscription();
+        await fetchMySubscription(businessId);
         return;
       }
 
@@ -133,16 +133,16 @@ class SubscriptionController extends GetxController {
 
       await _presentPaymentSheet(checkout);
 
-      final bool activated = await _waitForActive();
+      final bool activated = await _waitForActive(businessId);
       if (activated) {
         SnackbarService.success('Subscription activated');
-        await fetchMySubscription();
+        await fetchMySubscription(businessId);
       } else {
         SnackbarService.info(
           'Payment received — your plan should activate shortly.',
           title: 'Almost there',
         );
-        await fetchMySubscription();
+        await fetchMySubscription(businessId);
       }
     } on StripeException catch (e) {
       final String message = e.error.localizedMessage ?? 'Payment cancelled';
@@ -162,7 +162,9 @@ class SubscriptionController extends GetxController {
     _isCancelling.value = true;
 
     try {
-      _mySubscription.value = await _service.cancelSubscription();
+      final String? businessId = await _resolveBusinessId();
+      if (businessId == null) return; // _resolveBusinessId already toasted why
+      _mySubscription.value = await _service.cancelSubscription(businessId);
 
       final String? endDate = mySubscription?.currentPeriodEnd;
       if (endDate != null && mySubscription?.cancelAtPeriodEnd == true) {
@@ -234,10 +236,12 @@ class SubscriptionController extends GetxController {
     await Stripe.instance.presentPaymentSheet();
   }
 
-  Future<bool> _waitForActive({int attempts = 8}) async {
+  Future<bool> _waitForActive(String businessId, {int attempts = 8}) async {
     for (int i = 0; i < attempts; i++) {
       try {
-        final MySubscriptionModel? sub = await _service.getMySubscription();
+        final MySubscriptionModel? sub = await _service.getMySubscription(
+          businessId,
+        );
         if (sub?.isActive == true) {
           _mySubscription.value = sub;
           return true;

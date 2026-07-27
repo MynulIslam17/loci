@@ -84,8 +84,15 @@ display — `5000` renders as `$50`, matching what Stripe actually charges.
 | Stripe publishable key | `GET /subscriptions/config` | used by `StripeService.init()` |
 | Plan catalog | `GET /subscriptions/plans?billingType=` | `monthly` or `one_time` |
 | Checkout | `POST /subscriptions/checkout` | body `{ planId, businessId }` |
-| Current subscription | `GET /subscriptions/my` | `data: null` ⇒ no subscription |
-| Cancel | `DELETE /subscriptions/my` | same endpoint, DELETE method |
+| Current subscription | `GET /subscriptions/my?businessId=` | **`businessId` required** (400 without it); `data: null` ⇒ no subscription |
+| Cancel | `DELETE /subscriptions/my?businessId=` | **`businessId` required** (400 without it); same endpoint, DELETE method |
+
+> **Per-business scoping:** subscriptions belong to a *business*, not just a
+> user. `GET /my` and `DELETE /my` both require `businessId` — an owner of more
+> than one business would otherwise read/cancel the wrong plan. Pass the same
+> id sent to checkout. The drawer plan page and the settings "My Subscription"
+> screen default to the owner's **first** business (`_resolveBusinessId`); the
+> business-profile screen passes the specific business it's viewing.
 
 ### Checkout response shapes (`POST /subscriptions/checkout`)
 

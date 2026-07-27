@@ -1,8 +1,9 @@
 import 'package:get/get.dart';
-import 'package:loci/features/raffles/data/models/raffles_model.dart';
 import 'package:loci/features/explore_activity/domain/services/explore_activity_service.dart';
+import 'package:loci/features/explore_activity/presentation/controllers/explore_tab_list_cache.dart';
+import 'package:loci/features/raffles/data/models/raffles_model.dart';
 
-class BusinessRafflesListController extends GetxController {
+class BusinessRafflesListController extends GetxController with ExploreTabListCache {
   BusinessRafflesListController(this._service);
 
   final ExploreActivityService _service;
@@ -11,17 +12,22 @@ class BusinessRafflesListController extends GetxController {
   final RxBool isPaginationLoading = false.obs;
   final RxnString errorMessage = RxnString();
   final RxList<RaffleModel> raffleList = <RaffleModel>[].obs;
-  int _currentPage = 1;
   final RxBool hasMore = true.obs;
+
+  int _currentPage = 1;
   final int _limit = 3;
 
+  Future<void> loadIfNeeded(String businessId) =>
+      fetchRaffles(businessId: businessId);
+
   Future<void> fetchRaffles({
-    bool isRefresh = false,
     required String businessId,
+    bool forceRefresh = false,
   }) async {
+    if (!forceRefresh && isCachedFor(businessId)) return;
     if (isLoading.value) return;
 
-    if (isRefresh) {
+    if (forceRefresh) {
       _currentPage = 1;
       hasMore.value = true;
     }
@@ -36,13 +42,14 @@ class BusinessRafflesListController extends GetxController {
         businessId: businessId,
       );
 
-      if (isRefresh) {
+      if (forceRefresh || _currentPage == 1) {
         raffleList.assignAll(model.raffles);
       } else {
         raffleList.addAll(model.raffles);
       }
 
       hasMore.value = model.meta.hasNextPage;
+      markCached(businessId);
     } catch (e) {
       errorMessage.value = e.toString().replaceFirst('Exception: ', '');
     } finally {
@@ -72,6 +79,9 @@ class BusinessRafflesListController extends GetxController {
     }
   }
 
+  bool showInitialLoader(String businessId) =>
+      isLoading.value && !isCachedFor(businessId);
+
   void reset() {
     isLoading.value = false;
     isPaginationLoading.value = false;
@@ -79,5 +89,6 @@ class BusinessRafflesListController extends GetxController {
     raffleList.clear();
     _currentPage = 1;
     hasMore.value = true;
+    clearTabCache();
   }
 }

@@ -1,4 +1,5 @@
 import 'package:get/get.dart';
+import 'package:loci/core/utils/show_snackbar.dart';
 import 'package:loci/features/network/domain/services/network_service.dart';
 import 'package:loci/features/network/presentation/controllers/incoming_meetings_controller.dart';
 
@@ -35,11 +36,7 @@ class RespondMeetingController extends GetxController {
         await incoming.fetchIncomingMeetings();
       }
     } catch (e) {
-      Get.snackbar(
-        'Error',
-        e.toString().replaceFirst('Exception: ', ''),
-        snackPosition: SnackPosition.BOTTOM,
-      );
+      SnackbarService.error(e.toString().replaceFirst('Exception: ', ''));
     } finally {
       _loadingMap[meetingId] = null;
     }

@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:loci/core/constants/app_text_style.dart';
 import 'package:loci/core/theme/theme_extention.dart';
+import 'package:loci/features/auth/presentation/controllers/auth_controller.dart';
 import 'package:loci/shared/widgets/custom_appbar.dart';
 import 'package:loci/routes/app_routes.dart';
 
@@ -22,6 +23,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       icon: Icons.workspace_premium_outlined,
       title: "My Subscription",
       hasToggle: false,
+      requiresSubscription: true,
     ),
     _SettingsItem(
       icon: Icons.lock_outline,
@@ -83,28 +85,37 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
     return Scaffold(
       appBar: const CustomAppbar(title: "Settings"),
-      body: ListView.separated(
-        padding: const EdgeInsets.all(16),
-        itemCount: _settingsItems.length,
-        separatorBuilder: (_, __) => const SizedBox(height: 12),
-        itemBuilder: (context, index) {
-          final item = _settingsItems[index];
+      // Reactive so the "My Subscription" row appears the moment the user's
+      // role is promoted (e.g. right after claiming a business).
+      body: Obx(() {
+        final canSubscribe = Get.find<AuthController>().canAccessSubscription;
+        final items = _settingsItems
+            .where((item) => !item.requiresSubscription || canSubscribe)
+            .toList();
 
-          // Only toggle rows read an observable, so only those are wrapped in
-          // Obx. Wrapping a non-toggle row would give Obx nothing to observe
-          // and throw "improper use of GetX".
-          if (!item.hasToggle) {
-            return _buildTile(colorScheme, item, enabled: false);
-          }
-          return Obx(
-            () => _buildTile(
-              colorScheme,
-              item,
-              enabled: _isToggleEnabled(item.title),
-            ),
-          );
-        },
-      ),
+        return ListView.separated(
+          padding: const EdgeInsets.all(16),
+          itemCount: items.length,
+          separatorBuilder: (_, __) => const SizedBox(height: 12),
+          itemBuilder: (context, index) {
+            final item = items[index];
+
+            // Only toggle rows read an observable, so only those are wrapped
+            // in Obx. Wrapping a non-toggle row would give Obx nothing to
+            // observe and throw "improper use of GetX".
+            if (!item.hasToggle) {
+              return _buildTile(colorScheme, item, enabled: false);
+            }
+            return Obx(
+              () => _buildTile(
+                colorScheme,
+                item,
+                enabled: _isToggleEnabled(item.title),
+              ),
+            );
+          },
+        );
+      }),
     );
   }
 
@@ -174,9 +185,13 @@ class _SettingsItem {
   final String title;
   final bool hasToggle;
 
+  /// Only visible to roles that can use subscriptions (business owners/admins).
+  final bool requiresSubscription;
+
   const _SettingsItem({
     required this.icon,
     required this.title,
     required this.hasToggle,
+    this.requiresSubscription = false,
   });
 }
