@@ -1,8 +1,9 @@
 import 'package:get/get.dart';
-import 'package:loci/features/routes/data/models/routes_model.dart';
 import 'package:loci/features/explore_activity/domain/services/explore_activity_service.dart';
+import 'package:loci/features/explore_activity/presentation/controllers/explore_tab_list_cache.dart';
+import 'package:loci/features/routes/data/models/routes_model.dart';
 
-class BusinessRouteListController extends GetxController {
+class BusinessRouteListController extends GetxController with ExploreTabListCache {
   BusinessRouteListController(this._service);
 
   final ExploreActivityService _service;
@@ -11,17 +12,22 @@ class BusinessRouteListController extends GetxController {
   final RxBool isPaginationLoading = false.obs;
   final RxnString errorMessage = RxnString();
   final RxList<RouteModel> routeList = <RouteModel>[].obs;
-  int _currentPage = 1;
   final RxBool hasMore = true.obs;
+
+  int _currentPage = 1;
   final int _limit = 2;
 
+  Future<void> loadIfNeeded(String businessId) =>
+      fetchRoutes(businessId: businessId);
+
   Future<void> fetchRoutes({
-    bool isRefresh = false,
     required String businessId,
+    bool forceRefresh = false,
   }) async {
+    if (!forceRefresh && isCachedFor(businessId)) return;
     if (isLoading.value) return;
 
-    if (isRefresh) {
+    if (forceRefresh) {
       _currentPage = 1;
       hasMore.value = true;
     }
@@ -36,13 +42,14 @@ class BusinessRouteListController extends GetxController {
         businessId: businessId,
       );
 
-      if (isRefresh) {
+      if (forceRefresh || _currentPage == 1) {
         routeList.assignAll(model.routes);
       } else {
         routeList.addAll(model.routes);
       }
 
       hasMore.value = model.meta.hasNextPage;
+      markCached(businessId);
     } catch (e) {
       errorMessage.value = e.toString().replaceFirst('Exception: ', '');
     } finally {
@@ -73,6 +80,9 @@ class BusinessRouteListController extends GetxController {
     }
   }
 
+  bool showInitialLoader(String businessId) =>
+      isLoading.value && !isCachedFor(businessId);
+
   void reset() {
     isLoading.value = false;
     isPaginationLoading.value = false;
@@ -80,5 +90,6 @@ class BusinessRouteListController extends GetxController {
     routeList.clear();
     _currentPage = 1;
     hasMore.value = true;
+    clearTabCache();
   }
 }

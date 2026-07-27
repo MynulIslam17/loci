@@ -4,7 +4,6 @@ import 'package:loci/features/community/presentation/controllers/community_qr_co
 import 'package:loci/features/my_business/domain/services/my_business_service.dart';
 import 'package:loci/features/my_business/presentation/controllers/business_claim_controller.dart';
 import 'package:loci/features/my_business/presentation/controllers/business_review_controller.dart';
-import 'package:loci/features/my_business/presentation/controllers/create_ad_controller.dart';
 import 'package:loci/features/my_business/presentation/controllers/find_google_business_controller.dart';
 import 'package:loci/features/my_business/presentation/controllers/get_my_business_list_controller.dart';
 import 'package:loci/features/my_business/presentation/controllers/my_business_profile_controller.dart';
@@ -17,7 +16,6 @@ class MyBusinessBindings extends Bindings {
     Get.lazyPut(() => MyBusinessProfileController(service));
     Get.lazyPut(() => BusinessClaimController(service));
     Get.lazyPut(() => MyBusinessReviewController(service));
-    Get.lazyPut(() => CreateAdController(service), fenix: true);
     Get.lazyPut(() => FindGoogleBusinessController(service));
     Get.lazyPut(() => CommunityQrController(Get.find<CommunityService>()));
   }

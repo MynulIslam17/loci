@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:loci/features/browse_business/presentation/controllers/all_reviews_controller.dart';
-import 'package:loci/features/browse_business/presentation/widgets/business_profile/review_list.dart';
-import 'package:loci/features/browse_business/presentation/widgets/business_profile/reviews_shimmer.dart';
+import 'package:loci/features/browse_business/presentation/widgets/review_list.dart';
+import 'package:loci/features/browse_business/presentation/widgets/reviews_shimmer.dart';
 import 'package:loci/shared/widgets/empty_state.dart';
 
 class AllReviewsScreen extends StatefulWidget {
@@ -20,25 +20,26 @@ class _AllReviewsScreenState extends State<AllReviewsScreen> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final args = Get.arguments as Map<String, dynamic>;
-      final businessId = args['businessId'] as String;
-      ctrl.init(businessId);
+      ctrl.init(args['businessId'] as String);
     });
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("All Reviews")),
+      appBar: AppBar(title: const Text('All Reviews')),
       body: Obx(() {
-        if (ctrl.isLoading.value) {
+        if (ctrl.isLoading.value && ctrl.reviews.isEmpty) {
           return ReviewsShimmer(itemCount: 5);
         }
 
         if (ctrl.reviews.isEmpty) {
-          return const EmptyState(
-            icon: Icons.reviews_outlined,
-            title: "No reviews yet",
-            subtitle: "Be the first to leave a review.",
+          return const Center(
+            child: EmptyState(
+              icon: Icons.reviews_outlined,
+              title: 'No reviews yet',
+              subtitle: 'Be the first to leave a review.',
+            ),
           );
         }
 
@@ -59,7 +60,13 @@ class _AllReviewsScreenState extends State<AllReviewsScreen> {
               if (ctrl.isPaginationLoading.value)
                 const Padding(
                   padding: EdgeInsets.symmetric(vertical: 16),
-                  child: Center(child: CircularProgressIndicator()),
+                  child: Center(
+                    child: SizedBox(
+                      width: 24,
+                      height: 24,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    ),
+                  ),
                 ),
             ],
           ),

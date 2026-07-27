@@ -19,7 +19,8 @@ class UpgradeRequiredSheet {
   /// permission…" (any 403) must NOT open the paywall.
   static final RegExp _entitlementPattern = RegExp(
     r'subscription|upgrade|\bplan\b|\bplans\b|limit reached|reached your|'
-    r'active event|credits? (left|remaining|required)',
+    r'active event|credits? (left|remaining|required)|insufficient.*credit|'
+    r'hero spotlight',
     caseSensitive: false,
   );
 

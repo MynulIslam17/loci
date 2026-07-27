@@ -10,8 +10,12 @@ class ReviewPreviewController extends GetxController {
   final reviews = <ReviewModel>[].obs;
   final isLoading = false.obs;
 
-  Future<void> fetchReviews(String businessId) async {
-    isLoading.value = true;
+  Future<void> fetchReviews(
+    String businessId, {
+    bool showLoading = true,
+  }) async {
+    final shouldShowLoading = showLoading && reviews.isEmpty;
+    if (shouldShowLoading) isLoading.value = true;
 
     try {
       final model = await _service.getBusinessReviews(
@@ -22,9 +26,14 @@ class ReviewPreviewController extends GetxController {
       reviews.assignAll(model.reviews);
     } catch (_) {
       // Preserve previous silent failure behavior on load.
+    } finally {
+      if (shouldShowLoading) isLoading.value = false;
     }
+  }
 
-    isLoading.value = false;
+  void prependReview(ReviewModel review) {
+    reviews.removeWhere((existing) => existing.id == review.id);
+    reviews.insert(0, review);
   }
 
   List<ReviewModel> getLimited(int limit) {

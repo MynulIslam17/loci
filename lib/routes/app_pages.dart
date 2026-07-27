@@ -6,6 +6,7 @@ import 'package:loci/features/browse_business/presentation/bindings/browse_busin
 import 'package:loci/features/community/presentation/bindings/community_binding.dart';
 import 'package:loci/features/main_nav/presentation/bindings/drawer_binding.dart';
 import 'package:loci/features/event/presentation/bindings/event_binding.dart';
+import 'package:loci/features/my_business/presentation/bindings/create_ad_binding.dart';
 import 'package:loci/features/my_business/presentation/bindings/my_business_binding.dart';
 import 'package:loci/features/network/presentation/bindings/meetings_binding.dart';
 import 'package:loci/features/network/presentation/bindings/referrals_binding.dart';
@@ -230,7 +231,11 @@ abstract class AppPages {
       name: AppRoutes.manualClaimBusiness,
       page: () => ManualClaimBusiness(),
     ),
-    GetPage(name: AppRoutes.createAdd, page: () => CreateAd()),
+    GetPage(
+      name: AppRoutes.createAdd,
+      page: () => const CreateAd(),
+      binding: CreateAdBinding(),
+    ),
 
     //---explore activity
     GetPage(

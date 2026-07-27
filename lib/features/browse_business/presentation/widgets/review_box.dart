@@ -5,7 +5,7 @@ import 'package:loci/core/constants/app_text_style.dart';
 import 'package:loci/core/theme/theme_extention.dart';
 
 class ReviewBox extends StatefulWidget {
-  final Future<void> Function(String review, double rating)? onSubmit;
+  final Future<bool> Function(String review, double rating)? onSubmit;
 
   const ReviewBox({super.key, this.onSubmit});
 
@@ -45,10 +45,14 @@ class _ReviewBoxState extends State<ReviewBox> {
     if (!_canSubmit || _isSubmitting.value) return;
     _isSubmitting.value = true;
     try {
-      await widget.onSubmit?.call(_controller.text.trim(), _rating.value);
-      _controller.clear();
-      _rating.value = 0;
-      _textRevision.value++;
+      final success =
+          await widget.onSubmit?.call(_controller.text.trim(), _rating.value) ??
+          false;
+      if (success) {
+        _controller.clear();
+        _rating.value = 0;
+        _textRevision.value++;
+      }
     } finally {
       if (mounted) _isSubmitting.value = false;
     }

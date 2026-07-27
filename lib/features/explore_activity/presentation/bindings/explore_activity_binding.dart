@@ -11,14 +11,13 @@ import 'package:loci/features/explore_activity/presentation/controllers/business
 import 'package:loci/features/explore_activity/presentation/controllers/create_activity_controller.dart';
 import 'package:loci/features/explore_activity/presentation/controllers/raffle_edit_controller.dart';
 import 'package:loci/features/explore_activity/presentation/controllers/task_controller.dart';
-import 'package:loci/features/my_business/domain/services/my_business_service.dart';
 
 class ExploreActivityBinding extends Bindings {
   @override
   void dependencies() {
     final service = Get.find<ExploreActivityService>();
 
-    Get.lazyPut(() => CreateActivityController(Get.find<MyBusinessService>()));
+    Get.lazyPut(() => CreateActivityController(service), fenix: true);
 
     Get.lazyPut(() => TaskController(service));
 

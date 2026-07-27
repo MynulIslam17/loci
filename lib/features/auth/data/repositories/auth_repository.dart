@@ -116,6 +116,16 @@ class AuthRepository {
     return res.body!;
   }
 
+  /// Current user from `GET /auth/me` — reflects the latest role (e.g. after
+  /// claiming a business promotes a member to business_owner).
+  Future<Map<String, dynamic>> getMe() async {
+    final res = await _network.getRequest(url: AppUrl.getMyProfile);
+    if (!res.isSuccess || res.body == null) {
+      throw Exception(res.errorMessage ?? 'Failed to load user');
+    }
+    return res.body!;
+  }
+
   // ---------------------------------------------------------------------------
   // Local session
   // ---------------------------------------------------------------------------

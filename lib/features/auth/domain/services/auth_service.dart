@@ -94,6 +94,18 @@ class AuthService {
     return body['message']?.toString() ?? 'Password reset successfully';
   }
 
+  /// Fetches the current user from `/auth/me`, persists it locally (so the
+  /// refreshed role survives an app restart) and returns it.
+  Future<UserModel> getMe() async {
+    final body = await _repository.getMe();
+    final data = body['data'];
+    final userJson = data is Map ? data['user'] : null;
+    if (userJson is! Map) throw Exception('User not found');
+    final user = UserModel.fromJson(Map<String, dynamic>.from(userJson));
+    await _repository.updateUser(user);
+    return user;
+  }
+
   Future<({UserModel? user, String? token, String? role})> loadSession() {
     return _repository.loadUserData();
   }

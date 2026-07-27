@@ -22,6 +22,21 @@ class AuthController extends GetxController {
   String? get role => roleRx.value;
   UserModel? get userModel => userModelRx.value;
 
+  // ── Role helpers ──────────────────────────────────────────────────────────
+  /// Roles allowed to use subscription features (buy/manage a plan).
+  static const _subscriptionRoles = {'business_owner', 'admin'};
+
+  bool get isBusinessOwner => role == 'business_owner';
+  bool get isAdmin => role == 'admin';
+
+  /// A plain member (role `user`) — cannot access subscription features until
+  /// they claim/create a business and are promoted to `business_owner`.
+  bool get isMember => !isBusinessOwner && !isAdmin;
+
+  /// Gate for the whole subscription feature (drawer entry, settings entry,
+  /// purchase). Reactive — reading it inside an Obx updates when the role does.
+  bool get canAccessSubscription => _subscriptionRoles.contains(role);
+
   @override
   void onInit() {
     super.onInit();
@@ -50,6 +65,19 @@ class AuthController extends GetxController {
   Future<void> updateUser(UserModel updatedUser) async {
     await _service.updateUser(updatedUser);
     userModelRx.value = updatedUser;
+  }
+
+  /// Re-fetches the current user from the backend and updates the session.
+  /// Call after actions that can change the role — e.g. claiming a business
+  /// promotes a member to business_owner, unlocking subscriptions.
+  Future<void> refreshUser() async {
+    try {
+      final user = await _service.getMe();
+      userModelRx.value = user;
+      roleRx.value = user.role;
+    } catch (_) {
+      // Non-fatal — keep the existing session on failure.
+    }
   }
 
   // Static (survives the dependency wipe below) so a burst of 401s all calling
