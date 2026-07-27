@@ -155,7 +155,29 @@ class MyBusinessRepository {
       files: {'image': image},
     );
     if (!res.isSuccess || res.body == null) {
-      throw Exception(res.errorMessage ?? 'Failed to submit ad');
+      throw Exception(
+        _parseErrorMessage(res.body) ??
+            res.errorMessage ??
+            'Failed to submit ad',
+      );
+    }
+    return res.body!;
+  }
+
+  Future<Map<String, dynamic>> getMyAds({
+    required int page,
+    required int limit,
+  }) async {
+    final res = await _network.getRequest(
+      url: AppUrl.myAds,
+      queryParams: {'page': page, 'limit': limit},
+    );
+    if (!res.isSuccess || res.body == null) {
+      throw Exception(
+        _parseErrorMessage(res.body) ??
+            res.errorMessage ??
+            'Failed to load ads',
+      );
     }
     return res.body!;
   }

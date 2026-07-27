@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:loci/core/constants/app_text_style.dart';
 import 'package:loci/core/utils/app_error_messages.dart';
 
 import '../theme/app_colors.dart';
@@ -7,12 +8,14 @@ import '../theme/app_colors.dart';
 class SnackbarService {
   /// App-level hook run before an error snackbar is shown. Return true to
   /// swallow the snackbar (e.g. the subscription paywall sheet handled it).
-  /// Wired in AppBindings so this core service stays feature-agnostic.
   static bool Function(String message)? errorInterceptor;
 
-  // Debounce to prevent spam (500ms cooldown)
-  static final Duration _debounceDuration = Duration(milliseconds: 500);
+  static const Duration _debounceDuration = Duration(milliseconds: 500);
   static DateTime _lastShown = DateTime.fromMillisecondsSinceEpoch(0);
+
+  static const Color _surface = Color(0xFF2C2C2E);
+  static const Color _textPrimary = Color(0xFFF5F5F7);
+  static const Color _textSecondary = Color(0xFFB0B0B5);
 
   static bool _canShow() {
     final now = DateTime.now();
@@ -23,48 +26,141 @@ class SnackbarService {
     return true;
   }
 
+  static bool _isGenericTitle(String title) {
+    return title == 'Success' ||
+        title == 'Warning' ||
+        title == 'Info' ||
+        title == 'Please wait';
+  }
+
+  static ({String primary, String? secondary}) _copyLines({
+    required String title,
+    required String message,
+  }) {
+    final trimmedTitle = title.trim();
+    final trimmedMessage = message.trim();
+
+    if (_isGenericTitle(trimmedTitle) || trimmedTitle.isEmpty) {
+      return (primary: trimmedMessage, secondary: null);
+    }
+
+    if (trimmedMessage.isEmpty || trimmedMessage == trimmedTitle) {
+      return (primary: trimmedTitle, secondary: null);
+    }
+
+    return (primary: trimmedTitle, secondary: trimmedMessage);
+  }
+
+  static Widget _content({
+    required String primary,
+    String? secondary,
+    required Color accent,
+    IconData? icon,
+    Widget? leading,
+  }) {
+    return Row(
+      children: [
+        Container(
+          width: 3,
+          height: secondary == null ? 32 : 40,
+          decoration: BoxDecoration(
+            color: accent,
+            borderRadius: BorderRadius.circular(2),
+          ),
+        ),
+        const SizedBox(width: 10),
+        if (leading != null) ...[
+          leading,
+          const SizedBox(width: 8),
+        ] else if (icon != null) ...[
+          Icon(icon, size: 18, color: _textPrimary.withValues(alpha: 0.9)),
+          const SizedBox(width: 8),
+        ],
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                primary,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: AppTextStyle.textSm(
+                  color: _textPrimary,
+                  weight: FontWeight.w500,
+                ),
+              ),
+              if (secondary != null) ...[
+                const SizedBox(height: 2),
+                Text(
+                  secondary,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppTextStyle.textXs(color: _textSecondary),
+                ),
+              ],
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
   static void _show({
     required String title,
     required String message,
-    required Color backgroundColor,
+    required Color accent,
     IconData? icon,
+    Widget? leading,
     SnackPosition position = SnackPosition.BOTTOM,
     Duration duration = const Duration(seconds: 3),
     VoidCallback? onTap,
     TextButton? mainButton,
+    bool isDismissible = true,
   }) {
     if (Get.isSnackbarOpen) return;
     if (!_canShow()) return;
 
+    final lines = _copyLines(title: title, message: message);
+
     Get.snackbar(
-      title,
-      message,
+      '',
+      '',
       snackPosition: position,
-      backgroundColor: backgroundColor,
-      colorText: Colors.white,
-      icon: icon != null ? Icon(icon, color: Colors.white) : null,
+      backgroundColor: _surface,
+      colorText: _textPrimary,
+      titleText: const SizedBox.shrink(),
+      messageText: _content(
+        primary: lines.primary,
+        secondary: lines.secondary,
+        accent: accent,
+        icon: icon,
+        leading: leading,
+      ),
       duration: duration,
-      borderRadius: 12,
-      margin: const EdgeInsets.all(16),
+      borderRadius: 10,
+      margin: const EdgeInsets.fromLTRB(16, 8, 16, 20),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
       snackStyle: SnackStyle.FLOATING,
-      forwardAnimationCurve: Curves.easeOutBack,
-      reverseAnimationCurve: Curves.easeInBack,
-      shouldIconPulse: icon != null,
-      isDismissible: true,
+      forwardAnimationCurve: Curves.easeOutCubic,
+      reverseAnimationCurve: Curves.easeInCubic,
+      animationDuration: const Duration(milliseconds: 220),
+      shouldIconPulse: false,
+      isDismissible: isDismissible,
       dismissDirection: DismissDirection.horizontal,
+      barBlur: 0,
+      maxWidth: 420,
       onTap: (_) => onTap?.call(),
       mainButton: mainButton,
     );
   }
 
-  // ===== Pre-built helpers =====
-
-  static void success(String message, {String title = "Success"}) {
+  static void success(String message, {String title = 'Success'}) {
     _show(
       title: title,
       message: message,
-      backgroundColor: Colors.green.shade600,
-      icon: Icons.check_circle,
+      accent: AppColors.primaryG500,
+      icon: Icons.check_rounded,
       position: SnackPosition.TOP,
     );
   }
@@ -72,27 +168,30 @@ class SnackbarService {
   static void error(String message, {String? title, VoidCallback? onRetry}) {
     final friendly = AppErrorMessages.sanitize(message);
 
-    // Give the app a chance to replace the snackbar with richer UI (e.g. the
-    // upgrade-required paywall for plan-entitlement rejections).
     if (errorInterceptor?.call(friendly) ?? false) return;
 
     _show(
       title: title ?? AppErrorMessages.titleFor(message: friendly),
       message: friendly,
-      backgroundColor: AppColors.danger,
+      accent: AppColors.danger,
       icon: AppErrorMessages.iconFor(message: friendly),
-      duration: const Duration(seconds: 5),
+      duration: const Duration(seconds: 4),
       mainButton: onRetry != null
           ? TextButton(
               onPressed: () {
                 Get.back();
                 Future.delayed(Duration.zero, onRetry);
               },
-              child: const Text(
-                "RETRY",
-                style: TextStyle(
-                  color: Colors.yellow,
-                  fontWeight: FontWeight.bold,
+              style: TextButton.styleFrom(
+                minimumSize: Size.zero,
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                padding: const EdgeInsets.symmetric(horizontal: 8),
+              ),
+              child: Text(
+                'Retry',
+                style: AppTextStyle.textXs(
+                  color: _textPrimary,
+                  weight: FontWeight.w600,
                 ),
               ),
             )
@@ -100,21 +199,21 @@ class SnackbarService {
     );
   }
 
-  static void warning(String message, {String title = "Warning"}) {
+  static void warning(String message, {String title = 'Warning'}) {
     _show(
       title: title,
       message: AppErrorMessages.sanitize(message),
-      backgroundColor: Colors.orange,
-      icon: Icons.warning,
+      accent: const Color(0xFFE8A020),
+      icon: Icons.error_outline_rounded,
     );
   }
 
-  static void info(String message, {String title = "Info"}) {
+  static void info(String message, {String title = 'Info'}) {
     _show(
       title: title,
       message: message,
-      backgroundColor: Colors.blue.shade600,
-      icon: Icons.info,
+      accent: const Color(0xFF5B9BD5),
+      icon: Icons.info_outline_rounded,
       position: SnackPosition.TOP,
     );
   }
@@ -130,9 +229,9 @@ class SnackbarService {
     TextButton? mainButton,
   }) {
     _show(
-      title: title ?? "",
+      title: title ?? '',
       message: message,
-      backgroundColor: backgroundColor,
+      accent: backgroundColor,
       icon: icon,
       position: position,
       duration: duration,
@@ -144,24 +243,21 @@ class SnackbarService {
   static void loading(String message) {
     if (!_canShow()) return;
 
-    Get.snackbar(
-      "Please wait",
-      message,
-      backgroundColor: Colors.grey.shade800,
-      colorText: Colors.white,
-      icon: const SizedBox(
-        height: 20,
-        width: 20,
+    _show(
+      title: 'Please wait',
+      message: message,
+      accent: _textSecondary,
+      leading: const SizedBox(
+        height: 16,
+        width: 16,
         child: CircularProgressIndicator(
           strokeWidth: 2,
-          valueColor: AlwaysStoppedAnimation(Colors.white),
+          valueColor: AlwaysStoppedAnimation(_textPrimary),
         ),
       ),
       duration: const Duration(seconds: 30),
-      snackPosition: SnackPosition.BOTTOM,
+      position: SnackPosition.BOTTOM,
       isDismissible: false,
-      shouldIconPulse: false,
-      barBlur: 0,
     );
   }
 

@@ -29,9 +29,12 @@ class SubscriptionRepository {
     return res.body!;
   }
 
-  Future<Map<String, dynamic>?> getMySubscription() async {
+  /// `businessId` is required — subscriptions are per-business, so the backend
+  /// now rejects this call with 400 without it (owners of >1 business would
+  /// otherwise get the wrong plan back).
+  Future<Map<String, dynamic>?> getMySubscription(String businessId) async {
     final NetworkResponse res = await _network.getRequest(
-      url: AppUrl.mySubscription,
+      url: '${AppUrl.mySubscription}?businessId=$businessId',
     );
     if (!res.isSuccess) {
       throw Exception(res.errorMessage ?? 'Failed to load subscription');
@@ -53,9 +56,11 @@ class SubscriptionRepository {
     return res.body!;
   }
 
-  Future<Map<String, dynamic>?> cancelSubscription() async {
+  /// Same per-business scoping as [getMySubscription] — `businessId` is required
+  /// so the right business's plan is cancelled (400 without it).
+  Future<Map<String, dynamic>?> cancelSubscription(String businessId) async {
     final NetworkResponse res = await _network.deleteRequest(
-      url: AppUrl.mySubscription,
+      url: '${AppUrl.mySubscription}?businessId=$businessId',
     );
     if (!res.isSuccess) {
       throw Exception(res.errorMessage ?? 'Failed to cancel subscription');

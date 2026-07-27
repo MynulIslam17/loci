@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:get/get.dart';
 import 'package:loci/features/my_business/data/models/business_profile_model.dart';
+import 'package:loci/features/my_business/data/models/my_ad_model.dart';
 import 'package:loci/features/my_business/domain/services/my_business_service.dart';
 
 class MyBusinessProfileController extends GetxController {
@@ -14,6 +15,9 @@ class MyBusinessProfileController extends GetxController {
 
   final RxnString errorMessage = RxnString();
   final Rxn<BusinessProfileModel> business = Rxn<BusinessProfileModel>();
+
+  final RxList<MyAdModel> myAds = <MyAdModel>[].obs;
+  final RxBool isLoadingAds = false.obs;
 
   void setLoading(bool value) {
     isLoading.value = value;
@@ -44,8 +48,26 @@ class MyBusinessProfileController extends GetxController {
   Future<void> silentRefresh(String businessId) async {
     try {
       business.value = await _service.getBusinessProfile(businessId);
+      await fetchMyAds(isRefresh: true);
     } catch (_) {
       // ignore silent errors
+    }
+  }
+
+  Future<void> fetchMyAds({bool isRefresh = false}) async {
+    try {
+      if (!isRefresh) {
+        isLoadingAds.value = true;
+      }
+      myAds.assignAll(await _service.getMyAds());
+    } catch (_) {
+      if (!isRefresh) {
+        myAds.clear();
+      }
+    } finally {
+      if (!isRefresh) {
+        isLoadingAds.value = false;
+      }
     }
   }
 

@@ -1,4 +1,5 @@
 import 'package:get/get.dart';
+import 'package:loci/core/utils/show_snackbar.dart';
 import 'package:loci/features/network/domain/services/network_service.dart';
 import 'package:loci/features/network/presentation/controllers/received_referrals_controller.dart';
 
@@ -32,11 +33,7 @@ class RespondReferralController extends GetxController {
         }
       }
     } catch (e) {
-      Get.snackbar(
-        'Error',
-        e.toString().replaceFirst('Exception: ', ''),
-        snackPosition: SnackPosition.BOTTOM,
-      );
+      SnackbarService.error(e.toString().replaceFirst('Exception: ', ''));
     } finally {
       _loadingMap[referralId] = null;
     }

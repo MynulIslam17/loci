@@ -67,4 +67,9 @@ class AllReviewsController extends GetxController {
 
     isPaginationLoading.value = false;
   }
+
+  void prependReview(ReviewModel review) {
+    reviews.removeWhere((existing) => existing.id == review.id);
+    reviews.insert(0, review);
+  }
 }

@@ -19,10 +19,16 @@ class SubscriptionCheckoutController extends GetxController {
   String? _businessId;
   final Rxn<MySubscriptionModel> _mySubscription = Rxn<MySubscriptionModel>();
   final RxBool _isCancelling = false.obs;
+  // True until the very first `/my` fetch settles. Lets the page show a shimmer
+  // instead of flashing the "no subscription" state (all cards "Subscribe", no
+  // banner) before the current plan is known — subsequent refetches (poll,
+  // post-purchase) don't flip this back, so they never re-shimmer.
+  final RxBool _isInitialLoad = true.obs;
 
   String? get processingPlanId => _processingPlanId.value;
   MySubscriptionModel? get mySubscription => _mySubscription.value;
   bool get isCancelling => _isCancelling.value;
+  bool get isLoadingSubscription => _isInitialLoad.value;
 
   bool isProcessing(String planId) => processingPlanId == planId;
 
@@ -150,9 +156,15 @@ class SubscriptionCheckoutController extends GetxController {
 
   Future<void> fetchMySubscription() async {
     try {
-      _mySubscription.value = await _service.getMySubscription();
+      // `GET /my` is per-business now — without the id the backend 400s.
+      final String? businessId = await _resolveBusinessId();
+      if (businessId == null) return;
+      _mySubscription.value = await _service.getMySubscription(businessId);
     } catch (_) {
       // Keep previous state on transient poll failures.
+    } finally {
+      // First load is done (success, no-business, or error) — reveal real UI.
+      _isInitialLoad.value = false;
     }
   }
 
@@ -160,7 +172,14 @@ class SubscriptionCheckoutController extends GetxController {
     if (isCancelling) return;
     _isCancelling.value = true;
     try {
-      await _service.cancelSubscription();
+      final String? businessId = await _resolveBusinessId();
+      if (businessId == null) {
+        SnackbarService.error(
+          'You need a business before managing a subscription.',
+        );
+        return;
+      }
+      await _service.cancelSubscription(businessId);
       // The banner reflects the cancellation — no toast on success.
       await fetchMySubscription();
     } catch (e) {

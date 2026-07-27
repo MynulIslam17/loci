@@ -22,8 +22,10 @@ class SubscriptionService {
     return PlanResponseModel.fromJson(body).data;
   }
 
-  Future<MySubscriptionModel?> getMySubscription() async {
-    final Map<String, dynamic>? body = await _repository.getMySubscription();
+  Future<MySubscriptionModel?> getMySubscription(String businessId) async {
+    final Map<String, dynamic>? body = await _repository.getMySubscription(
+      businessId,
+    );
     if (body == null) return null;
     final dynamic data = body['data'];
     if (data is Map<String, dynamic>) {
@@ -44,8 +46,10 @@ class SubscriptionService {
     return CheckoutModel.fromJson(data is Map<String, dynamic> ? data : body);
   }
 
-  Future<MySubscriptionModel?> cancelSubscription() async {
-    final Map<String, dynamic>? body = await _repository.cancelSubscription();
+  Future<MySubscriptionModel?> cancelSubscription(String businessId) async {
+    final Map<String, dynamic>? body = await _repository.cancelSubscription(
+      businessId,
+    );
     final dynamic data = body?['data'];
     if (data is Map<String, dynamic>) {
       return MySubscriptionModel.fromJson(data);

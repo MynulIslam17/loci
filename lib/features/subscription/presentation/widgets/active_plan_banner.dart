@@ -5,6 +5,7 @@ import 'package:loci/core/constants/app_text_style.dart';
 import 'package:loci/core/theme/theme_extention.dart';
 import 'package:loci/features/subscription/data/models/my_subscription_model.dart';
 import 'package:loci/features/subscription/presentation/controllers/subscription_checkout_controller.dart';
+import 'package:loci/shared/widgets/app_skeleton.dart';
 
 /// Banner shown at the top of the Subscription screen when the user already has
 /// a subscription. Surfaces status + credits + renew/end date and lets them
@@ -19,6 +20,11 @@ class ActivePlanBanner extends StatelessWidget {
     return Obx(() {
       final SubscriptionCheckoutController checkout =
           Get.find<SubscriptionCheckoutController>();
+      // While the first `/my` fetch is in flight, show a placeholder so the
+      // banner doesn't pop in after the page has already rendered.
+      if (checkout.isLoadingSubscription) {
+        return const _BannerShimmer();
+      }
       final MySubscriptionModel? sub = checkout.mySubscription;
       if (sub == null) return const SizedBox.shrink();
 
@@ -216,6 +222,42 @@ class ActivePlanBanner extends StatelessWidget {
             ),
             child: const Text('Cancel it'),
           ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Placeholder shown in the banner slot while the first `/my` fetch resolves —
+/// matches the loaded banner's footprint so nothing jumps when it settles.
+class _BannerShimmer extends StatelessWidget {
+  const _BannerShimmer();
+
+  @override
+  Widget build(BuildContext context) {
+    final ColorScheme colorScheme = context.colorScheme;
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16),
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.4),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: colorScheme.outline.withValues(alpha: 0.3)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              AppSkeleton.box(width: 40, height: 40),
+              const SizedBox(width: 12),
+              Expanded(child: AppSkeleton.box(width: 120, height: 16)),
+              const SizedBox(width: 12),
+              AppSkeleton.box(width: 44, height: 24),
+            ],
+          ),
+          const SizedBox(height: 14),
+          AppSkeleton.box(width: double.infinity, height: 42),
         ],
       ),
     );

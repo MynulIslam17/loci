@@ -1,11 +1,13 @@
 import 'dart:io';
 
 import 'package:loci/features/my_business/data/models/business_claim_request_model.dart';
+import 'package:loci/features/my_business/data/models/submit_ad_request_model.dart';
 import 'package:loci/features/my_business/data/models/business_profile_model.dart';
 import 'package:loci/features/my_business/data/models/business_review_model.dart';
 import 'package:loci/features/my_business/data/models/create_business_request_model.dart';
 import 'package:loci/features/my_business/data/models/create_business_response_model.dart';
 import 'package:loci/features/my_business/data/models/find_business_response.dart';
+import 'package:loci/features/my_business/data/models/my_ad_model.dart';
 import 'package:loci/features/my_business/data/models/my_business_list_model.dart';
 import 'package:loci/shared/models/paginated_response.dart';
 import 'package:loci/features/my_business/data/repositories/my_business_repository.dart';
@@ -113,30 +115,21 @@ class MyBusinessService {
     return PaginatedResponse<Business>.fromJson(body, Business.fromJson);
   }
 
-  Future<String> submitAd({
-    required String title,
-    required DateTime endDate,
-    required File image,
-    String? businessName,
-    String? location,
-    DateTime? startDate,
-  }) async {
-    final fields = <String, String>{
-      'title': title,
-      'endDate': endDate.toUtc().toIso8601String(),
-    };
-    if (businessName != null && businessName.isNotEmpty) {
-      fields['businessName'] = businessName;
-    }
-    if (location != null && location.isNotEmpty) {
-      fields['location'] = location;
-    }
-    if (startDate != null) {
-      fields['startDate'] = startDate.toUtc().toIso8601String();
-    }
-
-    final body = await _repository.submitAd(fields: fields, image: image);
+  Future<String> submitAd(SubmitAdRequestModel request) async {
+    final body = await _repository.submitAd(
+      fields: request.toFields(),
+      image: request.image,
+    );
     return body['message'] as String? ?? 'Ad submitted for review';
+  }
+
+  Future<List<MyAdModel>> getMyAds({int page = 1, int limit = 10}) async {
+    final body = await _repository.getMyAds(page: page, limit: limit);
+    final list = body['data'] as List<dynamic>? ?? [];
+    return list
+        .map((e) => MyAdModel.fromJson(e as Map<String, dynamic>))
+        .where((ad) => ad.isActive || ad.isPending)
+        .toList();
   }
 
   Future<String> createActivity({

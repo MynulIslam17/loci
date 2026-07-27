@@ -88,7 +88,7 @@ class ExploreActivityRepository {
       'q': query,
       'page': page,
       'limit': limit,
-      'businessId': ?businessId,
+      if (businessId != null && businessId.isNotEmpty) 'businessId': businessId,
     };
     final res = await _network.getRequest(
       url: AppUrl.searchTask,
@@ -146,5 +146,27 @@ class ExploreActivityRepository {
     if (!res.isSuccess) {
       throw Exception(res.errorMessage ?? 'Update failed');
     }
+  }
+
+  Future<Map<String, dynamic>> createActivity({
+    required String url,
+    required Map<String, String> body,
+    Map<String, File>? files,
+  }) async {
+    final res = await _network.multipartRequest(
+      url: url,
+      method: 'POST',
+      fields: body,
+      files: files,
+    );
+    if (!res.isSuccess) {
+      final message =
+          res.body?['errors']?['details']?[0] ??
+          res.body?['message'] ??
+          res.errorMessage ??
+          'Failed to create activity';
+      throw Exception(message.toString());
+    }
+    return res.body ?? const {};
   }
 }
