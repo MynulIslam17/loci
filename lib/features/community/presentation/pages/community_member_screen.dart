@@ -5,13 +5,13 @@ import 'package:loci/core/theme/theme_extention.dart';
 import 'package:loci/core/utils/show_snackbar.dart';
 import 'package:loci/features/community/presentation/controllers/community_member_controller.dart';
 import 'package:loci/features/community/presentation/widgets/add_community_member_sheet.dart';
+import 'package:loci/features/community/presentation/widgets/community_search_bar.dart';
 import 'package:loci/shared/widgets/empty_state.dart';
 import 'package:loci/features/community/presentation/widgets/member_card.dart';
 import 'package:loci/features/community/presentation/widgets/member_list_header.dart';
 import 'package:loci/features/community/presentation/widgets/member_shimmer.dart';
 import 'package:loci/shared/widgets/custom_appbar.dart';
 import 'package:loci/shared/widgets/custom_button.dart';
-import 'package:loci/shared/widgets/custom_text_field.dart';
 
 class CommunityMemberScreen extends StatefulWidget {
   const CommunityMemberScreen({super.key});
@@ -97,23 +97,14 @@ class _CommunityMemberScreenState extends State<CommunityMemberScreen> {
                 padding: const EdgeInsets.all(16),
                 child: Column(
                   children: [
-                    CustomTextField(
+                    CommunitySearchBar(
                       controller: _searchController,
                       hintText: 'Search members...',
-                      borderColor: colors.outline,
-                      fontSize: 14,
-                      textColor: colors.onSurface,
-                      hintTextColor: colors.onSurfaceVariant,
                       onChanged: memberController.onSearchChanged,
-                      showClearButton: true,
                       onClear: () {
                         _searchController.clear();
                         memberController.clearSearch();
                       },
-                      suffixIcon: Icon(
-                        Icons.search,
-                        color: colors.onSurfaceVariant,
-                      ),
                     ),
                     const SizedBox(height: 16),
                     CustomButton(

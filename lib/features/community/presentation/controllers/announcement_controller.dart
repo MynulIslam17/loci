@@ -19,6 +19,7 @@ class AnnouncementController extends GetxController {
   final currentType = AnnouncementType.question.obs;
 
   String? _communityId;
+  int _feedLoadGeneration = 0;
   final communityOwnerUserId = RxnString();
   final _cacheByType = <AnnouncementType, AnnouncementTypeCache>{};
   final _tabRevision = <AnnouncementType, RxInt>{};
@@ -88,7 +89,12 @@ class AnnouncementController extends GetxController {
       announcementsFor(currentType.value);
 
   Future<void> init(String communityId) async {
-    if (_communityId != communityId) {
+    final switching = _communityId != communityId;
+    if (switching) {
+      final hadPreviousCommunity = _communityId != null;
+      if (hadPreviousCommunity) {
+        _feedLoadGeneration++;
+      }
       _communityId = communityId;
       communityOwnerUserId.value = null;
       _cacheByType.clear();
@@ -96,6 +102,18 @@ class AnnouncementController extends GetxController {
       announcementMap.clear();
       votedOptionIds.clear();
       currentType.value = AnnouncementType.question;
+      final cache = _cacheFor(AnnouncementType.question);
+      cache.isLoading = true;
+      _bump(AnnouncementType.question);
+
+      final generation =
+          hadPreviousCommunity ? _feedLoadGeneration : null;
+      await fetchAnnouncements(
+        type: AnnouncementType.question,
+        isRefresh: true,
+        loadGeneration: generation,
+      );
+      return;
     }
 
     if (!hasLoadedFor(AnnouncementType.question)) {
@@ -116,21 +134,30 @@ class AnnouncementController extends GetxController {
   }
 
   void changeType(AnnouncementType type) {
-    if (currentType.value == type) return;
-    currentType.value = type;
-
-    if (!hasLoadedFor(type) && _communityId != null) {
-      final cache = _cacheFor(type);
-      cache.isLoading = true;
-      cache.errorMessage = null;
-      _bump(type);
-      fetchAnnouncements(type: type, isRefresh: true);
+    if (currentType.value == type) {
+      ensureLoaded(type);
+      return;
     }
+    currentType.value = type;
+    ensureLoaded(type);
+  }
+
+  /// Loads tab data the first time it is shown (or after cache clear).
+  void ensureLoaded(AnnouncementType type) {
+    if (_communityId == null || hasLoadedFor(type) || isLoadingFor(type)) {
+      return;
+    }
+    final cache = _cacheFor(type);
+    cache.isLoading = true;
+    cache.errorMessage = null;
+    _bump(type);
+    fetchAnnouncements(type: type, isRefresh: true);
   }
 
   Future<void> fetchAnnouncements({
     required AnnouncementType type,
     bool isRefresh = false,
+    int? loadGeneration,
   }) async {
     if (_communityId == null) return;
 
@@ -155,14 +182,23 @@ class AnnouncementController extends GetxController {
         search: cache.searchQuery.isNotEmpty ? cache.searchQuery : null,
       );
 
+      if (loadGeneration != null && loadGeneration != _feedLoadGeneration) {
+        return;
+      }
+
       _appendAnnouncements(result.data, cache);
       cache.meta = result.meta;
       cache.hasLoaded = true;
     } catch (e) {
+      if (loadGeneration != null && loadGeneration != _feedLoadGeneration) {
+        return;
+      }
       cache.errorMessage = e.toString().replaceFirst('Exception: ', '');
     } finally {
       cache.isLoading = false;
-      _bump(type);
+      if (loadGeneration == null || loadGeneration == _feedLoadGeneration) {
+        _bump(type);
+      }
     }
   }
 

@@ -5,6 +5,12 @@ import 'package:loci/features/community/presentation/widgets/community_screen_ta
 import 'package:loci/features/community/presentation/widgets/community_screen_tab_content.dart';
 import 'package:loci/features/community/presentation/widgets/community_ui_constants.dart';
 
+/// Community hub scaffold body.
+///
+/// The sliver structure is intentionally *stable*: the header scrolls away
+/// while the tab bar stays pinned, in both the loading and loaded states.
+/// The header widgets render their own shimmer internally, so we never swap
+/// the sliver tree (doing so made the tab bar jump between pinned/unpinned).
 class CommunityScreenBody extends StatelessWidget {
   const CommunityScreenBody({
     super.key,
@@ -20,7 +26,7 @@ class CommunityScreenBody extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return NestedScrollView(
-      headerSliverBuilder: (_, _) => [
+      headerSliverBuilder: (context, innerBoxIsScrolled) => [
         CommunityScreenHeader(
           role: screen.role,
           communityName: screen.communityName,
