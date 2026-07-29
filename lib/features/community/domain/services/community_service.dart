@@ -136,6 +136,22 @@ class CommunityService {
     return CommunityMemberResponseModel.fromJson(body);
   }
 
+  Future<void> addCommunityMember({
+    required String communityId,
+    required String email,
+    String? note,
+  }) async {
+    await _repository.addCommunityMember(
+      communityId: communityId,
+      email: email,
+      note: note,
+    );
+  }
+
+  Future<String> exportCommunityMembers({required String communityId}) async {
+    return _repository.exportCommunityMembers(communityId: communityId);
+  }
+
   Future<void> removeMember({
     required String communityId,
     required String memberId,

@@ -32,10 +32,13 @@ class PostCommentSection extends StatelessWidget {
   Widget build(BuildContext context) {
     final colorScheme = context.colorScheme;
 
+    final keyboardInset = MediaQuery.viewInsetsOf(context).bottom;
+    final bottomInset = keyboardInset.isFinite
+        ? keyboardInset.clamp(0.0, MediaQuery.sizeOf(context).height * 0.5)
+        : 0.0;
+
     return Padding(
-      padding: EdgeInsets.only(
-        bottom: MediaQuery.of(context).viewInsets.bottom,
-      ),
+      padding: EdgeInsets.only(bottom: bottomInset),
       child: Container(
         height: MediaQuery.of(context).size.height * 0.75,
         padding: const EdgeInsets.all(16),

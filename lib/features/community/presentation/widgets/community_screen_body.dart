@@ -3,18 +3,19 @@ import 'package:loci/features/community/presentation/controllers/community_scree
 import 'package:loci/features/community/presentation/widgets/community_screen_header.dart';
 import 'package:loci/features/community/presentation/widgets/community_screen_tab_bar.dart';
 import 'package:loci/features/community/presentation/widgets/community_screen_tab_content.dart';
+import 'package:loci/features/community/presentation/widgets/community_ui_constants.dart';
 
 class CommunityScreenBody extends StatelessWidget {
   const CommunityScreenBody({
     super.key,
     required this.screen,
     required this.tabController,
-    required this.searchController,
+    required this.searchControllers,
   });
 
   final CommunityScreenController screen;
   final TabController tabController;
-  final TextEditingController searchController;
+  final List<TextEditingController> searchControllers;
 
   @override
   Widget build(BuildContext context) {
@@ -26,10 +27,13 @@ class CommunityScreenBody extends StatelessWidget {
         ),
         CommunityScreenTabBar(controller: tabController),
       ],
-      body: CommunityScreenTabContent(
-        screen: screen,
-        tabController: tabController,
-        searchController: searchController,
+      body: Padding(
+        padding: CommunityUi.screenPadding,
+        child: CommunityScreenTabContent(
+          screen: screen,
+          tabController: tabController,
+          searchControllers: searchControllers,
+        ),
       ),
     );
   }

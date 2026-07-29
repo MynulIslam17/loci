@@ -31,7 +31,7 @@ import 'package:loci/features/home/presentation/controllers/post_question_contro
 import 'package:loci/features/home/presentation/controllers/question_list_controller.dart';
 import 'package:loci/features/main_nav/presentation/controllers/nav_controller.dart';
 import 'package:loci/shared/widgets/feed/poll_bottom_sheet.dart';
-import 'package:loci/shared/widgets/feed/post_comment_section.dart';
+import 'package:loci/shared/widgets/feed/post_comment_bottom_sheet.dart';
 import 'package:loci/shared/widgets/feed/post_card.dart';
 import 'package:loci/shared/models/post_card_view_model.dart';
 import 'home_navigator.dart';
@@ -143,28 +143,11 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _showCommentSheet(String questionId) {
-    final inputController = TextEditingController();
-    _commentCtrl.fetchComments(questionId: questionId);
-
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (_) => Obx(
-        () => PostCommentSection(
-          comments: _commentCtrl.comments.toList(),
-          controller: inputController,
-          scrollController: _commentCtrl.scrollController,
-          paginationLoading: _commentCtrl.isPaginating.value,
-          currentUserImage: _authController.userModel?.avatar ?? '',
-          isLoading: _commentCtrl.isLoading.value,
-          isSending: _commentCtrl.isPosting.value,
-          onSendTap: (text) =>
-              _commentCtrl.postComment(content: text, questionId: questionId),
-        ),
-      ),
+    PostCommentBottomSheet.showForHomeQuestion(
+      context,
+      questionId: questionId,
+      commentController: _commentCtrl,
+      currentUserImage: _authController.userModel?.avatar ?? '',
     );
   }
 

@@ -217,6 +217,30 @@ class CommunityRepository {
     return res.body!;
   }
 
+  Future<Map<String, dynamic>> addCommunityMember({
+    required String communityId,
+    required String email,
+    String? note,
+  }) async {
+    final res = await _network.postRequest(
+      url: AppUrl.communityMember(communityId),
+      body: {
+        'email': email.trim(),
+        if (note != null && note.trim().isNotEmpty) 'note': note.trim(),
+      },
+    );
+    if (!res.isSuccess) {
+      throw Exception(
+        res.body?['message'] ?? res.errorMessage ?? 'Failed to add member',
+      );
+    }
+    return res.body ?? {};
+  }
+
+  Future<String> exportCommunityMembers({required String communityId}) async {
+    return _network.getTextBody(url: AppUrl.exportCommunityMembers(communityId));
+  }
+
   Future<void> removeMember({
     required String communityId,
     required String memberId,

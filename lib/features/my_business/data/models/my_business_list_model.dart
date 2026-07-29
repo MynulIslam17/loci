@@ -28,6 +28,8 @@ class BusinessModel {
   final String? category;
   final String? description;
   final String? logo;
+  final String? location;
+  final List<String> photos;
 
   BusinessModel({
     required this.id,
@@ -35,15 +37,21 @@ class BusinessModel {
     this.category,
     this.description,
     this.logo,
+    this.location,
+    this.photos = const [],
   });
 
   factory BusinessModel.fromJson(Map<String, dynamic> json) {
     return BusinessModel(
       id: json['_id'] ?? '',
       name: json['name'] ?? '',
-      category: json['category'], // nullable
-      description: json['description'], // nullable
-      logo: json['logo'], // nullable
+      category: json['category'],
+      description: json['description'],
+      logo: json['logo'],
+      location: json['location']?.toString(),
+      photos: json['photos'] != null
+          ? List<String>.from(json['photos'])
+          : const [],
     );
   }
 
@@ -53,6 +61,8 @@ class BusinessModel {
     String? category,
     String? description,
     String? logo,
+    String? location,
+    List<String>? photos,
   }) {
     return BusinessModel(
       id: id ?? this.id,
@@ -60,6 +70,8 @@ class BusinessModel {
       category: category ?? this.category,
       description: description ?? this.description,
       logo: logo ?? this.logo,
+      location: location ?? this.location,
+      photos: photos ?? this.photos,
     );
   }
 }

@@ -59,11 +59,23 @@ class CommunityScreenController extends GetxController {
     _loadAuthorContext(id);
   }
 
-  void handleTabChange(TabController tabs, TextEditingController searchField) {
+  /// Clears all searchable tabs (fields + API cache).
+  void resetAllSearchFields(List<TextEditingController> fields) {
+    assert(fields.length >= tabCount);
+    for (var i = 0; i < tabCount; i++) {
+      final type = tabTypes[i];
+      if (type == AnnouncementType.question) continue;
+      if (fields[i].text.isNotEmpty) {
+        fields[i].clear();
+      }
+      _announcements.clearSearch(type);
+    }
+  }
+
+  void handleTabChange(TabController tabs, List<TextEditingController> fields) {
     if (tabs.indexIsChanging) return;
-    final type = tabTypes[tabs.index];
-    _syncSearchField(type, searchField);
-    _announcements.changeType(type);
+    resetAllSearchFields(fields);
+    _announcements.changeType(tabTypes[tabs.index]);
   }
 
   void onSearchChanged(TabController tabs, String value) {
@@ -199,15 +211,5 @@ class CommunityScreenController extends GetxController {
       ownerId = _auth.userModel?.id;
     }
     _announcements.setCommunityOwnerUserId(ownerId);
-  }
-
-  void _syncSearchField(AnnouncementType type, TextEditingController search) {
-    if (type == AnnouncementType.question) return;
-    final query = _announcements.searchQueryFor(type);
-    if (search.text == query) return;
-    search.value = TextEditingValue(
-      text: query,
-      selection: TextSelection.collapsed(offset: query.length),
-    );
   }
 }
