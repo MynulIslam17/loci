@@ -1,7 +1,7 @@
 import 'package:get/get.dart';
 import 'package:loci/core/enums/checkin_status.dart';
 import 'package:loci/core/enums/rsvp_status.dart';
-import 'package:loci/features/event/data/models/event_details_model.dart';
+import 'package:loci/features/event/data/models/event_detail_model.dart';
 import 'package:loci/features/event/domain/services/event_service.dart';
 
 class EventDetailsController extends GetxController {

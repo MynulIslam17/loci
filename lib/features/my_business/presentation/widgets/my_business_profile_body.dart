@@ -6,6 +6,7 @@ import 'package:loci/core/constants/app_text_style.dart';
 import 'package:loci/core/theme/theme_extention.dart';
 import 'package:loci/features/my_business/data/models/business_profile_model.dart';
 import 'package:loci/features/my_business/presentation/controllers/my_business_profile_controller.dart';
+import 'package:loci/features/my_business/presentation/controllers/business_review_controller.dart';
 import 'package:loci/features/my_business/presentation/widgets/my_business_ads_section.dart';
 import 'package:loci/features/my_business/presentation/widgets/my_business_description_card.dart';
 import 'package:loci/features/my_business/presentation/widgets/my_business_photo_grid.dart';
@@ -128,11 +129,23 @@ class MyBusinessProfileBody extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 25),
-            MyBusinessSectionHeader(
-              title: 'Reviews',
-              showViewAll: true,
-              onViewAllTap: onViewAllReviewsTap,
-            ),
+            Obx(() {
+              final reviewCtrl = Get.find<MyBusinessReviewController>();
+              const previewLimit = 2;
+              final loaded = reviewCtrl.reviews.length;
+              final total = business.reviewCount;
+              final isLoading =
+                  reviewCtrl.isLoading.value && loaded == 0;
+              final showViewAll = !isLoading &&
+                  loaded > 0 &&
+                  (loaded > previewLimit || total > previewLimit);
+
+              return MyBusinessSectionHeader(
+                title: 'Reviews',
+                showViewAll: showViewAll,
+                onViewAllTap: onViewAllReviewsTap,
+              );
+            }),
             const MyBusinessReviewsPreview(),
             const SizedBox(height: 50),
           ],

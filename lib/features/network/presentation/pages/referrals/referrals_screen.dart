@@ -45,12 +45,6 @@ class _ReferralsScreenState extends State<ReferralsScreen>
     _receivedController.onSearchChanged(query);
   }
 
-  void _clearSearch() {
-    _searchController.clear();
-    _sentController.clearSearch();
-    _receivedController.clearSearch();
-  }
-
   @override
   Widget build(BuildContext context) {
     final color = context.colorScheme;
@@ -73,24 +67,18 @@ class _ReferralsScreenState extends State<ReferralsScreen>
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 /// SEARCH
-                ValueListenableBuilder<TextEditingValue>(
-                  valueListenable: _searchController,
-                  builder: (_, value, __) => CustomTextField(
-                    controller: _searchController,
-                    hintText: "Search Referral ..",
-                    textColor: color.onSurface,
-                    borderColor: color.outline,
-                    onChanged: _onSearchChanged,
-                    suffixIcon: value.text.isNotEmpty
-                        ? IconButton(
-                            icon: Icon(
-                              Icons.close,
-                              color: color.onSurfaceVariant,
-                            ),
-                            onPressed: _clearSearch,
-                          )
-                        : Icon(Icons.search, color: color.onSurfaceVariant),
-                  ),
+                CustomTextField(
+                  controller: _searchController,
+                  hintText: "Search Referral ..",
+                  textColor: color.onSurface,
+                  borderColor: color.outline,
+                  onChanged: _onSearchChanged,
+                  showClearButton: true,
+                  onClear: () {
+                    _sentController.clearSearch();
+                    _receivedController.clearSearch();
+                  },
+                  suffixIcon: Icon(Icons.search, color: color.onSurfaceVariant),
                 ),
 
                 const SizedBox(height: 20),

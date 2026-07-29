@@ -49,8 +49,8 @@ class _MyBusinessAdsCarouselState extends State<MyBusinessAdsCarousel> {
 
     final colorScheme = context.colorScheme;
     final usePeekLayout = ads.length >= 3;
-    // Extra room so [enlargeCenterPage] scale does not clip the card.
-    final slideHeight = _maxSlideHeight(context) + 28;
+    // Headroom for the [enlargeCenterPage] scale on the centre card.
+    final slideHeight = _maxSlideHeight(context) + 14;
 
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -82,24 +82,36 @@ class _MyBusinessAdsCarouselState extends State<MyBusinessAdsCarousel> {
             );
           },
         ),
-        const SizedBox(height: 8),
-        Obx(
-          () => Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: List.generate(
-              ads.length,
-              (index) => AnimatedContainer(
-                duration: const Duration(milliseconds: 280),
-                margin: const EdgeInsets.symmetric(horizontal: 3),
-                height: 6,
-                width: _currentIndex.value == index ? 18 : 6,
-                decoration: BoxDecoration(
-                  color: _currentIndex.value == index
-                      ? colorScheme.primary
-                      : colorScheme.outlineVariant,
-                  borderRadius: BorderRadius.circular(4),
-                ),
-              ),
+        const SizedBox(height: 6),
+        // Page dots below the carousel, inside a theme-aware pill so they stay
+        // visible on both light and dark surfaces.
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+          decoration: BoxDecoration(
+            color: colorScheme.surfaceContainerHighest,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(
+              color: colorScheme.outlineVariant.withValues(alpha: 0.5),
+            ),
+          ),
+          child: Obx(
+            () => Row(
+              mainAxisSize: MainAxisSize.min,
+              children: List.generate(ads.length, (index) {
+                final bool selected = _currentIndex.value == index;
+                return AnimatedContainer(
+                  duration: const Duration(milliseconds: 280),
+                  margin: const EdgeInsets.symmetric(horizontal: 3),
+                  height: 6,
+                  width: selected ? 18 : 6,
+                  decoration: BoxDecoration(
+                    color: selected
+                        ? colorScheme.primary
+                        : colorScheme.onSurfaceVariant.withValues(alpha: 0.4),
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                );
+              }),
             ),
           ),
         ),

@@ -65,7 +65,9 @@ class EventModel {
       date: json['eventDate'] ?? '',
       eventTime: json['eventTime'] ?? '',
       location: json['location'] ?? '',
-      goingCount: json['rsvpCount'] ?? 0,
+      goingCount: json['rsvpCount'] ??
+          (json['rsvpCounts'] as Map<String, dynamic>?)?['going'] ??
+          0,
       maxAttendees: json['maxParticipants'] ?? 0,
       activityType: json['activityType'],
       organizerName: json['organizerBusiness']?['name'] ?? '',

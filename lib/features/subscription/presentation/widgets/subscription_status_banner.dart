@@ -66,9 +66,7 @@ class SubscriptionStatusBanner extends StatelessWidget {
     }
 
     if (sub.isActive) {
-      final String renewalText = sub.cancelAtPeriodEnd && dateLabel != null
-          ? 'Ends on $dateLabel'
-          : dateLabel != null
+      final String renewalText = dateLabel != null
           ? 'Renews on $dateLabel'
           : 'Active plan';
 
@@ -105,12 +103,14 @@ class SubscriptionStatusBanner extends StatelessWidget {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  '${sub.heroSpotlightCredits} spotlight credits (5 credits per ad)',
+                  // `credits.remaining` is the pooled balance (plan + packs);
+                  // `heroSpotlightCredits` is only this row and is the fallback.
+                  '${sub.credits?.remaining ?? sub.heroSpotlightCredits} spotlight credits (5 credits per ad)',
                   style: AppTextStyle.textXs(
                     color: colorScheme.onPrimaryContainer,
                   ),
                 ),
-                if (onCancel != null && !sub.cancelAtPeriodEnd) ...[
+                if (onCancel != null) ...[
                   const SizedBox(height: 12),
                   Align(
                     alignment: Alignment.centerRight,

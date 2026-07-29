@@ -1,4 +1,3 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:loci/shared/widgets/custom_image_container.dart';
 
@@ -10,6 +9,7 @@ class UserPostHeader extends StatelessWidget {
   final String date;
   final String category;
   final String imagePath;
+  final bool isModerator;
 
   const UserPostHeader({
     super.key,
@@ -17,6 +17,7 @@ class UserPostHeader extends StatelessWidget {
     required this.date,
     required this.category,
     required this.imagePath,
+    this.isModerator = false,
   });
 
   @override
@@ -49,16 +50,26 @@ class UserPostHeader extends StatelessWidget {
                       ),
                     ),
                   ),
-                  const SizedBox(width: 8),
-                  const Text(
-                    "•",
-                    style: TextStyle(color: AppColors.neutral300),
-                  ),
-                  const SizedBox(width: 8),
-                  Text(
-                    category,
-                    style: AppTextStyle.textXs(color: AppColors.primaryG500),
-                  ),
+                  if (isModerator) ...[
+                    const SizedBox(width: 8),
+                    _ModeratorTag(colorScheme: theme),
+                  ],
+                  if (category.isNotEmpty) ...[
+                    const SizedBox(width: 8),
+                    const Text(
+                      "•",
+                      style: TextStyle(color: AppColors.neutral300),
+                    ),
+                    const SizedBox(width: 8),
+                    Flexible(
+                      child: Text(
+                        category,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: AppTextStyle.textXs(color: AppColors.primaryG500),
+                      ),
+                    ),
+                  ],
                 ],
               ),
               const SizedBox(height: 2),
@@ -70,6 +81,30 @@ class UserPostHeader extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+class _ModeratorTag extends StatelessWidget {
+  const _ModeratorTag({required this.colorScheme});
+
+  final ColorScheme colorScheme;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+      decoration: BoxDecoration(
+        color: colorScheme.primaryContainer,
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Text(
+        'Moderator',
+        style: AppTextStyle.textXs(
+          weight: FontWeight.w600,
+          color: colorScheme.primary,
+        ),
+      ),
     );
   }
 }

@@ -69,31 +69,19 @@ class _CommunityMemberScreenState extends State<CommunityMemberScreen> {
                 padding: const EdgeInsets.all(16),
                 child: Column(
                   children: [
-                    ValueListenableBuilder<TextEditingValue>(
-                      valueListenable: _searchController,
-                      builder: (_, value, __) => CustomTextField(
-                        controller: _searchController,
-                        hintText: 'Search members...',
-                        borderColor: colors.outline,
-                        fontSize: 14,
-                        textColor: colors.onSurface,
-                        hintTextColor: colors.onSurfaceVariant,
-                        onChanged: memberController.onSearchChanged,
-                        suffixIcon: value.text.isNotEmpty
-                            ? IconButton(
-                                icon: Icon(
-                                  Icons.close,
-                                  color: colors.onSurfaceVariant,
-                                ),
-                                onPressed: () {
-                                  _searchController.clear();
-                                  memberController.clearSearch();
-                                },
-                              )
-                            : Icon(
-                                Icons.search,
-                                color: colors.onSurfaceVariant,
-                              ),
+                    CustomTextField(
+                      controller: _searchController,
+                      hintText: 'Search members...',
+                      borderColor: colors.outline,
+                      fontSize: 14,
+                      textColor: colors.onSurface,
+                      hintTextColor: colors.onSurfaceVariant,
+                      onChanged: memberController.onSearchChanged,
+                      showClearButton: true,
+                      onClear: memberController.clearSearch,
+                      suffixIcon: Icon(
+                        Icons.search,
+                        color: colors.onSurfaceVariant,
                       ),
                     ),
                     const SizedBox(height: 16),

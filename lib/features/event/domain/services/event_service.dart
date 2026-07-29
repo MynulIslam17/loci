@@ -1,5 +1,5 @@
-import 'package:loci/features/event/data/models/event_details_model.dart';
-import 'package:loci/features/event/data/models/event_model.dart';
+import 'package:loci/features/event/data/models/event_detail_model.dart';
+import 'package:loci/features/event/data/models/event_list_model.dart';
 import 'package:loci/features/event/data/repositories/event_repository.dart';
 
 /// Domain orchestration for events. Controllers call this — never NetworkCaller.

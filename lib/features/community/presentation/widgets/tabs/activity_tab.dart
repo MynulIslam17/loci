@@ -1,68 +1,76 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:loci/core/enums/announcement_type.dart';
 import 'package:loci/core/enums/acitivty_ref_type.dart';
 import 'package:loci/core/utils/time_parser.dart';
+import 'package:loci/features/community/data/models/announcement_author_display.dart';
 import 'package:loci/features/community/data/models/announcement_model.dart';
 import 'package:loci/features/community/presentation/controllers/announcement_controller.dart';
 import 'package:loci/features/event/presentation/controllers/rsvp_controller.dart';
 import 'package:loci/features/community/presentation/widgets/activity_card.dart';
-import 'package:loci/features/community/presentation/widgets/community_search_bar.dart';
 import 'package:loci/features/event/presentation/widgets/event_card.dart';
 import 'package:loci/features/routes/presentation/widgets/route_card.dart';
 import 'package:loci/features/raffles/presentation/widgets/raffle_card.dart';
 import 'package:loci/routes/app_routes.dart';
 
-class ActivityTab extends StatelessWidget {
-  final TextEditingController searchController;
-  final void Function(String postId) onCommentTap;
-  final void Function(String postId) onLikeTap;
-  final void Function(String eventId, RSVPController rsvpController) onRsvp;
-
+class ActivityTab extends StatefulWidget {
   const ActivityTab({
     super.key,
-    required this.searchController,
     required this.onCommentTap,
     required this.onLikeTap,
     required this.onRsvp,
   });
 
+  final void Function(String postId) onCommentTap;
+  final void Function(String postId) onLikeTap;
+  final void Function(String eventId, RSVPController rsvpController) onRsvp;
+
+  @override
+  State<ActivityTab> createState() => _ActivityTabState();
+}
+
+class _ActivityTabState extends State<ActivityTab>
+    with AutomaticKeepAliveClientMixin {
+  static const _tabType = AnnouncementType.activity;
+
+  @override
+  bool get wantKeepAlive => true;
+
   @override
   Widget build(BuildContext context) {
+    super.build(context);
     return Obx(() {
       final ctrl = Get.find<AnnouncementController>();
-      final announcements = ctrl.announcements;
+      ctrl.revisionFor(_tabType).value;
       ctrl.announcementMap.length;
+      ctrl.communityOwnerUserId.value;
+      final announcements = ctrl.announcementsFor(_tabType);
 
-      return Column(
-        children: [
-          CommunitySearchBar(
-            controller: searchController,
-            hintText: "Search activity",
-          ),
-          const SizedBox(height: 16),
-          ListView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            itemCount: announcements.length,
-            itemBuilder: (context, index) {
-              final activity = announcements[index];
-              final business = activity.business;
+      return ListView.builder(
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
+        itemCount: announcements.length,
+        itemBuilder: (context, index) {
+          final activity = announcements[index];
+              final author = AnnouncementAuthorDisplay.from(
+                activity,
+                communityOwnerUserId: ctrl.communityOwnerUserId.value,
+              );
               return CommunityActivityCard(
-                profileImage: business?.logo ?? "",
-                businessName: business?.name ?? "",
+                profileImage: author.avatarUrl,
+                displayName: author.displayName,
+                isModerator: author.isModerator,
                 description: activity.details,
                 likes: (activity.likeCount ?? 0).toString(),
                 comments: (activity.commentCount ?? 0).toString(),
                 isLiked: activity.isLiked,
                 activityContent: _buildActivityContent(activity),
-                onLikeTap: () => onLikeTap(activity.id),
-                onCommentTap: () => onCommentTap(activity.id),
+                onLikeTap: () => widget.onLikeTap(activity.id),
+                onCommentTap: () => widget.onCommentTap(activity.id),
                 dateTime: formatDateTime(activity.createdAt),
               );
             },
-          ),
-        ],
-      );
+          );
     });
   }
 
@@ -86,7 +94,7 @@ class ActivityTab extends StatelessWidget {
             AppRoutes.eventDetails,
             arguments: {'eventId': event.id, "eventTitle": event.title},
           ),
-          onRSVP: () => onRsvp(event.id, rsvpController),
+          onRSVP: () => widget.onRsvp(event.id, rsvpController),
           isLoading:
               rsvpController.isLoading &&
               rsvpController.loadingEventId == event.id,

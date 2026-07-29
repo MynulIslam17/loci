@@ -1,5 +1,5 @@
 import 'package:get/get.dart';
-import 'package:loci/features/raffles/data/models/raffles_details_model.dart';
+import 'package:loci/features/raffles/data/models/raffle_detail_model.dart';
 import 'package:loci/features/raffles/domain/services/raffles_service.dart';
 
 class RaffleDetailsController extends GetxController {

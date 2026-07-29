@@ -11,9 +11,15 @@ class BusinessProfileReviewsSection extends StatelessWidget {
   const BusinessProfileReviewsSection({
     super.key,
     required this.businessId,
+    this.totalReviewCount,
   });
 
   final String businessId;
+
+  /// From business profile when available; used with loaded list for "View all".
+  final int? totalReviewCount;
+
+  static const int _previewLimit = 3;
 
   @override
   Widget build(BuildContext context) {
@@ -23,13 +29,19 @@ class BusinessProfileReviewsSection extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Obx(() {
-          final hasMoreThanThree = reviewController.reviews.length > 3;
+          final loaded = reviewController.reviews.length;
+          final total = totalReviewCount ?? loaded;
+          final isLoading =
+              reviewController.isLoading.value && loaded == 0;
+          final showViewAll = !isLoading &&
+              loaded > 0 &&
+              (loaded > _previewLimit || total > _previewLimit);
 
           return Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text('Reviews', style: AppTextStyle.textXl()),
-              if (hasMoreThanThree)
+              if (showViewAll)
                 TextButton(
                   onPressed: () {
                     Get.toNamed(
@@ -49,7 +61,7 @@ class BusinessProfileReviewsSection extends StatelessWidget {
             return const ReviewsShimmer(itemCount: 2);
           }
 
-          final reviews = reviewController.getLimited(3);
+          final reviews = reviewController.getLimited(_previewLimit);
 
           if (reviews.isEmpty) {
             return const EmptyState(

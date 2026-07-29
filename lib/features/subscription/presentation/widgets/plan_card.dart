@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:intl/intl.dart';
 import 'package:loci/core/theme/theme_extention.dart';
 import 'package:loci/core/constants/app_text_style.dart';
 import 'package:loci/features/subscription/data/models/my_subscription_model.dart';
 import 'package:loci/features/subscription/data/models/plan_response_model.dart';
 import 'package:loci/features/subscription/presentation/controllers/subscription_checkout_controller.dart';
+import 'package:loci/shared/widgets/confirm_dialog.dart';
 
 class PlanCard extends StatelessWidget {
   final PlanModel plan;
@@ -38,6 +40,65 @@ class PlanCard extends StatelessWidget {
     if (sub == null) return false;
     final String? pendingId = sub.pendingPlanId;
     return pendingId != null && pendingId == plan.id;
+  }
+
+  /// Button label for a scheduled downgrade's target card. The switch takes
+  /// effect at the current plan's period end, so show that date when known.
+  String _pendingLabel(MySubscriptionModel? sub) {
+    final String? iso = sub?.currentPeriodEnd;
+    final DateTime? date = iso != null && iso.isNotEmpty
+        ? DateTime.tryParse(iso)
+        : null;
+    if (date == null) return 'Starts at next renewal';
+    return 'Starts ${DateFormat('MMM d').format(date.toLocal())}';
+  }
+
+  /// An upgrade is tapping a *recurring* plan that costs more than the active
+  /// paid plan. The backend applies these in place and charges the prorated
+  /// difference to the saved card without a PaymentSheet, so we confirm first.
+  ///
+  /// One-time credit packs are excluded (`isMonthly`): they stack on top and
+  /// don't touch the recurring plan, so they're never an "upgrade" and must go
+  /// straight to the PaymentSheet, not the recurring-upgrade dialog.
+  bool _isUpgrade(MySubscriptionModel? sub) {
+    return isMonthly &&
+        sub != null &&
+        sub.isActive &&
+        sub.amount > 0 &&
+        plan.amount > sub.amount;
+  }
+
+  /// Plan price for the confirm dialog copy, e.g. "$75/month" or "$75".
+  String get _formattedPrice {
+    final double dollars = plan.amount / 100;
+    final String formatted = dollars == dollars.roundToDouble()
+        ? dollars.toStringAsFixed(0)
+        : dollars.toStringAsFixed(2);
+    return isMonthly ? '\$$formatted/month' : '\$$formatted';
+  }
+
+  /// Confirms an upgrade (which charges immediately) before starting checkout;
+  /// new/first-time paid plans skip straight to Stripe's PaymentSheet, which is
+  /// its own confirmation.
+  Future<void> _onSubscribePressed(
+    BuildContext context,
+    SubscriptionCheckoutController checkout,
+  ) async {
+    if (_isUpgrade(checkout.mySubscription)) {
+      final bool confirmed = await showConfirmDialog(
+        context,
+        title: 'Upgrade to ${plan.name}?',
+        message:
+            'You\'ll switch to ${plan.name} now and be charged a prorated '
+            'amount for the rest of this billing cycle, then $_formattedPrice '
+            'going forward.',
+        confirmText: 'Upgrade',
+        icon: Icons.workspace_premium_rounded,
+      );
+      if (!confirmed) return;
+    }
+
+    await checkout.subscribe(plan.id);
   }
 
   @override
@@ -305,7 +366,7 @@ class PlanCard extends StatelessWidget {
                         ),
                         const SizedBox(width: 8),
                         Text(
-                          "Starts at next renewal",
+                          _pendingLabel(checkout.mySubscription),
                           style: AppTextStyle.textSm(
                             color: colorScheme.primary,
                             weight: FontWeight.w700,
@@ -337,7 +398,7 @@ class PlanCard extends StatelessWidget {
                     // Disable every card's button while any purchase is in flight.
                     onPressed: anyProcessing
                         ? null
-                        : () => checkout.subscribe(plan.id),
+                        : () => _onSubscribePressed(context, checkout),
                     child: isProcessing
                         ? SizedBox(
                             height: 20,

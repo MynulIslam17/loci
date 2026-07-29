@@ -31,6 +31,7 @@ class _RecentActivityState extends State<RecentActivity>
   final removeCtrl = Get.find<RemoveSavedBusinessController>();
 
   final RxInt _activeTabIndex = 0.obs;
+  final _searchController = TextEditingController();
 
   final _tabTypes = const [
     RecentActivityType.questions,
@@ -61,6 +62,7 @@ class _RecentActivityState extends State<RecentActivity>
 
   @override
   void dispose() {
+    _searchController.dispose();
     tabController.dispose();
     super.dispose();
   }
@@ -82,8 +84,10 @@ class _RecentActivityState extends State<RecentActivity>
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     CustomTextField(
+                      controller: _searchController,
                       hintText: "Recent Activity...",
                       borderColor: colorScheme.outline,
+                      showClearButton: true,
                       suffixIcon: Icon(
                         Icons.search,
                         color: colorScheme.onSurfaceVariant,

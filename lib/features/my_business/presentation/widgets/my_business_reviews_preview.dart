@@ -20,7 +20,7 @@ class MyBusinessReviewsPreview extends StatelessWidget {
         return const EmptyState(
           icon: Icons.rate_review_outlined,
           title: 'No reviews yet',
-          subtitle: 'Be the first to leave a review!',
+          subtitle: 'When customers leave feedback, it will show up here.',
         );
       }
 

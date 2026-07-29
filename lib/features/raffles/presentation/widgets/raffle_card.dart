@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 
 import 'package:loci/core/constants/app_text_style.dart';
 import 'package:loci/core/theme/theme_extention.dart';
-import 'package:loci/features/raffles/data/models/raffles_model.dart';
+import 'package:loci/features/raffles/data/models/raffle_list_model.dart';
 import 'package:loci/shared/widgets/custom_button.dart';
 import 'package:loci/shared/widgets/custom_image_container.dart';
 import 'date_range_helper.dart';

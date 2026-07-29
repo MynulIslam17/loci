@@ -1,5 +1,5 @@
 import 'package:get/get.dart';
-import 'package:loci/features/explore_activity/data/models/route_update_request_model.dart';
+import 'package:loci/features/explore_activity/data/models/update_route_request_model.dart';
 import 'package:loci/features/explore_activity/domain/services/explore_activity_service.dart';
 
 class BusinessRouteUpdateController extends GetxController {

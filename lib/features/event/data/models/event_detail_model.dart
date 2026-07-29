@@ -1,6 +1,6 @@
 import 'package:loci/core/enums/checkin_status.dart';
 import 'package:loci/core/utils/date_parser.dart';
-import 'package:loci/features/event/data/models/event_model.dart';
+import 'package:loci/features/event/data/models/event_list_model.dart';
 
 class EventDetailsModel {
   final EventModel eventModel;
@@ -18,6 +18,7 @@ class EventDetailsModel {
   final CheckInStatus myCheckInStatus;
 
   final OrganizerBusiness organizerBusiness;
+  final String status;
 
   EventDetailsModel({
     required this.eventModel,
@@ -31,6 +32,7 @@ class EventDetailsModel {
     required this.organizerBusiness,
     required this.myCheckInStatus,
     required this.qrCode,
+    required this.status,
     this.mapUrl,
   });
 
@@ -63,6 +65,7 @@ class EventDetailsModel {
       organizerBusiness: OrganizerBusiness.fromJson(
         data['organizerBusiness'] ?? {},
       ),
+      status: data['status']?.toString() ?? '',
     );
   }
 
@@ -86,6 +89,7 @@ class EventDetailsModel {
       myCheckInStatus: myCheckInStatus ?? this.myCheckInStatus,
       organizerBusiness: organizerBusiness,
       qrCode: qrCode,
+      status: status,
       mapUrl: mapUrl ?? this.mapUrl,
     );
   }
@@ -136,12 +140,14 @@ class OrganizerBusiness {
       addressJson['zip'],
     ].where((e) => e != null && e.toString().isNotEmpty).join(', ');
 
+    final locationText = json['location']?.toString().trim() ?? '';
+
     return OrganizerBusiness(
       id: json['_id'] ?? '',
       name: json['name'] ?? '',
       logo: json['logo'],
-      description: json['description'],
-      address: formattedAddress,
+      description: json['description']?.toString() ?? '',
+      address: formattedAddress.isNotEmpty ? formattedAddress : locationText,
     );
   }
 }

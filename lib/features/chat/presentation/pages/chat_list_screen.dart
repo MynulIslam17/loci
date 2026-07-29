@@ -23,6 +23,7 @@ class ChatListScreen extends StatefulWidget {
 class _ChatListScreenState extends State<ChatListScreen> {
   final ChatListController controller = Get.find<ChatListController>();
   final AuthController _auth = Get.find<AuthController>();
+  final _searchController = TextEditingController();
   final _query = ''.obs;
 
   String get _myId => _auth.userModel?.id ?? '';
@@ -31,6 +32,12 @@ class _ChatListScreenState extends State<ChatListScreen> {
   void initState() {
     super.initState();
     controller.fetchConversations();
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
   }
 
   @override
@@ -46,12 +53,14 @@ class _ChatListScreenState extends State<ChatListScreen> {
             Padding(
               padding: const EdgeInsets.all(16.0),
               child: CustomTextField(
+                controller: _searchController,
                 hintText: "Search chats",
                 borderColor: colorScheme.outline,
                 fontSize: 14,
                 textColor: colorScheme.onSurface,
                 hintTextColor: colorScheme.onSurfaceVariant,
                 onChanged: (v) => _query.value = v.trim().toLowerCase(),
+                showClearButton: true,
                 prefixIcon: Icon(
                   Icons.search,
                   color: colorScheme.onSurfaceVariant,

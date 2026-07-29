@@ -1,5 +1,5 @@
 import 'package:get/get.dart';
-import 'package:loci/features/raffles/data/models/raffles_details_model.dart';
+import 'package:loci/features/raffles/data/models/raffle_detail_model.dart';
 import 'package:loci/features/explore_activity/domain/services/explore_activity_service.dart';
 
 class BusinessRaffleDetailsController extends GetxController {
@@ -10,6 +10,18 @@ class BusinessRaffleDetailsController extends GetxController {
   final RxBool isLoading = false.obs;
   final RxnString errorMessage = RxnString();
   final Rxn<RaffleDetailsModel> raffleDetails = Rxn<RaffleDetailsModel>();
+
+  String screenTitle = '';
+  String _raffleId = '';
+
+  Future<void> loadFromRouteArguments() async {
+    final args = Get.arguments as Map<String, dynamic>?;
+    screenTitle = args?['rafflesName']?.toString() ?? '';
+    _raffleId = args?['raffleId']?.toString() ?? '';
+    await fetchRaffleDetails(_raffleId);
+  }
+
+  Future<void> retryLoad() => fetchRaffleDetails(_raffleId);
 
   Future<void> fetchRaffleDetails(String raffleId) async {
     if (isLoading.value) return;

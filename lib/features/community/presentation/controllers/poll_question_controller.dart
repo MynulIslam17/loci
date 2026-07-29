@@ -14,6 +14,7 @@ class PollQuestionController extends GetxController {
     required String pollQuestion,
     required String pollCategory,
     required String qType,
+    String? businessId,
   }) async {
     isLoading.value = true;
     errorMessage.value = null;
@@ -24,6 +25,7 @@ class PollQuestionController extends GetxController {
         pollQuestion: pollQuestion,
         pollCategory: pollCategory,
         qType: qType,
+        businessId: businessId,
       );
       return true;
     } catch (e) {

@@ -75,6 +75,7 @@ class PostCardWidget extends StatelessWidget {
               date: vm.date,
               category: vm.category,
               imagePath: vm.userImage,
+              isModerator: vm.isModerator,
             ),
             const SizedBox(height: 20),
 

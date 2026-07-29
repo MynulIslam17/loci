@@ -19,6 +19,7 @@ class ConnectionScreen extends StatefulWidget {
 
 class _ConnectionScreenState extends State<ConnectionScreen> {
   final controller = Get.find<ConnectionController>();
+  final _searchController = TextEditingController();
 
   @override
   void initState() {
@@ -27,6 +28,12 @@ class _ConnectionScreenState extends State<ConnectionScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       controller.fetchDashboard(NetworkType.connections);
     });
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
   }
 
   @override
@@ -50,7 +57,9 @@ class _ConnectionScreenState extends State<ConnectionScreen> {
               const SizedBox(height: 10),
 
               CustomTextField(
+                controller: _searchController,
                 hintText: "Search Connection",
+                showClearButton: true,
                 suffixIcon: Icon(Icons.search),
                 borderColor: context.colorScheme.outline,
               ),

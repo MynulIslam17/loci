@@ -1,5 +1,5 @@
 import 'package:get/get.dart';
-import 'package:loci/features/event/data/models/event_model.dart';
+import 'package:loci/features/event/data/models/event_list_model.dart';
 import 'package:loci/features/explore_activity/domain/services/explore_activity_service.dart';
 import 'package:loci/features/explore_activity/presentation/controllers/explore_tab_list_cache.dart';
 
@@ -15,17 +15,52 @@ class BusinessEventListController extends GetxController with ExploreTabListCach
   final RxBool hasMore = true.obs;
 
   int _currentPage = 1;
-  final int _limit = 2;
+  final int _limit = 10;
+  String _searchQuery = '';
 
-  /// First visit: loads and shows spinner. Returns instantly when cached.
-  Future<void> loadIfNeeded(String businessId) =>
-      fetchEvents(businessId: businessId);
+  String get searchQuery => _searchQuery;
+
+  Future<void> loadIfNeeded(String businessId, {String search = ''}) =>
+      ensureLoaded(businessId: businessId, search: search);
+
+  Future<void> ensureLoaded({
+    required String businessId,
+    required String search,
+  }) async {
+    _syncSearchContext(businessId: businessId, search: search.trim());
+    if (isCachedFor(businessId, search: _searchQuery)) return;
+    await fetchEvents(businessId: businessId, forceRefresh: _searchQuery.isNotEmpty);
+  }
+
+  Future<void> applySearch({
+    required String businessId,
+    required String query,
+  }) async {
+    final trimmed = query.trim();
+    if (trimmed == _searchQuery && isCachedFor(businessId, search: trimmed)) {
+      return;
+    }
+    _searchQuery = trimmed;
+    _currentPage = 1;
+    hasMore.value = true;
+    clearTabCache();
+    await fetchEvents(businessId: businessId, forceRefresh: true);
+  }
 
   Future<void> fetchEvents({
     required String businessId,
     bool forceRefresh = false,
   }) async {
-    if (!forceRefresh && isCachedFor(businessId)) return;
+    if (!forceRefresh && isCachedFor(businessId, search: _searchQuery)) return;
+    if (isLoading.value && !forceRefresh) return;
+
+    if (businessChanged(businessId)) {
+      _currentPage = 1;
+      hasMore.value = true;
+      eventList.clear();
+      _searchQuery = '';
+      clearTabCache();
+    }
 
     if (forceRefresh) {
       _currentPage = 1;
@@ -40,10 +75,11 @@ class BusinessEventListController extends GetxController with ExploreTabListCach
         page: _currentPage,
         limit: _limit,
         businessId: businessId,
+        search: _searchQuery.isEmpty ? null : _searchQuery,
       );
       eventList.assignAll(model.events);
       hasMore.value = model.meta.hasNextPage;
-      markCached(businessId);
+      markCached(businessId, search: _searchQuery);
     } catch (e) {
       errorMessage.value = e.toString().replaceFirst('Exception: ', '');
     } finally {
@@ -62,6 +98,7 @@ class BusinessEventListController extends GetxController with ExploreTabListCach
         page: _currentPage,
         limit: _limit,
         businessId: businessId,
+        search: _searchQuery.isEmpty ? null : _searchQuery,
       );
       eventList.addAll(model.events);
       hasMore.value = model.meta.hasNextPage;
@@ -73,8 +110,22 @@ class BusinessEventListController extends GetxController with ExploreTabListCach
     }
   }
 
-  bool showInitialLoader(String businessId) =>
-      isLoading.value && !isCachedFor(businessId);
+  bool showInitialLoader(String businessId) => showExploreInitialLoader(
+        businessId,
+        errorMessage: errorMessage.value,
+        search: _searchQuery,
+      );
+
+  bool showEmptyState(String businessId) {
+    final _ = eventList.length;
+    return showExploreEmptyState(
+      businessId,
+      isEmpty: eventList.isEmpty,
+      isLoading: isLoading.value,
+      errorMessage: errorMessage.value,
+      search: _searchQuery,
+    );
+  }
 
   void reset() {
     isLoading.value = false;
@@ -82,7 +133,24 @@ class BusinessEventListController extends GetxController with ExploreTabListCach
     errorMessage.value = null;
     eventList.clear();
     _currentPage = 1;
+    _searchQuery = '';
     hasMore.value = true;
     clearTabCache();
+  }
+
+  void _syncSearchContext({required String businessId, required String search}) {
+    if (businessChanged(businessId)) {
+      _currentPage = 1;
+      hasMore.value = true;
+      eventList.clear();
+      _searchQuery = '';
+      clearTabCache();
+    }
+    if (_searchQuery != search) {
+      _searchQuery = search;
+      _currentPage = 1;
+      hasMore.value = true;
+      clearTabCache();
+    }
   }
 }

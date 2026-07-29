@@ -1,7 +1,7 @@
 import 'dart:async';
 
 import 'package:get/get.dart';
-import 'package:loci/features/routes/data/models/routes_model.dart';
+import 'package:loci/features/routes/data/models/route_list_model.dart';
 import 'package:loci/features/routes/domain/services/routes_service.dart';
 
 class RouteListController extends GetxController {

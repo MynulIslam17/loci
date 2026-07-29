@@ -149,13 +149,12 @@ class _SearchMyBusinessState extends State<SearchMyBusiness> {
         final controller = myBusinessController;
         // Track google search selection for header (_canAdd).
         findGoogleBusinessController.selectedBusiness.value;
-        // Only show the category filter when there is something to filter,
-        // OR a filter is already applied (so the user can change/clear it).
+        // Category filter stays visible for business owners (including "All"
+        // with an empty list) so they can switch categories without the
+        // dropdown disappearing.
         final showFilter =
             controller.isBusinessOwner.value &&
-            controller.errorMessage.value == null &&
-            (selectedCategory.value != null ||
-                controller.businessList.isNotEmpty);
+            controller.errorMessage.value == null;
 
         // Read expand-state synchronously so this Obx subscribes to it. It's
         // otherwise only read inside the sliver's lazy itemBuilder (which runs
@@ -277,22 +276,25 @@ class _SearchMyBusinessState extends State<SearchMyBusiness> {
         width: 200,
         child: Card(
           color: colorScheme.surfaceContainerHigh,
-          child: CustomDropdown<BusinessCategory>(
+          child: CustomDropdown<BusinessCategory?>(
             dropdownColor: colorScheme.surfaceContainerHigh,
             borderColor: colorScheme.outline,
             hintColor: colorScheme.onSurfaceVariant,
             textColor: colorScheme.onSurface,
             value: selectedCategory.value,
-            hintText: "Select Category",
             onChanged: _onCategoryChanged,
-            items: BusinessCategory.values
-                .map(
-                  (category) => DropdownMenuItem(
-                    value: category,
-                    child: Text(category.label),
-                  ),
-                )
-                .toList(),
+            items: [
+              const DropdownMenuItem<BusinessCategory?>(
+                value: null,
+                child: Text('All'),
+              ),
+              ...BusinessCategory.values.map(
+                (category) => DropdownMenuItem<BusinessCategory?>(
+                  value: category,
+                  child: Text(category.label),
+                ),
+              ),
+            ],
           ),
         ),
       ),
@@ -366,6 +368,7 @@ class _SearchMyBusinessState extends State<SearchMyBusiness> {
         return ExpandableBusinessCard(
           isExpanded: expandedIndexValue == index,
           businessName: business.name,
+          category: business.category,
           imagePath: business.logo ?? "",
           description: business.description ?? "",
           onTap: () =>

@@ -10,8 +10,13 @@ import 'package:loci/core/enums/routeType.dart';
 import 'package:loci/core/utils/acitvity_validator.dart';
 import 'package:loci/core/utils/date_parser.dart';
 import 'package:loci/core/utils/time_parser.dart';
-import 'package:loci/features/explore_activity/data/models/task_model.dart';
+import 'package:loci/core/utils/show_snackbar.dart';
+import 'package:loci/features/explore_activity/data/models/activity_task_search_model.dart';
+import 'package:loci/features/explore_activity/presentation/controllers/business_event_list_controller.dart';
+import 'package:loci/features/explore_activity/presentation/controllers/business_raffles_list_controller.dart';
+import 'package:loci/features/explore_activity/presentation/controllers/business_route_list_controller.dart';
 import 'package:loci/features/explore_activity/domain/services/explore_activity_service.dart';
+import 'package:loci/features/explore_activity/presentation/widgets/create_activity_task_sheet.dart';
 
 class CreateActivityController extends GetxController {
   CreateActivityController(this._service);
@@ -62,6 +67,81 @@ class CreateActivityController extends GetxController {
   }
 
   @override
+  void onReady() {
+    super.onReady();
+    prepareNewActivityForm();
+  }
+
+  Future<void> handlePublish(BuildContext context) async {
+    final success = await publish(context);
+    if (!context.mounted) return;
+
+    if (success) {
+      await _refreshListForCategory(selectedCategory.value, businessId);
+      Get.back();
+      SnackbarService.success(message.value);
+      return;
+    }
+
+    if (message.value.isNotEmpty) {
+      SnackbarService.warning(message.value);
+    }
+  }
+
+  void openAddTaskSheet(BuildContext context) {
+    showCreateActivityTaskSheet(
+      context: context,
+      businessId: businessId,
+      onAddTask: (task) {
+        if (isDuplicateTask(task)) {
+          SnackbarService.warning('Task already added');
+          return;
+        }
+        addTask(task);
+      },
+    );
+  }
+
+  Future<void> _refreshListForCategory(
+    ActivityType category,
+    String businessId,
+  ) async {
+    switch (category) {
+      case ActivityType.event:
+        await Get.find<BusinessEventListController>().fetchEvents(
+          businessId: businessId,
+          forceRefresh: true,
+        );
+      case ActivityType.routes:
+        await Get.find<BusinessRouteListController>().fetchRoutes(
+          businessId: businessId,
+          forceRefresh: true,
+        );
+      case ActivityType.raffles:
+        await Get.find<BusinessRafflesListController>().fetchRaffles(
+          businessId: businessId,
+          forceRefresh: true,
+        );
+    }
+  }
+
+  /// Clears the form when opening create activity (controller is fenix-persisted).
+  void prepareNewActivityForm() {
+    formKey.currentState?.reset();
+    selectedCategory.value = ActivityType.event;
+    isPublic.value = false;
+    isLoading.value = false;
+    message.value = '';
+
+    titleController.clear();
+    detailsController.clear();
+    locationController.clear();
+    urlController.clear();
+    bannerImage.value = null;
+    _clearCategorySpecificFields();
+  }
+
+  @override
   void onClose() {
     dateController.dispose();
     timeController.dispose();
@@ -80,7 +160,7 @@ class CreateActivityController extends GetxController {
 
   void setCategory(ActivityType value) {
     if (value != selectedCategory.value) {
-      _clearCategoryFields();
+      _clearCategorySpecificFields();
     }
     selectedCategory.value = value;
   }
@@ -158,7 +238,7 @@ class CreateActivityController extends GetxController {
       routeOpeningTime.value = picked;
     }
 
-    timeController.text = picked.format(context);
+    timeController.text = formatTime(picked);
   }
 
   Future<bool> publish(BuildContext context) async {
@@ -260,23 +340,17 @@ class CreateActivityController extends GetxController {
     }
   }
 
-  void _clearCategoryFields() {
+  void _clearCategorySpecificFields() {
     dateController.clear();
     timeController.clear();
-    titleController.clear();
-    detailsController.clear();
     personController.clear();
-    locationController.clear();
-    urlController.clear();
     maxSupplyController.clear();
     raffleDateController.clear();
     couponTitleController.clear();
 
-    bannerImage.value = null;
     rafflePrizeImage.value = null;
     tasks.clear();
     selectedRouteCondition.value = null;
-    isPublic.value = false;
     eventDate.value = null;
     eventTime.value = null;
     routeOpeningTime.value = null;

@@ -30,10 +30,7 @@ class ActivePlanBanner extends StatelessWidget {
 
       final bool isPastDue = sub.status == 'past_due';
       final Color accent = isPastDue ? colorScheme.error : colorScheme.primary;
-      final String? periodText = _periodText(
-        sub.cancelAtPeriodEnd,
-        sub.currentPeriodEnd,
-      );
+      final String? periodText = _periodText(sub.currentPeriodEnd);
 
       return Container(
         margin: const EdgeInsets.symmetric(horizontal: 16),
@@ -120,7 +117,10 @@ class ActivePlanBanner extends StatelessWidget {
                       Icon(Icons.star_rounded, size: 14, color: accent),
                       const SizedBox(width: 4),
                       Text(
-                        '${sub.heroSpotlightCredits}',
+                        // Spendable balance = plan + stacked packs, summed by the
+                        // backend into `credits.remaining`. `heroSpotlightCredits`
+                        // is only this row's balance, so it's the fallback.
+                        '${sub.credits?.remaining ?? sub.heroSpotlightCredits}',
                         style: AppTextStyle.textXs(
                           color: colorScheme.onSurface,
                           weight: FontWeight.w700,
@@ -132,8 +132,8 @@ class ActivePlanBanner extends StatelessWidget {
               ],
             ),
 
-            // Offer cancel for any active plan (free included), even one already
-            // set to end — the "Ends on …" line above still shows the date.
+            // Offer cancel for any active plan (free included). Cancellation is
+            // immediate now — there's no "ends on" grace period.
             if (sub.isActive) ...[
               const SizedBox(height: 14),
               SizedBox(
@@ -181,12 +181,12 @@ class ActivePlanBanner extends StatelessWidget {
     }
   }
 
-  /// "Renews on …" for a recurring plan, or "Ends on …" when cancellation is
-  /// scheduled. Returns null for one-time packs (no period end).
-  String? _periodText(bool cancelAtPeriodEnd, String? isoDate) {
+  /// "Renews on …" for a recurring plan. Returns null for one-time packs (no
+  /// period end). Cancellation is immediate now, so there's no "Ends on" state.
+  String? _periodText(String? isoDate) {
     final String? date = _formatDate(isoDate);
     if (date == null) return null;
-    return cancelAtPeriodEnd ? 'Ends on $date' : 'Renews on $date';
+    return 'Renews on $date';
   }
 
   String? _formatDate(String? isoDate) {
@@ -204,8 +204,9 @@ class ActivePlanBanner extends StatelessWidget {
       AlertDialog(
         title: const Text('Cancel subscription?'),
         content: const Text(
-          'Your plan stays active until the end of the current billing period. '
-          'You can resubscribe anytime.',
+          'Your plan will be cancelled immediately and you\'ll lose access to '
+          'paid features right away. Remaining paid days aren\'t refunded. You '
+          'can resubscribe anytime.',
         ),
         actions: [
           TextButton(

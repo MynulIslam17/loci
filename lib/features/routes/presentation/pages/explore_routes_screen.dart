@@ -111,21 +111,11 @@ class _ExploreRoutesPageState extends State<ExploreRoutesPage> {
                       borderColor: colorScheme.outline,
                       textColor: colorScheme.onSurface,
                       onChanged: controller.onSearchChanged,
-                      suffixIcon: hasSearch
-                          ? IconButton(
-                              icon: Icon(
-                                Icons.close,
-                                color: colorScheme.onSurfaceVariant,
-                              ),
-                              onPressed: () {
-                                _searchController.clear();
-                                controller.onSearchChanged('');
-                              },
-                            )
-                          : Icon(
-                              Icons.search,
-                              color: colorScheme.onSurfaceVariant,
-                            ),
+                      showClearButton: true,
+                      suffixIcon: Icon(
+                        Icons.search,
+                        color: colorScheme.onSurfaceVariant,
+                      ),
                     ),
                     const SizedBox(height: 24),
                     Text(

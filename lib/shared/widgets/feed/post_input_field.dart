@@ -204,39 +204,48 @@ class _PostInputFieldState extends State<PostInputField>
                   axisAlignment: -1,
                   child: Padding(
                     padding: const EdgeInsets.only(top: 12),
-                    child: Row(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      mainAxisSize: MainAxisSize.min,
                       children: [
-                        // Type segmented control
-                        _SegmentedToggle(
-                          options: QuestionType.values,
-                          selected: selectedType,
-                          activeColor: _purple,
-                          onSelect: (v) => _selectedType.value = v,
+                        Row(
+                          children: [
+                            _SegmentedToggle(
+                              options: QuestionType.values,
+                              selected: selectedType,
+                              activeColor: _purple,
+                              onSelect: (v) => _selectedType.value = v,
+                            ),
+                            const Spacer(),
+                            Text(
+                              '$charCount / $_maxChars',
+                              style: AppTextStyle.textXs(
+                                color: overLimit
+                                    ? colors.error
+                                    : colors.onSurfaceVariant,
+                              ),
+                            ),
+                          ],
                         ),
-                        const SizedBox(width: 8),
-
-                        // Category picker
-                        _CategoryChip(
-                          categories: widget.categories,
-                          selected: selectedCategory,
-                          onSelect: (v) {
-                            _selectedCategory.value = v;
-                            _isPopupOpen.value = false;
-                          },
-                          onOpened: () => _isPopupOpen.value = true,
-                          onCanceled: () => _isPopupOpen.value = false,
-                        ),
-
-                        const Spacer(),
-
-                        // Char count
-                        Text(
-                          '$charCount / $_maxChars',
-                          style: AppTextStyle.textXs(
-                            color: overLimit
-                                ? colors.error
-                                : colors.onSurfaceVariant,
-                          ),
+                        const SizedBox(height: 8),
+                        Row(
+                          children: [
+                            Flexible(
+                              child: Align(
+                                alignment: Alignment.centerLeft,
+                                child: _CategoryChip(
+                                  categories: widget.categories,
+                                  selected: selectedCategory,
+                                  onSelect: (v) {
+                                    _selectedCategory.value = v;
+                                    _isPopupOpen.value = false;
+                                  },
+                                  onOpened: () => _isPopupOpen.value = true,
+                                  onCanceled: () => _isPopupOpen.value = false,
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
                       ],
                     ),
@@ -343,16 +352,19 @@ class _CategoryChip extends StatelessWidget {
         decoration: BoxDecoration(
           color: colors.surfaceVariant,
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: colors.outline.withOpacity(0.4)),
+          border: Border.all(color: colors.outline.withValues(alpha: 0.4)),
         ),
         child: Row(
-          mainAxisSize: MainAxisSize.min,
           children: [
             Icon(Icons.sell_outlined, size: 13, color: colors.onSurfaceVariant),
             const SizedBox(width: 4),
-            Text(
-              selected,
-              style: TextStyle(fontSize: 12, color: colors.onSurface),
+            Flexible(
+              child: Text(
+                selected,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(fontSize: 12, color: colors.onSurface),
+              ),
             ),
             const SizedBox(width: 2),
             Icon(Icons.expand_less, size: 14, color: colors.onSurfaceVariant),

@@ -20,6 +20,8 @@ class BrowseBusinessModel {
   final String createdAt;
   final String updatedAt;
 
+  final bool isSaved;
+
   final OwnerModel? owner;
 
   BrowseBusinessModel({
@@ -37,6 +39,7 @@ class BrowseBusinessModel {
     required this.isActive,
     required this.createdAt,
     required this.updatedAt,
+    this.isSaved = false,
     this.owner,
   });
 
@@ -56,6 +59,7 @@ class BrowseBusinessModel {
       isActive: json['isActive'] ?? false,
       createdAt: json['createdAt'] ?? '',
       updatedAt: json['updatedAt'] ?? '',
+      isSaved: json['isSaved'] ?? false,
       owner: json['owner'] != null ? OwnerModel.fromJson(json['owner']) : null,
     );
   }
@@ -76,6 +80,7 @@ class BrowseBusinessModel {
       'isActive': isActive,
       'createdAt': createdAt,
       'updatedAt': updatedAt,
+      'isSaved': isSaved,
       'owner': owner?.toJson(),
     };
   }

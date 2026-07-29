@@ -15,6 +15,7 @@ class TotalCheckInScreen extends StatefulWidget {
 
 class _TotalCheckInScreenState extends State<TotalCheckInScreen> {
   late String title;
+  final _searchController = TextEditingController();
 
   @override
   void initState() {
@@ -26,6 +27,12 @@ class _TotalCheckInScreenState extends State<TotalCheckInScreen> {
     } else {
       title = "Check-Ins";
     }
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
   }
 
   @override
@@ -46,10 +53,12 @@ class _TotalCheckInScreenState extends State<TotalCheckInScreen> {
 
                   // --- Search Bar ---
                   CustomTextField(
+                    controller: _searchController,
                     borderColor: colorScheme.outline,
                     hintText: "Search check-ins contacts ...",
                     hintTextColor: colorScheme.onSurfaceVariant,
                     textColor: colorScheme.onSurface,
+                    showClearButton: true,
                     suffixIcon: Icon(
                       Icons.search,
                       color: colorScheme.onSurfaceVariant,
