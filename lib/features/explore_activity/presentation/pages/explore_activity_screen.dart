@@ -1,9 +1,12 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:loci/core/theme/theme_extention.dart';
 import 'package:loci/features/explore_activity/presentation/controllers/business_event_list_controller.dart';
 import 'package:loci/features/explore_activity/presentation/controllers/business_raffles_list_controller.dart';
 import 'package:loci/features/explore_activity/presentation/controllers/business_route_list_controller.dart';
+import 'package:loci/features/explore_activity/presentation/utils/explore_activity_search_focus.dart';
 import 'package:loci/features/explore_activity/presentation/widgets/explore_activity_events_tab.dart';
 import 'package:loci/features/explore_activity/presentation/widgets/explore_activity_header.dart';
 import 'package:loci/features/explore_activity/presentation/widgets/explore_activity_raffles_tab.dart';
@@ -25,6 +28,11 @@ class _ExploreActivityScreenState extends State<ExploreActivityScreen>
   final _routeListController = Get.find<BusinessRouteListController>();
   final _raffleListController = Get.find<BusinessRafflesListController>();
 
+  final _searchController = TextEditingController();
+  final _searchFocusNode = FocusNode();
+  late final ExploreActivitySearchFocus _searchFocus;
+  Timer? _searchDebounce;
+
   late final String businessId;
   late final String businessName;
 
@@ -38,27 +46,65 @@ class _ExploreActivityScreenState extends State<ExploreActivityScreen>
     businessId = args?['businessId'] ?? '';
     businessName = args?['businessName'] ?? '';
 
+    _searchFocus = ExploreActivitySearchFocus(_searchFocusNode);
+
     _loadTab(0);
 
     _tabController.addListener(() {
       if (_tabController.indexIsChanging) return;
+      setState(() {});
       _loadTab(_tabController.index);
     });
   }
 
-  void _loadTab(int index) {
+  String get _searchHint {
+    switch (_tabController.index) {
+      case 0:
+        return 'Search events';
+      case 1:
+        return 'Search routes';
+      case 2:
+        return 'Search raffles';
+      default:
+        return 'Search activities';
+    }
+  }
+
+  void _onSearchChanged(String query) {
+    _searchDebounce?.cancel();
+    _searchDebounce = Timer(const Duration(milliseconds: 400), () {
+      _applySearchToTab(_tabController.index, query);
+    });
+  }
+
+  void _applySearchToTab(int index, String query) {
     switch (index) {
       case 0:
-        _eventListController.loadIfNeeded(businessId);
+        _eventListController.applySearch(businessId: businessId, query: query);
       case 1:
-        _routeListController.loadIfNeeded(businessId);
+        _routeListController.applySearch(businessId: businessId, query: query);
       case 2:
-        _raffleListController.loadIfNeeded(businessId);
+        _raffleListController.applySearch(businessId: businessId, query: query);
+    }
+  }
+
+  void _loadTab(int index) {
+    final search = _searchController.text.trim();
+    switch (index) {
+      case 0:
+        _eventListController.loadIfNeeded(businessId, search: search);
+      case 1:
+        _routeListController.loadIfNeeded(businessId, search: search);
+      case 2:
+        _raffleListController.loadIfNeeded(businessId, search: search);
     }
   }
 
   @override
   void dispose() {
+    _searchDebounce?.cancel();
+    _searchFocusNode.dispose();
+    _searchController.dispose();
     _tabController.dispose();
     super.dispose();
   }
@@ -76,6 +122,11 @@ class _ExploreActivityScreenState extends State<ExploreActivityScreen>
             child: ExploreActivityHeader(
               businessId: businessId,
               businessName: businessName,
+              searchController: _searchController,
+              searchFocusNode: _searchFocusNode,
+              searchHint: _searchHint,
+              onSearchChanged: _onSearchChanged,
+              searchFocus: _searchFocus,
             ),
           ),
           SliverOverlapAbsorber(
@@ -104,9 +155,18 @@ class _ExploreActivityScreenState extends State<ExploreActivityScreen>
         body: TabBarView(
           controller: _tabController,
           children: [
-            ExploreActivityEventsTab(businessId: businessId),
-            ExploreActivityRoutesTab(businessId: businessId),
-            ExploreActivityRafflesTab(businessId: businessId),
+            ExploreActivityEventsTab(
+              businessId: businessId,
+              searchFocus: _searchFocus,
+            ),
+            ExploreActivityRoutesTab(
+              businessId: businessId,
+              searchFocus: _searchFocus,
+            ),
+            ExploreActivityRafflesTab(
+              businessId: businessId,
+              searchFocus: _searchFocus,
+            ),
           ],
         ),
       ),

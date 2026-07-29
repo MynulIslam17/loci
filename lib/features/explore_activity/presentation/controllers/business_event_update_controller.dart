@@ -1,5 +1,5 @@
 import 'package:get/get.dart';
-import 'package:loci/features/explore_activity/data/models/event_update_request_model.dart';
+import 'package:loci/features/explore_activity/data/models/update_event_request_model.dart';
 import 'package:loci/features/explore_activity/domain/services/explore_activity_service.dart';
 
 class BusinessEventUpdateController extends GetxController {

@@ -123,8 +123,16 @@ class MyBusinessService {
     return body['message'] as String? ?? 'Ad submitted for review';
   }
 
-  Future<List<MyAdModel>> getMyAds({int page = 1, int limit = 10}) async {
-    final body = await _repository.getMyAds(page: page, limit: limit);
+  Future<List<MyAdModel>> getMyAds({
+    required String businessId,
+    int page = 1,
+    int limit = 10,
+  }) async {
+    final body = await _repository.getMyAds(
+      businessId: businessId,
+      page: page,
+      limit: limit,
+    );
     final list = body['data'] as List<dynamic>? ?? [];
     return list
         .map((e) => MyAdModel.fromJson(e as Map<String, dynamic>))

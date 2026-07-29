@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:loci/core/theme/app_colors.dart';
 import 'package:loci/features/my_business/presentation/widgets/edit_circle_button.dart';
+import 'package:loci/shared/widgets/confirm_dialog.dart';
 import 'package:loci/shared/widgets/custom_image_container.dart';
 import 'package:loci/shared/widgets/image_picker_helper.dart';
 
@@ -22,6 +23,25 @@ class MyBusinessPhotoGrid extends StatelessWidget {
   final void Function(List<File> files) onAddPhotos;
   final void Function(int localIndex) onRemoveLocalPhoto;
   final void Function(String photoUrl) onRemoveApiPhoto;
+
+  Future<void> _confirmRemovePhoto(
+    BuildContext context, {
+    required bool isUploaded,
+    required VoidCallback onConfirm,
+  }) async {
+    final confirmed = await showConfirmDialog(
+      context,
+      title: 'Remove photo?',
+      message: isUploaded
+          ? 'This photo will be removed from your business profile. You can add it again later.'
+          : 'This photo has not been uploaded yet and will be removed from your selection.',
+      confirmText: 'Remove',
+      cancelText: 'Cancel',
+      icon: Icons.photo_outlined,
+      isDestructive: true,
+    );
+    if (confirmed) onConfirm();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -65,7 +85,11 @@ class MyBusinessPhotoGrid extends StatelessWidget {
                   right: 5,
                   top: 5,
                   child: EditCircleButton(
-                    onTap: () => onRemoveApiPhoto(url),
+                    onTap: () => _confirmRemovePhoto(
+                      context,
+                      isUploaded: true,
+                      onConfirm: () => onRemoveApiPhoto(url),
+                    ),
                     size: 20,
                     icon: Icons.cancel,
                     iconColor: AppColors.danger,
@@ -87,7 +111,11 @@ class MyBusinessPhotoGrid extends StatelessWidget {
                 right: 5,
                 top: 5,
                 child: EditCircleButton(
-                  onTap: () => onRemoveLocalPhoto(localIndex),
+                  onTap: () => _confirmRemovePhoto(
+                    context,
+                    isUploaded: false,
+                    onConfirm: () => onRemoveLocalPhoto(localIndex),
+                  ),
                   size: 20,
                   icon: Icons.cancel,
                   iconColor: AppColors.danger,

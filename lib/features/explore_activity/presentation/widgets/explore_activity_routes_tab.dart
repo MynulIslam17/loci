@@ -1,17 +1,24 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:loci/features/explore_activity/presentation/controllers/business_route_list_controller.dart';
+import 'package:loci/features/explore_activity/presentation/utils/explore_activity_search_focus.dart';
 import 'package:loci/features/explore_activity/presentation/widgets/explore_activity_empty_sliver.dart';
 import 'package:loci/features/explore_activity/presentation/widgets/explore_activity_list_footer.dart';
+import 'package:loci/features/explore_activity/presentation/widgets/explore_activity_list_shimmer.dart';
 import 'package:loci/features/explore_activity/presentation/widgets/explore_activity_tab_scroll.dart';
 import 'package:loci/features/explore_activity/presentation/widgets/route_edit_card.dart';
 import 'package:loci/routes/app_routes.dart';
 import 'package:loci/shared/widgets/error_state.dart';
 
 class ExploreActivityRoutesTab extends StatefulWidget {
-  const ExploreActivityRoutesTab({super.key, required this.businessId});
+  const ExploreActivityRoutesTab({
+    super.key,
+    required this.businessId,
+    required this.searchFocus,
+  });
 
   final String businessId;
+  final ExploreActivitySearchFocus searchFocus;
 
   @override
   State<ExploreActivityRoutesTab> createState() =>
@@ -46,10 +53,7 @@ class _ExploreActivityRoutesTabState extends State<ExploreActivityRoutesTab>
 
   Widget _buildSliver() {
     if (_controller.showInitialLoader(widget.businessId)) {
-      return const SliverFillRemaining(
-        hasScrollBody: false,
-        child: Center(child: CircularProgressIndicator()),
-      );
+      return ExploreActivityListShimmer.sliver();
     }
 
     if (_controller.errorMessage.value != null &&
@@ -66,7 +70,7 @@ class _ExploreActivityRoutesTabState extends State<ExploreActivityRoutesTab>
       );
     }
 
-    if (!_controller.isLoading.value && _controller.routeList.isEmpty) {
+    if (_controller.showEmptyState(widget.businessId)) {
       return const ExploreActivityEmptySliver(
         icon: Icons.route_outlined,
         title: 'No routes yet',
@@ -95,9 +99,15 @@ class _ExploreActivityRoutesTabState extends State<ExploreActivityRoutesTab>
           availabilityType: route.availabilityType,
           isPublic: route.isRoutePublic,
           onEdit: () async {
-            final result = await Get.toNamed(
-              AppRoutes.editRoutes,
-              arguments: {'routeName': route.title, 'routeId': route.routeId},
+            final result = await widget.searchFocus.guard(
+              () => Get.toNamed(
+                AppRoutes.editRoutes,
+                arguments: {
+                  'routeName': route.title,
+                  'routeId': route.routeId,
+                  'businessId': widget.businessId,
+                },
+              ),
             );
             if (result == true) {
               await _controller.fetchRoutes(
@@ -106,10 +116,18 @@ class _ExploreActivityRoutesTabState extends State<ExploreActivityRoutesTab>
               );
             }
           },
-          onView: () => Get.toNamed(
-            AppRoutes.viewRoutes,
-            arguments: {'routeName': route.title, 'routeId': route.routeId},
-          ),
+          onView: () {
+            widget.searchFocus.guard(
+              () => Get.toNamed(
+                AppRoutes.viewRoutes,
+                arguments: {
+                  'routeName': route.title,
+                  'routeId': route.routeId,
+                  'businessId': widget.businessId,
+                },
+              ),
+            );
+          },
         );
       },
       separatorBuilder: (_, __) => const SizedBox(height: 10),

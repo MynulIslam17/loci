@@ -4,7 +4,8 @@ import 'package:loci/core/enums/activity_type.dart';
 import 'package:loci/core/theme/theme_extention.dart';
 import 'package:loci/features/my_business/presentation/widgets/my_business.dart';
 import 'package:loci/shared/widgets/custom_button.dart';
-import 'package:loci/shared/widgets/custom_text_field.dart';
+import 'package:loci/features/explore_activity/presentation/widgets/explore_activity_location_fields.dart';
+import 'package:loci/features/explore_activity/presentation/widgets/explore_activity_visibility_row.dart';
 
 class CreateActivityBottomSection extends StatelessWidget {
   const CreateActivityBottomSection({
@@ -36,70 +37,30 @@ class CreateActivityBottomSection extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         if (category != ActivityType.raffles) ...[
-          CustomTextField(
-            controller: locationController,
-            title: 'Location',
-            hintText: 'Enter location',
-            prefixIcon: const Icon(Icons.location_on),
-            borderColor: colorScheme.outline,
-            textColor: colorScheme.onSurface,
-            validator: (value) {
-              if (value == null || value.trim().isEmpty) {
-                return 'Location is required';
-              }
-              return null;
-            },
+          ExploreActivityLocationFields(
+            locationController: locationController,
+            urlController: urlController,
           ),
-          const SizedBox(height: 16),
-          CustomTextField(
-            controller: urlController,
-            title: 'Map Url',
-            hintText: 'Map link',
-            prefixIcon: const Icon(Icons.link),
-            borderColor: colorScheme.outline,
-            textColor: colorScheme.onSurface,
-            validator: (value) {
-              if (value == null || value.trim().isEmpty) {
-                return 'Map url is required';
-              }
-              return null;
-            },
-          ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 20),
         ],
-        Padding(
-          padding: const EdgeInsets.symmetric(vertical: 8),
-          child: Row(
-            children: [
-              Text(
-                'Organizer',
-                style: AppTextStyle.textMd(
-                  weight: FontWeight.w700,
-                  color: colorScheme.onSurface,
-                ),
-              ),
-              const Spacer(),
-              Text(
-                isPublic ? 'Public' : 'Private',
-                style: AppTextStyle.textSm(
-                  weight: FontWeight.w700,
-                  color: colorScheme.onSurfaceVariant,
-                ),
-              ),
-              const SizedBox(width: 8),
-              Switch(
-                value: isPublic,
-                activeColor: colorScheme.primary,
-                onChanged: onPublicChanged,
-              ),
-            ],
+        ExploreActivityVisibilityRow(
+          isPublic: isPublic,
+          onChanged: onPublicChanged,
+        ),
+        const SizedBox(height: 16),
+        Text(
+          'Organizer',
+          style: AppTextStyle.textSm(
+            weight: FontWeight.w600,
+            color: colorScheme.onSurface,
           ),
         ),
+        const SizedBox(height: 8),
         MyOwnBusiness(businessName: businessName),
-        const SizedBox(height: 10),
+        const SizedBox(height: 20),
         CustomButton(
           isLoading: isPublishLoading,
-          text: 'Publish',
+          text: 'Publish activity',
           backgroundColor: colorScheme.primary,
           textColor: colorScheme.onPrimary,
           onPressed: onPublish,

@@ -17,6 +17,7 @@ class TotalRsvpScreen extends StatefulWidget {
 
 class _TotalRsvpScreenState extends State<TotalRsvpScreen> {
   late String title;
+  final _searchController = TextEditingController();
 
   @override
   void initState() {
@@ -28,6 +29,12 @@ class _TotalRsvpScreenState extends State<TotalRsvpScreen> {
     } else {
       title = "Event Details";
     }
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
   }
 
   @override
@@ -47,10 +54,12 @@ class _TotalRsvpScreenState extends State<TotalRsvpScreen> {
 
                   // --- Search Bar ---
                   CustomTextField(
+                    controller: _searchController,
                     borderColor: context.colorScheme.outline,
                     hintText: "Explore Activities",
                     hintTextColor: context.colorScheme.onSurfaceVariant,
                     textColor: context.colorScheme.onSurface,
+                    showClearButton: true,
                     suffixIcon: Icon(
                       Icons.search,
                       color: context.colorScheme.onSurfaceVariant,

@@ -9,6 +9,7 @@ import 'package:loci/core/theme/app_colors.dart';
 import 'package:loci/core/theme/theme_extention.dart';
 import 'package:loci/features/community/domain/services/community_service.dart';
 import 'package:loci/features/community/presentation/controllers/create_announcement_controller.dart';
+import 'package:loci/features/community/presentation/controllers/my_community_controller.dart';
 import 'package:loci/features/community/presentation/controllers/search_activity_controller.dart';
 import 'package:loci/shared/widgets/custom_appbar.dart';
 import 'package:loci/shared/widgets/custom_button.dart';
@@ -39,6 +40,7 @@ class _CreateAnnouncementScreenState extends State<CreateAnnouncementScreen> {
 
   // ── State ─────────────────────────────────────────────────────────────────
   late final String _communityId;
+  late final bool _postAsBusiness;
   final _announcementType = AnnouncementType.notice.obs;
   final _activityRefType = ActivityRefType.event.obs;
   final _selectedActivityId = RxnString();
@@ -49,7 +51,9 @@ class _CreateAnnouncementScreenState extends State<CreateAnnouncementScreen> {
   @override
   void initState() {
     super.initState();
-    _communityId = (Get.arguments as Map)['communityId'] as String;
+    final args = Get.arguments as Map;
+    _communityId = args['communityId'] as String;
+    _postAsBusiness = args['postAsBusiness'] == true;
 
     // SearchActivityController needs communityId + activityRefType at setup,
 
@@ -123,6 +127,14 @@ class _CreateAnnouncementScreenState extends State<CreateAnnouncementScreen> {
         fields['activityRefType'] = _activityRefType.value.name;
         fields['activityId'] = _selectedActivityId.value ?? '';
         fields['description'] = _detailsController.text.trim();
+    }
+
+    if (_postAsBusiness && Get.isRegistered<MyCommunityController>()) {
+      final businessId =
+          Get.find<MyCommunityController>().community.value?.business.id;
+      if (businessId != null && businessId.isNotEmpty) {
+        fields['businessId'] = businessId;
+      }
     }
 
     final success = await _createCtrl.createAnnouncement(
@@ -391,10 +403,15 @@ class _CreateAnnouncementScreenState extends State<CreateAnnouncementScreen> {
           fontSize: 14,
           textColor: colors.onSurface,
           hintTextColor: colors.onSurfaceVariant,
+          showClearButton: true,
           validator: (_) => (_selectedActivityId.value?.isEmpty ?? true)
               ? "Please select an activity"
               : null,
           onChanged: _onActivitySearchChanged,
+          suffixIcon: Icon(
+            Icons.search,
+            color: colors.onSurfaceVariant,
+          ),
         ),
         Obx(
           () => _showSuggestions.value

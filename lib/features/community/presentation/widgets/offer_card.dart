@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
-import 'package:loci/core/constants/app_text_style.dart';
-import 'package:loci/core/theme/theme_extention.dart';
+import 'package:loci/features/community/presentation/widgets/community_announcement_card_shell.dart';
 import 'package:loci/shared/widgets/custom_image_container.dart';
-
 import 'package:loci/shared/widgets/feed/expandable_text.dart';
 import 'package:loci/shared/widgets/feed/post_interaction_bar.dart';
+import 'package:loci/shared/widgets/feed/user_post_header.dart';
 
 class CommunityOfferCard extends StatelessWidget {
   final String profileImage;
-  final String businessName;
+  final String displayName;
+  final bool isModerator;
   final String dateTime;
   final String description;
   final String couponImageUrl;
@@ -19,11 +19,13 @@ class CommunityOfferCard extends StatelessWidget {
   final VoidCallback? onDownloadTap;
   final VoidCallback? onLikeTap;
   final VoidCallback? onCommentTap;
+  final bool isDownloading;
 
   const CommunityOfferCard({
     super.key,
     required this.profileImage,
-    required this.businessName,
+    required this.displayName,
+    this.isModerator = false,
     required this.dateTime,
     required this.description,
     required this.couponImageUrl,
@@ -33,80 +35,26 @@ class CommunityOfferCard extends StatelessWidget {
     this.onDownloadTap,
     this.onLikeTap,
     this.onCommentTap,
+    this.isDownloading = false,
   });
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = context.colorScheme;
-
-    return Container(
-      margin: const EdgeInsets.only(bottom: 14),
-      decoration: BoxDecoration(
-        color: colorScheme.surfaceContainer,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.03),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
+    return CommunityAnnouncementCardShell(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          UserPostHeader(
+            fullName: displayName,
+            date: dateTime,
+            category: '',
+            imagePath: profileImage,
+            isModerator: isModerator,
           ),
-        ],
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(14),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // ---------------- HEADER ----------------
-            Row(
-              children: [
-                CustomCachedImage(
-                  width: 42,
-                  height: 42,
-                  imageUrl: profileImage,
-                  isCircle: true,
-                ),
-                const SizedBox(width: 10),
-
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        businessName,
-                        style: AppTextStyle.textMd(
-                          weight: FontWeight.w600,
-                          color: colorScheme.onSurface,
-                        ),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        dateTime,
-                        style: AppTextStyle.textXs(
-                          color: colorScheme.onSurfaceVariant,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-
-                // Optional menu icon (production feel)
-                Icon(
-                  Icons.more_vert,
-                  size: 18,
-                  color: colorScheme.onSurfaceVariant,
-                ),
-              ],
-            ),
-
+          const SizedBox(height: 12),
+          ExpandableText(text: description, trimLines: 2),
+          if (couponImageUrl.trim().isNotEmpty) ...[
             const SizedBox(height: 12),
-
-            // ---------------- DESCRIPTION ----------------
-            ExpandableText(text: description, trimLines: 2),
-
-            const SizedBox(height: 12),
-
-            // ---------------- IMAGE ----------------
             ClipRRect(
               borderRadius: BorderRadius.circular(14),
               child: Stack(
@@ -115,44 +63,52 @@ class CommunityOfferCard extends StatelessWidget {
                     aspectRatio: 16 / 9,
                     child: CustomCachedImage(imageUrl: couponImageUrl),
                   ),
-
-                  // Download button overlay
-                  Positioned(
-                    right: 10,
-                    bottom: 10,
-                    child: InkWell(
-                      onTap: onDownloadTap,
-                      borderRadius: BorderRadius.circular(30),
-                      child: Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          color: Colors.black.withOpacity(0.5),
-                          shape: BoxShape.circle,
-                        ),
-                        child: const Icon(
-                          Icons.download_rounded,
-                          size: 20,
-                          color: Colors.white,
+                  if (onDownloadTap != null)
+                    Positioned(
+                      right: 10,
+                      bottom: 10,
+                      child: Material(
+                        color: Colors.transparent,
+                        child: InkWell(
+                          onTap: isDownloading ? null : onDownloadTap,
+                          borderRadius: BorderRadius.circular(30),
+                          child: Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: Colors.black.withValues(alpha: 0.5),
+                              shape: BoxShape.circle,
+                            ),
+                            child: isDownloading
+                                ? const SizedBox(
+                                    width: 20,
+                                    height: 20,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      color: Colors.white,
+                                    ),
+                                  )
+                                : const Icon(
+                                    Icons.download_rounded,
+                                    size: 20,
+                                    color: Colors.white,
+                                  ),
+                          ),
                         ),
                       ),
                     ),
-                  ),
                 ],
               ),
             ),
-
-            const SizedBox(height: 14),
-
-            // ---------------- INTERACTION ----------------
-            PostInteractionBar(
-              likes: likes,
-              comments: comments,
-              isLiked: isLiked,
-              onLikeTap: onLikeTap,
-              onCommentTap: onCommentTap,
-            ),
           ],
-        ),
+          const SizedBox(height: 14),
+          PostInteractionBar(
+            likes: likes,
+            comments: comments,
+            isLiked: isLiked,
+            onLikeTap: onLikeTap,
+            onCommentTap: onCommentTap,
+          ),
+        ],
       ),
     );
   }

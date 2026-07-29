@@ -2,18 +2,25 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:loci/core/utils/date_parser.dart';
 import 'package:loci/features/explore_activity/presentation/controllers/business_raffles_list_controller.dart';
+import 'package:loci/features/explore_activity/presentation/utils/explore_activity_search_focus.dart';
 import 'package:loci/features/explore_activity/presentation/widgets/explore_activity_empty_sliver.dart';
 import 'package:loci/features/explore_activity/presentation/widgets/explore_activity_list_footer.dart';
+import 'package:loci/features/explore_activity/presentation/widgets/explore_activity_list_shimmer.dart';
 import 'package:loci/features/explore_activity/presentation/widgets/explore_activity_tab_scroll.dart';
 import 'package:loci/features/explore_activity/presentation/widgets/raffles_edit_card.dart';
-import 'package:loci/features/raffles/data/models/raffles_model.dart';
+import 'package:loci/features/raffles/data/models/raffle_list_model.dart';
 import 'package:loci/routes/app_routes.dart';
 import 'package:loci/shared/widgets/error_state.dart';
 
 class ExploreActivityRafflesTab extends StatefulWidget {
-  const ExploreActivityRafflesTab({super.key, required this.businessId});
+  const ExploreActivityRafflesTab({
+    super.key,
+    required this.businessId,
+    required this.searchFocus,
+  });
 
   final String businessId;
+  final ExploreActivitySearchFocus searchFocus;
 
   @override
   State<ExploreActivityRafflesTab> createState() =>
@@ -48,10 +55,7 @@ class _ExploreActivityRafflesTabState extends State<ExploreActivityRafflesTab>
 
   Widget _buildSliver() {
     if (_controller.showInitialLoader(widget.businessId)) {
-      return const SliverFillRemaining(
-        hasScrollBody: false,
-        child: Center(child: CircularProgressIndicator()),
-      );
+      return ExploreActivityListShimmer.sliver();
     }
 
     if (_controller.errorMessage.value != null &&
@@ -68,7 +72,7 @@ class _ExploreActivityRafflesTabState extends State<ExploreActivityRafflesTab>
       );
     }
 
-    if (!_controller.isLoading.value && _controller.raffleList.isEmpty) {
+    if (_controller.showEmptyState(widget.businessId)) {
       return const ExploreActivityEmptySliver(
         icon: Icons.card_giftcard_outlined,
         title: 'No raffles yet',
@@ -96,9 +100,14 @@ class _ExploreActivityRafflesTabState extends State<ExploreActivityRafflesTab>
           imageUrl: raffle.banner,
           organizerName: raffle.organizerName,
           onEdit: () async {
-            final result = await Get.toNamed(
-              AppRoutes.editRaffles,
-              arguments: {'raffleId': raffle.id},
+            final result = await widget.searchFocus.guard(
+              () => Get.toNamed(
+                AppRoutes.editRaffles,
+                arguments: {
+                  'raffleId': raffle.id,
+                  'businessId': widget.businessId,
+                },
+              ),
             );
             if (result == true) {
               await _controller.fetchRaffles(
@@ -108,9 +117,14 @@ class _ExploreActivityRafflesTabState extends State<ExploreActivityRafflesTab>
             }
           },
           onView: () {
-            Get.toNamed(
-              AppRoutes.viewRaffles,
-              arguments: {'raffleId': raffle.id, 'rafflesName': raffle.title},
+            widget.searchFocus.guard(
+              () => Get.toNamed(
+                AppRoutes.viewRaffles,
+                arguments: {
+                  'raffleId': raffle.id,
+                  'rafflesName': raffle.title,
+                },
+              ),
             );
           },
         );

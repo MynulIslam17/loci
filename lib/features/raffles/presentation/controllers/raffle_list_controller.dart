@@ -2,7 +2,7 @@ import 'dart:async';
 
 import 'package:get/get.dart';
 import 'package:loci/core/utils/show_snackbar.dart';
-import 'package:loci/features/raffles/data/models/raffles_model.dart';
+import 'package:loci/features/raffles/data/models/raffle_list_model.dart';
 import 'package:loci/features/raffles/domain/services/raffles_service.dart';
 
 class RaffleListController extends GetxController {

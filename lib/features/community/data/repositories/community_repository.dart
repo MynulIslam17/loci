@@ -65,6 +65,7 @@ class CommunityRepository {
     required String type,
     required int page,
     required int limit,
+    String? search,
   }) async {
     final res = await _network.getRequest(
       url: AppUrl.announcementList,
@@ -73,6 +74,7 @@ class CommunityRepository {
         'type': type,
         'page': page,
         'limit': limit,
+        if (search != null && search.isNotEmpty) 'search': search,
       },
     );
     if (!res.isSuccess || res.body == null) {
@@ -154,16 +156,19 @@ class CommunityRepository {
     required String pollQuestion,
     required String pollCategory,
     required String qType,
+    String? businessId,
   }) async {
+    final body = <String, dynamic>{
+      'type': 'question',
+      'communityId': communityId,
+      'pollQuestion': pollQuestion,
+      'pollCategory': pollCategory,
+      'qtype': qType,
+      if (businessId != null && businessId.isNotEmpty) 'businessId': businessId,
+    };
     final res = await _network.postRequest(
       url: AppUrl.crateAnnouncement,
-      body: {
-        'type': 'question',
-        'communityId': communityId,
-        'pollQuestion': pollQuestion,
-        'pollCategory': pollCategory,
-        'qtype': qType,
-      },
+      body: body,
     );
     if (!res.isSuccess) {
       throw Exception(res.errorMessage ?? 'Failed to create poll question');

@@ -56,7 +56,7 @@ class _MyBusinessProfileState extends State<MyBusinessProfile> {
       }
     });
     reviewController.fetchReviews(businessId);
-    profileController.fetchMyAds();
+    profileController.fetchMyAds(businessId: businessId);
     _loadSpotlightCredits();
   }
 
@@ -171,12 +171,13 @@ class _MyBusinessProfileState extends State<MyBusinessProfile> {
     final created = await Get.toNamed(
       AppRoutes.createAdd,
       arguments: {
+        'businessId': business.id,
         'businessName': business.name,
         'location': business.location,
       },
     );
     if (created == true) {
-      await profileController.fetchMyAds();
+      await profileController.fetchMyAds(businessId: businessId);
       await _loadSpotlightCredits();
     }
   }

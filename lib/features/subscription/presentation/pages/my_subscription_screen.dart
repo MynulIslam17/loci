@@ -54,9 +54,8 @@ class MySubscriptionScreen extends StatelessWidget {
               ],
               const SizedBox(height: 16),
               _BillingCard(sub: sub, colorScheme: colorScheme),
-              // Offer cancel for any active plan (free included), even one
-              // already set to end — the billing row above still shows the
-              // "Ends on …" date for context.
+              // Offer cancel for any active plan (free included). Cancellation
+              // is immediate — no grace period.
               if (sub.isActive) ...[
                 const SizedBox(height: 24),
                 _CancelButton(controller: controller, colorScheme: colorScheme),
@@ -225,7 +224,8 @@ class _BillingCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final String renewLabel = sub.cancelAtPeriodEnd ? 'Ends on' : 'Renews on';
+    // Cancellation is immediate now, so an active recurring plan always renews.
+    const String renewLabel = 'Renews on';
 
     return _SectionCard(
       colorScheme: colorScheme,
@@ -303,8 +303,9 @@ class _CancelButton extends StatelessWidget {
       AlertDialog(
         title: const Text('Cancel subscription?'),
         content: const Text(
-          'Your plan stays active until the end of the current billing '
-          'period. You can resubscribe anytime.',
+          'Your plan will be cancelled immediately and you\'ll lose access to '
+          'paid features right away. Remaining paid days aren\'t refunded. You '
+          'can resubscribe anytime.',
         ),
         actions: [
           TextButton(

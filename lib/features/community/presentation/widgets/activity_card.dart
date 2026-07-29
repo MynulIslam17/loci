@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:loci/features/community/presentation/widgets/community_announcement_card_shell.dart';
 import 'package:loci/shared/widgets/feed/expandable_text.dart';
 import 'package:loci/shared/widgets/feed/post_interaction_bar.dart';
-
-import 'package:loci/core/constants/app_text_style.dart';
-import 'package:loci/core/theme/theme_extention.dart';
+import 'package:loci/shared/widgets/feed/user_post_header.dart';
 
 /// Card for community activity with header, description, activity content, and interaction bar.
 class CommunityActivityCard extends StatelessWidget {
   final String profileImage;
-  final String businessName;
+  final String displayName;
+  final bool isModerator;
   final String dateTime;
   final String description;
   final String likes;
@@ -21,7 +21,8 @@ class CommunityActivityCard extends StatelessWidget {
   const CommunityActivityCard({
     super.key,
     required this.profileImage,
-    required this.businessName,
+    required this.displayName,
+    this.isModerator = false,
     required this.dateTime,
     required this.description,
     required this.likes,
@@ -34,65 +35,33 @@ class CommunityActivityCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = context.colorScheme;
-
-    return Card(
-      elevation: 1,
-      color: colorScheme.surfaceContainer,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+    return CommunityAnnouncementCardShell(
       margin: const EdgeInsets.only(bottom: 16),
-      child: Padding(
-        padding: const EdgeInsets.all(14),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Header
-            Row(
-              children: [
-                CircleAvatar(
-                  radius: 20,
-                  backgroundImage: AssetImage(profileImage),
-                ),
-                const SizedBox(width: 12),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      businessName,
-                      style: AppTextStyle.textSm(weight: FontWeight.bold),
-                    ),
-                    Text(
-                      dateTime,
-                      style: AppTextStyle.textXs(
-                        color: colorScheme.onSurfaceVariant.withOpacity(0.7),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-
-            // Description
-            ExpandableText(text: description, trimLines: 2),
-
-            if (activityContent != null) ...[
-              const SizedBox(height: 16),
-              activityContent!,
-            ],
-
-            const SizedBox(height: 18),
-
-            // Interaction bar
-            PostInteractionBar(
-              likes: likes,
-              comments: comments,
-              isLiked: isLiked,
-              onLikeTap: onLikeTap,
-              onCommentTap: onCommentTap,
-            ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          UserPostHeader(
+            fullName: displayName,
+            date: dateTime,
+            category: '',
+            imagePath: profileImage,
+            isModerator: isModerator,
+          ),
+          const SizedBox(height: 12),
+          ExpandableText(text: description, trimLines: 2),
+          if (activityContent != null) ...[
+            const SizedBox(height: 16),
+            activityContent!,
           ],
-        ),
+          const SizedBox(height: 14),
+          PostInteractionBar(
+            likes: likes,
+            comments: comments,
+            isLiked: isLiked,
+            onLikeTap: onLikeTap,
+            onCommentTap: onCommentTap,
+          ),
+        ],
       ),
     );
   }

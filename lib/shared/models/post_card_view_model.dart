@@ -1,5 +1,6 @@
 import 'package:loci/core/enums/question_type.dart';
 import 'package:loci/core/utils/time_parser.dart';
+import 'package:loci/features/community/data/models/announcement_author_display.dart';
 import 'package:loci/features/community/data/models/announcement_model.dart';
 import 'package:loci/features/home/data/models/question_model.dart';
 
@@ -48,6 +49,8 @@ class PostCardViewModel {
   final String comments;
   final bool isLiked;
   final bool isPoll;
+  final bool isModerator;
+  final String? businessId;
   final int totalVotes;
   final List<PostPollOption>? pollOptions;
 
@@ -62,6 +65,8 @@ class PostCardViewModel {
     required this.comments,
     required this.isLiked,
     required this.isPoll,
+    this.isModerator = false,
+    this.businessId,
     required this.totalVotes,
     this.pollOptions,
   });
@@ -103,18 +108,27 @@ class PostCardViewModel {
     return preview;
   }
 
-  factory PostCardViewModel.from(AnnouncementModel ann) {
+  factory PostCardViewModel.from(
+    AnnouncementModel ann, {
+    String? communityOwnerUserId,
+  }) {
+    final author = AnnouncementAuthorDisplay.from(
+      ann,
+      communityOwnerUserId: communityOwnerUserId,
+    );
     return PostCardViewModel(
       postId: ann.id,
-      userName: ann.business?.name ?? ann.createdBy?.name ?? '',
-      userImage: ann.business?.logo ?? ann.createdBy?.avatar ?? '',
+      userName: author.displayName,
+      userImage: author.avatarUrl,
       date: formatDateTime(ann.createdAt),
       category: ann.pollCategory ?? '',
-      text: ann.pollQuestion ?? ann.details,
+      text: ann.feedBodyText,
       likes: (ann.likeCount ?? 0).toString(),
       comments: (ann.commentCount ?? 0).toString(),
       isLiked: ann.isLiked,
       isPoll: ann.qType == QuestionType.poll,
+      isModerator: author.isModerator,
+      businessId: author.businessId,
       totalVotes: ann.totalVotes ?? 0,
       pollOptions: ann.pollOptions
           ?.map(

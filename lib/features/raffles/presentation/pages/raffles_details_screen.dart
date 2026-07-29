@@ -11,7 +11,7 @@ import 'package:loci/routes/app_routes.dart';
 import 'package:percent_indicator/linear_percent_indicator.dart';
 
 import 'package:loci/core/theme/app_colors.dart';
-import 'package:loci/features/raffles/data/models/raffles_details_model.dart';
+import 'package:loci/features/raffles/data/models/raffle_detail_model.dart';
 import 'package:loci/shared/widgets/custom_image_container.dart';
 
 class RafflesDetailsScreen extends StatefulWidget {

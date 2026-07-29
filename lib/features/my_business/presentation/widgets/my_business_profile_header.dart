@@ -4,7 +4,9 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:loci/core/constants/app_text_style.dart';
 import 'package:loci/core/theme/app_colors.dart';
+import 'package:loci/core/enums/community_role.dart';
 import 'package:loci/core/theme/theme_extention.dart';
+import 'package:loci/core/utils/show_snackbar.dart';
 import 'package:loci/features/my_business/data/models/business_profile_model.dart';
 import 'package:loci/features/my_business/presentation/widgets/edit_circle_button.dart';
 import 'package:loci/features/my_business/presentation/widgets/my_business_action_chip.dart';
@@ -146,7 +148,21 @@ class MyBusinessProfileHeader extends StatelessWidget {
           children: [
             MyBusinessActionChip(
               label: 'Community',
-              onTap: () => Get.toNamed(AppRoutes.allCommunity),
+              onTap: () {
+                final community = business.community;
+                if (community.id.isEmpty) {
+                  SnackbarService.error('No community linked to this business');
+                  return;
+                }
+                Get.toNamed(
+                  AppRoutes.communityScreen,
+                  arguments: {
+                    'communityRole': CommunityRole.owner,
+                    'communityId': community.id,
+                    'communityName': community.name,
+                  },
+                );
+              },
               backgroundColor: colorScheme.primary,
             ),
             const SizedBox(width: 12),

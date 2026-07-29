@@ -6,12 +6,17 @@ class SubmitAdRequestModel {
     required this.title,
     required this.endDate,
     required this.image,
+    this.businessId,
     this.businessName,
     this.location,
     this.startDate,
   });
 
   final String title;
+
+  /// The business the ad (and its spotlight credits) belongs to. Required by
+  /// the backend for owners of more than one business — it 400s without it.
+  final String? businessId;
   final String? businessName;
   final String? location;
   final DateTime? startDate;
@@ -23,6 +28,9 @@ class SubmitAdRequestModel {
       'title': title,
       'endDate': endDate.toUtc().toIso8601String(),
     };
+    if (businessId != null && businessId!.isNotEmpty) {
+      fields['businessId'] = businessId!;
+    }
     if (businessName != null && businessName!.isNotEmpty) {
       fields['businessName'] = businessName!;
     }

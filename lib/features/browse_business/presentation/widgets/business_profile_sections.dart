@@ -3,11 +3,17 @@ import 'package:get/get.dart';
 import 'package:loci/core/constants/app_text_style.dart';
 import 'package:loci/core/theme/theme_extention.dart';
 import 'package:loci/features/browse_business/presentation/controllers/save_business_controller.dart';
+import 'package:loci/shared/widgets/confirm_dialog.dart';
 
 class BusinessSaveListButton extends StatelessWidget {
-  const BusinessSaveListButton({super.key, required this.businessId});
+  const BusinessSaveListButton({
+    super.key,
+    required this.businessId,
+    this.initiallySaved = false,
+  });
 
   final String businessId;
+  final bool initiallySaved;
 
   @override
   Widget build(BuildContext context) {
@@ -15,23 +21,63 @@ class BusinessSaveListButton extends StatelessWidget {
 
     return Obx(() {
       final loading = saveController.isLoading(businessId);
+      final saved = saveController.isSaved(businessId, initiallySaved);
+
+      if (loading) {
+        return SizedBox(
+          width: 180,
+          height: 45,
+          child: ElevatedButton.icon(
+            onPressed: null,
+            icon: const SizedBox(
+              width: 16,
+              height: 16,
+              child: CircularProgressIndicator(strokeWidth: 2),
+            ),
+            label: const Text('Please wait...'),
+          ),
+        );
+      }
+
+      if (saved) {
+        return SizedBox(
+          width: 180,
+          height: 45,
+          child: ElevatedButton.icon(
+            onPressed: () => _confirmUnsave(context, saveController),
+            icon: const Icon(Icons.check, size: 20),
+            label: const Text('Saved'),
+          ),
+        );
+      }
 
       return SizedBox(
         width: 180,
         height: 45,
         child: ElevatedButton.icon(
-          onPressed: loading ? null : () => saveController.saveBusiness(businessId),
-          icon: loading
-              ? const SizedBox(
-                  width: 16,
-                  height: 16,
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                )
-              : const Icon(Icons.add, size: 20),
-          label: Text(loading ? 'Saving...' : 'Add to List'),
+          onPressed: () => saveController.saveBusiness(businessId),
+          icon: const Icon(Icons.add, size: 20),
+          label: const Text('Add to List'),
         ),
       );
     });
+  }
+
+  Future<void> _confirmUnsave(
+    BuildContext context,
+    SaveBusinessController saveController,
+  ) async {
+    final confirmed = await showConfirmDialog(
+      context,
+      title: 'Remove from list?',
+      message: 'Do you want to remove this business from your saved list?',
+      confirmText: 'Remove',
+      icon: Icons.bookmark_remove_outlined,
+      isDestructive: true,
+    );
+    if (confirmed) {
+      await saveController.unsaveBusiness(businessId);
+    }
   }
 }
 

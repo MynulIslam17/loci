@@ -5,6 +5,7 @@ import 'package:loci/features/browse_business/data/models/browse_business_model.
 
 import 'package:loci/core/theme/theme_extention.dart';
 import 'package:loci/features/browse_business/presentation/controllers/save_business_controller.dart';
+import 'package:loci/shared/widgets/confirm_dialog.dart';
 import 'package:loci/shared/widgets/custom_image_container.dart';
 import 'business_logo_avatar.dart';
 
@@ -23,6 +24,24 @@ class BrowseBusinessCard extends StatelessWidget {
     required this.onAdd,
     required this.onView,
   });
+
+  Future<void> _confirmUnsave(
+    BuildContext context,
+    SaveBusinessController ctrl,
+  ) async {
+    final confirmed = await showConfirmDialog(
+      context,
+      title: 'Remove from list?',
+      message:
+          'Do you want to remove "${item.name}" from your saved businesses?',
+      confirmText: 'Remove',
+      icon: Icons.bookmark_remove_outlined,
+      isDestructive: true,
+    );
+    if (confirmed) {
+      await ctrl.unsaveBusiness(item.id);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -189,21 +208,35 @@ class BrowseBusinessCard extends StatelessWidget {
                               Obx(() {
                                 final ctrl = Get.find<SaveBusinessController>();
                                 final loading = ctrl.isLoading(item.id);
+                                final saved = ctrl.isSaved(item.id, item.isSaved);
+
+                                if (loading) {
+                                  return OutlinedButton.icon(
+                                    onPressed: null,
+                                    icon: const SizedBox(
+                                      width: 14,
+                                      height: 14,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                      ),
+                                    ),
+                                    label: const Text("Please wait..."),
+                                  );
+                                }
+
+                                if (saved) {
+                                  return OutlinedButton.icon(
+                                    onPressed: () =>
+                                        _confirmUnsave(context, ctrl),
+                                    icon: const Icon(Icons.check),
+                                    label: const Text("Saved"),
+                                  );
+                                }
 
                                 return OutlinedButton.icon(
-                                  onPressed: loading ? null : onAdd,
-                                  icon: loading
-                                      ? const SizedBox(
-                                          width: 14,
-                                          height: 14,
-                                          child: CircularProgressIndicator(
-                                            strokeWidth: 2,
-                                          ),
-                                        )
-                                      : const Icon(Icons.add),
-                                  label: Text(
-                                    loading ? "Saving..." : "Add to list",
-                                  ),
+                                  onPressed: onAdd,
+                                  icon: const Icon(Icons.add),
+                                  label: const Text("Add to list"),
                                 );
                               }),
                               const SizedBox(width: 10),

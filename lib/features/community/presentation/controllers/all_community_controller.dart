@@ -2,6 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:get/get.dart';
 import 'package:loci/features/community/data/models/community_model.dart';
 import 'package:loci/features/community/domain/services/community_service.dart';
+import 'package:loci/routes/app_routes.dart';
 
 class AllCommunityController extends GetxController {
   AllCommunityController(this._service);
@@ -12,6 +13,7 @@ class AllCommunityController extends GetxController {
   final isLoading = false.obs;
   final isPaginationLoading = false.obs;
   final errorMessage = RxnString();
+  final searchQuery = ''.obs;
 
   final joined = <CommunityModel>[].obs;
   final available = <CommunityModel>[].obs;
@@ -21,12 +23,37 @@ class AllCommunityController extends GetxController {
   final hasNextPage = true.obs;
 
   bool get hasMore => hasNextPage.value;
+  bool get isSearching => searchQuery.value.trim().isNotEmpty;
+
+  List<CommunityModel> get displayedJoined => _filter(joined);
+  List<CommunityModel> get displayedAvailable => _filter(available);
 
   @override
   void onInit() {
     super.onInit();
     scrollController.addListener(_scrollListener);
     fetchCommunities();
+  }
+
+  @override
+  void onClose() {
+    scrollController.dispose();
+    super.onClose();
+  }
+
+  void onSearchChanged(String value) => searchQuery.value = value;
+
+  void clearSearch() => searchQuery.value = '';
+
+  void openCommunity(CommunityModel community) {
+    Get.toNamed(
+      AppRoutes.communityScreen,
+      arguments: {
+        'communityRole': community.role,
+        'communityId': community.id,
+        'communityName': community.name,
+      },
+    );
   }
 
   void _scrollListener() {
@@ -38,16 +65,6 @@ class AllCommunityController extends GetxController {
     }
   }
 
-  @override
-  void onClose() {
-    // Crucial: Dispose the ScrollController when the controller is destroyed
-    scrollController.dispose();
-    super.onClose();
-  }
-
-  // ===========================================================
-  // FETCH COMMUNITIES (FIRST LOAD / REFRESH)
-  // ===========================================================
   Future<void> fetchCommunities({bool isRefresh = false}) async {
     if (isRefresh) {
       _currentPage = 1;
@@ -65,12 +82,8 @@ class AllCommunityController extends GetxController {
         limit: _limit,
       );
 
-      // joined always replace (no pagination needed)
       joined.assignAll(model.joined);
-
-      // available list handling (EVENT STYLE)
       available.assignAll(model.available);
-
       hasNextPage.value = model.meta?.hasNextPage ?? false;
     } catch (e) {
       errorMessage.value = e.toString().replaceFirst('Exception: ', '');
@@ -79,9 +92,6 @@ class AllCommunityController extends GetxController {
     }
   }
 
-  // ===========================================================
-  // LOAD MORE (PAGINATION)
-  // ===========================================================
   Future<void> loadMoreCommunities() async {
     if (!hasNextPage.value || isPaginationLoading.value) return;
 
@@ -95,35 +105,36 @@ class AllCommunityController extends GetxController {
       );
 
       available.addAll(model.available);
-
       hasNextPage.value = model.meta?.hasNextPage ?? false;
     } catch (e) {
-      _currentPage--; // rollback
+      _currentPage--;
       errorMessage.value = 'Pagination error: $e';
     } finally {
       isPaginationLoading.value = false;
     }
   }
 
-  // ===========================================================
-  // REFRESH
-  // ===========================================================
-  Future<void> refreshCommunities() async {
-    await fetchCommunities(isRefresh: true);
-  }
+  Future<void> refreshCommunities() => fetchCommunities(isRefresh: true);
 
-  // ===========================================================
-  // RESET
-  // ===========================================================
   void reset() {
     isLoading.value = false;
     isPaginationLoading.value = false;
     errorMessage.value = null;
-
+    searchQuery.value = '';
     joined.clear();
     available.clear();
-
     _currentPage = 1;
     hasNextPage.value = true;
+  }
+
+  List<CommunityModel> _filter(List<CommunityModel> source) {
+    final q = searchQuery.value.trim().toLowerCase();
+    if (q.isEmpty) return source;
+
+    return source.where((c) {
+      return c.name.toLowerCase().contains(q) ||
+          c.description.toLowerCase().contains(q) ||
+          c.category.label.toLowerCase().contains(q);
+    }).toList();
   }
 }

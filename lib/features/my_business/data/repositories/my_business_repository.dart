@@ -11,10 +11,19 @@ class MyBusinessRepository {
 
   MyBusinessRepository(this._network);
 
-  Future<Map<String, dynamic>> getMyBusinesses({String? category}) async {
+  Future<Map<String, dynamic>> getMyBusinesses({
+    String? category,
+    int page = 1,
+    int limit = 10,
+  }) async {
+    final queryParams = <String, dynamic>{
+      'page': page,
+      'limit': limit,
+      if (category != null && category.isNotEmpty) 'category': category,
+    };
     final res = await _network.getRequest(
       url: AppUrl.myBusiness,
-      queryParams: category != null ? {'category': category} : null,
+      queryParams: queryParams,
     );
     if (!res.isSuccess || res.body == null) {
       throw Exception(res.errorMessage ?? 'Something went wrong');
@@ -165,12 +174,17 @@ class MyBusinessRepository {
   }
 
   Future<Map<String, dynamic>> getMyAds({
+    required String businessId,
     required int page,
     required int limit,
   }) async {
     final res = await _network.getRequest(
       url: AppUrl.myAds,
-      queryParams: {'page': page, 'limit': limit},
+      queryParams: {
+        'businessId': businessId,
+        'page': page,
+        'limit': limit,
+      },
     );
     if (!res.isSuccess || res.body == null) {
       throw Exception(

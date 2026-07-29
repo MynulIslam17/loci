@@ -36,9 +36,7 @@ import 'package:loci/features/explore_activity/presentation/pages/explore_activi
 import 'package:loci/features/recent_activity/presentation/pages/recent_activity_screen.dart';
 import 'package:loci/features/explore_activity/presentation/pages/total_checkin_screen.dart';
 import 'package:loci/features/explore_activity/presentation/pages/total_rsvp_screen.dart';
-import 'package:loci/features/explore_activity/presentation/pages/view_event_screen.dart';
-import 'package:loci/features/explore_activity/presentation/pages/view_raffles_screen.dart';
-import 'package:loci/features/explore_activity/presentation/pages/view_route_screen.dart';
+import 'package:loci/features/explore_activity/presentation/pages/view_activity_screen.dart';
 import 'package:loci/features/routes/presentation/pages/explore_routes_screen.dart';
 import 'package:loci/features/routes/presentation/pages/route_details_screen.dart';
 import 'package:loci/features/chat/presentation/pages/chat_list_screen.dart';
@@ -266,17 +264,17 @@ abstract class AppPages {
 
     GetPage(
       name: AppRoutes.viewEvent,
-      page: () => ViewEventScreen(),
+      page: () => const ViewActivityScreen(),
       binding: ExploreActivityBindings(),
     ),
     GetPage(
       name: AppRoutes.viewRoutes,
-      page: () => ViewRouteScreen(),
+      page: () => const ViewActivityScreen(),
       binding: ExploreActivityBindings(),
     ),
     GetPage(
       name: AppRoutes.viewRaffles,
-      page: () => ViewRafflesScreen(),
+      page: () => const ViewActivityScreen(),
       binding: ExploreActivityBindings(),
     ),
 
@@ -304,7 +302,14 @@ abstract class AppPages {
 
     GetPage(
       name: AppRoutes.communityScreen,
-      page: () => CommunityScreen(),
+      page: () {
+        final args = Get.arguments as Map<String, dynamic>?;
+        return CommunityScreen(
+          role: args?['communityRole'],
+          communityId: args?['communityId'] as String?,
+          communityName: args?['communityName'] as String?,
+        );
+      },
       binding: CommunityBinding(),
     ),
 

@@ -2,7 +2,7 @@ import 'dart:async';
 
 import 'package:get/get.dart';
 import 'package:loci/core/enums/rsvp_status.dart';
-import 'package:loci/features/event/data/models/event_model.dart';
+import 'package:loci/features/event/data/models/event_list_model.dart';
 import 'package:loci/features/event/domain/services/event_service.dart';
 
 class EventListController extends GetxController {
