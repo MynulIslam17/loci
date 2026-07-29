@@ -1,6 +1,6 @@
 import 'package:get/get.dart';
 import 'package:loci/core/enums/checkin_status.dart';
-import 'package:loci/features/routes/data/models/route_details_model.dart';
+import 'package:loci/features/routes/data/models/route_detail_model.dart';
 import 'package:loci/features/routes/domain/services/routes_service.dart';
 
 class RouteDetailsController extends GetxController {

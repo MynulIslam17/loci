@@ -1,5 +1,5 @@
 import 'package:get/get.dart';
-import 'package:loci/features/explore_activity/data/models/task_model.dart';
+import 'package:loci/features/explore_activity/data/models/activity_task_search_model.dart';
 import 'package:loci/features/explore_activity/domain/services/explore_activity_service.dart';
 
 class TaskController extends GetxController {

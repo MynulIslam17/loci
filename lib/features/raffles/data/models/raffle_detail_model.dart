@@ -1,4 +1,4 @@
-import 'package:loci/features/raffles/data/models/raffles_model.dart';
+import 'package:loci/features/raffles/data/models/raffle_list_model.dart';
 
 class RaffleDetailsModel {
   final RaffleModel raffleModel;

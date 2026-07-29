@@ -164,17 +164,11 @@ class SubscriptionController extends GetxController {
     try {
       final String? businessId = await _resolveBusinessId();
       if (businessId == null) return; // _resolveBusinessId already toasted why
-      _mySubscription.value = await _service.cancelSubscription(businessId);
-
-      final String? endDate = mySubscription?.currentPeriodEnd;
-      if (endDate != null && mySubscription?.cancelAtPeriodEnd == true) {
-        SnackbarService.success(
-          'Your plan stays active until ${_formatDate(endDate)}.',
-        );
-      } else {
-        SnackbarService.success('Subscription cancelled');
-        _mySubscription.value = null;
-      }
+      await _service.cancelSubscription(businessId);
+      // Cancellation is immediate now — `/my` returns null right after, so clear
+      // the plan and confirm.
+      _mySubscription.value = null;
+      SnackbarService.success('Subscription cancelled');
     } catch (e) {
       SnackbarService.error(e.toString().replaceFirst('Exception: ', ''));
     } finally {
@@ -250,11 +244,5 @@ class SubscriptionController extends GetxController {
       await Future.delayed(const Duration(seconds: 1));
     }
     return false;
-  }
-
-  String _formatDate(String isoDate) {
-    final DateTime? date = DateTime.tryParse(isoDate);
-    if (date == null) return isoDate;
-    return '${date.month}/${date.day}/${date.year}';
   }
 }

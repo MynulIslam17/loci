@@ -35,6 +35,10 @@ class CreateAdController extends GetxController {
 
   final businessLocked = false.obs;
 
+  /// The business this ad is for — sent to the backend so it knows which
+  /// business's ad credits to spend (required for multi-business owners).
+  String? _businessId;
+
   final RxBool isLoading = false.obs;
   final RxnString errorMessage = RxnString();
   final RxnString successMessage = RxnString();
@@ -59,6 +63,9 @@ class CreateAdController extends GetxController {
 
   void _hydrateFromArguments(dynamic args) {
     if (args is! Map) return;
+    if (args['businessId'] is String) {
+      _businessId = args['businessId'] as String;
+    }
     if (args['businessName'] is String) {
       final name = args['businessName'] as String;
       businessController.text = name;
@@ -202,6 +209,7 @@ class CreateAdController extends GetxController {
       successMessage.value = await _service.submitAd(
         SubmitAdRequestModel(
           title: titleController.text.trim(),
+          businessId: _businessId,
           businessName: businessName.isEmpty ? null : businessName,
           location: location.isEmpty ? null : location,
           startDate: start,

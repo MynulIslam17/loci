@@ -33,7 +33,7 @@ class MyBusinessAdBannerCard extends StatelessWidget {
     height += 6 + 20 * textScale; // schedule / location row
     if (showCredits) height += 2;
     height += 10 + bannerImageHeight + 10; // framed banner
-    return height.ceilToDouble() + 16;
+    return height.ceilToDouble() + 4;
   }
 
   final MyAdModel ad;

@@ -8,38 +8,52 @@ import 'package:loci/shared/widgets/custom_imagepicker.dart';
 class CreateActivityBannerSection extends StatelessWidget {
   const CreateActivityBannerSection({
     super.key,
-    required this.bannerImage,
+    this.bannerImage,
+    this.imageUrl,
     required this.onSelected,
   });
 
   final File? bannerImage;
+  final String? imageUrl;
   final ValueChanged<File> onSelected;
 
   @override
   Widget build(BuildContext context) {
     final colorScheme = context.colorScheme;
-    return CustomImagePicker(
-      backgroundColor: colorScheme.surfaceContainerHigh,
-      selectedImage: bannerImage,
-      height: 200,
-      onImageSelected: onSelected,
-      placeholder: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.cloud_upload_outlined,
-              color: colorScheme.onSurface,
-              size: 30,
-            ),
-            Text(
-              'Browse image',
-              style: AppTextStyle.textMd(
-                color: colorScheme.onSurface,
-                weight: FontWeight.w600,
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(12),
+      child: CustomImagePicker(
+        backgroundColor: colorScheme.surface,
+        imageUrl: imageUrl,
+        selectedImage: bannerImage,
+        height: 180,
+        onImageSelected: onSelected,
+        placeholder: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                Icons.add_photo_alternate_outlined,
+                color: colorScheme.primary,
+                size: 36,
               ),
-            ),
-          ],
+              const SizedBox(height: 8),
+              Text(
+                'Tap to upload banner',
+                style: AppTextStyle.textSm(
+                  color: colorScheme.onSurface,
+                  weight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                'Recommended: wide image, JPG or PNG',
+                style: AppTextStyle.textXs(
+                  color: colorScheme.onSurfaceVariant,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

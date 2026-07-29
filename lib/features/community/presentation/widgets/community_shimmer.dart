@@ -6,9 +6,6 @@ class CommunitySkeleton {
 
   /// Matches the layout: Circle Image (Top Left), Text (Right), Description & Category (Below)
   static Widget card(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final color = isDark ? Colors.grey.shade900 : Colors.white;
-
     return Card(
       elevation: 1,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),

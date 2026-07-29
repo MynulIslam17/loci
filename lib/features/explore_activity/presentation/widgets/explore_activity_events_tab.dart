@@ -1,17 +1,24 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:loci/features/explore_activity/presentation/controllers/business_event_list_controller.dart';
+import 'package:loci/features/explore_activity/presentation/utils/explore_activity_search_focus.dart';
 import 'package:loci/features/explore_activity/presentation/widgets/event_edit_card.dart';
 import 'package:loci/features/explore_activity/presentation/widgets/explore_activity_empty_sliver.dart';
 import 'package:loci/features/explore_activity/presentation/widgets/explore_activity_list_footer.dart';
+import 'package:loci/features/explore_activity/presentation/widgets/explore_activity_list_shimmer.dart';
 import 'package:loci/features/explore_activity/presentation/widgets/explore_activity_tab_scroll.dart';
 import 'package:loci/routes/app_routes.dart';
 import 'package:loci/shared/widgets/error_state.dart';
 
 class ExploreActivityEventsTab extends StatefulWidget {
-  const ExploreActivityEventsTab({super.key, required this.businessId});
+  const ExploreActivityEventsTab({
+    super.key,
+    required this.businessId,
+    required this.searchFocus,
+  });
 
   final String businessId;
+  final ExploreActivitySearchFocus searchFocus;
 
   @override
   State<ExploreActivityEventsTab> createState() =>
@@ -46,10 +53,7 @@ class _ExploreActivityEventsTabState extends State<ExploreActivityEventsTab>
 
   Widget _buildSliver() {
     if (_controller.showInitialLoader(widget.businessId)) {
-      return const SliverFillRemaining(
-        hasScrollBody: false,
-        child: Center(child: CircularProgressIndicator()),
-      );
+      return ExploreActivityListShimmer.sliver();
     }
 
     if (_controller.errorMessage.value != null &&
@@ -66,7 +70,7 @@ class _ExploreActivityEventsTabState extends State<ExploreActivityEventsTab>
       );
     }
 
-    if (!_controller.isLoading.value && _controller.eventList.isEmpty) {
+    if (_controller.showEmptyState(widget.businessId)) {
       return const ExploreActivityEmptySliver(
         icon: Icons.event_outlined,
         title: 'No events yet',
@@ -95,9 +99,14 @@ class _ExploreActivityEventsTabState extends State<ExploreActivityEventsTab>
           attendance: '${event.goingCount} going / ${event.maxAttendees} max',
           organizerName: event.organizerName,
           onEditInfo: () async {
-            final result = await Get.toNamed(
-              AppRoutes.editEvent,
-              arguments: {'eventId': event.id},
+            final result = await widget.searchFocus.guard(
+              () => Get.toNamed(
+                AppRoutes.editEvent,
+                arguments: {
+                  'eventId': event.id,
+                  'businessId': widget.businessId,
+                },
+              ),
             );
             if (result == true) {
               _controller.fetchEvents(
@@ -106,10 +115,18 @@ class _ExploreActivityEventsTabState extends State<ExploreActivityEventsTab>
               );
             }
           },
-          onViewDetails: () => Get.toNamed(
-            AppRoutes.viewEvent,
-            arguments: {'eventId': event.id, 'title': event.title},
-          ),
+          onViewDetails: () {
+            widget.searchFocus.guard(
+              () => Get.toNamed(
+                AppRoutes.viewEvent,
+                arguments: {
+                  'eventId': event.id,
+                  'title': event.title,
+                  'businessId': widget.businessId,
+                },
+              ),
+            );
+          },
         );
       },
       separatorBuilder: (_, __) => const SizedBox(height: 10),

@@ -151,7 +151,10 @@ class _BusinessProfileContent extends StatelessWidget {
             reviewCount: business.reviewCount,
           ),
           const SizedBox(height: 24),
-          BusinessSaveListButton(businessId: businessId),
+          BusinessSaveListButton(
+            businessId: businessId,
+            initiallySaved: business.isSaved,
+          ),
           const SizedBox(height: 32),
           BusinessDescriptionCard(description: business.description),
           const SizedBox(height: 32),
@@ -161,7 +164,10 @@ class _BusinessProfileContent extends StatelessWidget {
           const SizedBox(height: 32),
           ReviewBox(onSubmit: onSubmitReview),
           const SizedBox(height: 32),
-          BusinessProfileReviewsSection(businessId: businessId),
+          BusinessProfileReviewsSection(
+            businessId: businessId,
+            totalReviewCount: business.reviewCount,
+          ),
         ],
       ),
     );

@@ -8,6 +8,7 @@ class MyCommunityController extends GetxController {
   final CommunityService _service;
 
   final isLoading = false.obs;
+  final isRefreshing = false.obs;
   final errorMessage = RxnString();
 
   final community = Rxn<CommunityModel>();
@@ -16,8 +17,13 @@ class MyCommunityController extends GetxController {
   // FETCH COMMUNITY
   // -------------------------------------------------
   Future<void> fetchCommunity(String communityId) async {
+    final isInitialLoad = community.value == null;
     try {
-      isLoading.value = true;
+      if (isInitialLoad) {
+        isLoading.value = true;
+      } else {
+        isRefreshing.value = true;
+      }
       errorMessage.value = null;
 
       community.value = await _service.getSingleCommunity(communityId);
@@ -25,6 +31,7 @@ class MyCommunityController extends GetxController {
       errorMessage.value = e.toString().replaceFirst('Exception: ', '');
     } finally {
       isLoading.value = false;
+      isRefreshing.value = false;
     }
   }
 

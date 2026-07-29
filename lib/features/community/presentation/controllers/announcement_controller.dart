@@ -1,122 +1,243 @@
+import 'dart:async';
+
 import 'package:get/get.dart';
 import 'package:loci/core/enums/announcement_type.dart';
 import 'package:loci/core/enums/rsvp_status.dart';
-import 'package:loci/shared/models/pagination_model.dart';
 import 'package:loci/features/auth/presentation/controllers/auth_controller.dart';
 import 'package:loci/features/community/data/models/announcement_model.dart';
 import 'package:loci/features/community/domain/services/community_service.dart';
+import 'package:loci/features/community/presentation/controllers/announcement_type_cache.dart';
+import 'package:loci/features/community/presentation/controllers/my_community_controller.dart';
 
 class AnnouncementController extends GetxController {
   AnnouncementController(this._service);
 
   final CommunityService _service;
 
-  // -------------------------------------------------
-  // NORMALIZED STATE
-  // -------------------------------------------------
   final announcementMap = <String, AnnouncementModel>{}.obs;
-  final announcementIds = <String>[].obs;
   final votedOptionIds = <String, String>{}.obs;
-
-  // -------------------------------------------------
-  // OTHER STATE
-  // -------------------------------------------------
-  final isLoading = false.obs;
-  final isPaginationLoading = false.obs;
-  final errorMessage = RxnString();
-  final meta = Rxn<PaginationMeta>();
-
-  int _currentPage = 1;
   final currentType = AnnouncementType.question.obs;
+
   String? _communityId;
+  final communityOwnerUserId = RxnString();
+  final _cacheByType = <AnnouncementType, AnnouncementTypeCache>{};
+  final _tabRevision = <AnnouncementType, RxInt>{};
+  final _searchDebounce = <AnnouncementType, Timer?>{};
 
-  // -------------------------------------------------
-  // GETTERS
-  // -------------------------------------------------
-  bool get hasMore => meta.value?.hasNextPage ?? false;
-
-  List<AnnouncementModel> get announcements => announcementIds
-      .map((id) => announcementMap[id])
-      .whereType<AnnouncementModel>()
-      .toList();
-
-  // -------------------------------------------------
-  // INIT
-  // -------------------------------------------------
-  Future<void> init(String communityId) async {
-    _communityId = communityId;
-    await fetchAnnouncements(isRefresh: true);
+  AnnouncementTypeCache _cacheFor(AnnouncementType type) {
+    return _cacheByType.putIfAbsent(
+      type,
+      () => AnnouncementTypeCache(type),
+    );
   }
 
-  // -------------------------------------------------
-  // CHANGE TAB TYPE
-  // -------------------------------------------------
+  RxInt revisionFor(AnnouncementType type) {
+    return _tabRevision.putIfAbsent(type, () => 0.obs);
+  }
+
+  void _bump(AnnouncementType type) {
+    revisionFor(type).value++;
+  }
+
+  List<AnnouncementModel> announcementsFor(AnnouncementType type) {
+    final cache = _cacheFor(type);
+    return cache.ids
+        .map((id) => announcementMap[id])
+        .whereType<AnnouncementModel>()
+        .toList();
+  }
+
+  bool isLoadingFor(AnnouncementType type) => _cacheFor(type).isLoading;
+
+  bool isPaginationLoadingFor(AnnouncementType type) =>
+      _cacheFor(type).isPaginationLoading;
+
+  bool hasLoadedFor(AnnouncementType type) => _cacheFor(type).hasLoaded;
+
+  String? errorFor(AnnouncementType type) => _cacheFor(type).errorMessage;
+
+  bool hasMoreFor(AnnouncementType type) => _cacheFor(type).hasMore;
+
+  String? get communityId => _communityId;
+
+  String searchQueryFor(AnnouncementType type) => _cacheFor(type).searchQuery;
+
+  void onSearchChanged(AnnouncementType type, String query) {
+    _searchDebounce[type]?.cancel();
+    _searchDebounce[type] = Timer(const Duration(milliseconds: 400), () {
+      final trimmed = query.trim();
+      final cache = _cacheFor(type);
+      if (cache.searchQuery == trimmed) return;
+      cache.searchQuery = trimmed;
+      fetchAnnouncements(type: type, isRefresh: true);
+    });
+  }
+
+  void clearSearch(AnnouncementType type) {
+    _searchDebounce[type]?.cancel();
+    final cache = _cacheFor(type);
+    if (cache.searchQuery.isEmpty) return;
+    cache.searchQuery = '';
+    fetchAnnouncements(type: type, isRefresh: true);
+  }
+
+  /// Backward-compatible helpers for active tab actions.
+  bool get hasMore => hasMoreFor(currentType.value);
+
+  List<AnnouncementModel> get announcements =>
+      announcementsFor(currentType.value);
+
+  Future<void> init(String communityId) async {
+    if (_communityId != communityId) {
+      _communityId = communityId;
+      communityOwnerUserId.value = null;
+      _cacheByType.clear();
+      _tabRevision.clear();
+      announcementMap.clear();
+      votedOptionIds.clear();
+      currentType.value = AnnouncementType.question;
+    }
+
+    if (!hasLoadedFor(AnnouncementType.question)) {
+      await fetchAnnouncements(
+        type: AnnouncementType.question,
+        isRefresh: true,
+      );
+    }
+  }
+
+  /// Business owner of this community (for author labels on announcements).
+  void setCommunityOwnerUserId(String? userId) {
+    if (communityOwnerUserId.value == userId) return;
+    communityOwnerUserId.value = userId;
+    for (final type in AnnouncementType.values) {
+      _bump(type);
+    }
+  }
+
   void changeType(AnnouncementType type) {
     if (currentType.value == type) return;
     currentType.value = type;
-    fetchAnnouncements(isRefresh: true);
+
+    if (!hasLoadedFor(type) && _communityId != null) {
+      final cache = _cacheFor(type);
+      cache.isLoading = true;
+      cache.errorMessage = null;
+      _bump(type);
+      fetchAnnouncements(type: type, isRefresh: true);
+    }
   }
 
-  // -------------------------------------------------
-  // FETCH FIRST PAGE
-  // -------------------------------------------------
-  Future<void> fetchAnnouncements({bool isRefresh = false}) async {
+  Future<void> fetchAnnouncements({
+    required AnnouncementType type,
+    bool isRefresh = false,
+  }) async {
     if (_communityId == null) return;
 
-    try {
-      isLoading.value = true;
-      errorMessage.value = null;
+    final cache = _cacheFor(type);
+    final isFirstLoad = !cache.hasLoaded;
 
-      if (isRefresh) {
-        _currentPage = 1;
-        _resetList();
+    try {
+      cache.isLoading = true;
+      cache.errorMessage = null;
+      _bump(type);
+
+      if (isRefresh && isFirstLoad) {
+        cache.currentPage = 1;
+        cache.ids.clear();
+      } else if (isRefresh) {
+        cache.currentPage = 1;
       }
 
       final result = await _service.getAnnouncements(
         communityId: _communityId!,
-        type: currentType.value.toJson,
-        page: _currentPage,
-        limit: 3,
+        type: type.toJson,
+        page: cache.currentPage,
+        limit: 10,
+        search: cache.searchQuery.isNotEmpty ? cache.searchQuery : null,
       );
-      _appendAnnouncements(result.data);
-      meta.value = result.meta;
+
+      if (isRefresh && !isFirstLoad) {
+        cache.ids.clear();
+      }
+
+      _appendAnnouncements(result.data, cache);
+      cache.meta = result.meta;
+      cache.hasLoaded = true;
     } catch (e) {
-      errorMessage.value = e.toString().replaceFirst('Exception: ', '');
+      cache.errorMessage = e.toString().replaceFirst('Exception: ', '');
     } finally {
-      isLoading.value = false;
+      cache.isLoading = false;
+      _bump(type);
     }
   }
 
-  // -------------------------------------------------
-  // PAGINATION
-  // -------------------------------------------------
-  Future<void> fetchMoreAnnouncements() async {
-    if (!hasMore || isPaginationLoading.value || isLoading.value) return;
+  Future<void> fetchMoreAnnouncements({AnnouncementType? type}) async {
+    final tab = type ?? currentType.value;
+    final cache = _cacheFor(tab);
+
+    if (!cache.hasMore ||
+        cache.isPaginationLoading ||
+        cache.isLoading ||
+        _communityId == null) {
+      return;
+    }
 
     try {
-      isPaginationLoading.value = true;
-
-      _currentPage++;
+      cache.isPaginationLoading = true;
+      _bump(tab);
+      cache.currentPage++;
 
       final result = await _service.getAnnouncements(
         communityId: _communityId!,
-        type: currentType.value.toJson,
-        page: _currentPage,
-        limit: 3,
+        type: tab.toJson,
+        page: cache.currentPage,
+        limit: 10,
+        search: cache.searchQuery.isNotEmpty ? cache.searchQuery : null,
       );
-      _appendAnnouncements(result.data);
-      meta.value = result.meta;
+
+      _appendAnnouncements(result.data, cache);
+      cache.meta = result.meta;
     } catch (e) {
-      _currentPage--;
-      errorMessage.value = e.toString().replaceFirst('Exception: ', '');
+      cache.currentPage--;
+      cache.errorMessage = e.toString().replaceFirst('Exception: ', '');
     } finally {
-      isPaginationLoading.value = false;
+      cache.isPaginationLoading = false;
+      _bump(tab);
     }
   }
 
-  // -------------------------------------------------
-  // UPDATE HELPERS — all O(1)
-  // -------------------------------------------------
+  Future<void> refreshAnnouncements([AnnouncementType? type]) async {
+    await fetchAnnouncements(
+      type: type ?? currentType.value,
+      isRefresh: true,
+    );
+  }
+
+  /// Pull-to-refresh: reload the active tab and community meta (members, QR, etc.).
+  Future<void> refreshTabWithCommunityMeta(AnnouncementType type) async {
+    final id = _communityId;
+    MyCommunityController? myCommunity;
+    if (Get.isRegistered<MyCommunityController>()) {
+      myCommunity = Get.find<MyCommunityController>();
+    }
+
+    if (id == null || myCommunity == null) {
+      await refreshAnnouncements(type);
+      return;
+    }
+
+    await Future.wait([
+      refreshAnnouncements(type),
+      myCommunity.refreshCommunity(id),
+    ]);
+
+    final ownerId = myCommunity.community.value?.ownerUserId;
+    if (ownerId != null && ownerId.isNotEmpty) {
+      setCommunityOwnerUserId(ownerId);
+    }
+  }
+
   bool isLiked(String announcementId) =>
       announcementMap[announcementId]?.isLiked ?? false;
 
@@ -171,6 +292,7 @@ class AnnouncementController extends GetxController {
     );
     votedOptionIds[announcementId] = newOptionId;
     announcementMap.refresh();
+    _bumpAllTabsContaining(announcementId);
   }
 
   void toggleLikeLocally(String announcementId) {
@@ -183,6 +305,7 @@ class AnnouncementController extends GetxController {
           : (post.likeCount ?? 0) + 1,
     );
     announcementMap.refresh();
+    _bumpAllTabsContaining(announcementId);
   }
 
   void incrementCommentCount(String announcementId) {
@@ -192,6 +315,7 @@ class AnnouncementController extends GetxController {
       commentCount: (post.commentCount ?? 0) + 1,
     );
     announcementMap.refresh();
+    _bumpAllTabsContaining(announcementId);
   }
 
   void decrementCommentCount(String announcementId) {
@@ -203,6 +327,7 @@ class AnnouncementController extends GetxController {
           .toInt(),
     );
     announcementMap.refresh();
+    _bumpAllTabsContaining(announcementId);
   }
 
   void updatePollOption(String announcementId, PollOption option) {
@@ -212,39 +337,34 @@ class AnnouncementController extends GetxController {
       pollOptions: [...(post.pollOptions ?? []), option],
     );
     announcementMap.refresh();
+    _bumpAllTabsContaining(announcementId);
   }
 
   void updateEventRsvpStatus(String eventId, RsvpStatus status) {
-    // find announcement that contains this event
-    final announcementId = announcementIds.firstWhere(
-      (id) => announcementMap[id]?.event?.id == eventId,
-      orElse: () => '',
-    );
-    if (announcementId.isEmpty) return;
+    for (final cache in _cacheByType.values) {
+      for (final id in cache.ids) {
+        final post = announcementMap[id];
+        if (post?.event?.id != eventId) continue;
 
-    final post = announcementMap[announcementId]!;
-    final updatedEvent = post.event!.copyWith(
-      myRsvpStatus: status,
-      goingCount: status == RsvpStatus.going
-          ? post.event!.goingCount + 1
-          : post.event!.goingCount,
-    );
+        final updatedEvent = post!.event!.copyWith(
+          myRsvpStatus: status,
+          goingCount: status == RsvpStatus.going
+              ? post.event!.goingCount + 1
+              : post.event!.goingCount,
+        );
 
-    announcementMap[announcementId] = post.copyWith(event: updatedEvent);
-    announcementMap.refresh();
+        announcementMap[id] = post.copyWith(event: updatedEvent);
+        announcementMap.refresh();
+        _bump(cache.type);
+        return;
+      }
+    }
   }
 
-  // -------------------------------------------------
-  // REFRESH
-  // -------------------------------------------------
-  Future<void> refreshAnnouncements() async {
-    await fetchAnnouncements(isRefresh: true);
-  }
-
-  // -------------------------------------------------
-  // PRIVATE HELPERS
-  // -------------------------------------------------
-  void _appendAnnouncements(List<AnnouncementModel> items) {
+  void _appendAnnouncements(
+    List<AnnouncementModel> items,
+    AnnouncementTypeCache cache,
+  ) {
     String? currentUserId;
     try {
       currentUserId = Get.find<AuthController>().userModel?.id;
@@ -252,9 +372,10 @@ class AnnouncementController extends GetxController {
 
     for (final item in items) {
       announcementMap[item.id] = item;
-      if (!announcementIds.contains(item.id)) announcementIds.add(item.id);
+      if (!cache.ids.contains(item.id)) {
+        cache.ids.add(item.id);
+      }
 
-      // Seed which option the current user already voted on
       if (currentUserId != null && !votedOptionIds.containsKey(item.id)) {
         for (final opt in item.pollOptions ?? []) {
           if (opt.voters.any((v) => v.userId == currentUserId)) {
@@ -265,10 +386,14 @@ class AnnouncementController extends GetxController {
       }
     }
     announcementMap.refresh();
+    _bump(cache.type);
   }
 
-  void _resetList() {
-    announcementIds.clear();
-    announcementMap.clear();
+  void _bumpAllTabsContaining(String announcementId) {
+    for (final entry in _cacheByType.entries) {
+      if (entry.value.ids.contains(announcementId)) {
+        _bump(entry.key);
+      }
+    }
   }
 }

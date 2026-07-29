@@ -2,151 +2,113 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:loci/core/enums/activity_type.dart';
 import 'package:loci/core/theme/theme_extention.dart';
-import 'package:loci/core/utils/show_snackbar.dart';
-import 'package:loci/features/explore_activity/presentation/controllers/business_event_list_controller.dart';
-import 'package:loci/features/explore_activity/presentation/controllers/business_raffles_list_controller.dart';
-import 'package:loci/features/explore_activity/presentation/controllers/business_route_list_controller.dart';
 import 'package:loci/features/explore_activity/presentation/controllers/create_activity_controller.dart';
-import 'package:loci/features/explore_activity/presentation/widgets/create_activity_banner_section.dart';
 import 'package:loci/features/explore_activity/presentation/widgets/create_activity_bottom_section.dart';
 import 'package:loci/features/explore_activity/presentation/widgets/create_activity_event_fields.dart';
 import 'package:loci/features/explore_activity/presentation/widgets/create_activity_raffle_fields.dart';
 import 'package:loci/features/explore_activity/presentation/widgets/create_activity_route_fields.dart';
-import 'package:loci/features/explore_activity/presentation/widgets/create_activity_task_sheet.dart';
 import 'package:loci/features/explore_activity/presentation/widgets/create_activity_top_fields.dart';
+import 'package:loci/features/explore_activity/presentation/widgets/explore_activity_cover_section.dart';
+import 'package:loci/features/explore_activity/presentation/widgets/explore_activity_form_scroll.dart';
+import 'package:loci/features/explore_activity/presentation/widgets/explore_activity_section.dart';
 import 'package:loci/shared/widgets/custom_appbar.dart';
 
-/// Form UI only — state and API live in [CreateActivityController].
-class CreateActivityScreen extends StatelessWidget {
+class CreateActivityScreen extends GetView<CreateActivityController> {
   const CreateActivityScreen({super.key});
 
-  CreateActivityController get _c => Get.find<CreateActivityController>();
-
-  Future<void> _onPublish(BuildContext context) async {
-    final c = _c;
-    final success = await c.publish(context);
-    if (!context.mounted) return;
-
-    if (success) {
-      await _refreshListForCategory(c.selectedCategory.value, c.businessId);
-      Get.back();
-      SnackbarService.success(c.message.value);
-      return;
-    }
-
-    if (c.message.value.isNotEmpty) {
-      SnackbarService.warning(c.message.value);
-    }
+  String _categorySectionTitle(ActivityType type) {
+    return switch (type) {
+      ActivityType.event => 'Schedule & capacity',
+      ActivityType.routes => 'Route schedule',
+      ActivityType.raffles => 'Raffle setup',
+    };
   }
 
-  Future<void> _refreshListForCategory(
-    ActivityType category,
-    String businessId,
-  ) async {
-    switch (category) {
-      case ActivityType.event:
-        await Get.find<BusinessEventListController>().fetchEvents(
-          businessId: businessId,
-          forceRefresh: true,
-        );
-      case ActivityType.routes:
-        await Get.find<BusinessRouteListController>().fetchRoutes(
-          businessId: businessId,
-          forceRefresh: true,
-        );
-      case ActivityType.raffles:
-        await Get.find<BusinessRafflesListController>().fetchRaffles(
-          businessId: businessId,
-          forceRefresh: true,
-        );
-    }
-  }
-
-  void _onAddTask(BuildContext context) {
-    showCreateActivityTaskSheet(
-      context: context,
-      businessId: _c.businessId,
-      onAddTask: (task) {
-        if (_c.isDuplicateTask(task)) {
-          SnackbarService.warning('Task already added');
-          return;
-        }
-        _c.addTask(task);
-      },
-    );
+  String? _categorySectionSubtitle(ActivityType type) {
+    return switch (type) {
+      ActivityType.event => 'When your event starts and how many can join',
+      ActivityType.routes => 'When the route opens and how it is available',
+      ActivityType.raffles => 'Duration, supply, and prize details',
+    };
   }
 
   @override
   Widget build(BuildContext context) {
-    final c = _c;
-
     return Scaffold(
       backgroundColor: context.colorScheme.surface,
       appBar: const CustomAppbar(title: 'Create Activity'),
-      body: SingleChildScrollView(
-        child: Form(
-          key: c.formKey,
-          child: Padding(
-            padding: const EdgeInsets.all(12),
-            child: Obx(() {
-              final category = c.selectedCategory.value;
-
-              return Column(
-                children: [
-                  CreateActivityBannerSection(
-                    bannerImage: c.bannerImage.value,
-                    onSelected: c.setBanner,
-                  ),
-                  const SizedBox(height: 16),
-                  CreateActivityTopFields(
-                    selectedCategory: category,
-                    onCategoryChanged: c.setCategory,
-                    titleController: c.titleController,
-                    detailsController: c.detailsController,
-                  ),
-                  if (category == ActivityType.event)
-                    CreateActivityEventFields(
-                      dateController: c.dateController,
-                      timeController: c.timeController,
-                      personController: c.personController,
-                      onPickDate: () => c.pickEventDate(context),
-                      onPickTime: () => c.pickTime(context),
-                    ),
-                  if (category == ActivityType.routes)
-                    CreateActivityRouteFields(
-                      timeController: c.timeController,
-                      selectedRouteCondition: c.selectedRouteCondition.value,
-                      onPickTime: () => c.pickTime(context),
-                      onRouteTypeChanged: c.setRouteType,
-                    ),
-                  if (category == ActivityType.raffles)
-                    CreateActivityRaffleFields(
-                      raffleDateController: c.raffleDateController,
-                      maxSupplyController: c.maxSupplyController,
-                      couponTitleController: c.couponTitleController,
-                      rafflePrizeImage: c.rafflePrizeImage.value,
-                      tasks: c.tasks.toList(),
-                      onPickRange: () => c.pickRaffleRange(context),
-                      onPickCoupon: c.pickRaffleCoupon,
-                      onClearCoupon: c.clearRafflePrize,
-                      onAddRequirement: () => _onAddTask(context),
-                      onRemoveTask: c.removeTaskAt,
-                    ),
-                  CreateActivityBottomSection(
-                    category: category,
-                    isPublic: c.isPublic.value,
-                    onPublicChanged: c.setPublic,
-                    businessName: c.businessName,
-                    locationController: c.locationController,
-                    urlController: c.urlController,
-                    isPublishLoading: c.isLoading.value,
-                    onPublish: () => _onPublish(context),
-                  ),
-                ],
-              );
-            }),
+      body: ExploreActivityFormScroll(
+        formKey: controller.formKey,
+        children: [
+          Obx(
+            () => ExploreActivityCoverSection(
+              bannerImage: controller.bannerImage.value,
+              onSelected: controller.setBanner,
+            ),
           ),
-        ),
+          Obx(
+            () => ExploreActivitySection(
+              title: 'Basic information',
+              child: CreateActivityTopFields(
+                selectedCategory: controller.selectedCategory.value,
+                onCategoryChanged: controller.setCategory,
+                titleController: controller.titleController,
+                detailsController: controller.detailsController,
+              ),
+            ),
+          ),
+          Obx(() {
+            final category = controller.selectedCategory.value;
+            return ExploreActivitySection(
+              title: _categorySectionTitle(category),
+              subtitle: _categorySectionSubtitle(category),
+              child: switch (category) {
+                ActivityType.event => CreateActivityEventFields(
+                    dateController: controller.dateController,
+                    timeController: controller.timeController,
+                    personController: controller.personController,
+                    onPickDate: () => controller.pickEventDate(context),
+                    onPickTime: () => controller.pickTime(context),
+                  ),
+                ActivityType.routes => CreateActivityRouteFields(
+                    timeController: controller.timeController,
+                    selectedRouteCondition:
+                        controller.selectedRouteCondition.value,
+                    onPickTime: () => controller.pickTime(context),
+                    onRouteTypeChanged: controller.setRouteType,
+                  ),
+                ActivityType.raffles => CreateActivityRaffleFields(
+                    raffleDateController: controller.raffleDateController,
+                    maxSupplyController: controller.maxSupplyController,
+                    couponTitleController: controller.couponTitleController,
+                    rafflePrizeImage: controller.rafflePrizeImage.value,
+                    tasks: controller.tasks.toList(),
+                    onPickRange: () => controller.pickRaffleRange(context),
+                    onPickCoupon: controller.pickRaffleCoupon,
+                    onClearCoupon: controller.clearRafflePrize,
+                    onAddRequirement: () =>
+                        controller.openAddTaskSheet(context),
+                    onRemoveTask: controller.removeTaskAt,
+                  ),
+              },
+            );
+          }),
+          Obx(
+            () => ExploreActivitySection(
+              title: 'Visibility & publish',
+              child: CreateActivityBottomSection(
+                category: controller.selectedCategory.value,
+                isPublic: controller.isPublic.value,
+                onPublicChanged: controller.setPublic,
+                businessName: controller.businessName,
+                locationController: controller.locationController,
+                urlController: controller.urlController,
+                isPublishLoading: controller.isLoading.value,
+                onPublish: () => controller.handlePublish(context),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

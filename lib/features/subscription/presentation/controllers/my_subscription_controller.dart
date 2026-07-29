@@ -61,15 +61,10 @@ class MySubscriptionController extends GetxController {
         );
         return;
       }
-      final MySubscriptionModel? updated = await _service.cancelSubscription(
-        businessId,
-      );
-      // The screen reflects the new state directly — no success toast.
-      if (updated != null && updated.cancelAtPeriodEnd) {
-        _subscription.value = updated;
-      } else {
-        _subscription.value = null;
-      }
+      await _service.cancelSubscription(businessId);
+      // Cancellation is immediate — `/my` now returns null right after, so drop
+      // the plan and let the screen fall back to the "no subscription" state.
+      _subscription.value = null;
     } catch (e) {
       SnackbarService.error(e.toString().replaceFirst('Exception: ', ''));
     } finally {

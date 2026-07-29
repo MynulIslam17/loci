@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:loci/core/constants/app_text_style.dart';
+import 'package:flutter/services.dart';
 import 'package:loci/core/theme/theme_extention.dart';
+import 'package:loci/features/explore_activity/presentation/widgets/create_activity_picker_field.dart';
+import 'package:loci/features/explore_activity/presentation/widgets/explore_activity_field_icon.dart';
 import 'package:loci/shared/widgets/custom_text_field.dart';
 
 class CreateActivityEventFields extends StatelessWidget {
@@ -24,85 +26,65 @@ class CreateActivityEventFields extends StatelessWidget {
     final colorScheme = context.colorScheme;
 
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          'Event Schedule and Seats',
-          style: AppTextStyle.textSm(weight: FontWeight.w700),
-        ),
-        const SizedBox(height: 12),
         Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Expanded(
-              child: CustomTextField(
+              child: CreateActivityPickerField(
                 controller: dateController,
-                readOnly: true,
+                title: 'Start date',
+                hintText: 'Select date',
+                icon: Icons.calendar_today_outlined,
                 onTap: onPickDate,
-                hintText: 'Start date',
-                fontSize: 12,
-                suffixIcon: Icon(
-                  Icons.calendar_today_outlined,
-                  size: 18,
-                  color: colorScheme.onSurfaceVariant,
-                ),
-                borderColor: colorScheme.outline,
-                textColor: colorScheme.onSurface,
                 validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Required';
-                  }
+                  if (value == null || value.isEmpty) return 'Required';
                   return null;
                 },
               ),
             ),
             const SizedBox(width: 12),
             Expanded(
-              child: CustomTextField(
+              child: CreateActivityPickerField(
                 controller: timeController,
-                readOnly: true,
+                title: 'Start time',
+                hintText: 'Select time',
+                icon: Icons.access_time,
                 onTap: onPickTime,
-                hintText: 'Start time',
-                fontSize: 12,
-                suffixIcon: Icon(
-                  Icons.access_time,
-                  size: 18,
-                  color: colorScheme.onSurfaceVariant,
-                ),
-                borderColor: colorScheme.outline,
-                textColor: colorScheme.onSurface,
                 validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Required';
-                  }
+                  if (value == null || value.isEmpty) return 'Required';
                   return null;
                 },
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: CustomTextField(
-                controller: personController,
-                hintText: 'Max seats',
-                fontSize: 12,
-                keyboardType: TextInputType.number,
-                suffixIcon: Icon(
-                  Icons.person_outline,
-                  size: 18,
-                  color: colorScheme.onSurfaceVariant,
-                ),
-                validator: (value) {
-                  if (value == null || value.trim().isEmpty) {
-                    return 'Required';
-                  }
-                  return null;
-                },
-                borderColor: colorScheme.outline,
-                textColor: colorScheme.onSurface,
               ),
             ),
           ],
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 16),
+        CustomTextField(
+          controller: personController,
+          title: 'Max participants',
+          hintText: 'e.g. 100',
+          keyboardType: TextInputType.number,
+          inputFormatters: [
+            FilteringTextInputFormatter.digitsOnly,
+            LengthLimitingTextInputFormatter(6),
+          ],
+          textInputAction: TextInputAction.next,
+          prefixIcon: exploreActivityFieldIcon(
+            context,
+            Icons.groups_outlined,
+          ),
+          borderColor: colorScheme.outline,
+          textColor: colorScheme.onSurface,
+          validator: (value) {
+            final text = value?.trim() ?? '';
+            if (text.isEmpty) return 'Max participants is required';
+            final count = int.tryParse(text);
+            if (count == null) return 'Enter a valid number';
+            if (count < 1) return 'Must allow at least 1 participant';
+            return null;
+          },
+        ),
       ],
     );
   }

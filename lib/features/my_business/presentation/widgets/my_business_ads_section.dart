@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:loci/features/my_business/data/models/my_ad_model.dart';
 import 'package:loci/features/my_business/presentation/widgets/my_business_ads_carousel.dart';
+import 'package:loci/shared/widgets/empty_state.dart';
 
 class MyBusinessAdsSection extends StatelessWidget {
   const MyBusinessAdsSection({
@@ -24,7 +25,14 @@ class MyBusinessAdsSection extends StatelessWidget {
       );
     }
 
-    if (ads.isEmpty) return const SizedBox.shrink();
+    if (ads.isEmpty) {
+      return const EmptyState(
+        icon: Icons.campaign_outlined,
+        title: 'No advertisements yet',
+        subtitle: 'Create an ad to promote your business here.',
+        iconSize: 44,
+      );
+    }
 
     return MyBusinessAdsCarousel(
       ads: ads,

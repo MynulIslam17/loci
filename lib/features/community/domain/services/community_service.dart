@@ -52,12 +52,14 @@ class CommunityService {
     required String type,
     required int page,
     required int limit,
+    String? search,
   }) async {
     final body = await _repository.getAnnouncements(
       communityId: communityId,
       type: type,
       page: page,
       limit: limit,
+      search: search,
     );
     return AnnouncementResponse.fromJson(body);
   }
@@ -95,12 +97,14 @@ class CommunityService {
     required String pollQuestion,
     required String pollCategory,
     required String qType,
+    String? businessId,
   }) {
     return _repository.createPollQuestion(
       communityId: communityId,
       pollQuestion: pollQuestion,
       pollCategory: pollCategory,
       qType: qType,
+      businessId: businessId,
     );
   }
 

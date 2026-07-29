@@ -105,21 +105,11 @@ class _EventScreenState extends State<EventScreen> {
                         hintTextColor: context.colorScheme.onSurfaceVariant,
                         textColor: context.colorScheme.onSurface,
                         onChanged: controller.onSearchChanged,
-                        suffixIcon: hasSearch
-                            ? IconButton(
-                                icon: Icon(
-                                  Icons.close,
-                                  color: context.colorScheme.onSurfaceVariant,
-                                ),
-                                onPressed: () {
-                                  _searchController.clear();
-                                  controller.onSearchChanged('');
-                                },
-                              )
-                            : Icon(
-                                Icons.search,
-                                color: context.colorScheme.onSurfaceVariant,
-                              ),
+                        showClearButton: true,
+                        suffixIcon: Icon(
+                          Icons.search,
+                          color: context.colorScheme.onSurfaceVariant,
+                        ),
                       ),
                       const SizedBox(height: 16),
                       Text(

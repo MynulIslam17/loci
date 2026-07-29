@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:loci/core/enums/announcement_type.dart';
 import 'package:loci/features/browse_business/data/models/browse_business_model.dart';
 import 'package:loci/features/community/data/models/announcement_model.dart';
 import 'package:loci/features/community/domain/services/community_service.dart';
@@ -33,7 +34,11 @@ class FeedTab extends StatefulWidget {
   State<FeedTab> createState() => _FeedTabState();
 }
 
-class _FeedTabState extends State<FeedTab> {
+class _FeedTabState extends State<FeedTab> with AutomaticKeepAliveClientMixin {
+  static const _tabType = AnnouncementType.question;
+
+  @override
+  bool get wantKeepAlive => true;
   late final SearchBusinessController _searchCtrl;
   final _activeMentionPostId = RxnString();
   final _authController = Get.find<AuthController>();
@@ -80,13 +85,14 @@ class _FeedTabState extends State<FeedTab> {
 
   @override
   Widget build(BuildContext context) {
+    super.build(context);
     return Obx(() {
       final annCtrl = Get.find<AnnouncementController>();
-      final searchCtrl = _searchCtrl;
-      // Subscribe to announcement map mutations (likes, votes, etc.).
-      final announcements = annCtrl.announcements;
+      annCtrl.revisionFor(_tabType).value;
       annCtrl.announcementMap.length;
-      // Subscribe to search status / results and active mention card.
+      annCtrl.communityOwnerUserId.value;
+      final announcements = annCtrl.announcementsFor(_tabType);
+      final searchCtrl = _searchCtrl;
       searchCtrl.status.value;
       searchCtrl.businesses.length;
       final activeId = _activeMentionPostId.value;
@@ -102,7 +108,10 @@ class _FeedTabState extends State<FeedTab> {
               final isActive = activeId == announcement.id;
 
               return PostCardWidget(
-                viewModel: PostCardViewModel.from(announcement),
+                viewModel: PostCardViewModel.from(
+                  announcement,
+                  communityOwnerUserId: annCtrl.communityOwnerUserId.value,
+                ),
                 onLikeTap: widget.onLikeTap,
                 onCommentTap: widget.onCommentTap,
                 onClickPoll: (_) => widget.onPollTap(announcement),

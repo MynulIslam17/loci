@@ -2,9 +2,9 @@ import 'package:loci/core/enums/acitivty_ref_type.dart';
 import 'package:loci/core/enums/announcement_type.dart';
 import 'package:loci/core/enums/question_type.dart';
 import 'package:loci/features/my_business/data/models/my_business_list_model.dart';
-import 'package:loci/features/event/data/models/event_model.dart';
-import 'package:loci/features/raffles/data/models/raffles_model.dart';
-import 'package:loci/features/routes/data/models/routes_model.dart';
+import 'package:loci/features/event/data/models/event_list_model.dart';
+import 'package:loci/features/raffles/data/models/raffle_list_model.dart';
+import 'package:loci/features/routes/data/models/route_list_model.dart';
 
 class AnnouncementModel {
   final String id;
@@ -39,6 +39,10 @@ class AnnouncementModel {
   final String? endsAt;
   final int? totalVotes;
 
+  /// True when the post was published as the community business (owner/moderator),
+  /// not when [business] merely describes the community.
+  final bool postedAsBusiness;
+
   AnnouncementModel({
     required this.id,
     required this.announcementType,
@@ -64,13 +68,25 @@ class AnnouncementModel {
     this.endsAt,
     this.totalVotes,
     required this.isLiked,
+    this.postedAsBusiness = false,
   });
 
+  /// Primary body text for feed / question cards.
+  String get feedBodyText {
+    if (announcementType == AnnouncementType.question) {
+      final q = pollQuestion?.trim();
+      if (q != null && q.isNotEmpty) return q;
+      return details;
+    }
+    return details;
+  }
+
   factory AnnouncementModel.fromJson(Map<String, dynamic> json) {
+    final type = AnnouncementType.fromString(json['type']);
     return AnnouncementModel(
       id: json['_id'] ?? '',
       isLiked: json["isLiked"] ?? false,
-      announcementType: AnnouncementType.fromString(json['type']),
+      announcementType: type,
       qType: QuestionType.fromString(json['qtype'] as String?),
       communityId: json['communityId'] ?? '',
       pollCategory: json['pollCategory'],
@@ -82,10 +98,8 @@ class AnnouncementModel {
           : null,
       createdAt: json['createdAt'] ?? '',
       updatedAt: json['updatedAt'] ?? '',
-      details:
-          AnnouncementType.fromString(json['type']) == AnnouncementType.activity
-          ? json['description'] ?? ''
-          : json['details'] ?? json['content'] ?? '',
+      details: _detailsFromJson(json, type),
+      postedAsBusiness: _postedAsBusinessFromJson(json),
       activityRefType: ActivityRefType.fromString(json['activityRefType']),
       activityId: json['activityId'],
       event: json['event'] != null ? EventModel.fromJson(json['event']) : null,
@@ -96,7 +110,9 @@ class AnnouncementModel {
       image: json['image'],
       likeCount: json['likeCount'],
       commentCount: json['commentCount'],
-      pollQuestion: json['content'] ?? json['question'],
+      pollQuestion: type == AnnouncementType.question
+          ? (json['content'] ?? json['question']) as String?
+          : null,
       pollOptions: json['options'] != null
           ? (json['options'] as List<dynamic>)
                 .map((e) => PollOption.fromJson(e))
@@ -106,6 +122,61 @@ class AnnouncementModel {
       endsAt: json['endsAt'],
       totalVotes: json['totalVotes'],
     );
+  }
+
+  static String _detailsFromJson(
+    Map<String, dynamic> json,
+    AnnouncementType type,
+  ) {
+    switch (type) {
+      case AnnouncementType.activity:
+        return json['description']?.toString() ?? '';
+      case AnnouncementType.question:
+        return json['details']?.toString() ?? '';
+      case AnnouncementType.offer:
+      case AnnouncementType.notice:
+        return json['details']?.toString() ?? '';
+    }
+  }
+
+  /// Owner posts show this community's business; member posts show [createdBy].
+  bool displaysAsCommunityBusiness({String? communityOwnerUserId}) {
+    if (postedAsBusiness && business != null && business!.name.isNotEmpty) {
+      return true;
+    }
+    final creatorId = createdBy?.id;
+    if (communityOwnerUserId != null &&
+        communityOwnerUserId.isNotEmpty &&
+        creatorId != null &&
+        creatorId == communityOwnerUserId) {
+      return business != null && business!.name.isNotEmpty;
+    }
+    return false;
+  }
+
+  /// Whether the author chose to publish as the community business (owner).
+  /// Nested [business] is community context and must not imply this flag alone.
+  static bool _postedAsBusinessFromJson(Map<String, dynamic> json) {
+    final postedAs = json['postedAs']?.toString().toLowerCase();
+    if (postedAs == 'business') return true;
+    if (postedAs == 'user' || postedAs == 'member') return false;
+
+    if (json['postedAsBusiness'] == true || json['isBusinessPost'] == true) {
+      return true;
+    }
+
+    // Owner create sends businessId; member posts usually omit it on the document.
+    final rootBusinessId = json['businessId']?.toString();
+    if (rootBusinessId == null || rootBusinessId.isEmpty) return false;
+
+    final business = json['business'];
+    if (business is Map<String, dynamic>) {
+      final nestedId = business['_id']?.toString();
+      if (nestedId != null && nestedId.isNotEmpty) {
+        return rootBusinessId == nestedId;
+      }
+    }
+    return true;
   }
 
   AnnouncementModel copyWith({
@@ -133,6 +204,7 @@ class AnnouncementModel {
     String? endsAt,
     int? totalVotes,
     bool? isLiked,
+    bool? postedAsBusiness,
   }) {
     return AnnouncementModel(
       id: id ?? this.id,
@@ -159,6 +231,7 @@ class AnnouncementModel {
       endsAt: endsAt ?? this.endsAt,
       totalVotes: totalVotes ?? this.totalVotes,
       isLiked: isLiked ?? this.isLiked,
+      postedAsBusiness: postedAsBusiness ?? this.postedAsBusiness,
     );
   }
 }
@@ -185,7 +258,7 @@ class PollOption {
 
   factory PollOption.fromJson(Map<String, dynamic> json) {
     return PollOption(
-      id: json['optionId'] ?? '',
+      id: json['optionId']?.toString() ?? json['_id']?.toString() ?? '',
       text: json['text'] ?? '',
       image: json['image'],
       voteCount: json['voteCount'] ?? 0,

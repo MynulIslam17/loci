@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:loci/features/raffles/data/models/raffles_details_model.dart';
+import 'package:loci/features/raffles/data/models/raffle_detail_model.dart';
 
 class RaffleUpdateRequest {
   final String raffleId;
@@ -50,7 +50,7 @@ class RaffleUpdateRequest {
     if (removeCoupon != null) map['removeCoupon'] = removeCoupon.toString();
     if (raffleBundleName != null) map['raffleBundleName'] = raffleBundleName!;
 
-    if (tasks != null && tasks!.isNotEmpty) {
+    if (tasks != null) {
       map['tasks'] = jsonEncode(
         tasks!
             .where((e) => e.activity != null)

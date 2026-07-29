@@ -9,7 +9,22 @@
       "PowerShell(git fetch *)",
       "Bash(git commit *)",
       "PowerShell(git merge *)",
-      "PowerShell($out = flutter analyze lib/presentation/pages/browse lib/data/models/busniess/browse_business_model.dart 2>$null; \\($out | Select-String -Pattern \"error -|warning -\"\\))"
+      "PowerShell($out = flutter analyze lib/presentation/pages/browse lib/data/models/busniess/browse_business_model.dart 2>$null; \\($out | Select-String -Pattern \"error -|warning -\"\\))",
+      "Bash(xargs grep -l \"class BillingType\\\\|enum BillingType\")",
+      "Bash(grep -rm1 \"package=\" android/app/src/main/AndroidManifest.xml)",
+      "Bash(adb -s emulator-5554 shell pm list packages)",
+      "Bash(nohup flutter run -d emulator-5554 -t lib/verify_edit_entry.dart --no-hot)",
+      "Bash(echo \"launched pid $!\")",
+      "Read(//c/Users/azaan/AppData/Local/Temp/claude/C--Users-azaan-StudioProjects-loci/07c17f8c-0009-4df6-a842-8a3172e37a45/scratchpad/**)",
+      "Bash(adb -s emulator-5554 shell screencap -p /sdcard/v1.png)",
+      "Bash(adb -s emulator-5554 pull /sdcard/v1.png ./v1_hints.png)",
+      "Bash(export ADB=\"/c/Users/azaan/AppData/Local/Android/Sdk/platform-tools/adb.exe\")",
+      "Bash(/c/Users/azaan/AppData/Local/Android/Sdk/platform-tools/adb.exe -s emulator-5554 shell screencap -p /sdcard/v1.png)",
+      "Bash(/c/Users/azaan/AppData/Local/Android/Sdk/platform-tools/adb.exe -s emulator-5554 pull /sdcard/v1.png __TRACKED_VAR__/v1_hints.png)",
+      "Bash(dart format *)",
+      "Bash(nohup flutter run -d emulator-5554 -t lib/verify_button_entry.dart --no-hot)",
+      "Bash(echo \"launched $!\")",
+      "Bash(flutter build *)"
     ]
   }
 }

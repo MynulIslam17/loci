@@ -1,5 +1,5 @@
-import 'package:loci/features/routes/data/models/route_details_model.dart';
-import 'package:loci/features/routes/data/models/routes_model.dart';
+import 'package:loci/features/routes/data/models/route_detail_model.dart';
+import 'package:loci/features/routes/data/models/route_list_model.dart';
 import 'package:loci/features/routes/data/repositories/routes_repository.dart';
 
 /// Domain orchestration for routes. Controllers call this — never NetworkCaller.

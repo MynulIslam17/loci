@@ -48,18 +48,25 @@ class MyBusinessProfileController extends GetxController {
   Future<void> silentRefresh(String businessId) async {
     try {
       business.value = await _service.getBusinessProfile(businessId);
-      await fetchMyAds(isRefresh: true);
+      await fetchMyAds(businessId: businessId, isRefresh: true);
     } catch (_) {
       // ignore silent errors
     }
   }
 
-  Future<void> fetchMyAds({bool isRefresh = false}) async {
+  Future<void> fetchMyAds({
+    required String businessId,
+    bool isRefresh = false,
+  }) async {
+    if (businessId.isEmpty) return;
+
     try {
       if (!isRefresh) {
         isLoadingAds.value = true;
       }
-      myAds.assignAll(await _service.getMyAds());
+      myAds.assignAll(
+        await _service.getMyAds(businessId: businessId),
+      );
     } catch (_) {
       if (!isRefresh) {
         myAds.clear();

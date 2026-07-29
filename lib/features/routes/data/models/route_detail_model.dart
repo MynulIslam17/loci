@@ -1,5 +1,5 @@
 import 'package:loci/core/enums/checkin_status.dart';
-import 'package:loci/features/routes/data/models/routes_model.dart';
+import 'package:loci/features/routes/data/models/route_list_model.dart';
 
 class RouteDetails {
   final RouteModel routeModel;
@@ -10,6 +10,7 @@ class RouteDetails {
   final String qrCode;
   final int checkInCount;
   final CheckInStatus myCheckInStatus;
+  final String status;
 
   RouteDetails({
     required this.routeModel,
@@ -19,6 +20,7 @@ class RouteDetails {
     required this.myCheckInStatus,
     required this.checkInCount,
     required this.qrCode,
+    required this.status,
     this.mapUrl,
   });
 
@@ -34,6 +36,7 @@ class RouteDetails {
       mapUrl: json['url'],
       checkInCount: (json["checkInCount"] as num?)?.toInt() ?? 0,
       myCheckInStatus: CheckInStatus.fromString(json["myCheckInStatus"] ?? ""),
+      status: json['status']?.toString() ?? '',
     );
   }
 
@@ -53,6 +56,7 @@ class RouteDetails {
       myCheckInStatus: myCheckInStatus ?? this.myCheckInStatus,
       checkInCount: checkInCount,
       qrCode: qrCode,
+      status: status,
       mapUrl: mapUrl ?? this.mapUrl,
     );
   }

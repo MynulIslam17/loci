@@ -1,5 +1,5 @@
-import 'package:loci/features/raffles/data/models/raffles_details_model.dart';
-import 'package:loci/features/raffles/data/models/raffles_model.dart';
+import 'package:loci/features/raffles/data/models/raffle_detail_model.dart';
+import 'package:loci/features/raffles/data/models/raffle_list_model.dart';
 import 'package:loci/features/raffles/data/repositories/raffles_repository.dart';
 
 /// Domain orchestration for raffles. Controllers call this — never NetworkCaller.

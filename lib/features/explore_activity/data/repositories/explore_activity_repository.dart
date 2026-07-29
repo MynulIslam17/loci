@@ -13,10 +13,16 @@ class ExploreActivityRepository {
     required int page,
     required int limit,
     required String businessId,
+    String? search,
   }) async {
     final res = await _network.getRequest(
       url: AppUrl.eventList,
-      queryParams: {'page': page, 'limit': limit, 'businessId': businessId},
+      queryParams: {
+        'page': page,
+        'limit': limit,
+        'businessId': businessId,
+        if (search != null && search.trim().isNotEmpty) 'search': search.trim(),
+      },
     );
     if (!res.isSuccess || res.body == null) {
       throw Exception(res.errorMessage ?? 'Failed to load events');
@@ -28,10 +34,16 @@ class ExploreActivityRepository {
     required int page,
     required int limit,
     required String businessId,
+    String? search,
   }) async {
     final res = await _network.getRequest(
       url: AppUrl.routeList,
-      queryParams: {'page': page, 'limit': limit, 'businessId': businessId},
+      queryParams: {
+        'page': page,
+        'limit': limit,
+        'businessId': businessId,
+        if (search != null && search.trim().isNotEmpty) 'search': search.trim(),
+      },
     );
     if (!res.isSuccess || res.body == null) {
       throw Exception(res.errorMessage ?? 'Failed to load routes');
@@ -43,10 +55,16 @@ class ExploreActivityRepository {
     required int page,
     required int limit,
     required String businessId,
+    String? search,
   }) async {
     final res = await _network.getRequest(
       url: AppUrl.raffles,
-      queryParams: {'page': page, 'limit': limit, 'businessId': businessId},
+      queryParams: {
+        'page': page,
+        'limit': limit,
+        'businessId': businessId,
+        if (search != null && search.trim().isNotEmpty) 'search': search.trim(),
+      },
     );
     if (!res.isSuccess || res.body == null) {
       throw Exception(res.errorMessage ?? 'Failed to load raffles');
@@ -54,16 +72,34 @@ class ExploreActivityRepository {
     return res.body!;
   }
 
-  Future<Map<String, dynamic>> getEventDetails(String eventId) async {
-    final res = await _network.getRequest(url: AppUrl.eventDetails(eventId));
+  Future<Map<String, dynamic>> getEventDetails(
+    String eventId, {
+    String? businessId,
+  }) async {
+    final res = await _network.getRequest(
+      url: AppUrl.eventDetails(eventId),
+      queryParams: {
+        if (businessId != null && businessId.isNotEmpty)
+          'businessId': businessId,
+      },
+    );
     if (!res.isSuccess || res.body == null) {
       throw Exception(res.errorMessage ?? 'Failed to load event details');
     }
     return res.body!;
   }
 
-  Future<Map<String, dynamic>> getRouteDetails(String routeId) async {
-    final res = await _network.getRequest(url: AppUrl.routeDetails(routeId));
+  Future<Map<String, dynamic>> getRouteDetails(
+    String routeId, {
+    String? businessId,
+  }) async {
+    final res = await _network.getRequest(
+      url: AppUrl.routeDetails(routeId),
+      queryParams: {
+        if (businessId != null && businessId.isNotEmpty)
+          'businessId': businessId,
+      },
+    );
     if (!res.isSuccess || res.body == null) {
       throw Exception(res.errorMessage ?? 'Failed to fetch route details');
     }

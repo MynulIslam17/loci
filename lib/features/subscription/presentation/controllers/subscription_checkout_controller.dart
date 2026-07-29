@@ -85,10 +85,17 @@ class SubscriptionCheckoutController extends GetxController {
 
       // 2c. Upgrade applied immediately in place (existing Stripe subscription
       // updated, not a new one) — if Stripe could already charge the prorated
-      // difference automatically, there's nothing left to confirm here.
+      // difference automatically, there's nothing left to confirm here. The
+      // charge already happened silently (no PaymentSheet), so confirm the
+      // outcome with a success toast rather than only flipping the plan card.
       if (checkout.switched && !checkout.canPresentSheet) {
-        // Applied in place — the plan card reflects the new plan, no toast.
         await fetchMySubscription();
+        final String? planName = mySubscription?.planName;
+        SnackbarService.success(
+          planName != null && planName.isNotEmpty
+              ? 'You\'re now on $planName.'
+              : 'Your plan has been upgraded.',
+        );
         return;
       }
 
