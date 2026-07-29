@@ -32,7 +32,7 @@ class _CommunityScreenState extends State<CommunityScreen>
     with SingleTickerProviderStateMixin {
   late final CommunityScreenController _screen;
   late final TabController _tabController;
-  late final TextEditingController _searchController;
+  late final List<TextEditingController> _searchControllers;
 
   @override
   void initState() {
@@ -51,32 +51,40 @@ class _CommunityScreenState extends State<CommunityScreen>
       length: CommunityScreenController.tabCount,
       vsync: this,
     );
-    _searchController = TextEditingController();
+    _searchControllers = List.generate(
+      CommunityScreenController.tabCount,
+      (_) => TextEditingController(),
+    );
+    _screen.resetAllSearchFields(_searchControllers);
     _tabController.addListener(_onTabChanged);
   }
 
   void _onTabChanged() {
-    _screen.handleTabChange(_tabController, _searchController);
+    _screen.handleTabChange(_tabController, _searchControllers);
   }
 
   @override
   void dispose() {
     _tabController.removeListener(_onTabChanged);
-    _tabController.dispose();
-    _searchController.dispose();
+    FocusManager.instance.primaryFocus?.unfocus();
     Get.delete<CommunityScreenController>(tag: CommunityScreen._controllerTag);
+    _tabController.dispose();
+    for (final controller in _searchControllers) {
+      controller.dispose();
+    }
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      resizeToAvoidBottomInset: true,
       backgroundColor: context.colorScheme.surface,
       appBar: CustomAppbar(title: _screen.title),
       body: CommunityScreenBody(
         screen: _screen,
         tabController: _tabController,
-        searchController: _searchController,
+        searchControllers: _searchControllers,
       ),
     );
   }

@@ -21,29 +21,31 @@ class CommunityHeaderActionCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = context.colorScheme;
 
-    return Card(
+    return Material(
+      color: colors.surface,
       elevation: 0,
-      color: colors.surfaceContainerHigh,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(CommunityUi.headerActionRadius),
-        side: BorderSide(color: colors.outlineVariant.withValues(alpha: 0.35)),
+        side: BorderSide(color: colors.outlineVariant.withValues(alpha: 0.45)),
       ),
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(CommunityUi.headerActionRadius),
         child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 12),
+          padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
           child: Column(
+            mainAxisSize: MainAxisSize.min,
             children: [
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
+                mainAxisSize: MainAxisSize.min,
                 children: [
-                  _IconCircle(icon: icon, colors: colors),
+                  Icon(icon, size: 26, color: colors.onSurfaceVariant),
                   if (value != null) ...[
                     const SizedBox(width: 8),
                     Text(
                       value!,
-                      style: AppTextStyle.textSm(
+                      style: AppTextStyle.textMd(
                         weight: FontWeight.w700,
                         color: colors.onSurface,
                       ),
@@ -51,12 +53,12 @@ class CommunityHeaderActionCard extends StatelessWidget {
                   ],
                 ],
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 10),
               Text(
                 label,
                 textAlign: TextAlign.center,
                 style: AppTextStyle.textSm(
-                  weight: FontWeight.w600,
+                  weight: FontWeight.w500,
                   color: colors.onSurface,
                 ),
               ),
@@ -64,26 +66,6 @@ class CommunityHeaderActionCard extends StatelessWidget {
           ),
         ),
       ),
-    );
-  }
-}
-
-class _IconCircle extends StatelessWidget {
-  const _IconCircle({required this.icon, required this.colors});
-
-  final IconData icon;
-  final ColorScheme colors;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 40,
-      height: 40,
-      decoration: BoxDecoration(
-        color: colors.surfaceContainer,
-        shape: BoxShape.circle,
-      ),
-      child: Icon(icon, size: 22, color: colors.onSurfaceVariant),
     );
   }
 }

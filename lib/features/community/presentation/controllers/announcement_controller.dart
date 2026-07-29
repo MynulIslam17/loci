@@ -135,19 +135,17 @@ class AnnouncementController extends GetxController {
     if (_communityId == null) return;
 
     final cache = _cacheFor(type);
-    final isFirstLoad = !cache.hasLoaded;
 
     try {
       cache.isLoading = true;
       cache.errorMessage = null;
-      _bump(type);
 
-      if (isRefresh && isFirstLoad) {
+      if (isRefresh) {
         cache.currentPage = 1;
         cache.ids.clear();
-      } else if (isRefresh) {
-        cache.currentPage = 1;
       }
+
+      _bump(type);
 
       final result = await _service.getAnnouncements(
         communityId: _communityId!,
@@ -156,10 +154,6 @@ class AnnouncementController extends GetxController {
         limit: 10,
         search: cache.searchQuery.isNotEmpty ? cache.searchQuery : null,
       );
-
-      if (isRefresh && !isFirstLoad) {
-        cache.ids.clear();
-      }
 
       _appendAnnouncements(result.data, cache);
       cache.meta = result.meta;

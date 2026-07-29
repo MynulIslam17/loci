@@ -1,20 +1,23 @@
 import 'dart:async';
+import 'dart:convert';
 
+import 'package:file_picker/file_picker.dart';
 import 'package:get/get.dart';
-import 'package:loci/shared/models/pagination_model.dart';
 import 'package:loci/features/community/data/models/community_member_model.dart';
 import 'package:loci/features/community/domain/services/community_service.dart';
+import 'package:loci/features/community/presentation/controllers/my_community_controller.dart';
+import 'package:loci/shared/models/pagination_model.dart';
 
 class CommunityMemberController extends GetxController {
   CommunityMemberController(this._service);
 
   final CommunityService _service;
 
-  // ── State ───────────────────────────────────────────────
   final members = <CommunityMemberModel>[].obs;
 
   final isLoading = false.obs;
   final isPaginationLoading = false.obs;
+  final isExporting = false.obs;
 
   final errorMessage = RxnString();
   final meta = Rxn<PaginationMeta>();
@@ -27,13 +30,11 @@ class CommunityMemberController extends GetxController {
 
   bool get hasMore => meta.value?.hasNextPage ?? false;
 
-  // ── Init ────────────────────────────────────────────────
-  Future<void> init(String communityId) async {
+  Future<void> init({required String communityId}) async {
     _communityId = communityId;
     await fetchMembers(isRefresh: true);
   }
 
-  // ── Search ───────────────────────────────────────────────
   void onSearchChanged(String query) {
     _debounce?.cancel();
     _debounce = Timer(const Duration(milliseconds: 400), () {
@@ -54,9 +55,9 @@ class CommunityMemberController extends GetxController {
     super.onClose();
   }
 
-  // ── Fetch Members ────────────────────────────────────────
   Future<void> fetchMembers({bool isRefresh = false}) async {
-    if (_communityId == null) return;
+    final communityId = _communityId;
+    if (communityId == null || communityId.isEmpty) return;
 
     try {
       isLoading.value = true;
@@ -68,14 +69,17 @@ class CommunityMemberController extends GetxController {
       }
 
       final result = await _service.getCommunityMembers(
-        communityId: _communityId!,
+        communityId: communityId,
         page: _currentPage,
         limit: 20,
         searchTerm: _searchTerm.isNotEmpty ? _searchTerm : null,
       );
       members.addAll(result.data);
       meta.value = result.meta;
-      if (_searchTerm.isEmpty) totalCount.value = result.meta.total;
+      if (_searchTerm.isEmpty) {
+        totalCount.value = result.meta.total;
+        _syncHeaderMemberCount();
+      }
     } catch (e) {
       errorMessage.value = e.toString().replaceFirst('Exception: ', '');
     } finally {
@@ -83,9 +87,9 @@ class CommunityMemberController extends GetxController {
     }
   }
 
-  // ── Pagination ──────────────────────────────────────────
   Future<void> fetchMoreMembers() async {
-    if (_communityId == null) return;
+    final communityId = _communityId;
+    if (communityId == null || communityId.isEmpty) return;
     if (!hasMore || isLoading.value || isPaginationLoading.value) return;
 
     try {
@@ -94,7 +98,7 @@ class CommunityMemberController extends GetxController {
       final nextPage = _currentPage + 1;
 
       final result = await _service.getCommunityMembers(
-        communityId: _communityId!,
+        communityId: communityId,
         page: nextPage,
         limit: 20,
         searchTerm: _searchTerm.isNotEmpty ? _searchTerm : null,
@@ -110,8 +114,80 @@ class CommunityMemberController extends GetxController {
     }
   }
 
-  // ── Refresh ─────────────────────────────────────────────
   Future<void> refreshMembers() async {
     await fetchMembers(isRefresh: true);
+  }
+
+  Future<bool> addMember({
+    required String email,
+    String? note,
+  }) async {
+    final communityId = _communityId;
+    if (communityId == null || communityId.isEmpty) return false;
+
+    try {
+      errorMessage.value = null;
+      await _service.addCommunityMember(
+        communityId: communityId,
+        email: email,
+        note: note,
+      );
+      await fetchMembers(isRefresh: true);
+      return true;
+    } catch (e) {
+      errorMessage.value = e.toString().replaceFirst('Exception: ', '');
+      return false;
+    }
+  }
+
+  Future<bool> removeMember(String memberId) async {
+    final communityId = _communityId;
+    if (communityId == null || communityId.isEmpty) return false;
+
+    try {
+      errorMessage.value = null;
+      await _service.removeMember(
+        communityId: communityId,
+        memberId: memberId,
+      );
+      members.removeWhere((m) => m.id == memberId);
+      if (_searchTerm.isEmpty) {
+        totalCount.value = (totalCount.value - 1).clamp(0, 1 << 30);
+        _syncHeaderMemberCount();
+      }
+      return true;
+    } catch (e) {
+      errorMessage.value = e.toString().replaceFirst('Exception: ', '');
+      return false;
+    }
+  }
+
+  Future<bool> exportMembers() async {
+    final communityId = _communityId;
+    if (communityId == null || communityId.isEmpty) return false;
+
+    try {
+      isExporting.value = true;
+      errorMessage.value = null;
+      final csv =
+          await _service.exportCommunityMembers(communityId: communityId);
+      final saved = await FilePicker.platform.saveFile(
+        fileName: 'community_members.csv',
+        bytes: utf8.encode(csv),
+      );
+      return saved != null;
+    } catch (e) {
+      errorMessage.value = e.toString().replaceFirst('Exception: ', '');
+      return false;
+    } finally {
+      isExporting.value = false;
+    }
+  }
+
+  void _syncHeaderMemberCount() {
+    final communityId = _communityId;
+    if (communityId == null || communityId.isEmpty) return;
+    if (!Get.isRegistered<MyCommunityController>()) return;
+    Get.find<MyCommunityController>().updateMemberCount(totalCount.value);
   }
 }

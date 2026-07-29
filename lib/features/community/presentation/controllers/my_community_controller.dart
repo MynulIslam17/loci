@@ -41,4 +41,21 @@ class MyCommunityController extends GetxController {
   Future<void> refreshCommunity(String communityId) async {
     await fetchCommunity(communityId);
   }
+
+  void updateMemberCount(int count) {
+    final current = community.value;
+    if (current == null) return;
+    community.value = CommunityModel(
+      id: current.id,
+      business: current.business,
+      name: current.name,
+      description: current.description,
+      qrCode: current.qrCode,
+      memberCount: count,
+      isActive: current.isActive,
+      ownerUserId: current.ownerUserId,
+      createdAt: current.createdAt,
+      updatedAt: current.updatedAt,
+    );
+  }
 }

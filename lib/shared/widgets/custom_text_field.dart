@@ -27,6 +27,7 @@ class CustomTextField extends StatefulWidget {
   final VoidCallback? onTap;
   final ValueChanged<String>? onChanged;
   final VoidCallback? onClear;
+  final ValueChanged<String>? onFieldSubmitted;
   final TextInputAction? textInputAction;
   final List<TextInputFormatter>? inputFormatters;
   final String? title;
@@ -35,6 +36,7 @@ class CustomTextField extends StatefulWidget {
   final String? errorText;
   final Color? textColor;
   final bool showClearButton;
+  final EdgeInsets scrollPadding;
 
   const CustomTextField({
     super.key,
@@ -64,6 +66,7 @@ class CustomTextField extends StatefulWidget {
     this.onTap,
     this.onChanged,
     this.onClear,
+    this.onFieldSubmitted,
     this.title,
     this.titleStyle,
     this.focusNode,
@@ -71,6 +74,7 @@ class CustomTextField extends StatefulWidget {
     this.autoValidateMode,
     this.textColor,
     this.showClearButton = false,
+    this.scrollPadding = const EdgeInsets.all(20),
   });
 
   @override
@@ -126,7 +130,8 @@ class _CustomTextFieldState extends State<CustomTextField> {
         widget.hintText != null &&
         widget.labelText == null &&
         !isMultiline &&
-        widget.prefixIcon == null;
+        widget.prefixIcon == null &&
+        widget.suffixIcon == null;
     final String? effectiveLabel =
         widget.labelText ?? (useFloatingLabel ? widget.hintText : null);
     final String? effectiveHint = useFloatingLabel ? null : widget.hintText;
@@ -136,6 +141,8 @@ class _CustomTextFieldState extends State<CustomTextField> {
     return TextFormField(
       maxLength: widget.maxLength,
       onChanged: widget.onChanged,
+      onFieldSubmitted: widget.onFieldSubmitted,
+      scrollPadding: widget.scrollPadding,
       onTap: widget.onTap,
       focusNode: widget.focusNode,
       readOnly: widget.readOnly,
