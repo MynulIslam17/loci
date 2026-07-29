@@ -4,6 +4,7 @@ import 'package:loci/features/community/data/models/community_model.dart';
 import 'package:loci/features/community/domain/services/community_service.dart';
 import 'package:loci/routes/app_routes.dart';
 
+/// UI → [AllCommunityController] → [CommunityService] → repository → API.
 class AllCommunityController extends GetxController {
   AllCommunityController(this._service);
 
@@ -24,6 +25,18 @@ class AllCommunityController extends GetxController {
 
   bool get hasMore => hasNextPage.value;
   bool get isSearching => searchQuery.value.trim().isNotEmpty;
+
+  /// Initial load failed and there is nothing to show.
+  bool get hasFatalLoadError =>
+      errorMessage.value != null &&
+      joined.isEmpty &&
+      available.isEmpty &&
+      !isLoading.value;
+
+  bool get showPaginationLoader => isPaginationLoading.value;
+
+  bool get showEndOfAvailableList =>
+      !hasNextPage.value && available.isNotEmpty;
 
   List<CommunityModel> get displayedJoined => _filter(joined);
   List<CommunityModel> get displayedAvailable => _filter(available);

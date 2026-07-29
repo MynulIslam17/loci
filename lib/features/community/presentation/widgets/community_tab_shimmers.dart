@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:loci/features/community/presentation/widgets/community_card_skeleton.dart';
 
-/// Post cards only (composer stays visible in [TabBodyWrapper.stickyHeader]).
+/// Post cards only (pair with [CommunityPostInputSkeleton] while loading in [TabBodyWrapper]).
 class CommunityFeedListShimmer extends StatelessWidget {
   const CommunityFeedListShimmer({super.key});
 
