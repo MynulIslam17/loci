@@ -17,7 +17,10 @@ class RemoveMemberController extends GetxController {
       isLoading.value = true;
       errorMessage.value = null;
 
-      await _service.removeMember(communityId: communityId, memberId: memberId);
+      await _service.removeMember(
+        communityId: communityId,
+        memberId: memberId,
+      );
       return true;
     } catch (e) {
       errorMessage.value = e.toString().replaceFirst('Exception: ', '');

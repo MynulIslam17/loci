@@ -4,7 +4,7 @@ import 'package:loci/core/constants/app_text_style.dart';
 import 'package:loci/core/theme/theme_extention.dart';
 import 'package:loci/core/utils/show_snackbar.dart';
 import 'package:loci/features/community/presentation/controllers/community_member_controller.dart';
-import 'package:loci/features/community/presentation/controllers/remove_member_controller.dart';
+import 'package:loci/features/community/presentation/widgets/add_community_member_sheet.dart';
 import 'package:loci/shared/widgets/empty_state.dart';
 import 'package:loci/features/community/presentation/widgets/member_card.dart';
 import 'package:loci/features/community/presentation/widgets/member_list_header.dart';
@@ -22,7 +22,6 @@ class CommunityMemberScreen extends StatefulWidget {
 
 class _CommunityMemberScreenState extends State<CommunityMemberScreen> {
   final memberController = Get.find<CommunityMemberController>();
-  final removeController = Get.find<RemoveMemberController>();
   final _scrollController = ScrollController();
   final _searchController = TextEditingController();
   late final String communityId;
@@ -31,9 +30,9 @@ class _CommunityMemberScreenState extends State<CommunityMemberScreen> {
   void initState() {
     super.initState();
     final args = Get.arguments as Map<String, dynamic>?;
-    communityId = args?['communityId'] ?? '';
+    communityId = args?['communityId']?.toString() ?? '';
     if (communityId.isNotEmpty) {
-      memberController.init(communityId);
+      memberController.init(communityId: communityId);
     }
     _scrollController.addListener(_onScroll);
   }
@@ -52,6 +51,36 @@ class _CommunityMemberScreenState extends State<CommunityMemberScreen> {
     }
   }
 
+  Future<void> _onAddMember() async {
+    await AddCommunityMemberSheet.show(
+      context,
+      onSubmit: (payload) async {
+        final ok = await memberController.addMember(
+          email: payload.email,
+          note: payload.note,
+        );
+        if (!ok && mounted) {
+          SnackbarService.error(
+            memberController.errorMessage.value ?? 'Failed to add member',
+          );
+        } else if (ok) {
+          SnackbarService.success('Member added');
+        }
+        return ok;
+      },
+    );
+  }
+
+  Future<void> _onExport() async {
+    final saved = await memberController.exportMembers();
+    if (!mounted) return;
+    if (saved) {
+      SnackbarService.success('Member list saved');
+    } else if (memberController.errorMessage.value != null) {
+      SnackbarService.error(memberController.errorMessage.value!);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final colors = context.colorScheme;
@@ -63,7 +92,6 @@ class _CommunityMemberScreenState extends State<CommunityMemberScreen> {
         return CustomScrollView(
           controller: _scrollController,
           slivers: [
-            // ── Search + Add Member ──────────────────────────────────────
             SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.all(16),
@@ -78,7 +106,10 @@ class _CommunityMemberScreenState extends State<CommunityMemberScreen> {
                       hintTextColor: colors.onSurfaceVariant,
                       onChanged: memberController.onSearchChanged,
                       showClearButton: true,
-                      onClear: memberController.clearSearch,
+                      onClear: () {
+                        _searchController.clear();
+                        memberController.clearSearch();
+                      },
                       suffixIcon: Icon(
                         Icons.search,
                         color: colors.onSurfaceVariant,
@@ -88,7 +119,7 @@ class _CommunityMemberScreenState extends State<CommunityMemberScreen> {
                     CustomButton(
                       width: double.infinity,
                       height: 50,
-                      onPressed: () {},
+                      onPressed: _onAddMember,
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
@@ -112,25 +143,23 @@ class _CommunityMemberScreenState extends State<CommunityMemberScreen> {
                 ),
               ),
             ),
-
-            // ── Header ───────────────────────────────────────────────────
             SliverToBoxAdapter(
               child: MemberListHeader(
                 count: memberController.totalCount.value,
-                isLoading:
-                    memberController.isLoading.value &&
+                isLoading: memberController.isLoading.value &&
                     memberController.totalCount.value == 0,
+                isExporting: memberController.isExporting.value,
+                onExport: communityId.isEmpty ? null : _onExport,
               ),
             ),
-
-            // ── Body ─────────────────────────────────────────────────────
-            if (memberController.isLoading.value)
+            if (memberController.isLoading.value &&
+                memberController.members.isEmpty)
               const MemberListShimmer()
             else if (memberController.members.isEmpty)
               SliverFillRemaining(
                 child: EmptyState(
                   icon: Icons.group_off,
-                  title: "No members yet",
+                  title: 'No members yet',
                 ),
               )
             else
@@ -145,15 +174,15 @@ class _CommunityMemberScreenState extends State<CommunityMemberScreen> {
                     return MemberCard(
                       member: member,
                       onDelete: () async {
-                        final success = await removeController.removeMember(
-                          communityId: communityId,
-                          memberId: member.id,
+                        final success = await memberController.removeMember(
+                          member.id,
                         );
+                        if (!mounted) return;
                         if (success) {
-                          memberController.fetchMembers(isRefresh: true);
+                          SnackbarService.success('Member removed');
                         } else {
                           SnackbarService.error(
-                            removeController.errorMessage.value ??
+                            memberController.errorMessage.value ??
                                 'Failed to remove member',
                           );
                         }
@@ -162,8 +191,6 @@ class _CommunityMemberScreenState extends State<CommunityMemberScreen> {
                   }, childCount: memberController.members.length),
                 ),
               ),
-
-            // ── Pagination loader ─────────────────────────────────────────
             if (memberController.isPaginationLoading.value)
               const SliverToBoxAdapter(
                 child: Padding(
@@ -171,7 +198,6 @@ class _CommunityMemberScreenState extends State<CommunityMemberScreen> {
                   child: Center(child: CircularProgressIndicator()),
                 ),
               ),
-
             const SliverToBoxAdapter(child: SizedBox(height: 20)),
           ],
         );

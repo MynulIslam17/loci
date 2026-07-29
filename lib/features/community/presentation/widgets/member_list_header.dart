@@ -5,11 +5,15 @@ import 'package:loci/core/theme/theme_extention.dart';
 class MemberListHeader extends StatelessWidget {
   final int count;
   final bool isLoading;
+  final bool isExporting;
+  final VoidCallback? onExport;
 
   const MemberListHeader({
     super.key,
     required this.count,
     required this.isLoading,
+    this.isExporting = false,
+    this.onExport,
   });
 
   @override
@@ -42,12 +46,27 @@ class MemberListHeader extends StatelessWidget {
             ],
           ),
           OutlinedButton.icon(
-            onPressed: () {},
-            icon: Text('Save', style: TextStyle(color: colors.onSurface)),
-            label: Icon(
-              Icons.file_download_outlined,
-              color: colors.onSurface,
-              size: 20,
+            onPressed: isExporting || onExport == null ? null : onExport,
+            icon: isExporting
+                ? SizedBox(
+                    width: 18,
+                    height: 18,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: colors.primary,
+                    ),
+                  )
+                : Icon(
+                    Icons.file_download_outlined,
+                    color: colors.onSurface,
+                    size: 20,
+                  ),
+            label: Text(
+              isExporting ? 'Saving' : 'Save',
+              style: TextStyle(
+                color: colors.onSurface,
+                fontWeight: FontWeight.w600,
+              ),
             ),
             style: OutlinedButton.styleFrom(
               side: BorderSide(color: Colors.grey.shade300),

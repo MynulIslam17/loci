@@ -18,79 +18,80 @@ class CommunityScreenTabContent extends StatelessWidget {
     super.key,
     required this.screen,
     required this.tabController,
-    required this.searchController,
+    required this.searchControllers,
   });
 
   final CommunityScreenController screen;
   final TabController tabController;
-  final TextEditingController searchController;
+  final List<TextEditingController> searchControllers;
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: CommunityUi.screenPadding,
-      child: TabBarView(
-        controller: tabController,
-        children: [
-          TabBodyWrapper(
-            tabType: AnnouncementType.question,
-            shimmerBuilder: (_) => const CommunityFeedShimmer(),
-            stickyHeader: Padding(
-              padding: CommunityUi.stickyHeaderPadding,
-              child: PostInputField(
-                categories:
-                    BusinessCategory.values.map((e) => e.label).toList(),
-                initialCategory: BusinessCategory.foodie.label,
-                onSubmit: screen.postQuestion,
-                hintText: 'Post a question...',
-              ),
-            ),
-            builder: () => FeedTab(
-              onCommentTap: (id) => screen.openComments(context, id),
-              onPollTap: (a) => screen.openPollSheet(context, a),
-              onLikeTap: screen.toggleLike,
-              onMentionSubmit: screen.submitMentionOption,
+    return TabBarView(
+      controller: tabController,
+      children: [
+        TabBodyWrapper(
+          tabType: AnnouncementType.question,
+          shimmerBuilder: (_) => const CommunityFeedShimmer(),
+          stickyHeader: Padding(
+            padding: CommunityUi.stickyHeaderPadding,
+            child: PostInputField(
+              categories: BusinessCategory.values.map((e) => e.label).toList(),
+              initialCategory: BusinessCategory.foodie.label,
+              onSubmit: screen.postQuestion,
+              hintText: 'Post a question...',
             ),
           ),
-          _searchableTab(
-            type: AnnouncementType.offer,
-            hint: 'Search offers',
-            shimmer: const CommunityOffersListShimmer(),
-            child: OffersTab(
-              onCommentTap: (id) => screen.openComments(context, id),
-              onLikeTap: screen.toggleLike,
-            ),
+          builder: () => FeedTab(
+            onCommentTap: (id) => screen.openComments(context, id),
+            onPollTap: (a) => screen.openPollSheet(context, a),
+            onLikeTap: screen.toggleLike,
+            onMentionSubmit: screen.submitMentionOption,
           ),
-          _searchableTab(
-            type: AnnouncementType.notice,
-            hint: 'Search notices',
-            shimmer: const CommunityNoticesListShimmer(),
-            child: NoticesTab(
-              onCommentTap: (id) => screen.openComments(context, id),
-              onLikeTap: screen.toggleLike,
-            ),
+        ),
+        _searchableTab(
+          tabIndex: 1,
+          type: AnnouncementType.offer,
+          hint: 'Search offers',
+          shimmer: const CommunityOffersListShimmer(),
+          child: OffersTab(
+            onCommentTap: (id) => screen.openComments(context, id),
+            onLikeTap: screen.toggleLike,
           ),
-          _searchableTab(
-            type: AnnouncementType.activity,
-            hint: 'Search activity',
-            shimmer: const CommunityActivityListShimmer(),
-            child: ActivityTab(
-              onCommentTap: (id) => screen.openComments(context, id),
-              onLikeTap: screen.toggleLike,
-              onRsvp: screen.submitRsvp,
-            ),
+        ),
+        _searchableTab(
+          tabIndex: 2,
+          type: AnnouncementType.notice,
+          hint: 'Search notices',
+          shimmer: const CommunityNoticesListShimmer(),
+          child: NoticesTab(
+            onCommentTap: (id) => screen.openComments(context, id),
+            onLikeTap: screen.toggleLike,
           ),
-        ],
-      ),
+        ),
+        _searchableTab(
+          tabIndex: 3,
+          type: AnnouncementType.activity,
+          hint: 'Search activity',
+          shimmer: const CommunityActivityListShimmer(),
+          child: ActivityTab(
+            onCommentTap: (id) => screen.openComments(context, id),
+            onLikeTap: screen.toggleLike,
+            onRsvp: screen.submitRsvp,
+          ),
+        ),
+      ],
     );
   }
 
   Widget _searchableTab({
+    required int tabIndex,
     required AnnouncementType type,
     required String hint,
     required Widget shimmer,
     required Widget child,
   }) {
+    final searchController = searchControllers[tabIndex];
     return TabBodyWrapper(
       tabType: type,
       shimmerBuilder: (_) => shimmer,
@@ -100,7 +101,8 @@ class CommunityScreenTabContent extends StatelessWidget {
           controller: searchController,
           hintText: hint,
           onChanged: (value) => screen.onSearchChanged(tabController, value),
-          onClear: () => screen.clearSearch(tabController, searchController),
+          onClear: () =>
+              screen.clearSearch(tabController, searchController),
         ),
       ),
       builder: () => child,

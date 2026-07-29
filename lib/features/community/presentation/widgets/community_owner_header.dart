@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:loci/core/constants/app_text_style.dart';
 import 'package:loci/core/theme/theme_extention.dart';
+import 'package:loci/core/utils/member_parse.dart';
 import 'package:loci/features/community/presentation/controllers/my_community_controller.dart';
 import 'package:loci/features/community/presentation/widgets/community_header_action_card.dart';
+import 'package:loci/features/community/presentation/widgets/community_header_identity.dart';
 import 'package:loci/features/community/presentation/widgets/community_owner_header_shimmer.dart';
 import 'package:loci/features/community/presentation/widgets/community_ui_constants.dart';
 import 'package:loci/routes/app_routes.dart';
@@ -20,15 +22,16 @@ class CommunityOwnerHeader extends StatelessWidget {
 
     return Obx(() {
       if (controller.isLoading.value && controller.community.value == null) {
-        return const CommunityOwnerHeaderShimmer();
+        return const CommunityOwnerHeaderShimmer(showIdentity: true);
       }
 
       final community = controller.community.value;
       final communityId = community?.id ?? '';
       final communityName = community?.name ?? 'Community';
-      final memberCount = '${community?.memberCount ?? 0}';
+      final memberCount = formatMembers(community?.memberCount ?? 0);
 
       return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           if (controller.isRefreshing.value)
             LinearProgressIndicator(
@@ -36,12 +39,13 @@ class CommunityOwnerHeader extends StatelessWidget {
               color: colorScheme.primary,
               backgroundColor: colorScheme.surfaceContainerHighest,
             ),
+          CommunityHeaderIdentity(community: community),
           Row(
             children: [
               Expanded(
                 child: CommunityHeaderActionCard(
                   icon: Icons.group_outlined,
-                  label: 'Members',
+                  label: 'Member',
                   value: memberCount,
                   onTap: communityId.isEmpty
                       ? null
@@ -61,8 +65,7 @@ class CommunityOwnerHeader extends StatelessWidget {
                       context,
                       data: community?.qrCode ?? '',
                       title: communityName,
-                      subtitle:
-                          'Scan this QR code to join $communityName',
+                      subtitle: 'Scan this QR code to join $communityName',
                       appName: 'Loci',
                     );
                   },
@@ -84,10 +87,10 @@ class CommunityOwnerHeader extends StatelessWidget {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(Icons.add, color: colorScheme.onPrimary, size: 20),
-                const SizedBox(width: 8),
+                Icon(Icons.add, color: colorScheme.onPrimary, size: 22),
+                const SizedBox(width: 6),
                 Text(
-                  'Create announcement',
+                  'Announcement',
                   style: AppTextStyle.textMd(
                     weight: FontWeight.w600,
                     color: colorScheme.onPrimary,

@@ -147,6 +147,37 @@ class NetworkCaller {
     }
   }
 
+  /// GET whose successful body is plain text (e.g. CSV export).
+  Future<String> getTextBody({required String url}) async {
+    try {
+      final uri = Uri.parse(url);
+      final token = accessToken();
+      final headers = {
+        if (token.isNotEmpty) 'Authorization': 'Bearer $token',
+      };
+
+      _logRequest(uri.toString(), null, headers);
+
+      final response = await get(uri, headers: headers).timeout(
+        const Duration(seconds: 30),
+      );
+
+      _logResponse(uri.toString(), response);
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        return response.body;
+      }
+
+      final decoded = _tryDecodeBody(response.body);
+      _handleAuthErrors(response.statusCode, hadToken: token.isNotEmpty);
+      throw Exception(_resolveErrorMessage(response.statusCode, decoded));
+    } catch (e) {
+      _logger.e('GET text request failed: $e');
+      if (e is Exception) rethrow;
+      throw Exception(_networkExceptionMessage(e));
+    }
+  }
+
   // ===========================================================
   // POST REQUEST
   // ===========================================================
