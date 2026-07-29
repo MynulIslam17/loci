@@ -30,6 +30,11 @@ class CommunityScreenController extends GetxController {
   String? communityId;
   String? communityName;
 
+  /// Last tab index we reacted to, so the [TabController] listener (which fires
+  /// every animation frame — continuously during a swipe) only does work when
+  /// the selected tab actually changes.
+  int _lastHandledTabIndex = 0;
+
   AnnouncementController get _announcements => Get.find();
   MyCommunityController get _community => Get.find();
   AnnouncementLikeController get _likes => Get.find();
@@ -55,6 +60,7 @@ class CommunityScreenController extends GetxController {
     final id = communityId;
     if (id == null || id.isEmpty) return;
 
+    _community.prepareForLoad(id);
     _announcements.init(id);
     _loadAuthorContext(id);
   }
@@ -73,7 +79,11 @@ class CommunityScreenController extends GetxController {
   }
 
   void handleTabChange(TabController tabs, List<TextEditingController> fields) {
+    // Wait for a tap-driven animation to settle, and ignore the intermediate
+    // frames of a swipe: only act once the selected tab has really changed.
     if (tabs.indexIsChanging) return;
+    if (tabs.index == _lastHandledTabIndex) return;
+    _lastHandledTabIndex = tabs.index;
     resetAllSearchFields(fields);
     _announcements.changeType(tabTypes[tabs.index]);
   }
