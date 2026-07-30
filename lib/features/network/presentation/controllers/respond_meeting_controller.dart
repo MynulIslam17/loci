@@ -31,7 +31,11 @@ class RespondMeetingController extends GetxController {
       final incoming = Get.find<IncomingMeetingsController>();
 
       if (updated != null) {
-        incoming.replaceMeeting(updated);
+        final index = incoming.meetings.indexWhere((m) => m.id == meetingId);
+        final merged = index >= 0
+            ? updated.mergeWith(incoming.meetings[index])
+            : updated;
+        incoming.replaceMeeting(merged);
       } else {
         await incoming.fetchIncomingMeetings();
       }

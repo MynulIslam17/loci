@@ -1,12 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-import 'package:loci/core/utils/date_parser.dart';
 import 'package:loci/features/network/presentation/controllers/sent_referrals_controller.dart';
 import 'package:loci/shared/widgets/empty_state.dart';
 import 'package:loci/shared/widgets/error_state.dart';
-import 'package:loci/features/network/presentation/widgets/referral_card.dart';
-import 'package:loci/features/network/presentation/widgets/referral_shimmer.dart';
+import 'package:loci/features/network/presentation/widgets/referrals/referral_card.dart';
+import 'package:loci/features/network/presentation/widgets/network_list_shimmer.dart';
 
 class SentReferralsTab extends StatefulWidget {
   const SentReferralsTab({super.key});
@@ -27,7 +26,7 @@ class _SentReferralsTabState extends State<SentReferralsTab>
     final controller = Get.find<SentReferralsController>();
     return Obx(() {
       if (controller.isLoading) {
-        return const ReferralShimmer();
+        return const NetworkListShimmer();
       }
 
       if (controller.errorMessage != null && controller.referrals.isEmpty) {
@@ -70,33 +69,30 @@ class _SentReferralsTabState extends State<SentReferralsTab>
 
       return RefreshIndicator(
         onRefresh: controller.fetchSentReferrals,
-        child: ListView.separated(
-          controller: controller.scrollController,
-          physics: const AlwaysScrollableScrollPhysics(),
-          padding: const EdgeInsets.all(12),
-          itemCount:
-              controller.referrals.length + (controller.isLoadingMore ? 1 : 0),
-          itemBuilder: (context, index) {
-            if (index == controller.referrals.length) {
-              return const Padding(
-                padding: EdgeInsets.symmetric(vertical: 16),
-                child: Center(child: CircularProgressIndicator()),
-              );
+        child: NotificationListener<ScrollNotification>(
+          onNotification: (n) {
+            if (n.metrics.pixels >= n.metrics.maxScrollExtent - 200) {
+              controller.loadMore();
             }
-            final r = controller.referrals[index];
-            return ReferralCard(
-              status: r.status,
-              recipientName: r.recipient.fullName,
-              recipientEmail: r.recipient.email,
-              businessOwnerName: r.businessOwner.fullName,
-              businessOwnerEmail: r.businessOwner.email,
-              message: r.message,
-              date: DateParserHelper.eventDateTime(
-                DateParserHelper.parseDate(r.createdAt)?.toLocal(),
-              ),
-            );
+            return false;
           },
-          separatorBuilder: (_, __) => const SizedBox(height: 15),
+          child: ListView.separated(
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: const EdgeInsets.all(12),
+            itemCount:
+                controller.referrals.length +
+                (controller.isLoadingMore ? 1 : 0),
+            itemBuilder: (context, index) {
+              if (index == controller.referrals.length) {
+                return const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 16),
+                  child: Center(child: CircularProgressIndicator()),
+                );
+              }
+              return ReferralCard(referral: controller.referrals[index]);
+            },
+            separatorBuilder: (_, __) => const SizedBox(height: 12),
+          ),
         ),
       );
     });

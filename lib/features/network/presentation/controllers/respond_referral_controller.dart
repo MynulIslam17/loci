@@ -24,13 +24,7 @@ class RespondReferralController extends GetxController {
       );
 
       if (updated != null && Get.isRegistered<ReceivedReferralsController>()) {
-        final receivedController = Get.find<ReceivedReferralsController>();
-        final index = receivedController.referrals.indexWhere(
-          (r) => r.id == referralId,
-        );
-        if (index != -1) {
-          receivedController.referrals[index] = updated;
-        }
+        Get.find<ReceivedReferralsController>().replaceReferral(updated);
       }
     } catch (e) {
       SnackbarService.error(e.toString().replaceFirst('Exception: ', ''));

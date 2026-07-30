@@ -1,3 +1,5 @@
+import 'package:loci/core/enums/notification_type.dart';
+
 class NotificationModel {
   final String id;
   final String recipient;
@@ -46,4 +48,29 @@ class NotificationModel {
     'isRead': isRead,
     'createdAt': createdAt,
   };
+}
+
+extension NotificationModelX on NotificationModel {
+  NotificationType get notificationType => NotificationType.fromString(type);
+
+  String? get entityId {
+    final value = data['entityId'];
+    return value is String && value.isNotEmpty ? value : null;
+  }
+
+  String? get businessId {
+    final value = data['businessId'];
+    return value is String && value.isNotEmpty ? value : null;
+  }
+
+  String? get communityId {
+    final value = data['communityId'];
+    return value is String && value.isNotEmpty ? value : null;
+  }
+
+  bool get showsInlineActions =>
+      notificationType.hasInlineActions && actionRequired;
+
+  bool get isTappable =>
+      !showsInlineActions && notificationType.opensDetailScreen;
 }

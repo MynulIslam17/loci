@@ -136,16 +136,18 @@ class CommunityService {
     return CommunityMemberResponseModel.fromJson(body);
   }
 
-  Future<void> addCommunityMember({
+  /// Returns the backend's success message (e.g. "Community invitation sent").
+  Future<String> addCommunityMember({
     required String communityId,
     required String email,
     String? note,
   }) async {
-    await _repository.addCommunityMember(
+    final body = await _repository.addCommunityMember(
       communityId: communityId,
       email: email,
       note: note,
     );
+    return body['message'] as String? ?? 'Invitation sent';
   }
 
   Future<String> exportCommunityMembers({required String communityId}) async {

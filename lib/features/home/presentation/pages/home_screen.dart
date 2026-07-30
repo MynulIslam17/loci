@@ -34,7 +34,6 @@ import 'package:loci/shared/widgets/feed/poll_bottom_sheet.dart';
 import 'package:loci/shared/widgets/feed/post_comment_bottom_sheet.dart';
 import 'package:loci/shared/widgets/feed/post_card.dart';
 import 'package:loci/shared/models/post_card_view_model.dart';
-import 'home_navigator.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -250,7 +249,9 @@ class _HomeScreenState extends State<HomeScreen> {
                             break;
 
                           case "Communities":
-                            HomeNavigator.push(AppRoutes.allCommunity);
+                            // Full-screen section on the root navigator: single
+                            // app bar + back, no bottom nav (not a primary tab).
+                            Get.toNamed(AppRoutes.allCommunity);
                             break;
 
                           case "Events":

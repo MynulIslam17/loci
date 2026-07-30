@@ -29,6 +29,8 @@ class CustomTextField extends StatefulWidget {
   final VoidCallback? onClear;
   final ValueChanged<String>? onFieldSubmitted;
   final TextInputAction? textInputAction;
+  final TextCapitalization textCapitalization;
+  final Iterable<String>? autofillHints;
   final List<TextInputFormatter>? inputFormatters;
   final String? title;
   final TextStyle? titleStyle;
@@ -44,6 +46,8 @@ class CustomTextField extends StatefulWidget {
     this.contentPaddingVertical,
     this.hintText,
     this.textInputAction,
+    this.textCapitalization = TextCapitalization.none,
+    this.autofillHints,
     this.inputFormatters,
     this.prefixIcon,
     this.suffixIcon,
@@ -148,6 +152,8 @@ class _CustomTextFieldState extends State<CustomTextField> {
       readOnly: widget.readOnly,
       controller: widget.controller,
       keyboardType: widget.keyboardType,
+      textCapitalization: widget.textCapitalization,
+      autofillHints: widget.autofillHints,
       inputFormatters: widget.inputFormatters,
       obscuringCharacter: widget.obscuringCharacter,
       autovalidateMode:

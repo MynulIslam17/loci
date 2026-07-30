@@ -20,18 +20,30 @@ class CommunityMemberController extends GetxController {
   final isExporting = false.obs;
 
   final errorMessage = RxnString();
+  final successMessage = RxnString();
   final meta = Rxn<PaginationMeta>();
 
   int _currentPage = 1;
   String? _communityId;
+
+  /// Community whose members are already loaded in memory. Used to avoid
+  /// re-hitting the API every time the screen is re-opened.
+  String? _loadedCommunityId;
   String _searchTerm = '';
   Timer? _debounce;
   final totalCount = 0.obs;
 
   bool get hasMore => meta.value?.hasNextPage ?? false;
 
-  Future<void> init({required String communityId}) async {
+  /// Called when the screen opens. Fetches members only the first time for a
+  /// given community; subsequent opens reuse the cached list. Use
+  /// [refreshMembers] (pull-to-refresh) to force a reload.
+  Future<void> init({
+    required String communityId,
+    bool forceRefresh = false,
+  }) async {
     _communityId = communityId;
+    if (!forceRefresh && _loadedCommunityId == communityId) return;
     await fetchMembers(isRefresh: true);
   }
 
@@ -76,6 +88,7 @@ class CommunityMemberController extends GetxController {
       );
       members.addAll(result.data);
       meta.value = result.meta;
+      _loadedCommunityId = communityId;
       if (_searchTerm.isEmpty) {
         totalCount.value = result.meta.total;
         _syncHeaderMemberCount();
@@ -127,7 +140,8 @@ class CommunityMemberController extends GetxController {
 
     try {
       errorMessage.value = null;
-      await _service.addCommunityMember(
+      successMessage.value = null;
+      successMessage.value = await _service.addCommunityMember(
         communityId: communityId,
         email: email,
         note: note,

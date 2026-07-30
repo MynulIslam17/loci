@@ -1,8 +1,7 @@
-import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:loci/core/utils/date_parser.dart';
 import 'package:loci/shared/models/pagination_model.dart';
-import 'package:loci/features/network/data/models/meeting/meeting_models.dart';
+import 'package:loci/features/network/data/models/meeting_models.dart';
 import 'package:loci/features/network/domain/services/network_service.dart';
 
 class SentMeetingsController extends GetxController {
@@ -38,8 +37,6 @@ class SentMeetingsController extends GetxController {
   static const int _limit = 10;
   static const int _markersLimit = 100;
 
-  final ScrollController scrollController = ScrollController();
-
   bool get hasNextPage => meta?.hasNextPage ?? false;
 
   @override
@@ -48,22 +45,6 @@ class SentMeetingsController extends GetxController {
     _selectedDate.value = _normalize(DateTime.now());
     fetchMarkerDates();
     fetchSentMeetings();
-    scrollController.addListener(_onScroll);
-  }
-
-  @override
-  void onClose() {
-    scrollController.dispose();
-    super.onClose();
-  }
-
-  void _onScroll() {
-    final pos = scrollController.position;
-    if (pos.pixels >= pos.maxScrollExtent - 200 &&
-        !isLoadingMore &&
-        hasNextPage) {
-      loadMore();
-    }
   }
 
   DateTime _normalize(DateTime d) => DateTime(d.year, d.month, d.day);
