@@ -1,5 +1,6 @@
 import 'package:get/get.dart';
 import 'package:loci/features/network/domain/services/network_service.dart';
+import 'package:loci/features/network/presentation/controllers/sent_referrals_controller.dart';
 
 class SendNewReferralsController extends GetxController {
   SendNewReferralsController(this._service);
@@ -15,10 +16,10 @@ class SendNewReferralsController extends GetxController {
   Future<bool> sendReferral({
     required String recipientEmail,
     required String recipientName,
-    required String recipientCompany,
     required String businessOwnerEmail,
     required String businessOwnerName,
-    required String ownerCompanyName,
+    String? recipientCompany,
+    String? ownerCompanyName,
     String? message,
   }) async {
     _isLoading.value = true;
@@ -41,5 +42,10 @@ class SendNewReferralsController extends GetxController {
     } finally {
       _isLoading.value = false;
     }
+  }
+
+  Future<void> onSendSuccess() async {
+    if (!Get.isRegistered<SentReferralsController>()) return;
+    await Get.find<SentReferralsController>().fetchSentReferrals();
   }
 }

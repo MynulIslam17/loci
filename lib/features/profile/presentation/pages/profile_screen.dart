@@ -4,6 +4,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:loci/core/constants/app_text_style.dart';
 import 'package:loci/core/theme/theme_extention.dart';
 import 'package:loci/core/theme/app_colors.dart';
+import 'package:loci/core/utils/validators.dart';
 import 'package:loci/shared/widgets/app_skeleton.dart';
 import 'package:loci/shared/widgets/custom_button.dart';
 import 'package:loci/shared/widgets/custom_text_field.dart';
@@ -92,6 +93,8 @@ class ProfileScreen extends StatelessWidget {
                           hintText: "Edit Name",
                           initialValue: c.userName,
                           onSave: c.updateName,
+                          validator: validateFullName,
+                          isNameField: true,
                         ),
                       ),
                     ),
@@ -256,6 +259,8 @@ class ProfileScreen extends StatelessWidget {
     required Function(String) onSave,
     String? hintText,
     int maxLines = 1,
+    String? Function(String?)? validator,
+    bool isNameField = false,
   }) {
     showModalBottomSheet(
       context: context,
@@ -266,6 +271,8 @@ class ProfileScreen extends StatelessWidget {
         initialValue: initialValue,
         maxLines: maxLines,
         onSave: onSave,
+        validator: validator,
+        isNameField: isNameField,
       ),
     );
   }
@@ -277,6 +284,8 @@ class _EditFieldSheet extends StatefulWidget {
   final String initialValue;
   final int maxLines;
   final Function(String) onSave;
+  final String? Function(String?)? validator;
+  final bool isNameField;
 
   const _EditFieldSheet({
     required this.title,
@@ -284,6 +293,8 @@ class _EditFieldSheet extends StatefulWidget {
     required this.initialValue,
     required this.maxLines,
     required this.onSave,
+    this.validator,
+    this.isNameField = false,
   });
 
   @override
@@ -292,6 +303,7 @@ class _EditFieldSheet extends StatefulWidget {
 
 class _EditFieldSheetState extends State<_EditFieldSheet> {
   late final TextEditingController _textController;
+  final _formKey = GlobalKey<FormState>();
 
   @override
   void initState() {
@@ -306,6 +318,8 @@ class _EditFieldSheetState extends State<_EditFieldSheet> {
   }
 
   void _onSave() {
+    if (!(_formKey.currentState?.validate() ?? false)) return;
+
     final value = _textController.text.trim();
     if (value != widget.initialValue) {
       widget.onSave(value);
@@ -323,23 +337,34 @@ class _EditFieldSheetState extends State<_EditFieldSheet> {
           right: 16,
           top: 16,
         ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              widget.title,
-              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 10),
-            CustomTextField(
-              controller: _textController,
-              maxLine: widget.maxLines,
-              hintText: widget.hintText,
-            ),
-            const SizedBox(height: 15),
-            CustomButton(text: "Save", onPressed: _onSave),
-            const SizedBox(height: 10),
-          ],
+        child: Form(
+          key: _formKey,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                widget.title,
+                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 10),
+              CustomTextField(
+                controller: _textController,
+                maxLine: widget.maxLines,
+                hintText: widget.hintText,
+                keyboardType:
+                    widget.isNameField ? TextInputType.name : TextInputType.text,
+                textCapitalization: widget.isNameField
+                    ? TextCapitalization.words
+                    : TextCapitalization.none,
+                inputFormatters:
+                    widget.isNameField ? nameInputFormatters : null,
+                validator: widget.validator,
+              ),
+              const SizedBox(height: 15),
+              CustomButton(text: "Save", onPressed: _onSave),
+              const SizedBox(height: 10),
+            ],
+          ),
         ),
       ),
     );

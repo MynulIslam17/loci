@@ -1,6 +1,7 @@
 import 'package:get/get.dart';
 import 'package:loci/features/network/domain/services/network_service.dart';
 import 'package:loci/features/network/presentation/controllers/incoming_meetings_controller.dart';
+import 'package:loci/features/network/presentation/controllers/meeting_screen_controller.dart';
 import 'package:loci/features/network/presentation/controllers/respond_meeting_controller.dart';
 import 'package:loci/features/network/presentation/controllers/schedule_meeting_controller.dart';
 import 'package:loci/features/network/presentation/controllers/sent_meetings_controller.dart';
@@ -13,5 +14,6 @@ class MeetingsBindings extends Bindings {
     Get.lazyPut(() => IncomingMeetingsController(service), fenix: true);
     Get.lazyPut(() => RespondMeetingController(service), fenix: true);
     Get.lazyPut(() => ScheduleMeetingController(service), fenix: true);
+    Get.lazyPut(() => MeetingScreenController(), fenix: true);
   }
 }

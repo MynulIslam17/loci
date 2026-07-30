@@ -1,23 +1,29 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:loci/core/constants/app_text_style.dart';
 import 'package:loci/core/enums/announcement_type.dart';
-import 'package:loci/core/theme/app_colors.dart';
 import 'package:loci/core/theme/theme_extention.dart';
 import 'package:loci/core/utils/show_snackbar.dart';
+import 'package:loci/features/community/data/models/activity_model.dart';
 import 'package:loci/features/community/presentation/controllers/create_announcement_controller.dart';
 import 'package:loci/features/community/presentation/widgets/create_announcement_activity_section.dart';
+import 'package:loci/shared/widgets/attachment_picker_field.dart';
 import 'package:loci/shared/widgets/custom_appbar.dart';
 import 'package:loci/shared/widgets/custom_button.dart';
 import 'package:loci/shared/widgets/custom_dropdown.dart';
 import 'package:loci/shared/widgets/custom_text_field.dart';
 import 'package:loci/shared/widgets/file_picker.dart';
 
-/// Create community announcement (notice, offer, or activity).
+/// Screen for creating a community announcement (notice, offer, or activity).
 ///
-/// Flow: UI → [CreateAnnouncementController] → [CommunityService] → repository → API.
+/// Layering — the UI only talks to the controller; it never reaches into the
+/// service, repository, or network directly:
+///
+///   UI (this screen)
+///     → CreateAnnouncementController  (form state + validation)
+///       → CommunityService           (use-case orchestration)
+///         → CommunityRepository      (request building)
+///           → NetworkCaller          (HTTP)
 class CreateAnnouncementScreen extends StatefulWidget {
   const CreateAnnouncementScreen({super.key});
 
@@ -27,112 +33,148 @@ class CreateAnnouncementScreen extends StatefulWidget {
 }
 
 class _CreateAnnouncementScreenState extends State<CreateAnnouncementScreen> {
+  final _controller = Get.find<CreateAnnouncementController>();
+
+  // Form state owned by the screen.
   final _formKey = GlobalKey<FormState>();
   final _detailsController = TextEditingController();
   final _activitySearchController = TextEditingController();
 
-  final _createCtrl = Get.find<CreateAnnouncementController>();
+  // Scrolls the activity search field above the keyboard when the results
+  // dropdown (rendered below the field) opens.
+  final _activityFieldKey = GlobalKey();
+  final _scrollController = ScrollController();
+  Worker? _suggestionsWorker;
 
   @override
   void initState() {
     super.initState();
+    _initControllerFromArguments();
+    _watchActivitySuggestions();
+  }
+
+  @override
+  void dispose() {
+    _suggestionsWorker?.dispose();
+    _scrollController.dispose();
+    _detailsController.dispose();
+    _activitySearchController.dispose();
+    super.dispose();
+  }
+
+  /// Binds the controller to the community passed in via route arguments.
+  void _initControllerFromArguments() {
     final args = Get.arguments as Map<String, dynamic>? ?? {};
-    final communityId = args['communityId']?.toString() ?? '';
-    _createCtrl.bind(
-      communityId: communityId,
+    _controller.bind(
+      communityId: args['communityId']?.toString() ?? '',
       postAsBusiness: args['postAsBusiness'] == true,
     );
     _detailsController.clear();
     _activitySearchController.clear();
   }
 
-  @override
-  void dispose() {
-    _detailsController.dispose();
-    _activitySearchController.dispose();
-    super.dispose();
+  /// Lifts the search field into view when suggestions open so the results are
+  /// not hidden behind the keyboard.
+  void _watchActivitySuggestions() {
+    _suggestionsWorker = ever<bool>(_controller.showActivitySuggestions, (
+      isOpen,
+    ) {
+      if (isOpen) _scrollActivityFieldIntoView();
+    });
   }
 
-  Future<void> _pickAttachment() async {
+  void _scrollActivityFieldIntoView() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final fieldContext = _activityFieldKey.currentContext;
+      if (fieldContext == null) return;
+      Scrollable.ensureVisible(
+        fieldContext,
+        alignment: 0.05,
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeOut,
+      );
+    });
+  }
+
+  // Offers accept images only — the backend rejects other file types.
+  static const _offerImageExtensions = ['jpg', 'jpeg', 'png', 'webp'];
+
+  Future<void> _pickOfferAttachment() async {
+    // 1. Restrict the picker to image types.
     final file = await AppFilePicker.pickSingle(
-      allowedExtensions: ['jpg', 'jpeg', 'png', 'pdf'],
+      allowedExtensions: _offerImageExtensions,
     );
-    if (file != null) {
-      _createCtrl.setAttachment(file);
+    if (file == null) return;
+
+    // 2. Validate the selection (some pickers still allow browsing to a PDF).
+    final extension = file.path.split('.').last.toLowerCase();
+    if (!_offerImageExtensions.contains(extension)) {
+      SnackbarService.error('Please choose an image (JPG, PNG or WEBP)');
+      return;
     }
+
+    _controller.setAttachment(file);
   }
 
-  Future<void> _publish() async {
+  void _onActivitySelected(ActivityModel activity) {
+    _controller.selectActivity(activity);
+  }
+
+  Future<void> _publishAnnouncement() async {
     if (!_formKey.currentState!.validate()) return;
 
-    final success = await _createCtrl.publish(_detailsController.text);
+    final published = await _controller.publishAnnouncement(
+      _detailsController.text,
+    );
     if (!mounted) return;
 
-    if (success) {
-      _closeScreen();
+    if (published) {
+      _closeAfterPublish();
       SnackbarService.success('Announcement published');
     } else {
       SnackbarService.error(
-        _createCtrl.errorMessage.value ?? 'Could not publish announcement',
+        _controller.errorMessage.value ?? 'Could not publish announcement',
       );
     }
   }
 
-  void _onActivitySelected(String id, String title) {
-    _activitySearchController.text = title;
-    _createCtrl.selectActivity(id: id);
-  }
-
-  void _closeScreen() {
+  void _closeAfterPublish() {
     if (Get.key.currentState?.canPop() ?? false) {
       Get.back(result: true);
-      return;
-    }
-    if (mounted) {
+    } else if (mounted) {
       Navigator.of(context).pop(true);
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final colors = context.colorScheme;
-
     return Scaffold(
-      backgroundColor: colors.surface,
+      backgroundColor: context.colorScheme.surface,
       appBar: const CustomAppbar(title: 'Create announcement'),
       body: Column(
         children: [
           Expanded(
             child: SingleChildScrollView(
+              controller: _scrollController,
               padding: const EdgeInsets.all(16),
               child: Form(
                 key: _formKey,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      'Announcement details',
-                      style: AppTextStyle.textLg(
-                        color: colors.onSurface,
-                        weight: FontWeight.w600,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      'Choose a type and fill in the fields below to post to your community.',
-                      style: AppTextStyle.textSm(color: colors.onSurfaceVariant),
+                    const _FormHeader(),
+                    const SizedBox(height: 20),
+                    _AnnouncementTypeSelector(
+                      controller: _controller,
+                      onLeaveActivityType: _activitySearchController.clear,
                     ),
                     const SizedBox(height: 20),
-                    _TypeDropdown(
-                      controller: _createCtrl,
-                      onLeftActivityType: _activitySearchController.clear,
-                    ),
-                    const SizedBox(height: 20),
-                    _FormBody(
-                      controller: _createCtrl,
+                    _AnnouncementFields(
+                      controller: _controller,
                       detailsController: _detailsController,
                       activitySearchController: _activitySearchController,
-                      onPickAttachment: _pickAttachment,
+                      activityFieldKey: _activityFieldKey,
+                      onPickAttachment: _pickOfferAttachment,
                       onActivitySelected: _onActivitySelected,
                     ),
                   ],
@@ -140,21 +182,65 @@ class _CreateAnnouncementScreenState extends State<CreateAnnouncementScreen> {
               ),
             ),
           ),
-          _PublishBar(onPublish: _publish, controller: _createCtrl),
+          SafeArea(
+            top: false,
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 10, 16, 12),
+              child: Obx(
+                () => CustomButton(
+                  height: 52,
+                  text: 'Publish',
+                  isLoading: _controller.isLoading.value,
+                  onPressed: _publishAnnouncement,
+                ),
+              ),
+            ),
+          ),
         ],
       ),
     );
   }
 }
 
-class _TypeDropdown extends StatelessWidget {
-  const _TypeDropdown({
+/// Title + helper line at the top of the form.
+class _FormHeader extends StatelessWidget {
+  const _FormHeader();
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.colorScheme;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Announcement details',
+          style: AppTextStyle.textLg(
+            color: colors.onSurface,
+            weight: FontWeight.w600,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          'Choose a type and fill in the fields below to post to your community.',
+          style: AppTextStyle.textSm(color: colors.onSurfaceVariant),
+        ),
+      ],
+    );
+  }
+}
+
+/// Dropdown that picks the announcement type (notice / offer / activity).
+class _AnnouncementTypeSelector extends StatelessWidget {
+  const _AnnouncementTypeSelector({
     required this.controller,
-    required this.onLeftActivityType,
+    required this.onLeaveActivityType,
   });
 
   final CreateAnnouncementController controller;
-  final VoidCallback onLeftActivityType;
+
+  /// Called when switching away from the activity type, so the screen can clear
+  /// the activity search field.
+  final VoidCallback onLeaveActivityType;
 
   @override
   Widget build(BuildContext context) {
@@ -172,34 +258,36 @@ class _TypeDropdown extends StatelessWidget {
         textColor: colors.onSurface,
         value: controller.announcementType.value.label,
         items: CreateAnnouncementController.creatableTypes
-            .map(
-              (t) => DropdownMenuItem(value: t.label, child: Text(t.label)),
-            )
+            .map((t) => DropdownMenuItem(value: t.label, child: Text(t.label)))
             .toList(),
-        onChanged: (label) {
-          if (label == null) return;
-          final type = AnnouncementType.values.firstWhere(
-            (t) => t.label == label,
-            orElse: () => AnnouncementType.notice,
-          );
-          final wasActivity =
-              controller.announcementType.value == AnnouncementType.activity;
-          controller.setAnnouncementType(type);
-          if (wasActivity && type != AnnouncementType.activity) {
-            controller.clearActivitySelection();
-            onLeftActivityType();
-          }
-        },
+        onChanged: (label) => _onTypeChanged(label),
       ),
     );
   }
+
+  void _onTypeChanged(String? label) {
+    if (label == null) return;
+    final type = AnnouncementType.values.firstWhere(
+      (t) => t.label == label,
+      orElse: () => AnnouncementType.notice,
+    );
+    final wasActivity =
+        controller.announcementType.value == AnnouncementType.activity;
+    controller.setAnnouncementType(type);
+    if (wasActivity && type != AnnouncementType.activity) {
+      controller.clearActivitySelection();
+      onLeaveActivityType();
+    }
+  }
 }
 
-class _FormBody extends StatelessWidget {
-  const _FormBody({
+/// The type-specific fields: activity picker, details, and offer attachment.
+class _AnnouncementFields extends StatelessWidget {
+  const _AnnouncementFields({
     required this.controller,
     required this.detailsController,
     required this.activitySearchController,
+    required this.activityFieldKey,
     required this.onPickAttachment,
     required this.onActivitySelected,
   });
@@ -207,8 +295,9 @@ class _FormBody extends StatelessWidget {
   final CreateAnnouncementController controller;
   final TextEditingController detailsController;
   final TextEditingController activitySearchController;
+  final GlobalKey activityFieldKey;
   final VoidCallback onPickAttachment;
-  final void Function(String id, String title) onActivitySelected;
+  final void Function(ActivityModel activity) onActivitySelected;
 
   @override
   Widget build(BuildContext context) {
@@ -216,169 +305,45 @@ class _FormBody extends StatelessWidget {
 
     return Obx(() {
       final type = controller.announcementType.value;
+      final isActivity = type == AnnouncementType.activity;
+      final isOffer = type == AnnouncementType.offer;
 
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          if (type == AnnouncementType.activity) ...[
+          if (isActivity) ...[
             CreateAnnouncementActivitySection(
               controller: controller,
               searchController: activitySearchController,
-              onActivityTitleSelected: onActivitySelected,
+              searchFieldKey: activityFieldKey,
+              onActivitySelected: onActivitySelected,
             ),
             const SizedBox(height: 20),
           ],
           CustomTextField(
             controller: detailsController,
-            title: 'Details',
+            title: isActivity ? 'Description' : 'Details',
             hintText: 'Enter details...',
             maxLine: 4,
             maxLength: 2000,
             borderColor: colors.outline,
             textColor: colors.onSurface,
-            validator: (v) => v != null && v.trim().isNotEmpty
+            validator: (v) => (v != null && v.trim().isNotEmpty)
                 ? null
                 : 'Please enter details',
           ),
-          if (type == AnnouncementType.offer) ...[
+          if (isOffer) ...[
             const SizedBox(height: 20),
-            _OfferAttachmentField(
-              file: controller.attachment.value,
-              onPick: onPickAttachment,
-              onRemove: controller.clearAttachment,
-            ),
-          ],
-          if (type == AnnouncementType.activity) ...[
-            const SizedBox(height: 8),
-            Text(
-              'Add an optional description for this activity post.',
-              style: AppTextStyle.textXs(color: colors.onSurfaceVariant),
+            AttachmentPickerField(
+              selectedFile: controller.attachment.value,
+              onPickFile: onPickAttachment,
+              onRemoveFile: controller.clearAttachment,
+              title: 'Image',
+              emptyLabel: 'Add image (JPG or PNG)',
             ),
           ],
         ],
       );
     });
-  }
-}
-
-class _OfferAttachmentField extends StatelessWidget {
-  const _OfferAttachmentField({
-    required this.file,
-    required this.onPick,
-    required this.onRemove,
-  });
-
-  final File? file;
-  final VoidCallback onPick;
-  final VoidCallback onRemove;
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = context.colorScheme;
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Attachment',
-          style: AppTextStyle.textMd(
-            color: colors.onSurface,
-            weight: FontWeight.w600,
-          ),
-        ),
-        const SizedBox(height: 12),
-        if (file != null)
-          Card(
-            color: colors.surfaceContainerHigh,
-            child: Padding(
-              padding: const EdgeInsets.all(12),
-              child: Row(
-                children: [
-                  Icon(
-                    file!.path.toLowerCase().endsWith('.pdf')
-                        ? Icons.picture_as_pdf
-                        : Icons.image_outlined,
-                    color: file!.path.toLowerCase().endsWith('.pdf')
-                        ? Colors.red
-                        : colors.onSurfaceVariant,
-                    size: 24,
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Text(
-                      file!.path.split(Platform.pathSeparator).last,
-                      style: AppTextStyle.textSm(weight: FontWeight.w500),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                  IconButton(
-                    onPressed: onRemove,
-                    icon: const Icon(
-                      Icons.delete_outline,
-                      color: AppColors.danger,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          )
-        else
-          InkWell(
-            onTap: onPick,
-            borderRadius: BorderRadius.circular(8),
-            child: Container(
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(vertical: 16),
-              decoration: BoxDecoration(
-                color: colors.surfaceContainerHighest.withValues(alpha: 0.35),
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: colors.outline),
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.attach_file, size: 20, color: colors.onSurface),
-                  const SizedBox(width: 8),
-                  Text(
-                    'Add attachment (image or PDF)',
-                    style: AppTextStyle.textSm(
-                      weight: FontWeight.w600,
-                      color: colors.onSurface,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-      ],
-    );
-  }
-}
-
-class _PublishBar extends StatelessWidget {
-  const _PublishBar({
-    required this.onPublish,
-    required this.controller,
-  });
-
-  final VoidCallback onPublish;
-  final CreateAnnouncementController controller;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
-      child: Obx(
-        () => SizedBox(
-          width: double.infinity,
-          height: 50,
-          child: CustomButton(
-            onPressed: controller.isLoading.value ? null : onPublish,
-            text: controller.isLoading.value ? 'Publishing...' : 'Publish',
-          ),
-        ),
-      ),
-    );
   }
 }

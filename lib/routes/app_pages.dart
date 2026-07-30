@@ -8,6 +8,7 @@ import 'package:loci/features/main_nav/presentation/bindings/drawer_binding.dart
 import 'package:loci/features/event/presentation/bindings/event_binding.dart';
 import 'package:loci/features/my_business/presentation/bindings/create_ad_binding.dart';
 import 'package:loci/features/my_business/presentation/bindings/my_business_binding.dart';
+import 'package:loci/features/network/presentation/bindings/connections_binding.dart';
 import 'package:loci/features/network/presentation/bindings/meetings_binding.dart';
 import 'package:loci/features/network/presentation/bindings/referrals_binding.dart';
 import 'package:loci/features/auth/presentation/pages/forget_pass_screen.dart';
@@ -42,7 +43,7 @@ import 'package:loci/features/routes/presentation/pages/route_details_screen.dar
 import 'package:loci/features/chat/presentation/pages/chat_list_screen.dart';
 import 'package:loci/features/chat/presentation/pages/message_screen.dart';
 import 'package:loci/features/qr_code/presentation/pages/my_qr_code_screen.dart';
-import 'package:loci/features/network/presentation/pages/connection_screen.dart';
+import 'package:loci/features/network/presentation/pages/connections/connection_screen.dart';
 import 'package:loci/features/network/presentation/pages/meetings/meeting_invitation_screen.dart';
 import 'package:loci/features/network/presentation/pages/meetings/meeting_screen.dart';
 import 'package:loci/features/network/presentation/pages/referrals/referrals_screen.dart';
@@ -150,7 +151,7 @@ abstract class AppPages {
     GetPage(
       name: AppRoutes.connection,
       page: () => ConnectionScreen(),
-      binding: BottomNavBinding(),
+      binding: ConnectionsBinding(),
     ),
     GetPage(
       name: AppRoutes.sendReferral,

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:loci/core/utils/date_parser.dart';
 import 'package:loci/routes/app_routes.dart';
@@ -34,9 +35,46 @@ class _SignupScreenState extends State<SignupScreen> {
   final TextEditingController confirmPasswordTEController =
       TextEditingController();
 
+  // Focus nodes for production-level "next" field traversal.
+  // Keeping the keyboard's IME session alive across fields avoids the
+  // hide/show flicker (and the perceived open delay) when moving between them.
+  final FocusNode nameFocus = FocusNode();
+  final FocusNode zipFocus = FocusNode();
+  final FocusNode emailFocus = FocusNode();
+  final FocusNode passwordFocus = FocusNode();
+  final FocusNode confirmPasswordFocus = FocusNode();
+
   final isAgreed = false.obs;
 
+  @override
+  void dispose() {
+    nameTEController.dispose();
+    emailTEController.dispose();
+    zipTEController.dispose();
+    dateTEController.dispose();
+    passwordTEController.dispose();
+    confirmPasswordTEController.dispose();
+
+    nameFocus.dispose();
+    zipFocus.dispose();
+    emailFocus.dispose();
+    passwordFocus.dispose();
+    confirmPasswordFocus.dispose();
+    super.dispose();
+  }
+
+  /// Moves the IME focus from [current] to [next] without letting the
+  /// keyboard collapse, so it slides straight to the next field instead of
+  /// hiding and re-showing (which is what caused the open delay/flicker).
+  void _fieldFocusChange(FocusNode current, FocusNode next) {
+    current.unfocus();
+    FocusScope.of(context).requestFocus(next);
+  }
+
   void _showCalender() async {
+    // Drop any open keyboard before showing the date picker.
+    FocusScope.of(context).unfocus();
+
     DateTime? pickedDate = await showDatePicker(
       context: context,
       initialDate: DateTime.now(),
@@ -199,9 +237,10 @@ class _SignupScreenState extends State<SignupScreen> {
   }
 
   Widget _buildSignupForm() {
-    return Form(
-      key: _formKey,
-      child: Padding(
+    return AutofillGroup(
+      child: Form(
+        key: _formKey,
+        child: Padding(
         padding: const EdgeInsets.fromLTRB(24, 48, 24, 32),
         child: Column(
           children: [
@@ -236,6 +275,12 @@ class _SignupScreenState extends State<SignupScreen> {
             const SizedBox(height: 12),
             CustomTextField(
               controller: nameTEController,
+              focusNode: nameFocus,
+              keyboardType: TextInputType.name,
+              textCapitalization: TextCapitalization.words,
+              autofillHints: const [AutofillHints.name],
+              textInputAction: TextInputAction.next,
+              onFieldSubmitted: (_) => _fieldFocusChange(nameFocus, zipFocus),
               borderColor: context.colorScheme.outline,
               title: "Full name",
               hintText: "Alex Carry",
@@ -244,7 +289,8 @@ class _SignupScreenState extends State<SignupScreen> {
                 color: context.colorScheme.onSurface,
                 weight: FontWeight.w600,
               ),
-              validator: validateFirstName,
+              inputFormatters: nameInputFormatters,
+              validator: validateFullName,
             ),
             const SizedBox(height: 12),
             CustomTextField(
@@ -269,6 +315,12 @@ class _SignupScreenState extends State<SignupScreen> {
             const SizedBox(height: 12),
             CustomTextField(
               controller: zipTEController,
+              focusNode: zipFocus,
+              keyboardType: TextInputType.number,
+              autofillHints: const [AutofillHints.postalCode],
+              textInputAction: TextInputAction.next,
+              inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+              onFieldSubmitted: (_) => _fieldFocusChange(zipFocus, emailFocus),
               borderColor: context.colorScheme.outline,
               title: "Zip code",
               hintText: "Enter Zipcode",
@@ -282,6 +334,12 @@ class _SignupScreenState extends State<SignupScreen> {
             const SizedBox(height: 12),
             CustomTextField(
               controller: emailTEController,
+              focusNode: emailFocus,
+              keyboardType: TextInputType.emailAddress,
+              autofillHints: const [AutofillHints.email],
+              textInputAction: TextInputAction.next,
+              onFieldSubmitted: (_) =>
+                  _fieldFocusChange(emailFocus, passwordFocus),
               borderColor: context.colorScheme.outline,
               title: "Email",
               hintText: "example@gmail.com",
@@ -295,6 +353,11 @@ class _SignupScreenState extends State<SignupScreen> {
             const SizedBox(height: 12),
             CustomTextField(
               controller: passwordTEController,
+              focusNode: passwordFocus,
+              autofillHints: const [AutofillHints.newPassword],
+              textInputAction: TextInputAction.next,
+              onFieldSubmitted: (_) =>
+                  _fieldFocusChange(passwordFocus, confirmPasswordFocus),
               borderColor: context.colorScheme.outline,
               hintText: "Enter password",
               title: "Password",
@@ -310,6 +373,10 @@ class _SignupScreenState extends State<SignupScreen> {
             const SizedBox(height: 12),
             CustomTextField(
               controller: confirmPasswordTEController,
+              focusNode: confirmPasswordFocus,
+              autofillHints: const [AutofillHints.newPassword],
+              textInputAction: TextInputAction.done,
+              onFieldSubmitted: (_) => _signupHandler(),
               borderColor: context.colorScheme.outline,
               hintText: "Confirm password",
               title: "Confirm Password",
@@ -403,6 +470,7 @@ class _SignupScreenState extends State<SignupScreen> {
             ),
             const SizedBox(height: 40),
           ],
+        ),
         ),
       ),
     );

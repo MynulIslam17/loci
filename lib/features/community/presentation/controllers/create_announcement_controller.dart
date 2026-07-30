@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:get/get.dart';
 import 'package:loci/core/enums/acitivty_ref_type.dart';
 import 'package:loci/core/enums/announcement_type.dart';
+import 'package:loci/features/community/data/models/activity_model.dart';
 import 'package:loci/features/community/domain/services/community_service.dart';
 import 'package:loci/features/community/presentation/controllers/announcement_controller.dart';
 import 'package:loci/features/community/presentation/controllers/my_community_controller.dart';
@@ -20,9 +21,11 @@ class CreateAnnouncementController extends GetxController {
 
   final announcementType = AnnouncementType.notice.obs;
   final activityRefType = ActivityRefType.event.obs;
-  final selectedActivityId = RxnString();
+  final selectedActivity = Rxn<ActivityModel>();
   final showActivitySuggestions = false.obs;
   final attachment = Rxn<File>();
+
+  String? get selectedActivityId => selectedActivity.value?.id;
 
   late String _communityId;
   var _postAsBusiness = false;
@@ -48,7 +51,7 @@ class CreateAnnouncementController extends GetxController {
   void resetForm() {
     announcementType.value = AnnouncementType.notice;
     activityRefType.value = ActivityRefType.event;
-    selectedActivityId.value = null;
+    selectedActivity.value = null;
     showActivitySuggestions.value = false;
     attachment.value = null;
     errorMessage.value = null;
@@ -61,24 +64,25 @@ class CreateAnnouncementController extends GetxController {
 
   void setActivityRefType(ActivityRefType type) {
     activityRefType.value = type;
-    selectedActivityId.value = null;
+    selectedActivity.value = null;
     showActivitySuggestions.value = false;
     _activitySearch.changeType(type);
   }
 
   void onActivityQueryChanged(String query) {
-    selectedActivityId.value = null;
+    selectedActivity.value = null;
     showActivitySuggestions.value = query.trim().isNotEmpty;
     _activitySearch.onSearchChanged(query);
   }
 
-  void selectActivity({required String id}) {
-    selectedActivityId.value = id;
+  void selectActivity(ActivityModel activity) {
+    selectedActivity.value = activity;
     showActivitySuggestions.value = false;
   }
 
   void clearActivitySelection() {
-    selectedActivityId.value = null;
+    selectedActivity.value = null;
+    showActivitySuggestions.value = false;
   }
 
   void clearAttachment() => attachment.value = null;
@@ -87,7 +91,7 @@ class CreateAnnouncementController extends GetxController {
 
   String? validateActivitySelection() {
     if (announcementType.value != AnnouncementType.activity) return null;
-    final id = selectedActivityId.value;
+    final id = selectedActivityId;
     if (id == null || id.isEmpty) {
       return 'Please select an activity';
     }
@@ -107,7 +111,7 @@ class CreateAnnouncementController extends GetxController {
         fields['details'] = details;
       case AnnouncementType.activity:
         fields['activityRefType'] = activityRefType.value.name;
-        fields['activityId'] = selectedActivityId.value ?? '';
+        fields['activityId'] = selectedActivityId ?? '';
         fields['description'] = details;
     }
 
@@ -122,7 +126,7 @@ class CreateAnnouncementController extends GetxController {
     return fields;
   }
 
-  Future<bool> publish(String details) async {
+  Future<bool> publishAnnouncement(String details) async {
     final activityError = validateActivitySelection();
     if (activityError != null) {
       errorMessage.value = activityError;

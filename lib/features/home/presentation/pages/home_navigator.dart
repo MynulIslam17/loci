@@ -1,36 +1,16 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:get/get_instance/src/bindings_interface.dart';
-import 'package:loci/routes/app_routes.dart';
-import 'package:loci/features/community/presentation/bindings/community_binding.dart';
-import 'package:loci/features/community/presentation/pages/all_community_screen.dart';
-import 'package:loci/features/community/presentation/pages/community_screen.dart';
-import 'package:loci/features/community/presentation/pages/create_announcement_screen.dart';
 import 'home_screen.dart';
 
+/// Nested navigator for the Home tab.
+///
+/// Home currently has no in-tab sub-routes — feature sections (Communities,
+/// etc.) open as full-screen pages on the root navigator so they get their own
+/// app bar/back button without the bottom nav. The navigator and [navigatorKey]
+/// are kept because the main shell's back handling and [reset] rely on them.
 class HomeNavigator extends StatelessWidget {
   const HomeNavigator({super.key});
 
   static final navigatorKey = GlobalKey<NavigatorState>();
-
-  static Future<dynamic> push(String routeName, {dynamic arguments}) {
-    return navigatorKey.currentState!.pushNamed(
-      routeName,
-      arguments: arguments,
-    );
-  }
-
-  static Future<dynamic> pushWithBinding(
-    String routeName, {
-    Bindings? binding,
-    dynamic arguments,
-  }) {
-    binding?.dependencies();
-    return navigatorKey.currentState!.pushNamed(
-      routeName,
-      arguments: arguments,
-    );
-  }
 
   static void reset() {
     if (navigatorKey.currentState?.canPop() == true) {
@@ -42,32 +22,8 @@ class HomeNavigator extends StatelessWidget {
   Widget build(BuildContext context) {
     return Navigator(
       key: navigatorKey,
-      onGenerateRoute: (settings) {
-        switch (settings.name) {
-          case AppRoutes.allCommunity:
-            CommunityBinding().dependencies();
-            return MaterialPageRoute(builder: (_) => AllCommunityScreen());
-
-          case AppRoutes.communityScreen:
-            final args = settings.arguments as Map<String, dynamic>?;
-
-            final role = args?['communityRole'];
-            final communityId = args?['communityId'];
-            final communityName = args?['communityName'];
-
-            return MaterialPageRoute(
-              settings: settings,
-              builder: (_) => CommunityScreen(
-                role: role,
-                communityId: communityId,
-                communityName: communityName,
-              ),
-            );
-
-          default:
-            return MaterialPageRoute(builder: (_) => const HomeScreen());
-        }
-      },
+      onGenerateRoute: (settings) =>
+          MaterialPageRoute(builder: (_) => const HomeScreen()),
     );
   }
 }

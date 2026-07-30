@@ -38,11 +38,34 @@ class MeetingRequester {
 
   factory MeetingRequester.fromJson(Map<String, dynamic> json) {
     return MeetingRequester(
-      id: json['_id'] ?? '',
+      id: json['_id'] ?? json['id'] ?? '',
       name: json['name'] ?? '',
       email: json['email'] ?? '',
       avatar: json['avatar'] ?? '',
       company: json['company'] ?? '',
+    );
+  }
+
+  /// Respond API may return only a requester id string instead of the full user.
+  static MeetingRequester fromDynamic(dynamic raw) {
+    if (raw is Map<String, dynamic>) {
+      return MeetingRequester.fromJson(raw);
+    }
+    if (raw is String && raw.isNotEmpty) {
+      return MeetingRequester(
+        id: raw,
+        name: '',
+        email: '',
+        avatar: '',
+        company: '',
+      );
+    }
+    return MeetingRequester(
+      id: '',
+      name: '',
+      email: '',
+      avatar: '',
+      company: '',
     );
   }
 }
@@ -149,7 +172,7 @@ class IncomingMeetingModel {
   factory IncomingMeetingModel.fromJson(Map<String, dynamic> json) {
     return IncomingMeetingModel(
       id: json['_id'] ?? '',
-      requester: MeetingRequester.fromJson(json['requester'] ?? {}),
+      requester: MeetingRequester.fromDynamic(json['requester']),
       recipient: MeetingRecipient.fromJson(json['recipient'] ?? {}),
       meetingDate: json['meetingDate'] ?? '',
       meetingTime: json['meetingTime'] ?? '',
@@ -158,6 +181,22 @@ class IncomingMeetingModel {
       status: MeetingStatus.fromString(json['status']),
       createdAt: json['createdAt'] ?? '',
       updatedAt: json['updatedAt'] ?? '',
+    );
+  }
+
+  /// Keeps populated nested fields when a partial API payload is returned (e.g. respond).
+  IncomingMeetingModel mergeWith(IncomingMeetingModel previous) {
+    return IncomingMeetingModel(
+      id: id.isNotEmpty ? id : previous.id,
+      requester: requester.name.isNotEmpty ? requester : previous.requester,
+      recipient: recipient.name.isNotEmpty ? recipient : previous.recipient,
+      meetingDate: meetingDate.isNotEmpty ? meetingDate : previous.meetingDate,
+      meetingTime: meetingTime.isNotEmpty ? meetingTime : previous.meetingTime,
+      location: location.isNotEmpty ? location : previous.location,
+      message: message.isNotEmpty ? message : previous.message,
+      status: status,
+      createdAt: createdAt.isNotEmpty ? createdAt : previous.createdAt,
+      updatedAt: updatedAt.isNotEmpty ? updatedAt : previous.updatedAt,
     );
   }
 }

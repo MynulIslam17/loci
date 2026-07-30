@@ -1,13 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:loci/core/enums/network_type.dart';
-import 'package:loci/features/network/presentation/controllers/connection_controller.dart';
-import 'package:loci/shared/widgets/app_skeleton.dart';
-import 'package:loci/shared/widgets/custom_image_container.dart';
-import 'package:loci/shared/widgets/error_state.dart';
-
 import 'package:loci/core/constants/app_text_style.dart';
+import 'package:loci/core/theme/theme_extention.dart';
+import 'package:loci/features/network/data/models/dashboard_count.dart';
+import 'package:loci/features/network/data/models/checkin_item.dart';
+import 'package:loci/features/network/presentation/controllers/network_dashboard_controller.dart';
+import 'package:loci/features/network/presentation/widgets/network_detail_row.dart';
 import 'package:loci/routes/app_routes.dart';
+import 'package:loci/shared/widgets/app_skeleton.dart';
+import 'package:loci/shared/widgets/custom_button.dart';
+import 'package:loci/shared/widgets/custom_image_container.dart';
+import 'package:loci/shared/widgets/empty_state.dart';
+import 'package:loci/shared/widgets/error_state.dart';
 
 class NetworkScreen extends StatefulWidget {
   const NetworkScreen({super.key});
@@ -17,36 +21,28 @@ class NetworkScreen extends StatefulWidget {
 }
 
 class _NetworkScreenState extends State<NetworkScreen> {
-  final dashboardController = Get.find<ConnectionController>();
-
-  @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      dashboardController.fetchDashboard(NetworkType.checkins);
-    });
-  }
+  final _controller = Get.find<NetworkDashboardController>();
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final colors = context.colorScheme;
 
     return Scaffold(
-      backgroundColor: colorScheme.surface,
+      backgroundColor: colors.surface,
       body: Obx(() {
-        final controller = dashboardController;
-        if (controller.errorMessage != null) {
+        if (_controller.errorMessage != null) {
           return ErrorStateWidget(
-            message: controller.errorMessage!,
-            onRetry: () => controller.fetchDashboard(NetworkType.checkins),
+            message: _controller.errorMessage!,
+            onRetry: _controller.fetchDashboard,
           );
         }
 
-        final count = controller.counts;
+        final counts = _controller.counts;
+        final isLoading = _controller.isLoading;
+        final checkIns = _controller.checkins;
 
         return RefreshIndicator(
-          onRefresh: () async =>
-              controller.fetchDashboard(NetworkType.checkins),
+          onRefresh: _controller.refreshDashboard,
           child: SingleChildScrollView(
             padding: const EdgeInsets.symmetric(horizontal: 16),
             physics: const AlwaysScrollableScrollPhysics(),
@@ -55,124 +51,33 @@ class _NetworkScreenState extends State<NetworkScreen> {
               children: [
                 const SizedBox(height: 12),
                 Text(
-                  "Networking Dashboard",
-                  style: TextStyle(
-                    color: colorScheme.onSurface,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 20,
+                  'Networking Dashboard',
+                  style: AppTextStyle.textXl(
+                    color: colors.onSurface,
+                    weight: FontWeight.w700,
                   ),
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 4),
                 Text(
-                  "Overview of your network",
-                  style: TextStyle(
-                    color: colorScheme.onSurfaceVariant,
-                    fontSize: 16,
+                  'Overview of your network activity',
+                  style: AppTextStyle.textSm(
+                    color: colors.onSurfaceVariant,
+                    weight: FontWeight.w500,
                   ),
                 ),
                 const SizedBox(height: 16),
-
-                // --- Stats Grid ---
-                controller.isLoading
-                    ? AppSkeleton.list(context: context)
-                    : GridView.count(
-                        shrinkWrap: true,
-                        physics: const NeverScrollableScrollPhysics(),
-                        crossAxisCount: 2,
-                        crossAxisSpacing: 12,
-                        mainAxisSpacing: 12,
-                        childAspectRatio: 1.5,
-                        children: [
-                          _buildStatCard(
-                            context,
-                            "Total Contacts",
-                            "${count?.connections ?? 0}",
-                            Icons.people_outline,
-                          ),
-                          _buildStatCard(
-                            context,
-                            "Check-Ins",
-                            "${count?.totalCheckIns ?? 0}",
-                            Icons.person_outline,
-                          ),
-                          _buildStatCard(
-                            context,
-                            "Referrals Sent",
-                            "${count?.referralsSent ?? 0}",
-                            Icons.send_outlined,
-                          ),
-                          _buildStatCard(
-                            context,
-                            "Upcoming Meeting",
-                            "${count?.upcomingMeetings ?? 0}",
-                            Icons.handshake_outlined,
-                          ),
-                        ],
-                      ),
-
+                if (isLoading) ...[
+                  AppSkeleton.grid(context: context),
+                  const SizedBox(height: 24),
+                  AppSkeleton.list(context: context),
+                ] else ...[
+                  if (counts != null) _buildStats(context, counts),
+                  const SizedBox(height: 24),
+                  _buildQuickActions(context),
+                  const SizedBox(height: 24),
+                  _buildRecentCheckIns(context, checkIns),
+                ],
                 const SizedBox(height: 24),
-                Text(
-                  "Quick Actions",
-                  style: AppTextStyle.textMd(
-                    color: colorScheme.onSurface,
-                    weight: FontWeight.w600,
-                  ),
-                ),
-                const SizedBox(height: 16),
-
-                // --- Primary Quick Action Button ---
-                ElevatedButton.icon(
-                  onPressed: controller.isLoading
-                      ? null
-                      : () => Get.toNamed(AppRoutes.checkIn),
-                  icon: Icon(
-                    Icons.grid_view_rounded,
-                    color: colorScheme.onPrimary,
-                  ),
-                  label: Text(
-                    "Check In",
-                    style: AppTextStyle.textMd(weight: FontWeight.w600),
-                  ),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: colorScheme.primary,
-                    foregroundColor: colorScheme.onPrimary,
-                    minimumSize: const Size(double.infinity, 54),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    elevation: 0,
-                  ),
-                ),
-
-                const SizedBox(height: 18),
-
-                // --- Secondary Action Buttons ---
-                Row(
-                  children: [
-                    _buildActionButton(context, "Referral"),
-                    const SizedBox(width: 10),
-                    _buildActionButton(context, "Connection"),
-                    const SizedBox(width: 10),
-                    _buildActionButton(context, "Meeting"),
-                  ],
-                ),
-
-                const SizedBox(height: 24),
-                Text(
-                  "Recent Check-Ins",
-                  style: AppTextStyle.textMd(
-                    color: colorScheme.onSurface,
-                    weight: FontWeight.w600,
-                  ),
-                ),
-                const SizedBox(height: 12),
-
-                // --- Recent Check-In List ---
-                controller.isLoading
-                    ? AppSkeleton.list(context: context)
-                    : _buildRecentList(context),
-
-                const SizedBox(height: 20),
               ],
             ),
           ),
@@ -181,56 +86,139 @@ class _NetworkScreenState extends State<NetworkScreen> {
     );
   }
 
-  // ─── Stat Card ──────────────────────────────────────────────────────────────
-  Widget _buildStatCard(
+  Widget _buildStats(BuildContext context, DashboardCounts counts) {
+    return GridView.count(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      crossAxisCount: 2,
+      crossAxisSpacing: 12,
+      mainAxisSpacing: 12,
+      childAspectRatio: 1.55,
+      children: [
+        _statCard(context, 'Total Contacts', '${counts.connections}',
+            Icons.people_outline, AppRoutes.connection),
+        _statCard(context, 'Check-Ins', '${counts.totalCheckIns}',
+            Icons.qr_code_scanner_outlined, AppRoutes.checkIn),
+        _statCard(context, 'Referrals Sent', '${counts.referralsSent}',
+            Icons.send_outlined, AppRoutes.referral),
+        _statCard(context, 'Upcoming Meetings', '${counts.upcomingMeetings}',
+            Icons.handshake_outlined, AppRoutes.meeting),
+      ],
+    );
+  }
+
+  Widget _statCard(
     BuildContext context,
     String label,
     String value,
     IconData icon,
+    String route,
   ) {
-    final colorScheme = Theme.of(context).colorScheme;
-    return Card(
-      elevation: 2,
-      color: colorScheme.surfaceContainerHigh,
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Row(
+    final colors = context.colorScheme;
+
+    return Material(
+      color: colors.surfaceContainerHigh,
+      borderRadius: BorderRadius.circular(12),
+      child: InkWell(
+        onTap: () => Get.toNamed(route),
+        borderRadius: BorderRadius.circular(12),
+        child: Ink(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: colors.outlineVariant.withValues(alpha: 0.4),
+            ),
+          ),
+          child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(icon, color: colorScheme.onSurface, size: 24),
-              const SizedBox(width: 12),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(icon, color: colors.primary, size: 22),
+                  const SizedBox(width: 10),
+                  Text(
+                    value,
+                    style: AppTextStyle.textXl(
+                      color: colors.onSurface,
+                      weight: FontWeight.w700,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
               Text(
-                value,
-                style: AppTextStyle.textXl(
-                  color: colorScheme.onSurface,
+                label,
+                textAlign: TextAlign.center,
+                style: AppTextStyle.textXs(
+                  color: colors.onSurfaceVariant,
                   weight: FontWeight.w500,
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 8),
-          Text(
-            label,
-            style: AppTextStyle.textXs(
-              color: colorScheme.onSurfaceVariant,
-              weight: FontWeight.w500,
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }
 
-  // ─── Action Button ──────────────────────────────────────────────────────────
-  Widget _buildActionButton(BuildContext context, String label) {
-    final colorScheme = Theme.of(context).colorScheme;
+  Widget _buildQuickActions(BuildContext context) {
+    final colors = context.colorScheme;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Quick Actions',
+          style: AppTextStyle.textMd(
+            color: colors.onSurface,
+            weight: FontWeight.w600,
+          ),
+        ),
+        const SizedBox(height: 12),
+        ElevatedButton.icon(
+          onPressed: () => Get.toNamed(AppRoutes.checkIn),
+          icon: Icon(Icons.qr_code_scanner_rounded, color: colors.onPrimary),
+          label: Text(
+            'Check In',
+            style: AppTextStyle.textMd(
+              weight: FontWeight.w600,
+              color: colors.onPrimary,
+            ),
+          ),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: colors.primary,
+            foregroundColor: colors.onPrimary,
+            minimumSize: const Size(double.infinity, 50),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+            elevation: 0,
+          ),
+        ),
+        const SizedBox(height: 12),
+        Row(
+          children: [
+            _actionButton(context, 'Referral', AppRoutes.referral),
+            const SizedBox(width: 10),
+            _actionButton(context, 'Connection', AppRoutes.connection),
+            const SizedBox(width: 10),
+            _actionButton(context, 'Meeting', AppRoutes.meeting),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _actionButton(BuildContext context, String label, String route) {
+    final colors = context.colorScheme;
+
     return Expanded(
       child: OutlinedButton(
-        onPressed: () => _actionButtonHandler(label),
+        onPressed: () => Get.toNamed(route),
         style: OutlinedButton.styleFrom(
-          padding: const EdgeInsets.symmetric(vertical: 14),
-          side: BorderSide(color: colorScheme.outline),
+          padding: const EdgeInsets.symmetric(vertical: 12),
+          side: BorderSide(color: colors.outlineVariant.withValues(alpha: 0.6)),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
           ),
@@ -238,7 +226,7 @@ class _NetworkScreenState extends State<NetworkScreen> {
         child: Text(
           label,
           style: AppTextStyle.textSm(
-            color: colorScheme.onSurface,
+            color: colors.onSurface,
             weight: FontWeight.w600,
           ),
         ),
@@ -246,90 +234,220 @@ class _NetworkScreenState extends State<NetworkScreen> {
     );
   }
 
-  // ─── Recent Check-In List ───────────────────────────────────────────────────
-  Widget _buildRecentList(BuildContext context) {
-    final checkInList = dashboardController.checkins;
-    final colorScheme = Theme.of(context).colorScheme;
+  Widget _buildRecentCheckIns(
+    BuildContext context,
+    List<CheckInModel> checkIns,
+  ) {
+    final colors = context.colorScheme;
 
-    if (checkInList.isEmpty) {
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 20),
-          child: Text(
-            "No recent check-ins",
-            style: AppTextStyle.textSm(color: colorScheme.onSurfaceVariant),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Recent Check-Ins',
+          style: AppTextStyle.textMd(
+            color: colors.onSurface,
+            weight: FontWeight.w600,
           ),
         ),
-      );
-    }
-
-    return ListView.separated(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      itemCount: checkInList.length,
-      separatorBuilder: (_, __) =>
-          Divider(height: 1, color: colorScheme.outline.withOpacity(0.1)),
-      itemBuilder: (context, index) {
-        final checkIn = checkInList[index];
-        return Card(
-          elevation: 2,
-          color: colorScheme.surfaceContainerHigh,
-          margin: const EdgeInsets.only(bottom: 8),
-          child: ListTile(
-            contentPadding: const EdgeInsets.symmetric(
-              horizontal: 12,
-              vertical: 4,
-            ),
-            leading: CustomCachedImage(
-              isCircle: true,
-              width: 48,
-              height: 48,
-              imageUrl: checkIn.leadData.avatar,
-            ),
-            title: Text(
-              checkIn.leadData.name,
-              style: AppTextStyle.textSm(
-                color: colorScheme.onSurface,
-                weight: FontWeight.w700,
-              ),
-            ),
-            subtitle: Text(
-              checkIn.timeAgo,
-              style: AppTextStyle.textXs(
-                color: colorScheme.onSurfaceVariant,
-              ).copyWith(fontSize: 10),
-            ),
-            trailing: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-              decoration: BoxDecoration(
-                color: colorScheme
-                    .surfaceContainer, // Uses base500 (light) or dark800 (dark)
-                borderRadius: BorderRadius.circular(6),
-              ),
+        const SizedBox(height: 12),
+        if (checkIns.isEmpty)
+          EmptyState(
+            icon: Icons.qr_code_scanner_outlined,
+            title: 'No check-ins yet',
+            subtitle:
+                'Scan a QR code at an event or route to record your first check-in',
+            action: CustomButton(
+              onPressed: () => Get.toNamed(AppRoutes.checkIn),
+              height: 42,
               child: Text(
-                "Atlanta Tech Meetup",
-                style: AppTextStyle.textXs(
-                  color: colorScheme.onSurface,
-                ).copyWith(fontSize: 10),
+                'Check In Now',
+                style: AppTextStyle.textSm(
+                  weight: FontWeight.w600,
+                  color: colors.onPrimary,
+                ),
               ),
+            ),
+          )
+        else
+          ListView.separated(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: checkIns.length,
+            separatorBuilder: (context, index) => const SizedBox(height: 10),
+            itemBuilder: (context, index) {
+              return _CheckInCard(checkIn: checkIns[index]);
+            },
+          ),
+      ],
+    );
+  }
+}
+
+class _CheckInCard extends StatelessWidget {
+  const _CheckInCard({required this.checkIn});
+
+  final CheckInModel checkIn;
+
+  String get _entityLabel {
+    if (checkIn.entityName.isNotEmpty) return checkIn.entityName;
+    if (checkIn.entityType.isNotEmpty) {
+      return checkIn.entityType.replaceAll('_', ' ');
+    }
+    return 'Unknown location';
+  }
+
+  ({String label, IconData icon, Color bg, Color fg}) get _typeStyle {
+    switch (checkIn.entityType.toLowerCase()) {
+      case 'route':
+        return (
+          label: 'Route',
+          icon: Icons.route_outlined,
+          bg: Colors.blue.shade50,
+          fg: Colors.blue.shade700,
+        );
+      case 'event':
+        return (
+          label: 'Event',
+          icon: Icons.event_outlined,
+          bg: Colors.green.shade50,
+          fg: Colors.green.shade700,
+        );
+      default:
+        return (
+          label: 'Check-In',
+          icon: Icons.qr_code_scanner_rounded,
+          bg: Colors.teal.shade50,
+          fg: Colors.teal.shade700,
+        );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.colorScheme;
+    final type = _typeStyle;
+    final name = checkIn.leadData.name.isNotEmpty
+        ? checkIn.leadData.name
+        : 'Unknown contact';
+
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: colors.surfaceContainerHigh,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: colors.outlineVariant.withValues(alpha: 0.4)),
+        boxShadow: [
+          BoxShadow(
+            color: colors.shadow.withValues(alpha: 0.04),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              _typeBadge(type),
+              const Spacer(),
+              if (checkIn.timeAgo.isNotEmpty)
+                Text(
+                  checkIn.timeAgo,
+                  style: AppTextStyle.textXs(
+                    color: colors.onSurfaceVariant,
+                    weight: FontWeight.w500,
+                  ),
+                ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              CustomCachedImage(
+                isCircle: true,
+                width: 40,
+                height: 40,
+                imageUrl: checkIn.leadData.avatar,
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      name,
+                      softWrap: true,
+                      style: AppTextStyle.textSm(
+                        color: colors.onSurface,
+                        weight: FontWeight.w600,
+                      ),
+                    ),
+                    if (checkIn.leadData.email.isNotEmpty) ...[
+                      const SizedBox(height: 4),
+                      NetworkDetailRow(
+                        icon: Icons.mail_outline,
+                        text: checkIn.leadData.email,
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+            decoration: BoxDecoration(
+              color: colors.surfaceContainer,
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(
+                color: colors.outlineVariant.withValues(alpha: 0.35),
+              ),
+            ),
+            child: Row(
+              children: [
+                Icon(type.icon, size: 14, color: type.fg),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    _entityLabel,
+                    softWrap: true,
+                    style: AppTextStyle.textXs(
+                      color: colors.onSurfaceVariant,
+                      weight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
-        );
-      },
+        ],
+      ),
     );
   }
 
-  void _actionButtonHandler(String label) {
-    switch (label) {
-      case "Referral":
-        Get.toNamed(AppRoutes.referral);
-        break;
-      case "Connection":
-        Get.toNamed(AppRoutes.connection);
-        break;
-      case "Meeting":
-        Get.toNamed(AppRoutes.meeting);
-        break;
-    }
+  Widget _typeBadge(({String label, IconData icon, Color bg, Color fg}) type) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: type.bg,
+        borderRadius: BorderRadius.circular(6),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(type.icon, size: 12, color: type.fg),
+          const SizedBox(width: 4),
+          Text(
+            type.label,
+            style: AppTextStyle.textXs(color: type.fg, weight: FontWeight.w600),
+          ),
+        ],
+      ),
+    );
   }
 }

@@ -1,7 +1,7 @@
 import 'package:loci/core/enums/network_type.dart';
 import 'package:loci/features/network/data/models/dashboard_response.dart';
-import 'package:loci/features/network/data/models/meeting/meeting_models.dart';
-import 'package:loci/features/network/data/models/referral/referral_response_model.dart';
+import 'package:loci/features/network/data/models/meeting_models.dart';
+import 'package:loci/features/network/data/models/referral_response_model.dart';
 import 'package:loci/features/network/data/repositories/network_repository.dart';
 
 /// Domain orchestration for network dash. Controllers call this — never NetworkCaller.
@@ -113,20 +113,22 @@ class NetworkService {
   Future<void> sendReferral({
     required String recipientEmail,
     required String recipientName,
-    required String recipientCompany,
     required String businessOwnerEmail,
     required String businessOwnerName,
-    required String ownerCompanyName,
+    String? recipientCompany,
+    String? ownerCompanyName,
     String? message,
   }) async {
     await _repository.sendReferral(
       body: {
         'recipientEmail': recipientEmail,
         'recipientName': recipientName,
-        'recipientCompany': recipientCompany,
         'businessOwnerEmail': businessOwnerEmail,
         'businessOwnerName': businessOwnerName,
-        'businessOwnerCompany': ownerCompanyName,
+        if (recipientCompany != null && recipientCompany.isNotEmpty)
+          'recipientCompany': recipientCompany,
+        if (ownerCompanyName != null && ownerCompanyName.isNotEmpty)
+          'businessOwnerCompany': ownerCompanyName,
         if (message != null && message.isNotEmpty) 'message': message,
       },
     );
