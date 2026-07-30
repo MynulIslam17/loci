@@ -24,4 +24,22 @@ class NotificationRepository {
     }
     return res.body!;
   }
+
+  Future<Map<String, dynamic>> performAction({
+    required String notificationId,
+    required String action,
+  }) async {
+    final res = await _network.patchRequest(
+      url: AppUrl.notificationAction(notificationId),
+      body: {'action': action},
+    );
+    if (!res.isSuccess) {
+      throw Exception(
+        res.body?['message'] ??
+            res.errorMessage ??
+            'Failed to update notification',
+      );
+    }
+    return res.body ?? {};
+  }
 }

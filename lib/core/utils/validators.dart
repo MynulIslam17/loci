@@ -1,5 +1,6 @@
 
 
+import 'package:flutter/services.dart';
 import 'package:intl_phone_field/phone_number.dart';
 
 /// Standalone Validation Functions
@@ -7,14 +8,41 @@ import 'package:intl_phone_field/phone_number.dart';
 
 // ==================== NAME VALIDATORS ====================
 
+/// Letters, numbers, spaces, and common characters used in modern display names.
+final RegExp _nameCharacterPattern = RegExp(
+  r"[\p{L}\p{N}\s\-'@.]",
+  unicode: true,
+);
+
+/// Allowed characters in a person / display name (letters, numbers, common punctuation).
+final RegExp _nameAllowedPattern = RegExp(
+  r"^[\p{L}\p{N}\s\-'@.]+$",
+  unicode: true,
+);
+
+/// Restricts input to characters allowed in person-name fields.
+List<TextInputFormatter> get nameInputFormatters => [
+  FilteringTextInputFormatter.allow(_nameCharacterPattern),
+];
+
+/// Validates a person name. Use [fieldName] to match the label shown in the UI.
+String? validateName(String? value, {String fieldName = 'Name'}) {
+  return _validateName(value, fieldName: fieldName);
+}
+
+/// Validates full name (first + last).
+String? validateFullName(String? value) {
+  return _validateName(value, fieldName: 'Full name');
+}
+
 /// Validates first name
 String? validateFirstName(String? value) {
-  return _validateName(value, fieldName: "First name");
+  return _validateName(value, fieldName: 'First name');
 }
 
 /// Validates last name
 String? validateLastName(String? value) {
-  return _validateName(value, fieldName: "Last name");
+  return _validateName(value, fieldName: 'Last name');
 }
 
 /// Validates middle name (optional field)
@@ -22,37 +50,42 @@ String? validateMiddleName(String? value) {
   if (value == null || value.trim().isEmpty) {
     return null; // Optional field
   }
-  return _validateName(value, fieldName: "Middle name");
+  return _validateName(value, fieldName: 'Middle name');
 }
 
-/// Internal name validation logic
+/// Internal name validation logic shared across person-name fields.
 String? _validateName(String? value, {required String fieldName}) {
   if (value == null || value.trim().isEmpty) {
-    return "Name is required";
+    return '$fieldName is required';
   }
 
   final trimmedValue = value.trim();
 
   if (trimmedValue.length < 2) {
-    return "Name is too short";
+    return '$fieldName must be at least 2 characters';
   }
 
   if (trimmedValue.length > 50) {
-    return "$fieldName must be less than 50 characters";
+    return '$fieldName must be less than 50 characters';
   }
 
-  // Disallow multiple consecutive spaces
   if (trimmedValue.contains(RegExp(r'\s{2,}'))) {
-    return "$fieldName cannot contain multiple consecutive spaces";
+    return '$fieldName cannot contain multiple consecutive spaces';
   }
 
-  // Allow letters, spaces, hyphens, apostrophes (including international chars)
-  if (!RegExp(r"^[\p{L}]+(?:[\s\-'][\p{L}]+)*$", unicode: true)
-      .hasMatch(trimmedValue)) {
-    return "$fieldName can only contain letters, spaces, hyphens, or apostrophes";
+  if (RegExp(r"^[\s\-'.]|[\s\-'.]$").hasMatch(trimmedValue)) {
+    return '$fieldName cannot start or end with spaces or punctuation';
   }
 
-  return null; // ✅ Valid
+  if (!RegExp(r'[\p{L}\p{N}]', unicode: true).hasMatch(trimmedValue)) {
+    return '$fieldName must contain at least one letter or number';
+  }
+
+  if (!_nameAllowedPattern.hasMatch(trimmedValue)) {
+    return '$fieldName can only contain letters, numbers, spaces, and - \' @ .';
+  }
+
+  return null;
 }
 
 // ==================== EMAIL VALIDATOR ====================

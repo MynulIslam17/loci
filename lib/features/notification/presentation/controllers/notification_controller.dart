@@ -1,6 +1,8 @@
 import 'package:flutter/cupertino.dart';
 import 'package:get/get.dart';
+import 'package:loci/core/enums/action_type.dart';
 import 'package:loci/core/utils/app_error_messages.dart';
+import 'package:loci/core/utils/show_snackbar.dart';
 import 'package:loci/features/auth/presentation/controllers/auth_controller.dart';
 import 'package:loci/features/notification/data/models/notification_model.dart';
 import 'package:loci/features/notification/domain/services/notification_service.dart';
@@ -15,16 +17,27 @@ class NotificationController extends GetxController {
   final RxBool _isLoading = false.obs;
   final RxBool _isPaginationLoading = false.obs;
   final Rxn<String> _errorMessage = Rxn<String>();
+  final RxSet<String> _acceptingIds = <String>{}.obs;
+  final RxSet<String> _rejectingIds = <String>{}.obs;
 
   int _currentPage = 1;
   final int _limit = 20;
   bool _hasMore = true;
 
-  List<NotificationModel> get notifications => _notifications;
+  List<NotificationModel> get notifications => List.unmodifiable(_notifications);
   bool get isLoading => _isLoading.value;
   bool get isPaginationLoading => _isPaginationLoading.value;
   bool get hasMore => _hasMore;
   String? get errorMessage => _errorMessage.value;
+
+  bool isAccepting(String notificationId) =>
+      _acceptingIds.contains(notificationId);
+
+  bool isRejecting(String notificationId) =>
+      _rejectingIds.contains(notificationId);
+
+  bool isActingOn(String notificationId) =>
+      isAccepting(notificationId) || isRejecting(notificationId);
 
   @override
   void onInit() {
@@ -93,6 +106,35 @@ class NotificationController extends GetxController {
       _errorMessage.value = AppErrorMessages.sanitize(e);
     } finally {
       _isPaginationLoading.value = false;
+    }
+  }
+
+  Future<void> performAction({
+    required String notificationId,
+    required ActionType action,
+  }) async {
+    if (isActingOn(notificationId)) return;
+
+    if (action == ActionType.accept) {
+      _acceptingIds.add(notificationId);
+    } else {
+      _rejectingIds.add(notificationId);
+    }
+
+    try {
+      await _service.performAction(
+        notificationId: notificationId,
+        action: action.value,
+      );
+      _notifications.removeWhere((n) => n.id == notificationId);
+      SnackbarService.success(
+        action == ActionType.accept ? 'Invitation accepted' : 'Invitation declined',
+      );
+    } catch (e) {
+      SnackbarService.error(AppErrorMessages.sanitize(e));
+    } finally {
+      _acceptingIds.remove(notificationId);
+      _rejectingIds.remove(notificationId);
     }
   }
 }

@@ -57,14 +57,14 @@ class NetworkRepository {
       url: AppUrl.scheduleMeeting,
       body: body,
     );
-    if (!res.isSuccess || res.body == null) {
+    if (!res.isSuccess) {
       throw Exception(
         res.body?['message'] ??
             res.errorMessage ??
             'Failed to schedule meeting',
       );
     }
-    return res.body!;
+    return res.body ?? {};
   }
 
   Future<Map<String, dynamic>> respondMeeting({
@@ -118,12 +118,12 @@ class NetworkRepository {
       url: AppUrl.sendReferral,
       body: body,
     );
-    if (!res.isSuccess || res.body == null) {
+    if (!res.isSuccess) {
       throw Exception(
         res.body?['message'] ?? res.errorMessage ?? 'Failed to send referral',
       );
     }
-    return res.body!;
+    return res.body ?? {};
   }
 
   Future<Map<String, dynamic>> respondReferral({

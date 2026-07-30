@@ -2,7 +2,7 @@ import 'package:get/get.dart';
 import 'package:loci/features/event/domain/services/event_service.dart';
 import 'package:loci/features/event/presentation/controllers/event_list_controller.dart';
 import 'package:loci/features/home/presentation/bindings/home_binding.dart';
-import 'package:loci/features/network/presentation/bindings/connection_binding.dart';
+import 'package:loci/features/network/presentation/bindings/network_dashboard_binding.dart';
 import 'package:loci/features/notification/domain/services/notification_service.dart';
 import 'package:loci/features/notification/presentation/controllers/notification_controller.dart';
 import 'package:loci/features/profile/domain/services/profile_service.dart';
@@ -24,7 +24,7 @@ class BottomNavBinding extends Bindings {
     RafflesBinding().dependencies();
 
     Get.lazyPut(() => ProfileController(Get.find<ProfileService>()));
-    ConnectionBinding().dependencies();
+    NetworkDashboardBinding().dependencies();
     HomeBinding().dependencies();
     Get.lazyPut(
       () => NotificationController(Get.find<NotificationService>()),

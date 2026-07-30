@@ -192,9 +192,13 @@ class _QrBottomSheetState extends State<_QrBottomSheet> {
       );
 
       SnackbarService.success("QR Code saved to gallery");
+
+      // Close the sheet automatically once the QR is saved.
+      if (mounted) {
+        Navigator.of(context, rootNavigator: true).pop();
+      }
     } catch (e) {
       SnackbarService.error("Failed to save QR Code");
-    } finally {
       _isDownloading.value = false;
     }
   }

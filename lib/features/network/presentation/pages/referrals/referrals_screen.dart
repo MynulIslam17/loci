@@ -8,6 +8,7 @@ import 'package:loci/features/network/presentation/widgets/referrals/received_re
 import 'package:loci/features/network/presentation/widgets/referrals/sent_referrals_tab.dart';
 import 'package:loci/shared/widgets/custom_button.dart';
 import 'package:loci/shared/widgets/custom_text_field.dart';
+import 'package:loci/shared/widgets/sticky_tab_bar.dart';
 import 'package:loci/routes/app_routes.dart';
 
 class ReferralsScreen extends StatefulWidget {
@@ -30,7 +31,13 @@ class _ReferralsScreenState extends State<ReferralsScreen>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 2, vsync: this);
+    final args = Get.arguments;
+    final initialTab = (args is Map && args['initialTab'] == 'received') ? 1 : 0;
+    _tabController = TabController(
+      length: 2,
+      vsync: this,
+      initialIndex: initialTab,
+    );
   }
 
   @override
@@ -45,6 +52,12 @@ class _ReferralsScreenState extends State<ReferralsScreen>
     _receivedController.onSearchChanged(query);
   }
 
+  void _onClearSearch() {
+    _searchController.clear();
+    _sentController.clearSearch();
+    _receivedController.clearSearch();
+  }
+
   @override
   Widget build(BuildContext context) {
     final color = context.colorScheme;
@@ -57,107 +70,72 @@ class _ReferralsScreenState extends State<ReferralsScreen>
           style: AppTextStyle.textLg(weight: FontWeight.w700),
         ),
       ),
-      body: Column(
+      body: NestedScrollView(
+        headerSliverBuilder: (context, _) => [
+          SliverToBoxAdapter(child: _buildHeader(color)),
+          stickyTabBarSliver(
+            backgroundColor: color.surface,
+            tabBar: appStickyTabBar(
+              controller: _tabController,
+              colorScheme: color,
+              labels: const ['Sent', 'Received'],
+            ),
+          ),
+        ],
+        body: TabBarView(
+          controller: _tabController,
+          children: const [SentReferralsTab(), ReceivedReferralsTab()],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildHeader(ColorScheme color) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(12, 12, 12, 0),
+      child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          /// STATIC HEADER
-          Padding(
-            padding: const EdgeInsets.fromLTRB(12, 12, 12, 0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+          CustomTextField(
+            controller: _searchController,
+            hintText: 'Search Referral ..',
+            textColor: color.onSurface,
+            borderColor: color.outline,
+            onChanged: _onSearchChanged,
+            showClearButton: true,
+            onClear: _onClearSearch,
+            suffixIcon: Icon(Icons.search, color: color.onSurfaceVariant),
+          ),
+          const SizedBox(height: 20),
+          Text(
+            'Referrals',
+            style: AppTextStyle.textXl(weight: FontWeight.w600),
+          ),
+          const SizedBox(height: 5),
+          Text(
+            'Manage your business referrals',
+            style: AppTextStyle.textSm(color: color.onSurfaceVariant),
+          ),
+          const SizedBox(height: 16),
+          CustomButton(
+            backgroundColor: color.primary,
+            onPressed: () => Get.toNamed(AppRoutes.sendReferral),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                /// SEARCH
-                CustomTextField(
-                  controller: _searchController,
-                  hintText: "Search Referral ..",
-                  textColor: color.onSurface,
-                  borderColor: color.outline,
-                  onChanged: _onSearchChanged,
-                  showClearButton: true,
-                  onClear: () {
-                    _sentController.clearSearch();
-                    _receivedController.clearSearch();
-                  },
-                  suffixIcon: Icon(Icons.search, color: color.onSurfaceVariant),
-                ),
-
-                const SizedBox(height: 20),
-
+                Icon(Icons.send_outlined, color: color.onPrimary),
+                const SizedBox(width: 8),
                 Text(
-                  "Referrals",
-                  style: AppTextStyle.textXl(weight: FontWeight.w600),
-                ),
-
-                const SizedBox(height: 5),
-
-                Text(
-                  "Manage your business referrals",
-                  style: AppTextStyle.textSm(color: color.onSurfaceVariant),
-                ),
-
-                const SizedBox(height: 16),
-
-                /// SEND REFERRAL BUTTON
-                CustomButton(
-                  backgroundColor: color.primary,
-                  onPressed: () => Get.toNamed(AppRoutes.sendReferral),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.send_outlined, color: color.onPrimary),
-                      const SizedBox(width: 8),
-                      Text(
-                        "Send New Referral",
-                        style: AppTextStyle.textMd(
-                          weight: FontWeight.w600,
-                          color: color.onPrimary,
-                        ),
-                      ),
-                    ],
+                  'Send New Referral',
+                  style: AppTextStyle.textMd(
+                    weight: FontWeight.w600,
+                    color: color.onPrimary,
                   ),
                 ),
-
-                const SizedBox(height: 16),
               ],
             ),
           ),
-
-          /// TAB BAR
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-            child: TabBar(
-              controller: _tabController,
-              labelStyle: AppTextStyle.textSm(weight: FontWeight.w600),
-              unselectedLabelStyle: AppTextStyle.textSm(),
-              labelColor: color.primary,
-              unselectedLabelColor: color.onSurfaceVariant,
-              indicatorColor: color.primary,
-              indicatorWeight: 4,
-              indicatorSize: TabBarIndicatorSize.label,
-              dividerColor: Colors.transparent,
-              splashFactory: NoSplash.splashFactory,
-              overlayColor: WidgetStateProperty.all(Colors.transparent),
-              tabs: const [
-                Tab(text: "Sent"),
-                Tab(text: "Received"),
-              ],
-            ),
-          ),
-          const SizedBox(height: 4),
-
-          /// TAB CONTENT
-          Expanded(
-            child: TabBarView(
-              controller: _tabController,
-              children: [
-                /// SENT TAB
-                const SentReferralsTab(),
-
-                /// RECEIVED TAB
-                const ReceivedReferralsTab(),
-              ],
-            ),
-          ),
+          const SizedBox(height: 12),
         ],
       ),
     );

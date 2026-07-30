@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:loci/core/constants/app_text_style.dart';
-import 'package:loci/core/theme/theme_extention.dart';
-import 'package:loci/features/network/presentation/widgets/meeting_invitation_card.dart';
 import 'package:loci/core/enums/meeting_status.dart';
+import 'package:loci/core/theme/theme_extention.dart';
+import 'package:loci/features/network/data/models/meeting_models.dart';
+import 'package:loci/features/network/presentation/widgets/meetings/meeting_invitation_card.dart';
 import 'package:loci/shared/widgets/custom_appbar.dart';
 
 class MeetingInvitationScreen extends StatefulWidget {
@@ -14,6 +15,30 @@ class MeetingInvitationScreen extends StatefulWidget {
 }
 
 class _MeetingInvitationScreenState extends State<MeetingInvitationScreen> {
+  static IncomingMeetingModel _mockMeeting(MeetingStatus status) {
+    return IncomingMeetingModel(
+      id: 'mock',
+      requester: MeetingRequester(
+        id: '1',
+        name: 'Alice Johnson',
+        email: 'alice@techcorp.com',
+        avatar: '',
+        company: 'TechCorp',
+      ),
+      recipient: MeetingRecipient(
+        name: 'Michael Chen',
+        email: 'michael@innovatelabs.com',
+      ),
+      meetingDate: '2026-03-15',
+      meetingTime: '12:30 PM',
+      location: 'Downtown Conference Room',
+      message: 'Discuss Q2 roadmap and align on team objectives.',
+      status: status,
+      createdAt: '',
+      updatedAt: '',
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final colorScheme = context.colorScheme;
@@ -56,18 +81,11 @@ class _MeetingInvitationScreenState extends State<MeetingInvitationScreen> {
             sliver: SliverList.separated(
               itemCount: 5,
               itemBuilder: (context, index) {
+                final status = index.isEven
+                    ? MeetingStatus.pending
+                    : MeetingStatus.confirmed;
                 return MeetingInvitationCard(
-                  status: index % 3 == 0
-                      ? MeetingStatus.pending
-                      : MeetingStatus.confirmed,
-                  fromName: "Alice Johnson",
-                  fromCompany: "TechCorp",
-                  toName: "Michael Chen",
-                  toCompany: "Innovate Labs",
-                  location: "Downtown Conference Room",
-                  time: "12:30 PM",
-                  message: "Discuss Q2 roadmap and align on team objectives.",
-                  date: "Mar 15, 2026",
+                  meeting: _mockMeeting(status),
                   onConfirm: () {},
                   onReject: () {},
                 );

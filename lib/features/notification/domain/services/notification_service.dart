@@ -14,4 +14,14 @@ class NotificationService {
     final body = await _repository.getNotifications(page: page, limit: limit);
     return NotificationResponseModel.fromJson(body);
   }
+
+  Future<void> performAction({
+    required String notificationId,
+    required String action,
+  }) async {
+    await _repository.performAction(
+      notificationId: notificationId,
+      action: action,
+    );
+  }
 }

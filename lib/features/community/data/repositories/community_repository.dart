@@ -134,7 +134,7 @@ class CommunityRepository {
     required int limit,
   }) async {
     final res = await _network.getRequest(
-      url: AppUrl.searchActivity(communityId),
+      url: AppUrl.searchActivity,
       queryParams: {
         'communityId': communityId,
         'type': type,

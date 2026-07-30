@@ -1,9 +1,8 @@
 import 'dart:async';
 
-import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:loci/shared/models/pagination_model.dart';
-import 'package:loci/features/network/data/models/referral/referral_response_model.dart';
+import 'package:loci/features/network/data/models/referral_response_model.dart';
 import 'package:loci/features/network/domain/services/network_service.dart';
 
 class SentReferralsController extends GetxController {
@@ -21,15 +20,13 @@ class SentReferralsController extends GetxController {
   bool get isLoading => _isLoading.value;
   bool get isLoadingMore => _isLoadingMore.value;
   String? get errorMessage => _errorMessage.value;
-  List<ReferralModel> get referrals => _referrals;
+  List<ReferralModel> get referrals => List.unmodifiable(_referrals);
   PaginationMeta? get meta => _meta.value;
 
   int _currentPage = 1;
   static const int _limit = 10;
   String _searchTerm = '';
   Timer? _debounce;
-
-  final ScrollController scrollController = ScrollController();
 
   bool get hasNextPage => meta?.hasNextPage ?? false;
   String get searchTerm => _searchTerm;
@@ -38,23 +35,12 @@ class SentReferralsController extends GetxController {
   void onInit() {
     super.onInit();
     fetchSentReferrals();
-    scrollController.addListener(_onScroll);
   }
 
   @override
   void onClose() {
     _debounce?.cancel();
-    scrollController.dispose();
     super.onClose();
-  }
-
-  void _onScroll() {
-    final pos = scrollController.position;
-    if (pos.pixels >= pos.maxScrollExtent - 200 &&
-        !isLoadingMore &&
-        hasNextPage) {
-      loadMore();
-    }
   }
 
   void onSearchChanged(String query) {
