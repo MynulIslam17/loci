@@ -3,9 +3,9 @@ import 'package:loci/core/constants/app_text_style.dart';
 import 'package:loci/core/enums/activity_type.dart';
 import 'package:loci/core/theme/theme_extention.dart';
 import 'package:loci/features/my_business/presentation/widgets/my_business.dart';
-import 'package:loci/shared/widgets/location/location_models.dart';
+import 'package:loci/features/places/data/models/place_models.dart';
 import 'package:loci/shared/widgets/custom_button.dart';
-import 'package:loci/features/explore_activity/presentation/widgets/explore_activity_location_fields.dart';
+import 'package:loci/features/explore_activity/presentation/widgets/explore_activity_location_section.dart';
 import 'package:loci/features/explore_activity/presentation/widgets/explore_activity_visibility_row.dart';
 
 class CreateActivityBottomSection extends StatelessWidget {
@@ -40,7 +40,7 @@ class CreateActivityBottomSection extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         if (category != ActivityType.raffles) ...[
-          ExploreActivityLocationFields(
+          ExploreActivityLocationInputs(
             locationController: locationController,
             urlController: urlController,
             onLocationPicked: onLocationPicked,

@@ -8,7 +8,7 @@ import 'package:loci/shared/widgets/error_state.dart';
 import 'package:loci/routes/app_routes.dart';
 import 'package:loci/core/enums/checkin_status.dart';
 import 'package:loci/features/routes/presentation/controllers/route_details_controller.dart';
-import 'package:loci/shared/widgets/common/company_info_card.dart';
+import 'package:loci/shared/widgets/company_info_card.dart';
 import 'package:loci/shared/widgets/custom_image_container.dart';
 
 class RouteDetailsScreen extends StatefulWidget {

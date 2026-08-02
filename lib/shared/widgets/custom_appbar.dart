@@ -7,10 +7,11 @@ class CustomAppbar extends StatelessWidget implements PreferredSizeWidget{
   const CustomAppbar({
     super.key,
     required this.title,
-
+    this.actions,
   });
 
   final String title;
+  final List<Widget>? actions;
 
   @override
   Widget build(BuildContext context) {
@@ -19,6 +20,7 @@ class CustomAppbar extends StatelessWidget implements PreferredSizeWidget{
         title,
         style: AppTextStyle.textLg(weight: FontWeight.w600),
       ),
+      actions: actions,
     );
   }
 

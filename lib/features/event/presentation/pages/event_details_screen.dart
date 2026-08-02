@@ -14,7 +14,7 @@ import 'package:loci/core/enums/checkin_status.dart';
 import 'package:loci/core/utils/show_snackbar.dart';
 import 'package:loci/gen/assets.gen.dart';
 import 'package:loci/features/event/presentation/controllers/event_details_controller.dart';
-import 'package:loci/shared/widgets/common/company_info_card.dart';
+import 'package:loci/shared/widgets/company_info_card.dart';
 import '../widgets/event_card.dart';
 import '../widgets/event_details_skeleton.dart';
 

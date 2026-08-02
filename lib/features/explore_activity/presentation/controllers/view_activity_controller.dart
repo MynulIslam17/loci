@@ -16,19 +16,8 @@ class ViewActivityController extends GetxController {
   BusinessRaffleDetailsController get _raffleDetails =>
       Get.find<BusinessRaffleDetailsController>();
 
-  @override
-  void onInit() {
-    super.onInit();
-    _parseArguments();
-  }
-
-  @override
-  void onReady() {
-    super.onReady();
-    load();
-  }
-
-  void _parseArguments() {
+  /// Reads [Get.arguments] synchronously — call when the screen opens.
+  void parseRouteArguments() {
     final args = Get.arguments as Map<String, dynamic>? ?? {};
     screenTitle = args['title']?.toString() ??
         args['routeName']?.toString() ??
@@ -55,23 +44,26 @@ class ViewActivityController extends GetxController {
     return ActivityType.raffles;
   }
 
-  Future<void> load() async {
+  Future<void> loadCurrentActivity() async {
     switch (activityType) {
       case ActivityType.event:
         await _eventDetails.loadFromRouteArguments();
         if (screenTitle.isEmpty) {
           screenTitle = _eventDetails.screenTitle;
         }
+        return;
       case ActivityType.routes:
         await _routeDetails.loadFromRouteArguments();
         if (screenTitle.isEmpty) {
           screenTitle = _routeDetails.screenTitle;
         }
+        return;
       case ActivityType.raffles:
         await _raffleDetails.loadFromRouteArguments();
         if (screenTitle.isEmpty) {
           screenTitle = _raffleDetails.screenTitle;
         }
+        return;
     }
   }
 
@@ -79,10 +71,13 @@ class ViewActivityController extends GetxController {
     switch (activityType) {
       case ActivityType.event:
         await _eventDetails.retryLoad();
+        return;
       case ActivityType.routes:
         await _routeDetails.retryLoad();
+        return;
       case ActivityType.raffles:
         await _raffleDetails.retryLoad();
+        return;
     }
   }
 

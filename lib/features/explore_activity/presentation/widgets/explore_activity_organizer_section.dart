@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:loci/features/explore_activity/presentation/widgets/explore_activity_section.dart';
-import 'package:loci/shared/widgets/common/company_info_card.dart';
+import 'package:loci/shared/widgets/company_info_card.dart';
 
 class ExploreActivityOrganizerSection extends StatelessWidget {
   const ExploreActivityOrganizerSection({

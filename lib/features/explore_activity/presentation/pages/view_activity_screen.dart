@@ -7,24 +7,42 @@ import 'package:loci/features/explore_activity/presentation/widgets/view_activit
 import 'package:loci/shared/widgets/custom_appbar.dart';
 
 /// Single view screen for event, route, and raffle details.
-class ViewActivityScreen extends GetView<ViewActivityController> {
+class ViewActivityScreen extends StatefulWidget {
   const ViewActivityScreen({super.key});
+
+  @override
+  State<ViewActivityScreen> createState() => _ViewActivityScreenState();
+}
+
+class _ViewActivityScreenState extends State<ViewActivityScreen> {
+  late final ViewActivityController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = Get.find<ViewActivityController>();
+    _controller.parseRouteArguments();
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      await _controller.loadCurrentActivity();
+      if (mounted) setState(() {});
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: context.colorScheme.surface,
-      appBar: CustomAppbar(title: controller.screenTitle),
+      appBar: CustomAppbar(title: _controller.screenTitle),
       body: Obx(() {
-        controller.activityType;
+        _controller.activityType;
         return ExploreActivityAsyncBody(
-          isLoading: controller.isLoading,
-          errorMessage: controller.errorMessage,
-          onRetry: controller.retryLoad,
-          isEmpty: controller.isEmpty,
-          emptyMessage: controller.emptyMessage,
+          isLoading: _controller.isLoading,
+          errorMessage: _controller.errorMessage,
+          onRetry: _controller.retryLoad,
+          isEmpty: _controller.isEmpty,
+          emptyMessage: _controller.emptyMessage,
           builder: (context) => ViewActivityDetailContent(
-            activityType: controller.activityType,
+            activityType: _controller.activityType,
           ),
         );
       }),

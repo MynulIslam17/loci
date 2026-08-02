@@ -5,7 +5,7 @@ import 'package:loci/core/constants/app_text_style.dart';
 import 'package:loci/core/theme/theme_extention.dart';
 import 'package:loci/shared/widgets/custom_text_field.dart';
 import 'package:loci/shared/widgets/form_labels.dart';
-import 'package:loci/shared/widgets/location/location_picker_field.dart';
+import 'package:loci/shared/widgets/picked_location_field.dart';
 
 import 'package:loci/routes/app_routes.dart';
 
@@ -136,18 +136,9 @@ class _ManualClaimBusinessState extends State<ManualClaimBusiness> {
                             },
                           ),
                           const SizedBox(height: 16),
-                          LocationPickerField(
+                          PickedLocationField(
                             controller: _locationController,
-                            title: 'Location',
-                            isRequired: true,
                             hintText: 'Search business address',
-                            borderColor: colorScheme.outline,
-                            fillColor: Colors.transparent,
-                            fontSize: 14,
-                            validator: (v) => v == null || v.trim().isEmpty
-                                ? 'Required'
-                                : null,
-                            // Business claim only needs the address text.
                           ),
                           const SizedBox(height: 16),
                           FormField<String>(
