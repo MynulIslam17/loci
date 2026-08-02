@@ -7,7 +7,7 @@ import 'package:loci/features/auth/presentation/controllers/auth_controller.dart
 import 'package:loci/features/main_nav/presentation/controllers/nav_controller.dart';
 import 'package:loci/features/raffles/presentation/pages/active_raffles_screen.dart';
 import 'package:loci/features/routes/presentation/pages/explore_routes_screen.dart';
-import 'package:loci/gen/assets.gen.dart';
+import 'package:loci/features/chat/presentation/widgets/chat_avatar.dart';
 import 'package:loci/routes/app_routes.dart';
 
 /// Side navigation drawer for the main shell.
@@ -94,7 +94,6 @@ class AppNavigationDrawer extends StatelessWidget {
 
     return Obx(() {
       final user = authController.userModel;
-      final hasAvatar = (user?.avatar ?? '').isNotEmpty;
 
       return Container(
         width: double.infinity,
@@ -103,12 +102,11 @@ class AppNavigationDrawer extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 30),
         child: Row(
           children: [
-            /// User profile image
-            CircleAvatar(
-              radius: 28,
-              backgroundImage: hasAvatar
-                  ? NetworkImage(user!.avatar!)
-                  : AssetImage(Assets.images.user1.path) as ImageProvider,
+            /// User profile image — cached + initials fallback when no photo.
+            ChatAvatar(
+              name: (user?.name ?? '').isNotEmpty ? user!.name : 'Guest',
+              avatarUrl: user?.avatar,
+              size: 56,
             ),
 
             const SizedBox(width: 20),
@@ -185,15 +183,15 @@ class AppNavigationDrawer extends StatelessWidget {
 
       case "Explore Routes":
         navController.openDrawerPage(
-          ExploreRoutesScreen(),
-          navigatorKey: ExploreRoutesScreen.navigatorKey,
+          const ExploreRoutesPage(),
+          title: 'Explore Routes',
         );
         break;
 
       case "Active Raffles":
         navController.openDrawerPage(
-          ActiveRafflesScreen(),
-          navigatorKey: ActiveRafflesScreen.navigatorKey,
+          const ActiveRafflesPage(),
+          title: 'Active Raffles',
         );
         break;
 

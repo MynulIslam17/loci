@@ -243,8 +243,8 @@ class _HomeScreenState extends State<HomeScreen> {
                         switch (act["name"]) {
                           case "Raffles":
                             navController.openDrawerPage(
-                              ActiveRafflesScreen(),
-                              navigatorKey: ActiveRafflesScreen.navigatorKey,
+                              const ActiveRafflesPage(),
+                              title: 'Active Raffles',
                             );
                             break;
 

@@ -3,26 +3,13 @@ import 'package:get/get.dart';
 import 'package:loci/core/constants/app_text_style.dart';
 import 'package:loci/core/theme/theme_extention.dart';
 import 'package:loci/features/raffles/presentation/controllers/raffle_list_controller.dart';
-import 'package:loci/features/raffles/presentation/pages/raffles_details_screen.dart';
 import 'package:loci/features/raffles/presentation/widgets/raffle_card.dart';
 import 'package:loci/features/raffles/presentation/widgets/raffle_card_skeleton.dart';
+import 'package:loci/routes/app_routes.dart';
 import 'package:loci/shared/widgets/custom_text_field.dart';
 import 'package:loci/shared/widgets/error_state.dart';
 
-class ActiveRafflesScreen extends StatelessWidget {
-  const ActiveRafflesScreen({super.key});
-  static final navigatorKey = GlobalKey<NavigatorState>();
-
-  @override
-  Widget build(BuildContext context) {
-    return Navigator(
-      key: navigatorKey,
-      onGenerateRoute: (_) =>
-          MaterialPageRoute(builder: (_) => const ActiveRafflesPage()),
-    );
-  }
-}
-
+/// List of active raffles shown inside the main shell drawer overlay.
 class ActiveRafflesPage extends StatefulWidget {
   const ActiveRafflesPage({super.key});
 
@@ -174,12 +161,9 @@ class _ActiveRafflesPageState extends State<ActiveRafflesPage> {
                       return RaffleCard(
                         raffle: raffle,
                         onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) =>
-                                  RafflesDetailsScreen(raffleId: raffle.id),
-                            ),
+                          Get.toNamed(
+                            AppRoutes.rafflesDetails,
+                            arguments: {'raffleId': raffle.id},
                           );
                         },
                       );

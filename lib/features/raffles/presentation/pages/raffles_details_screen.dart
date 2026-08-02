@@ -28,7 +28,7 @@ class RafflesDetailsScreen extends StatefulWidget {
   const RafflesDetailsScreen({
     super.key,
     this.raffleId,
-    this.showAppBar = false,
+    this.showAppBar = true,
   });
 
   @override
