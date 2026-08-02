@@ -1,6 +1,6 @@
 import 'package:loci/core/constants/app_url.dart';
 import 'package:loci/core/network/network_caller.dart';
-import 'package:loci/shared/widgets/location/location_models.dart';
+import 'package:loci/features/places/data/models/place_models.dart';
 
 /// Data layer for the backend-proxied Places API. All calls are authenticated
 /// by [NetworkCaller] (Bearer token) — the Google key lives on the server.

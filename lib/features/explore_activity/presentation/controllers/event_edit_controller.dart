@@ -11,7 +11,7 @@ import 'package:loci/features/explore_activity/data/models/update_event_request_
 import 'package:loci/features/explore_activity/domain/services/explore_activity_service.dart';
 import 'package:loci/features/explore_activity/presentation/controllers/business_event_details_controller.dart';
 import 'package:loci/features/explore_activity/presentation/controllers/explore_activity_edit_form.dart';
-import 'package:loci/shared/widgets/location/location_models.dart';
+import 'package:loci/features/places/data/models/place_models.dart';
 
 class EventEditController extends GetxController {
   EventEditController(this._service);

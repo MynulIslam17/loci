@@ -139,6 +139,10 @@ class CreateActivityRaffleFields extends StatelessWidget {
                       title: tasks[i].title,
                       description: tasks[i].details,
                       imageUrl: tasks[i].banner,
+                      step: i + 1,
+                      typeLabel: TaskCard.typeLabelFromActivityType(
+                        tasks[i].activityType,
+                      ),
                       onRemove: () => onRemoveTask(i),
                     ),
                 ],

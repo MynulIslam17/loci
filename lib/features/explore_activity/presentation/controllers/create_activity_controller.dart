@@ -17,7 +17,7 @@ import 'package:loci/features/explore_activity/presentation/controllers/business
 import 'package:loci/features/explore_activity/presentation/controllers/business_route_list_controller.dart';
 import 'package:loci/features/explore_activity/domain/services/explore_activity_service.dart';
 import 'package:loci/features/explore_activity/presentation/widgets/create_activity_task_sheet.dart';
-import 'package:loci/shared/widgets/location/location_models.dart';
+import 'package:loci/features/places/data/models/place_models.dart';
 
 class CreateActivityController extends GetxController {
   CreateActivityController(this._service);

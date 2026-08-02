@@ -123,6 +123,7 @@ class _ExploreActivityRafflesTabState extends State<ExploreActivityRafflesTab>
                 arguments: {
                   'raffleId': raffle.id,
                   'rafflesName': raffle.title,
+                  'businessId': widget.businessId,
                 },
               ),
             );

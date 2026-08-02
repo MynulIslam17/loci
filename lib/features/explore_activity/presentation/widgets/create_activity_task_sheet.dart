@@ -240,8 +240,16 @@ class _CreateActivityTaskSheetContentState
                           return ListTile(
                             dense: true,
                             visualDensity: VisualDensity.compact,
-                            title: Text(item.title),
-                            subtitle: Text(item.activityType),
+                            title: Text(
+                              item.title,
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            subtitle: Text(
+                              item.activityType,
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                            ),
                             trailing: Icon(
                               Icons.add_circle,
                               color: colorScheme.primary,

@@ -6,7 +6,7 @@
 /// Lists: [ExploreActivityListCard], [ExploreActivityManageButtons],
 /// [ExploreActivityCompactMeta]
 ///
-/// Forms: [ExploreActivityBasicFields], [ExploreActivityLocationFields],
+/// Forms: [ExploreActivityBasicFields], [ExploreActivityLocationInputs],
 /// [ExploreActivityCoverSection], [ExploreActivityEditSaveSection]
 library;
 
@@ -38,7 +38,6 @@ export 'explore_activity_info_row.dart';
 export 'explore_activity_list_card.dart';
 export 'explore_activity_list_footer.dart';
 export 'explore_activity_list_shimmer.dart';
-export 'explore_activity_location_fields.dart';
 export 'explore_activity_location_section.dart';
 export 'explore_activity_manage_buttons.dart';
 export 'explore_activity_map_preview.dart';
