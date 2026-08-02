@@ -92,9 +92,11 @@ class ActivityValidator {
     return null;
   }
 
-  static String? _validateMapLink(String url) {
-    final text = url.trim();
-    if (text.isEmpty) return 'Map link is required';
+  /// Optional website (the repurposed `url` field). Empty is allowed; if
+  /// present it must be a real http(s) link.
+  static String? validateOptionalWebsite(String? url) {
+    final text = url?.trim() ?? '';
+    if (text.isEmpty) return null;
     final uri = Uri.tryParse(text);
     final isValid = uri != null &&
         (uri.isScheme('http') || uri.isScheme('https')) &&
@@ -139,7 +141,7 @@ class ActivityValidator {
     required String title,
     required String description,
     required String location,
-    required String mapUrl,
+    required bool hasCoordinates,
     required String maxParticipants,
     required DateTime? eventDate,
     required TimeOfDay? eventTime,
@@ -153,12 +155,12 @@ class ActivityValidator {
       _validateTitle(title),
       _validateDescription(description, maxLength: descriptionMaxLength),
       _validateLocation(location),
-      _validateMapLink(mapUrl),
       _validateMaxParticipants(maxParticipants),
     ]) {
       if (check != null) return check;
     }
 
+    if (!hasCoordinates) return 'Please pick a location from search';
     if (!hasBanner) return 'Banner image is required';
     if (eventDate == null) return 'Select event date';
     if (eventTime == null) return 'Select event time';
@@ -170,7 +172,7 @@ class ActivityValidator {
     required String title,
     required String description,
     required String location,
-    required String mapUrl,
+    required bool hasCoordinates,
     required TimeOfDay? openingTime,
     required RouteType? routeType,
     required bool hasBanner,
@@ -183,11 +185,11 @@ class ActivityValidator {
       _validateTitle(title),
       _validateDescription(description, maxLength: descriptionMaxLength),
       _validateLocation(location),
-      _validateMapLink(mapUrl),
     ]) {
       if (check != null) return check;
     }
 
+    if (!hasCoordinates) return 'Please pick a location from search';
     if (!hasBanner) return 'Banner image is required';
     if (openingTime == null) return 'Select opening time';
     if (routeType == null) return 'Select route type';

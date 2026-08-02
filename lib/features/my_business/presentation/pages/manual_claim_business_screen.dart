@@ -4,6 +4,8 @@ import 'package:intl_phone_field/intl_phone_field.dart';
 import 'package:loci/core/constants/app_text_style.dart';
 import 'package:loci/core/theme/theme_extention.dart';
 import 'package:loci/shared/widgets/custom_text_field.dart';
+import 'package:loci/shared/widgets/form_labels.dart';
+import 'package:loci/shared/widgets/location/location_picker_field.dart';
 
 import 'package:loci/routes/app_routes.dart';
 
@@ -21,6 +23,7 @@ class _ManualClaimBusinessState extends State<ManualClaimBusiness> {
   final TextEditingController _detailsController = TextEditingController();
 
   String? phoneNumber;
+
   final _formKey = GlobalKey<FormState>();
 
   @override
@@ -95,111 +98,167 @@ class _ManualClaimBusinessState extends State<ManualClaimBusiness> {
                         color: colorScheme.onSurfaceVariant,
                       ),
                     ),
+                    const SizedBox(height: 8),
+                    const RequiredFieldsNote(),
                     const SizedBox(height: 24),
-                    Card(
-                      color: colorScheme.surfaceContainerHigh,
-                      elevation: 2,
-                      child: Padding(
-                        padding: const EdgeInsets.all(13),
-                        child: Column(
-                          children: [
-                            CustomTextField(
-                              borderColor: colorScheme.outline,
-                              title: 'Business Name',
-                              hintText: 'Enter business name',
-                              textColor: colorScheme.onSurface,
-                              fontSize: 14,
-                              controller: _nameController,
-                              fillColor: Colors.transparent,
-                              validator: (v) {
-                                if (v == null || v.trim().isEmpty) {
-                                  return 'Required';
-                                }
-                                if (v.length < 2) {
-                                  return 'Business name must be at least 2 characters';
-                                }
-                                return null;
-                              },
-                            ),
-                            const SizedBox(height: 20),
-                            CustomTextField(
-                              borderColor: colorScheme.outline,
-                              title: 'Location',
-                              hintText: 'Enter full location',
-                              textColor: colorScheme.onSurface,
-                              fontSize: 14,
-                              controller: _locationController,
-                              fillColor: Colors.transparent,
-                              validator: (v) => v == null || v.trim().isEmpty
-                                  ? 'Required'
-                                  : null,
-                            ),
-                            const SizedBox(height: 20),
-                            FormField<String>(
-                              validator: (_) {
-                                if (phoneNumber == null ||
-                                    phoneNumber!.isEmpty) {
-                                  return 'Phone number is required';
-                                }
-                                return null;
-                              },
-                              builder: (state) {
-                                return IntlPhoneField(
-                                  decoration: InputDecoration(
-                                    labelText: 'Phone',
-                                    border: OutlineInputBorder(
-                                      borderRadius: BorderRadius.circular(10),
-                                    ),
-                                    errorText: state.errorText,
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: colorScheme.surfaceContainerHigh,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(
+                          color: colorScheme.outline.withValues(alpha: 0.35),
+                        ),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const FormSectionLabel(label: 'Business details'),
+                          const SizedBox(height: 16),
+                          CustomTextField(
+                            borderColor: colorScheme.outline,
+                            title: 'Business name',
+                            isRequired: true,
+                            hintText: 'Enter business name',
+                            textColor: colorScheme.onSurface,
+                            fontSize: 14,
+                            controller: _nameController,
+                            fillColor: Colors.transparent,
+                            validator: (v) {
+                              if (v == null || v.trim().isEmpty) {
+                                return 'Required';
+                              }
+                              if (v.length < 2) {
+                                return 'Business name must be at least 2 characters';
+                              }
+                              return null;
+                            },
+                          ),
+                          const SizedBox(height: 16),
+                          LocationPickerField(
+                            controller: _locationController,
+                            title: 'Location',
+                            isRequired: true,
+                            hintText: 'Search business address',
+                            borderColor: colorScheme.outline,
+                            fillColor: Colors.transparent,
+                            fontSize: 14,
+                            validator: (v) => v == null || v.trim().isEmpty
+                                ? 'Required'
+                                : null,
+                            // Business claim only needs the address text.
+                          ),
+                          const SizedBox(height: 16),
+                          FormField<String>(
+                            validator: (_) {
+                              if (phoneNumber == null ||
+                                  phoneNumber!.isEmpty) {
+                                return 'Phone number is required';
+                              }
+                              return null;
+                            },
+                            builder: (state) {
+                              return Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const FormFieldLabel(
+                                    label: 'Phone',
+                                    isRequired: true,
                                   ),
-                                  initialCountryCode: 'BD',
-                                  dropdownIconPosition: IconPosition.trailing,
-                                  onChanged: (phone) {
-                                    phoneNumber = phone.completeNumber;
-                                    state.didChange(phone.completeNumber);
-                                  },
-                                );
-                              },
-                            ),
-                            const SizedBox(height: 20),
-                            CustomTextField(
-                              title: 'Website (optional)',
-                              hintText: 'URL of your business website',
-                              borderColor: colorScheme.outline,
-                              textColor: colorScheme.onSurface,
-                              fontSize: 14,
-                              controller: _websiteController,
-                              fillColor: Colors.transparent,
-                            ),
-                            const SizedBox(height: 20),
-                            CustomTextField(
-                              title: 'Business Details',
-                              hintText: 'Enter details here...',
-                              maxLine: 5,
-                              borderColor: colorScheme.outline,
-                              textColor: colorScheme.onSurface,
-                              fontSize: 14,
-                              controller: _detailsController,
-                              fillColor: Colors.transparent,
-                              validator: (v) {
-                                if (v == null || v.trim().isEmpty)
-                                  return 'Required';
-                                if (v.length > 200) return 'Limit: 200 char';
-                                return null;
-                              },
-                            ),
-                            const SizedBox(height: 8),
-                            Align(
-                              alignment: Alignment.centerRight,
-                              child: Text(
-                                'Limit: 200 char',
-                                style: AppTextStyle.textXs(
-                                  color: colorScheme.onSurfaceVariant,
-                                ),
+                                  const SizedBox(height: 6),
+                                  IntlPhoneField(
+                                    decoration: InputDecoration(
+                                      hintText: 'Enter phone number',
+                                      border: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(12),
+                                        borderSide: BorderSide(
+                                          color: colorScheme.outline,
+                                          width: 1.2,
+                                        ),
+                                      ),
+                                      enabledBorder: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(12),
+                                        borderSide: BorderSide(
+                                          color: colorScheme.outline,
+                                          width: 1.2,
+                                        ),
+                                      ),
+                                      focusedBorder: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(12),
+                                        borderSide: BorderSide(
+                                          color: colorScheme.primary,
+                                          width: 1.2,
+                                        ),
+                                      ),
+                                      errorBorder: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(12),
+                                        borderSide: BorderSide(
+                                          color: colorScheme.error,
+                                          width: 1.2,
+                                        ),
+                                      ),
+                                      focusedErrorBorder: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(12),
+                                        borderSide: BorderSide(
+                                          color: colorScheme.error,
+                                          width: 1.2,
+                                        ),
+                                      ),
+                                      errorText: state.errorText,
+                                    ),
+                                    initialCountryCode: 'BD',
+                                    dropdownIconPosition: IconPosition.trailing,
+                                    onChanged: (phone) {
+                                      phoneNumber = phone.completeNumber;
+                                      state.didChange(phone.completeNumber);
+                                    },
+                                  ),
+                                ],
+                              );
+                            },
+                          ),
+                          const SizedBox(height: 16),
+                          CustomTextField(
+                            title: 'Website',
+                            isRequired: false,
+                            hintText: 'URL of your business website',
+                            borderColor: colorScheme.outline,
+                            textColor: colorScheme.onSurface,
+                            fontSize: 14,
+                            controller: _websiteController,
+                            fillColor: Colors.transparent,
+                          ),
+                          const SizedBox(height: 16),
+                          CustomTextField(
+                            title: 'Business details',
+                            isRequired: true,
+                            hintText: 'Enter details here...',
+                            maxLine: 5,
+                            borderColor: colorScheme.outline,
+                            textColor: colorScheme.onSurface,
+                            fontSize: 14,
+                            controller: _detailsController,
+                            fillColor: Colors.transparent,
+                            validator: (v) {
+                              if (v == null || v.trim().isEmpty) {
+                                return 'Required';
+                              }
+                              if (v.length > 200) return 'Limit: 200 char';
+                              return null;
+                            },
+                          ),
+                          const SizedBox(height: 8),
+                          Align(
+                            alignment: Alignment.centerRight,
+                            child: Text(
+                              'Limit: 200 char',
+                              style: AppTextStyle.textXs(
+                                color: colorScheme.onSurfaceVariant,
                               ),
                             ),
-                          ],
-                        ),
+                          ),
+                        ],
                       ),
                     ),
                   ],

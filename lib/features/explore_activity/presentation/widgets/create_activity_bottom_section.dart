@@ -3,6 +3,7 @@ import 'package:loci/core/constants/app_text_style.dart';
 import 'package:loci/core/enums/activity_type.dart';
 import 'package:loci/core/theme/theme_extention.dart';
 import 'package:loci/features/my_business/presentation/widgets/my_business.dart';
+import 'package:loci/shared/widgets/location/location_models.dart';
 import 'package:loci/shared/widgets/custom_button.dart';
 import 'package:loci/features/explore_activity/presentation/widgets/explore_activity_location_fields.dart';
 import 'package:loci/features/explore_activity/presentation/widgets/explore_activity_visibility_row.dart';
@@ -16,6 +17,7 @@ class CreateActivityBottomSection extends StatelessWidget {
     required this.businessName,
     required this.locationController,
     required this.urlController,
+    required this.onLocationPicked,
     required this.onPublish,
     required this.isPublishLoading,
   });
@@ -26,6 +28,7 @@ class CreateActivityBottomSection extends StatelessWidget {
   final String businessName;
   final TextEditingController locationController;
   final TextEditingController urlController;
+  final ValueChanged<PickedLocation> onLocationPicked;
   final VoidCallback onPublish;
   final bool isPublishLoading;
 
@@ -40,6 +43,7 @@ class CreateActivityBottomSection extends StatelessWidget {
           ExploreActivityLocationFields(
             locationController: locationController,
             urlController: urlController,
+            onLocationPicked: onLocationPicked,
           ),
           const SizedBox(height: 20),
         ],

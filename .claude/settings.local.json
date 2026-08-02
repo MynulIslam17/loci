@@ -24,7 +24,26 @@
       "Bash(dart format *)",
       "Bash(nohup flutter run -d emulator-5554 -t lib/verify_button_entry.dart --no-hot)",
       "Bash(echo \"launched $!\")",
-      "Bash(flutter build *)"
+      "Bash(flutter build *)",
+      "Bash(grep -nA3 '^  http:' pubspec.lock)",
+      "Bash(flutter pub *)",
+      "Bash(git check-ignore *)",
+      "Bash(python -c \"import json;d=json.load\\(open\\('dart_define.json'\\)\\);print\\('MAPS_API_KEY length =', len\\(d.get\\('MAPS_API_KEY',''\\)\\)\\)\")",
+      "Bash(curl -s \"https://maps.googleapis.com/maps/api/place/autocomplete/json?input=starbucks&key=AIzaSyA85qNqo9ywczeTAXnH8woB05tghuDJJ8k\")",
+      "Bash(curl -s -X POST https://places.googleapis.com/v1/places:autocomplete -H 'Content-Type: application/json' -H 'X-Goog-Api-Key: AIzaSyA85qNqo9ywczeTAXnH8woB05tghuDJJ8k' -d '{\"input\":\"starbucks\"}')",
+      "Bash(flutter devices *)",
+      "Bash(flutter run *)",
+      "Bash(adb -s emulator-5554 shell dumpsys window)",
+      "Bash(adb -s emulator-5554 exec-out screencap -p)",
+      "Bash(flutter test *)",
+      "Bash(curl -s -o /dev/null -w 'GET /api/v1/events -> %{http_code}\\\\n' https://jakuan5000.syedbipul.me/api/v1/events)",
+      "Bash(curl -s -w '\\\\n-> %{http_code}\\\\n' 'https://jakuan5000.syedbipul.me/api/v1/places/autocomplete?query=dga&sessionToken=test')",
+      "Bash(curl -s -o /dev/null -w '  GET /events                 -> %{http_code}\\\\n' https://jakuan5000.syedbipul.me/api/v1/events)",
+      "Bash(curl -s -o /dev/null -w '  GET  /places/autocomplete   -> %{http_code}\\\\n' 'https://jakuan5000.syedbipul.me/api/v1/places/autocomplete?query=dem&sessionToken=x')",
+      "Bash(curl -s -o /dev/null -w '  POST /places/autocomplete   -> %{http_code}\\\\n' -X POST https://jakuan5000.syedbipul.me/api/v1/places/autocomplete)",
+      "Bash(curl -s -o /dev/null -w '  GET  /places/search         -> %{http_code}\\\\n' https://jakuan5000.syedbipul.me/api/v1/places/search?query=dem)",
+      "Bash(curl -s -o /dev/null -w '  GET  /places                -> %{http_code}\\\\n' https://jakuan5000.syedbipul.me/api/v1/places)",
+      "Bash(xargs -r sed -i 's|package:loci/features/places/presentation/widgets/location_picker_field.dart|package:loci/shared/widgets/location/location_picker_field.dart|g')"
     ]
   }
 }

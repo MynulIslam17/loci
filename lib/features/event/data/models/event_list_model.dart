@@ -1,4 +1,5 @@
 import 'package:loci/core/enums/rsvp_status.dart';
+import 'package:loci/core/utils/date_parser.dart';
 import 'package:loci/shared/models/pagination_model.dart';
 
 class EventListResponseModel {
@@ -56,6 +57,19 @@ class EventModel {
     required this.myRsvpStatus,
   });
 
+  /// Human-friendly date for display, e.g. "Jul 20, 2026 · 06:30".
+  /// [date] is a raw ISO string from the API — never show it directly.
+  String get dateLabel {
+    final parsed = DateTime.tryParse(date);
+    final datePart = parsed != null
+        ? DateParserHelper.toFriendlyDate(parsed)
+        : '';
+    final timePart = eventTime.trim();
+    if (datePart.isEmpty) return timePart;
+    if (timePart.isEmpty) return datePart;
+    return '$datePart · $timePart';
+  }
+
   factory EventModel.fromJson(Map<String, dynamic> json) {
     return EventModel(
       id: json['_id'] ?? '',
@@ -65,7 +79,8 @@ class EventModel {
       date: json['eventDate'] ?? '',
       eventTime: json['eventTime'] ?? '',
       location: json['location'] ?? '',
-      goingCount: json['rsvpCount'] ??
+      goingCount:
+          json['rsvpCount'] ??
           (json['rsvpCounts'] as Map<String, dynamic>?)?['going'] ??
           0,
       maxAttendees: json['maxParticipants'] ?? 0,

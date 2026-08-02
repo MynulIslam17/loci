@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:loci/shared/widgets/form_labels.dart';
 
 class CustomDropdown<T> extends StatelessWidget {
   final String? title;
+  final bool? isRequired;
   final String? hintText;
   final T? value;
   final List<DropdownMenuItem<T>> items;
@@ -21,6 +23,7 @@ class CustomDropdown<T> extends StatelessWidget {
   const CustomDropdown({
     super.key,
     this.title,
+    this.isRequired,
     this.hintText,
     this.value,
     required this.items,
@@ -61,16 +64,19 @@ class CustomDropdown<T> extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         if (title != null) ...[
-          Text(
-            title!,
-            style: titleStyle ??
-                TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w500,
-                  color: scheme.onSurface,
-                ),
-          ),
-          const SizedBox(height: 10),
+          if (isRequired != null)
+            FormFieldLabel(label: title!, isRequired: isRequired!)
+          else
+            Text(
+              title!,
+              style: titleStyle ??
+                  TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                    color: scheme.onSurface,
+                  ),
+            ),
+          SizedBox(height: isRequired != null ? 6 : 10),
         ],
         DropdownButtonFormField<T>(
           value: value,
