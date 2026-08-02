@@ -207,7 +207,7 @@ class _EventScreenState extends State<EventScreen> {
                               imageUrl: event.coverImage,
                               title: event.title,
                               description: event.description,
-                              date: event.date,
+                              date: event.dateLabel,
                               location: event.location,
                               attendance:
                                   "${event.goingCount} going / ${event.maxAttendees} max",

@@ -47,6 +47,10 @@ abstract class AppUrl {
   ///-----check_in----------------
   static const String checkIn="$baseUrl/checkins/scan";
 
+  ///-----places (backend-proxied autocomplete + details)----------------
+  static const String placesAutocomplete="$baseUrl/places/autocomplete";
+  static String placeDetails(String placeId)=>"$baseUrl/places/$placeId/details";
+
 
 ///-------business
   static const String myBusiness="$baseUrl/businesses/me";

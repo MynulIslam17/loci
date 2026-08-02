@@ -12,6 +12,7 @@ import 'package:loci/features/explore_activity/presentation/widgets/explore_acti
 import 'package:loci/features/explore_activity/presentation/widgets/explore_activity_section.dart';
 import 'package:loci/gen/assets.gen.dart';
 import 'package:loci/shared/widgets/custom_appbar.dart';
+import 'package:loci/shared/widgets/form_labels.dart';
 
 class EditRoutesScreen extends StatelessWidget {
   const EditRoutesScreen({super.key});
@@ -47,13 +48,17 @@ class EditRoutesScreen extends StatelessWidget {
               return ExploreActivityFormScroll(
                 formKey: controller.formKey,
                 children: [
+                  const RequiredFieldsNote(),
+                  const SizedBox(height: 16),
                   ExploreActivityCoverSection(
                     imageUrl: controller.route!.banner,
                     bannerImage: controller.bannerImage.value,
                     onSelected: controller.setBanner,
+                    highlightTitle: true,
                   ),
                   ExploreActivitySection(
                     title: 'Basic information',
+                    highlightTitle: true,
                   child: ExploreActivityBasicFields(
                     titleController: controller.titleController,
                     detailsController: controller.detailsController,
@@ -65,6 +70,7 @@ class EditRoutesScreen extends StatelessWidget {
                   ExploreActivitySection(
                     title: 'Route schedule',
                     subtitle: 'When the route opens and how it is available',
+                    highlightTitle: true,
                     child: CreateActivityRouteFields(
                       timeController: controller.timeController,
                       selectedRouteCondition: controller.availabilityType.value,
@@ -75,8 +81,10 @@ class EditRoutesScreen extends StatelessWidget {
                   ExploreActivityLocationSection(
                     locationController: controller.locationController,
                     urlController: controller.mapUrlController,
-                    sectionSubtitle: 'Starting point and map link',
+                    onLocationPicked: controller.setPickedLocation,
+                    sectionSubtitle: 'Starting point',
                     locationHint: 'e.g. Downtown Austin, TX',
+                    highlightTitle: true,
                   ),
                   ExploreActivityEditSaveSection(
                     isPublic: controller.isPublic.value,
@@ -88,6 +96,7 @@ class EditRoutesScreen extends StatelessWidget {
                     primaryLabel: 'Update route',
                     isPrimaryEnabled: controller.hasChanged(),
                     isLoading: controller.isUpdating.value,
+                    highlightTitle: true,
                     onPrimary: () {
                       FocusScope.of(context).unfocus();
                       controller.submit();

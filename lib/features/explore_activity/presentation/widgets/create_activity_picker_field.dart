@@ -12,6 +12,7 @@ class CreateActivityPickerField extends StatelessWidget {
     required this.icon,
     required this.onTap,
     this.validator,
+    this.isRequired = true,
     this.fontSize = 13,
   });
 
@@ -21,6 +22,7 @@ class CreateActivityPickerField extends StatelessWidget {
   final IconData icon;
   final VoidCallback onTap;
   final FormFieldValidator<String>? validator;
+  final bool isRequired;
   final double fontSize;
 
   @override
@@ -30,6 +32,7 @@ class CreateActivityPickerField extends StatelessWidget {
     return CustomTextField(
       controller: controller,
       title: title,
+      isRequired: isRequired,
       hintText: hintText,
       readOnly: true,
       onTap: onTap,

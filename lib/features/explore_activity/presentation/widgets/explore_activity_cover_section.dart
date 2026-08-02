@@ -11,17 +11,20 @@ class ExploreActivityCoverSection extends StatelessWidget {
     this.imageUrl,
     required this.bannerImage,
     required this.onSelected,
+    this.highlightTitle = false,
   });
 
   final String? imageUrl;
   final File? bannerImage;
   final ValueChanged<File> onSelected;
+  final bool highlightTitle;
 
   @override
   Widget build(BuildContext context) {
     return ExploreActivitySection(
       title: 'Cover image',
       subtitle: 'Banner shown on the activity card',
+      highlightTitle: highlightTitle,
       child: CreateActivityBannerSection(
         imageUrl: imageUrl,
         bannerImage: bannerImage,

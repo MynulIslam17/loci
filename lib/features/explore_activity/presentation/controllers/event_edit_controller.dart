@@ -11,6 +11,7 @@ import 'package:loci/features/explore_activity/data/models/update_event_request_
 import 'package:loci/features/explore_activity/domain/services/explore_activity_service.dart';
 import 'package:loci/features/explore_activity/presentation/controllers/business_event_details_controller.dart';
 import 'package:loci/features/explore_activity/presentation/controllers/explore_activity_edit_form.dart';
+import 'package:loci/shared/widgets/location/location_models.dart';
 
 class EventEditController extends GetxController {
   EventEditController(this._service);
@@ -31,6 +32,18 @@ class EventEditController extends GetxController {
 
   final Rxn<File> bannerImage = Rxn<File>();
   final RxBool isPublic = false.obs;
+
+  /// Coordinates for the current location — seeded from the loaded event and
+  /// updated whenever the user picks a new place.
+  final Rxn<double> pickedLat = Rxn<double>();
+  final Rxn<double> pickedLng = Rxn<double>();
+
+  void setPickedLocation(PickedLocation place) {
+    pickedLat.value = place.lat;
+    pickedLng.value = place.lng;
+    formVersion.value++;
+  }
+
   final Rxn<DateTime> selectedDate = Rxn<DateTime>();
   final Rxn<TimeOfDay> selectedTime = Rxn<TimeOfDay>();
   final RxInt formVersion = 0.obs;
@@ -93,6 +106,9 @@ class EventEditController extends GetxController {
 
     final friendlyDate = DateParserHelper.toFriendlyDate(parsedDate);
     final friendlyTime = event.eventTime;
+
+    pickedLat.value = details.lat;
+    pickedLng.value = details.lng;
 
     _initialData = {
       'title': event.title,
@@ -210,7 +226,7 @@ class EventEditController extends GetxController {
         title: title,
         description: desc,
         location: location,
-        mapUrl: mapUrl,
+        hasCoordinates: pickedLat.value != null && pickedLng.value != null,
         maxParticipants: maxParticipants,
         eventDate: selectedDate.value,
         eventTime: selectedTime.value,
@@ -235,6 +251,13 @@ class EventEditController extends GetxController {
           : null,
       location: editFieldChanged(location, _initialData!['location'] as String)
           ? location
+          : null,
+      // Send coordinates whenever the location text changed (both or neither).
+      lat: editFieldChanged(location, _initialData!['location'] as String)
+          ? pickedLat.value
+          : null,
+      lng: editFieldChanged(location, _initialData!['location'] as String)
+          ? pickedLng.value
           : null,
       url: editFieldChanged(mapUrl, _initialData!['mapUrl'] as String)
           ? mapUrl

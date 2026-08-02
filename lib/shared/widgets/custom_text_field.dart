@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:loci/shared/widgets/form_labels.dart';
 
 class CustomTextField extends StatefulWidget {
   final AutovalidateMode? autoValidateMode;
@@ -33,11 +34,13 @@ class CustomTextField extends StatefulWidget {
   final Iterable<String>? autofillHints;
   final List<TextInputFormatter>? inputFormatters;
   final String? title;
+  final bool? isRequired;
   final TextStyle? titleStyle;
   final FocusNode? focusNode;
   final String? errorText;
   final Color? textColor;
   final bool showClearButton;
+  final bool autofocus;
   final EdgeInsets scrollPadding;
 
   const CustomTextField({
@@ -72,12 +75,14 @@ class CustomTextField extends StatefulWidget {
     this.onClear,
     this.onFieldSubmitted,
     this.title,
+    this.isRequired,
     this.titleStyle,
     this.focusNode,
     this.errorText,
     this.autoValidateMode,
     this.textColor,
     this.showClearButton = false,
+    this.autofocus = false,
     this.scrollPadding = const EdgeInsets.all(20),
   });
 
@@ -143,6 +148,7 @@ class _CustomTextFieldState extends State<CustomTextField> {
         widget.hintTextColor ?? themeColors.onSurfaceVariant;
 
     return TextFormField(
+      autofocus: widget.autofocus,
       maxLength: widget.maxLength,
       onChanged: widget.onChanged,
       onFieldSubmitted: widget.onFieldSubmitted,
@@ -221,16 +227,22 @@ class _CustomTextFieldState extends State<CustomTextField> {
       mainAxisSize: MainAxisSize.min,
       children: [
         if (widget.title != null) ...[
-          Text(
-            widget.title!,
-            style: widget.titleStyle ??
-                TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w500,
-                  color: themeColors.onSurface,
-                ),
-          ),
-          const SizedBox(height: 10),
+          if (widget.isRequired != null)
+            FormFieldLabel(
+              label: widget.title!,
+              isRequired: widget.isRequired!,
+            )
+          else
+            Text(
+              widget.title!,
+              style: widget.titleStyle ??
+                  TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                    color: themeColors.onSurface,
+                  ),
+            ),
+          SizedBox(height: widget.isRequired != null ? 6 : 10),
         ],
         if (isMultiline && widget.prefixIcon != null)
           Row(

@@ -12,6 +12,7 @@ import 'package:loci/features/explore_activity/presentation/widgets/explore_acti
 import 'package:loci/features/explore_activity/presentation/widgets/explore_activity_form_scroll.dart';
 import 'package:loci/features/explore_activity/presentation/widgets/explore_activity_section.dart';
 import 'package:loci/shared/widgets/custom_appbar.dart';
+import 'package:loci/shared/widgets/form_labels.dart';
 
 class CreateActivityScreen extends GetView<CreateActivityController> {
   const CreateActivityScreen({super.key});
@@ -40,15 +41,19 @@ class CreateActivityScreen extends GetView<CreateActivityController> {
       body: ExploreActivityFormScroll(
         formKey: controller.formKey,
         children: [
+          const RequiredFieldsNote(),
+          const SizedBox(height: 16),
           Obx(
             () => ExploreActivityCoverSection(
               bannerImage: controller.bannerImage.value,
               onSelected: controller.setBanner,
+              highlightTitle: true,
             ),
           ),
           Obx(
             () => ExploreActivitySection(
               title: 'Basic information',
+              highlightTitle: true,
               child: CreateActivityTopFields(
                 selectedCategory: controller.selectedCategory.value,
                 onCategoryChanged: controller.setCategory,
@@ -62,6 +67,7 @@ class CreateActivityScreen extends GetView<CreateActivityController> {
             return ExploreActivitySection(
               title: _categorySectionTitle(category),
               subtitle: _categorySectionSubtitle(category),
+              highlightTitle: true,
               child: switch (category) {
                 ActivityType.event => CreateActivityEventFields(
                     dateController: controller.dateController,
@@ -96,6 +102,7 @@ class CreateActivityScreen extends GetView<CreateActivityController> {
           Obx(
             () => ExploreActivitySection(
               title: 'Visibility & publish',
+              highlightTitle: true,
               child: CreateActivityBottomSection(
                 category: controller.selectedCategory.value,
                 isPublic: controller.isPublic.value,
@@ -103,6 +110,7 @@ class CreateActivityScreen extends GetView<CreateActivityController> {
                 businessName: controller.businessName,
                 locationController: controller.locationController,
                 urlController: controller.urlController,
+                onLocationPicked: controller.setPickedLocation,
                 isPublishLoading: controller.isLoading.value,
                 onPublish: () => controller.handlePublish(context),
               ),

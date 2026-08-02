@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:loci/core/constants/app_text_style.dart';
 import 'package:loci/core/theme/theme_extention.dart';
+import 'package:loci/shared/widgets/form_labels.dart';
 
 /// Card-style section used on create, edit, and detail screens.
 class ExploreActivitySection extends StatelessWidget {
@@ -9,10 +10,14 @@ class ExploreActivitySection extends StatelessWidget {
     required this.child,
     this.title,
     this.subtitle,
+    this.highlightTitle = false,
+    this.optional = false,
   });
 
   final String? title;
   final String? subtitle;
+  final bool highlightTitle;
+  final bool optional;
   final Widget child;
 
   @override
@@ -32,13 +37,16 @@ class ExploreActivitySection extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           if (title != null) ...[
-            Text(
-              title!,
-              style: AppTextStyle.textMd(
-                weight: FontWeight.w700,
-                color: colorScheme.onSurface,
+            if (highlightTitle)
+              FormSectionLabel(label: title!, optional: optional)
+            else
+              Text(
+                title!,
+                style: AppTextStyle.textMd(
+                  weight: FontWeight.w700,
+                  color: colorScheme.onSurface,
+                ),
               ),
-            ),
             if (subtitle != null) ...[
               const SizedBox(height: 4),
               Text(

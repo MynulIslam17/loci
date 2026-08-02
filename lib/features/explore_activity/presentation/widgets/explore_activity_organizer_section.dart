@@ -9,17 +9,20 @@ class ExploreActivityOrganizerSection extends StatelessWidget {
     required this.name,
     required this.description,
     required this.logo,
+    this.highlightTitle = false,
   });
 
   final String title;
   final String name;
   final String description;
   final String logo;
+  final bool highlightTitle;
 
   @override
   Widget build(BuildContext context) {
     return ExploreActivitySection(
       title: title,
+      highlightTitle: highlightTitle,
       child: CompanyInfoCard(
         title: name,
         description: description,

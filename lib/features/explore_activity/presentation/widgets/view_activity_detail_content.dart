@@ -74,6 +74,7 @@ class _EventDetailContent extends StatelessWidget {
         ),
         ExploreActivitySection(
           title: 'Details',
+          highlightTitle: true,
           child: Column(
             children: [
               ExploreActivityInfoRow(
@@ -101,6 +102,7 @@ class _EventDetailContent extends StatelessWidget {
         ),
         ExploreActivitySection(
           title: 'Engagement',
+          highlightTitle: true,
           child: Row(
             children: [
               Expanded(
@@ -135,6 +137,7 @@ class _EventDetailContent extends StatelessWidget {
         ),
         ExploreActivitySection(
           title: 'Check-in',
+          highlightTitle: true,
           child: ExploreActivityQrButton(
             label: 'View QR code',
             onPressed: () {
@@ -150,6 +153,7 @@ class _EventDetailContent extends StatelessWidget {
         ),
         const ExploreActivitySection(
           title: 'Location',
+          highlightTitle: true,
           child: ExploreActivityMapPreview(height: 150),
         ),
         ExploreActivityOrganizerSection(
@@ -158,6 +162,7 @@ class _EventDetailContent extends StatelessWidget {
               ? organization.description
               : organization.address,
           logo: organization.logo ?? '',
+          highlightTitle: true,
         ),
       ],
     );
@@ -213,6 +218,7 @@ class _RouteDetailContent extends StatelessWidget {
         ),
         ExploreActivitySection(
           title: 'Route details',
+          highlightTitle: true,
           child: Column(
             children: [
               ExploreActivityInfoRow(
@@ -234,6 +240,7 @@ class _RouteDetailContent extends StatelessWidget {
         ),
         ExploreActivitySection(
           title: 'Engagement',
+          highlightTitle: true,
           child: ExploreActivityStatCard(
             icon: Icons.person_outline,
             count: '${routeDetails.checkInCount}',
@@ -243,6 +250,7 @@ class _RouteDetailContent extends StatelessWidget {
         ),
         ExploreActivitySection(
           title: 'Check-in',
+          highlightTitle: true,
           child: ExploreActivityQrButton(
             label: 'Download QR code',
             icon: Icons.qr_code_scanner,
@@ -259,12 +267,14 @@ class _RouteDetailContent extends StatelessWidget {
         ),
         const ExploreActivitySection(
           title: 'Location',
+          highlightTitle: true,
           child: ExploreActivityMapPreview(),
         ),
         ExploreActivityOrganizerSection(
           name: organizer.name,
           description: organizer.description ?? '',
           logo: organizer.logo ?? '',
+          highlightTitle: true,
         ),
       ],
     );
@@ -306,15 +316,18 @@ class _RaffleDetailContent extends StatelessWidget {
         ),
         ExploreActivitySection(
           title: 'Prize',
+          highlightTitle: true,
           child: ExploreActivityRafflePrizeChip(label: raffle.bundleName),
         ),
         ExploreActivitySection(
           title: 'Raffle status',
+          highlightTitle: true,
           child: ExploreActivityRaffleProgress(tasks: tasks),
         ),
         ExploreActivitySection(
           title: 'Entry requirements',
           subtitle: 'Tasks participants must complete to enter',
+          highlightTitle: true,
           child: ListView.separated(
             shrinkWrap: true,
             padding: EdgeInsets.zero,
@@ -341,6 +354,7 @@ class _RaffleDetailContent extends StatelessWidget {
           name: sponsor.name,
           description: sponsor.description,
           logo: sponsor.logo,
+          highlightTitle: true,
         ),
       ],
     );

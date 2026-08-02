@@ -17,6 +17,7 @@ import 'package:loci/features/explore_activity/presentation/controllers/business
 import 'package:loci/features/explore_activity/presentation/controllers/business_route_list_controller.dart';
 import 'package:loci/features/explore_activity/domain/services/explore_activity_service.dart';
 import 'package:loci/features/explore_activity/presentation/widgets/create_activity_task_sheet.dart';
+import 'package:loci/shared/widgets/location/location_models.dart';
 
 class CreateActivityController extends GetxController {
   CreateActivityController(this._service);
@@ -42,6 +43,16 @@ class CreateActivityController extends GetxController {
   final Rx<ActivityType> selectedCategory = ActivityType.event.obs;
   final Rxn<RouteType> selectedRouteCondition = Rxn<RouteType>();
   final RxBool isPublic = false.obs;
+
+  /// Coordinates from the location picker (event & route only). Required on
+  /// create — publish is blocked until a place is picked.
+  final Rxn<double> pickedLat = Rxn<double>();
+  final Rxn<double> pickedLng = Rxn<double>();
+
+  void setPickedLocation(PickedLocation place) {
+    pickedLat.value = place.lat;
+    pickedLng.value = place.lng;
+  }
 
   final Rxn<File> bannerImage = Rxn<File>();
   final Rxn<File> rafflePrizeImage = Rxn<File>();
@@ -137,6 +148,8 @@ class CreateActivityController extends GetxController {
     detailsController.clear();
     locationController.clear();
     urlController.clear();
+    pickedLat.value = null;
+    pickedLng.value = null;
     bannerImage.value = null;
     _clearCategorySpecificFields();
   }
@@ -262,6 +275,14 @@ class CreateActivityController extends GetxController {
       return false;
     }
 
+    // Event & route require coordinates — block create until a place is picked.
+    if ((selectedCategory.value == ActivityType.event ||
+            selectedCategory.value == ActivityType.routes) &&
+        (pickedLat.value == null || pickedLng.value == null)) {
+      message.value = 'Please pick a location from search';
+      return false;
+    }
+
     final body = <String, String>{
       'activityType': selectedCategory.value.toJson,
       'title': titleController.text.trim(),
@@ -283,7 +304,10 @@ class CreateActivityController extends GetxController {
         'eventTime': eventTime.value!.format(context),
         'maxParticipants': personController.text.trim(),
         'location': locationController.text.trim(),
-        'url': urlController.text.trim(),
+        'mapCoordinates[lat]': pickedLat.value!.toString(),
+        'mapCoordinates[lng]': pickedLng.value!.toString(),
+        if (urlController.text.trim().isNotEmpty)
+          'url': urlController.text.trim(),
       });
     }
 
@@ -292,7 +316,10 @@ class CreateActivityController extends GetxController {
         'openingTime': routeOpeningTime.value!.format(context),
         'availabilityType': selectedRouteCondition.value?.apiValue ?? '',
         'location': locationController.text.trim(),
-        'url': urlController.text.trim(),
+        'mapCoordinates[lat]': pickedLat.value!.toString(),
+        'mapCoordinates[lng]': pickedLng.value!.toString(),
+        if (urlController.text.trim().isNotEmpty)
+          'url': urlController.text.trim(),
       });
     }
 

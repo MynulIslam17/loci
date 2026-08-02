@@ -63,6 +63,7 @@ class CreateActivityEventFields extends StatelessWidget {
         CustomTextField(
           controller: personController,
           title: 'Max participants',
+          isRequired: true,
           hintText: 'e.g. 100',
           keyboardType: TextInputType.number,
           inputFormatters: [

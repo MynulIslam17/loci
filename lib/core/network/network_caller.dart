@@ -470,10 +470,14 @@ class NetworkCaller {
       final responseBody = await streamed.stream.bytesToString();
       final decoded = _tryDecodeBody(responseBody);
 
-      // Wrap for logging
+      // Wrap for logging. Force UTF-8: the default Response(String) constructor
+      // re-encodes the body as Latin-1, which throws "Contains invalid
+      // characters" on non-Latin scripts (e.g. Bengali) — turning a successful
+      // response into a false failure.
       final logResponse = Response(
         responseBody,
         streamed.statusCode,
+        headers: const {'content-type': 'application/json; charset=utf-8'},
         reasonPhrase: streamed.reasonPhrase ?? '',
       );
       _logResponse(url, logResponse);

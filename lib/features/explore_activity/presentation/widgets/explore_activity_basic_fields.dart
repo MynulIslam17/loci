@@ -39,6 +39,7 @@ class ExploreActivityBasicFields extends StatelessWidget {
         if (_showTypePicker) ...[
           CustomDropdown<ActivityType>(
             title: 'Activity type',
+            isRequired: true,
             value: selectedCategory,
             hintText: 'Select type',
             dropdownColor: colorScheme.surfaceContainerHigh,
@@ -70,6 +71,7 @@ class ExploreActivityBasicFields extends StatelessWidget {
         CustomTextField(
           controller: titleController,
           title: 'Title',
+          isRequired: true,
           hintText: titleHint,
           textInputAction: TextInputAction.next,
           prefixIcon: exploreActivityFieldIcon(context, Icons.title_outlined),
@@ -91,6 +93,7 @@ class ExploreActivityBasicFields extends StatelessWidget {
         CustomTextField(
           controller: detailsController,
           title: 'Description',
+          isRequired: true,
           hintText: descriptionHint,
           maxLine: 4,
           textInputAction: TextInputAction.done,

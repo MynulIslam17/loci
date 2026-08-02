@@ -11,6 +11,7 @@ import 'package:loci/features/explore_activity/presentation/widgets/explore_acti
 import 'package:loci/features/explore_activity/presentation/widgets/explore_activity_raffle_tasks_block.dart';
 import 'package:loci/features/explore_activity/presentation/widgets/explore_activity_section.dart';
 import 'package:loci/shared/widgets/custom_appbar.dart';
+import 'package:loci/shared/widgets/form_labels.dart';
 import 'package:loci/shared/widgets/task_card.dart';
 
 class EditRafflesScreen extends StatelessWidget {
@@ -48,13 +49,17 @@ class EditRafflesScreen extends StatelessWidget {
               return ExploreActivityFormScroll(
                 formKey: controller.formKey,
                 children: [
+                  const RequiredFieldsNote(),
+                  const SizedBox(height: 16),
                   ExploreActivityCoverSection(
                     imageUrl: controller.initialRaffle?.banner,
                     bannerImage: controller.bannerImage.value,
                     onSelected: controller.setBanner,
+                    highlightTitle: true,
                   ),
                   ExploreActivitySection(
                     title: 'Basic information',
+                    highlightTitle: true,
                     child: ExploreActivityBasicFields(
                       titleController: controller.titleController,
                       detailsController: controller.detailsController,
@@ -67,6 +72,7 @@ class EditRafflesScreen extends StatelessWidget {
                   ExploreActivitySection(
                     title: 'Raffle setup',
                     subtitle: 'Duration, supply, and prize details',
+                    highlightTitle: true,
                     child: CreateActivityRaffleFields(
                       raffleDateController: controller.dateController,
                       maxSupplyController: controller.maxSupplyController,
@@ -87,6 +93,7 @@ class EditRafflesScreen extends StatelessWidget {
                     title: 'Entry requirements',
                     subtitle:
                         'Add or remove tasks participants must complete to enter',
+                    highlightTitle: true,
                     child: Obx(() {
                       controller.tasks.length;
                       controller.formVersion.value;
@@ -127,6 +134,7 @@ class EditRafflesScreen extends StatelessWidget {
                     primaryLabel: 'Update raffle',
                     isPrimaryEnabled: controller.hasChanged(),
                     isLoading: controller.isLoading.value,
+                    highlightTitle: true,
                     onPrimary: () {
                       FocusScope.of(context).unfocus();
                       controller.submit();

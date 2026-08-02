@@ -2,7 +2,6 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:loci/core/constants/app_text_style.dart';
 import 'package:loci/core/theme/theme_extention.dart';
 import 'package:loci/features/explore_activity/data/models/activity_task_search_model.dart';
 import 'package:loci/features/explore_activity/presentation/widgets/coupon_upload_card.dart';
@@ -10,6 +9,7 @@ import 'package:loci/features/explore_activity/presentation/widgets/create_activ
 import 'package:loci/features/explore_activity/presentation/widgets/explore_activity_field_icon.dart';
 import 'package:loci/features/explore_activity/presentation/widgets/explore_activity_raffle_tasks_block.dart';
 import 'package:loci/shared/widgets/custom_text_field.dart';
+import 'package:loci/shared/widgets/form_labels.dart';
 import 'package:loci/shared/widgets/task_card.dart';
 
 class CreateActivityRaffleFields extends StatelessWidget {
@@ -75,6 +75,7 @@ class CreateActivityRaffleFields extends StatelessWidget {
                 controller: maxSupplyController,
                 textInputAction: TextInputAction.next,
                 title: 'Max supply',
+                isRequired: true,
                 hintText: 'Quantity',
                 keyboardType: TextInputType.number,
                 inputFormatters: [
@@ -103,6 +104,7 @@ class CreateActivityRaffleFields extends StatelessWidget {
         CustomTextField(
           controller: couponTitleController,
           title: 'Prize bundle name',
+          isRequired: true,
           hintText: 'Name shown to participants',
           prefixIcon: exploreActivityFieldIcon(
             context,
@@ -118,14 +120,8 @@ class CreateActivityRaffleFields extends StatelessWidget {
           },
         ),
         const SizedBox(height: 16),
-        Text(
-          'Prize image or coupon',
-          style: AppTextStyle.textSm(
-            weight: FontWeight.w500,
-            color: colorScheme.onSurface,
-          ),
-        ),
-        const SizedBox(height: 10),
+        const FormFieldLabel(label: 'Prize image or coupon', isRequired: true),
+        const SizedBox(height: 6),
         CouponUploadCard(
           file: rafflePrizeImage,
           imageUrl: couponImageUrl,

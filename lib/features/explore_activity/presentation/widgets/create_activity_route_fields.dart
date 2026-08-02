@@ -46,6 +46,7 @@ class CreateActivityRouteFields extends StatelessWidget {
           textFontSize: 13,
           hintFontSize: 13,
           title: 'Availability',
+          isRequired: true,
           value: selectedRouteCondition,
           hintText: 'Select availability',
           prefixIcon: exploreActivityFieldIcon(

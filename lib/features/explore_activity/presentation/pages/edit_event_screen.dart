@@ -12,6 +12,7 @@ import 'package:loci/features/explore_activity/presentation/widgets/explore_acti
 import 'package:loci/features/explore_activity/presentation/widgets/explore_activity_section.dart';
 import 'package:loci/gen/assets.gen.dart';
 import 'package:loci/shared/widgets/custom_appbar.dart';
+import 'package:loci/shared/widgets/form_labels.dart';
 
 /// UI only — [EventEditController] → service → repository → API.
 class EditEventScreen extends StatelessWidget {
@@ -46,13 +47,17 @@ class EditEventScreen extends StatelessWidget {
               return ExploreActivityFormScroll(
                 formKey: controller.formKey,
                 children: [
+                  const RequiredFieldsNote(),
+                  const SizedBox(height: 16),
                   ExploreActivityCoverSection(
                     imageUrl: details.eventModel.coverImage,
                     bannerImage: controller.bannerImage.value,
                     onSelected: controller.setBanner,
+                    highlightTitle: true,
                   ),
                   ExploreActivitySection(
                     title: 'Basic information',
+                    highlightTitle: true,
                   child: ExploreActivityBasicFields(
                     titleController: controller.titleController,
                     detailsController: controller.detailsController,
@@ -64,6 +69,7 @@ class EditEventScreen extends StatelessWidget {
                   ExploreActivitySection(
                     title: 'Schedule & capacity',
                     subtitle: 'When your event starts and how many can join',
+                    highlightTitle: true,
                     child: CreateActivityEventFields(
                       dateController: controller.dateController,
                       timeController: controller.timeController,
@@ -75,8 +81,10 @@ class EditEventScreen extends StatelessWidget {
                   ExploreActivityLocationSection(
                     locationController: controller.locationController,
                     urlController: controller.mapUrlController,
+                    onLocationPicked: controller.setPickedLocation,
                     sectionSubtitle: 'Where participants will meet',
                     locationHint: 'e.g. 456 New St, Austin TX',
+                    highlightTitle: true,
                   ),
                   ExploreActivityEditSaveSection(
                     isPublic: controller.isPublic.value,
@@ -88,6 +96,7 @@ class EditEventScreen extends StatelessWidget {
                     primaryLabel: 'Update event',
                     isPrimaryEnabled: controller.hasChanged(),
                     isLoading: controller.isUpdating.value,
+                    highlightTitle: true,
                     onPrimary: () {
                       FocusScope.of(context).unfocus();
                       controller.submit();

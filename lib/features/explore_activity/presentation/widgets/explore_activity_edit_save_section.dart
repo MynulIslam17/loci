@@ -17,6 +17,7 @@ class ExploreActivityEditSaveSection extends StatelessWidget {
     required this.isPrimaryEnabled,
     required this.onPrimary,
     this.isLoading = false,
+    this.highlightTitle = false,
   });
 
   final bool isPublic;
@@ -28,11 +29,13 @@ class ExploreActivityEditSaveSection extends StatelessWidget {
   final bool isPrimaryEnabled;
   final VoidCallback onPrimary;
   final bool isLoading;
+  final bool highlightTitle;
 
   @override
   Widget build(BuildContext context) {
     return ExploreActivitySection(
       title: 'Visibility & save',
+      highlightTitle: highlightTitle,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
