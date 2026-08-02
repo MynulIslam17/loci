@@ -1,5 +1,4 @@
 /// A single autocomplete suggestion from `GET /places/autocomplete`.
-/// Deliberately carries no coordinates — those come from the details call.
 class PlacePrediction {
   const PlacePrediction({
     required this.placeId,
@@ -8,11 +7,7 @@ class PlacePrediction {
   });
 
   final String placeId;
-
-  /// Bold primary line (e.g. "742 W Randolph St").
   final String mainText;
-
-  /// Grey secondary line (e.g. "Chicago, IL, USA").
   final String secondaryText;
 
   factory PlacePrediction.fromJson(Map<String, dynamic> json) {
@@ -49,7 +44,7 @@ class PlaceDetails {
   }
 }
 
-/// What the picker hands back to a form: the display address plus coordinates.
+/// What the picker returns to a form: display address plus coordinates.
 class PickedLocation {
   const PickedLocation({
     required this.address,

@@ -2,13 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:loci/shared/widgets/custom_image_container.dart';
 
 class CompanyInfoCard extends StatelessWidget {
-  final String title;
-  final String description;
-  final String imagePath;
-  final VoidCallback? onTap;
-  final Color? backgroundColor;
-  final Color? titleColor;
-
   const CompanyInfoCard({
     super.key,
     required this.title,
@@ -18,6 +11,13 @@ class CompanyInfoCard extends StatelessWidget {
     this.backgroundColor,
     this.titleColor,
   });
+
+  final String title;
+  final String description;
+  final String imagePath;
+  final VoidCallback? onTap;
+  final Color? backgroundColor;
+  final Color? titleColor;
 
   @override
   Widget build(BuildContext context) {
@@ -39,18 +39,14 @@ class CompanyInfoCard extends StatelessWidget {
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-
                 CustomCachedImage(
                   imageUrl: imagePath,
                   width: 60,
                   height: 60,
                   fit: BoxFit.cover,
                   borderRadius: 10,
-
                 ),
-
                 const SizedBox(width: 16),
-
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,

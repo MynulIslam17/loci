@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:loci/core/constants/app_text_style.dart';
 import 'package:loci/core/enums/routeType.dart';
 import 'package:loci/core/enums/activity_type.dart';
 import 'package:loci/core/theme/theme_extention.dart';
@@ -14,11 +15,11 @@ import 'package:loci/features/explore_activity/presentation/widgets/explore_acti
 import 'package:loci/features/explore_activity/presentation/widgets/explore_activity_organizer_section.dart';
 import 'package:loci/features/explore_activity/presentation/widgets/explore_activity_qr_button.dart';
 import 'package:loci/features/explore_activity/presentation/widgets/explore_activity_raffle_prize_chip.dart';
-import 'package:loci/features/explore_activity/presentation/widgets/explore_activity_raffle_progress.dart';
 import 'package:loci/features/explore_activity/presentation/widgets/explore_activity_section.dart';
 import 'package:loci/features/explore_activity/presentation/widgets/explore_activity_stat_card.dart';
 import 'package:loci/features/explore_activity/presentation/widgets/explore_activity_status_badge.dart';
 import 'package:loci/features/explore_activity/presentation/widgets/explore_activity_visibility_badge.dart';
+import 'package:loci/features/raffles/data/models/raffle_detail_model.dart';
 import 'package:loci/routes/app_routes.dart';
 import 'package:loci/shared/widgets/qrcode_maker.dart';
 import 'package:loci/shared/widgets/task_card.dart';
@@ -284,6 +285,36 @@ class _RouteDetailContent extends StatelessWidget {
 class _RaffleDetailContent extends StatelessWidget {
   const _RaffleDetailContent();
 
+  void _openLinkedActivity(RaffleTaskModel task) {
+    final activity = task.activity;
+    if (activity == null || activity.id.isEmpty) return;
+
+    final raffleController = Get.find<BusinessRaffleDetailsController>();
+
+    if (task.isRouteTask) {
+      Get.toNamed(
+        AppRoutes.viewRoutes,
+        arguments: {
+          'routeId': activity.id,
+          'routeName': activity.title,
+          'businessId': raffleController.businessId,
+          'activityType': ActivityType.routes.name,
+        },
+      );
+      return;
+    }
+
+    Get.toNamed(
+      AppRoutes.viewEvent,
+      arguments: {
+        'eventId': activity.id,
+        'title': activity.title,
+        'businessId': raffleController.businessId,
+        'activityType': ActivityType.event.name,
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final rafflesDetails =
@@ -291,6 +322,7 @@ class _RaffleDetailContent extends StatelessWidget {
     final raffle = rafflesDetails.raffleModel;
     final tasks = rafflesDetails.tasks;
     final sponsor = rafflesDetails.sponsor;
+    final colorScheme = context.colorScheme;
 
     final dateRange =
         '${DateParserHelper.shortDate(DateTime.parse(raffle.startDate))} - '
@@ -310,44 +342,124 @@ class _RaffleDetailContent extends StatelessWidget {
             belowTitle: ExploreActivityInfoRow(
               icon: Icons.calendar_today_outlined,
               text: dateRange,
-              textColor: context.colorScheme.primary,
+              textColor: colorScheme.primary,
             ),
           ),
         ),
         ExploreActivitySection(
           title: 'Prize',
           highlightTitle: true,
-          child: ExploreActivityRafflePrizeChip(label: raffle.bundleName),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: colorScheme.primaryContainer,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(
+                  Icons.card_giftcard_rounded,
+                  color: colorScheme.primary,
+                  size: 22,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: ExploreActivityRafflePrizeChip(label: raffle.bundleName),
+              ),
+            ],
+          ),
         ),
         ExploreActivitySection(
-          title: 'Raffle status',
+          title: 'Engagement',
           highlightTitle: true,
-          child: ExploreActivityRaffleProgress(tasks: tasks),
+          child: Row(
+            children: [
+              Expanded(
+                child: ExploreActivityStatCard(
+                  icon: Icons.people_outline_rounded,
+                  count: '${rafflesDetails.participantCount}',
+                  label: 'Participants',
+                  onTap: () {},
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: ExploreActivityStatCard(
+                  icon: Icons.checklist_rounded,
+                  count: '${rafflesDetails.totalTasks}',
+                  label: 'Requirements',
+                  onTap: () {},
+                ),
+              ),
+            ],
+          ),
         ),
         ExploreActivitySection(
           title: 'Entry requirements',
-          subtitle: 'Tasks participants must complete to enter',
+          subtitle: 'Tap a task to preview the linked activity',
           highlightTitle: true,
-          child: ListView.separated(
-            shrinkWrap: true,
-            padding: EdgeInsets.zero,
-            physics: const NeverScrollableScrollPhysics(),
-            itemCount: tasks.length,
-            separatorBuilder: (_, _) => const SizedBox(height: 8),
-            itemBuilder: (context, index) {
-              final task = tasks[index];
-              final activity = task.activity;
+          child: tasks.isEmpty
+              ? Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(
+                    vertical: 24,
+                    horizontal: 16,
+                  ),
+                  decoration: BoxDecoration(
+                    color: colorScheme.surface,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: colorScheme.outline.withValues(alpha: 0.25),
+                    ),
+                  ),
+                  child: Column(
+                    children: [
+                      Icon(
+                        Icons.playlist_add_rounded,
+                        size: 32,
+                        color: colorScheme.onSurfaceVariant,
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'No entry requirements yet',
+                        style: AppTextStyle.textSm(
+                          weight: FontWeight.w600,
+                          color: colorScheme.onSurface,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Edit this raffle to add tasks participants must complete',
+                        textAlign: TextAlign.center,
+                        style: AppTextStyle.textXs(
+                          color: colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                    ],
+                  ),
+                )
+              : ListView.separated(
+                  shrinkWrap: true,
+                  padding: EdgeInsets.zero,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: tasks.length,
+                  separatorBuilder: (_, _) => const SizedBox(height: 8),
+                  itemBuilder: (context, index) {
+                    final task = tasks[index];
+                    final activity = task.activity;
 
-              return TaskCard(
-                id: activity?.id ?? 'id_$index',
-                imageUrl: activity?.banner ?? '',
-                title: activity?.title ?? 'No title',
-                description:
-                    '${task.isRouteTask ? 'Route' : 'Event'} • Step ${task.order}\n'
-                    '${activity?.details ?? 'No description'}',
-              );
-            },
-          ),
+                    return TaskCard(
+                      id: activity?.id ?? 'task_$index',
+                      step: task.order,
+                      title: activity?.title ?? 'Untitled activity',
+                      description: activity?.details ?? 'No description',
+                      imageUrl: activity?.banner ?? '',
+                      typeLabel: task.isRouteTask ? 'Route' : 'Event',
+                      onTap: () => _openLinkedActivity(task),
+                    );
+                  },
+                ),
         ),
         ExploreActivityOrganizerSection(
           title: 'Sponsor',

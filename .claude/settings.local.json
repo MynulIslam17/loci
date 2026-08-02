@@ -43,7 +43,9 @@
       "Bash(curl -s -o /dev/null -w '  POST /places/autocomplete   -> %{http_code}\\\\n' -X POST https://jakuan5000.syedbipul.me/api/v1/places/autocomplete)",
       "Bash(curl -s -o /dev/null -w '  GET  /places/search         -> %{http_code}\\\\n' https://jakuan5000.syedbipul.me/api/v1/places/search?query=dem)",
       "Bash(curl -s -o /dev/null -w '  GET  /places                -> %{http_code}\\\\n' https://jakuan5000.syedbipul.me/api/v1/places)",
-      "Bash(xargs -r sed -i 's|package:loci/features/places/presentation/widgets/location_picker_field.dart|package:loci/shared/widgets/location/location_picker_field.dart|g')"
+      "Bash(xargs -r sed -i 's|package:loci/features/places/presentation/widgets/location_picker_field.dart|package:loci/shared/widgets/location/location_picker_field.dart|g')",
+      "Bash(xargs grep -ln \"RaffleTaskModel\\\\|eventActivity\\\\|routeActivity\\\\|tasks\")",
+      "Bash(xargs grep -ln \"RaffleTaskModel\\\\|raffle_tasks_block\\\\|tasks\\\\b\")"
     ]
   }
 }

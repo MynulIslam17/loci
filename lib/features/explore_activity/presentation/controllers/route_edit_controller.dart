@@ -12,7 +12,7 @@ import 'package:loci/features/explore_activity/presentation/controllers/business
 import 'package:loci/features/explore_activity/presentation/controllers/explore_activity_edit_form.dart';
 import 'package:loci/features/routes/data/models/route_detail_model.dart';
 import 'package:loci/features/routes/data/models/route_list_model.dart';
-import 'package:loci/shared/widgets/location/location_models.dart';
+import 'package:loci/features/places/data/models/place_models.dart';
 
 class RouteEditController extends GetxController {
   RouteEditController(this._service);

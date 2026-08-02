@@ -13,11 +13,16 @@ class BusinessRaffleDetailsController extends GetxController {
 
   String screenTitle = '';
   String _raffleId = '';
+  String _businessId = '';
+
+  String get raffleId => _raffleId;
+  String get businessId => _businessId;
 
   Future<void> loadFromRouteArguments() async {
     final args = Get.arguments as Map<String, dynamic>?;
     screenTitle = args?['rafflesName']?.toString() ?? '';
     _raffleId = args?['raffleId']?.toString() ?? '';
+    _businessId = args?['businessId']?.toString() ?? '';
     await fetchRaffleDetails(_raffleId);
   }
 

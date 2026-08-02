@@ -1,4 +1,4 @@
-import 'package:loci/shared/widgets/location/location_models.dart';
+import 'package:loci/features/places/data/models/place_models.dart';
 import 'package:loci/features/places/data/repositories/places_repository.dart';
 
 /// Domain orchestration for Places. Controllers call this — never NetworkCaller.

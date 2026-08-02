@@ -347,6 +347,8 @@ class _RafflesDetailsScreenState extends State<RafflesDetailsScreen> {
                   children: [
                     Text(
                       name,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
                       style: AppTextStyle.textSm(weight: FontWeight.bold),
                     ),
                     Text(

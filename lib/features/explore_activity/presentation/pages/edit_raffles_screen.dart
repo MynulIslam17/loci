@@ -113,6 +113,10 @@ class EditRafflesScreen extends StatelessWidget {
                                 'No description',
                             imageUrl:
                                 controller.tasks[i].activity?.banner ?? '',
+                            step: controller.tasks[i].order,
+                            typeLabel: controller.tasks[i].isRouteTask
+                                ? 'Route'
+                                : 'Event',
                             onRemove: () => controller.removeTaskAt(i),
                           ),
                       ];
