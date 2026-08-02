@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:get/get.dart';
 import 'package:loci/core/enums/rsvp_status.dart';
+import 'package:loci/core/utils/paginated_list_fetch_state.dart';
 import 'package:loci/features/event/data/models/event_list_model.dart';
 import 'package:loci/features/event/domain/services/event_service.dart';
 
@@ -9,33 +10,29 @@ class EventListController extends GetxController {
   EventListController(this._service);
 
   final EventService _service;
+  final PaginatedListFetchState _fetch = PaginatedListFetchState();
 
-  final RxBool _isLoading = false.obs;
-  final RxBool _isPaginationLoading = false.obs;
   final Rxn<String> _errorMessage = Rxn<String>();
   final RxList<EventModel> _eventList = <EventModel>[].obs;
 
-  /// Current page number for pagination
   int _currentPage = 1;
-
-  /// Flag to check if there is a next page
   bool _hasNextPage = true;
-
-  // use to change the limit of events per page
   final int _limit = 20;
 
   String _searchQuery = '';
   Timer? _searchDebounce;
 
-  /// Public getters
-  bool get isLoading => _isLoading.value;
-  bool get isPaginationLoading => _isPaginationLoading.value;
+  bool get isInitialLoading => _fetch.initialLoading.value;
+  bool get isRefreshing => _fetch.refreshing.value;
+  bool get showInitialShimmer => _fetch.showInitialShimmer;
+  bool get hasFetched => _fetch.hasFetched.value;
+  bool get isLoading => isInitialLoading;
+  bool get isPaginationLoading => _fetch.loadingMore.value;
   String? get errorMessage => _errorMessage.value;
   List<EventModel> get eventList => _eventList;
   bool get hasMore => _hasNextPage;
   String get searchQuery => _searchQuery;
 
-  /// Debounced search — updates the query and refetches from the API.
   void onSearchChanged(String query) {
     _searchQuery = query;
     _searchDebounce?.cancel();
@@ -50,16 +47,13 @@ class EventListController extends GetxController {
     super.onClose();
   }
 
-  /// Fetch events from API
-  /// [isRefresh] → if true, reset page & clear list
   Future<void> fetchEvents({bool isRefresh = false, String? businessId}) async {
     if (isRefresh) {
       _currentPage = 1;
       _hasNextPage = true;
-      _eventList.clear();
     }
 
-    _isLoading.value = true;
+    _fetch.beginFirstPage(isRefresh: isRefresh);
     _errorMessage.value = null;
 
     try {
@@ -71,18 +65,22 @@ class EventListController extends GetxController {
       );
       _eventList.assignAll(model.events);
       _hasNextPage = model.meta.hasNextPage;
+      _fetch.endFirstPage();
     } catch (e) {
       _errorMessage.value = e.toString().replaceFirst('Exception: ', '');
-    } finally {
-      _isLoading.value = false;
+      _fetch.endFirstPage(markFetched: hasFetched);
     }
   }
 
-  /// Load next page for pagination
   Future<void> loadMoreEvents({String? businessId}) async {
-    if (!_hasNextPage || _isPaginationLoading.value) return;
+    if (!_hasNextPage ||
+        isPaginationLoading ||
+        isInitialLoading ||
+        isRefreshing) {
+      return;
+    }
 
-    _isPaginationLoading.value = true;
+    _fetch.beginLoadMore();
     _currentPage++;
 
     try {
@@ -98,11 +96,10 @@ class EventListController extends GetxController {
       _currentPage--;
       _errorMessage.value = 'Pagination error: $e';
     } finally {
-      _isPaginationLoading.value = false;
+      _fetch.endLoadMore();
     }
   }
 
-  /// update rsvp status and count locally
   void updateRsvpStatus(String eventId, RsvpStatus status) {
     final index = _eventList.indexWhere((e) => e.id == eventId);
     if (index != -1) {
@@ -115,10 +112,8 @@ class EventListController extends GetxController {
     }
   }
 
-  /// reset the controller
   void reset() {
-    _isLoading.value = false;
-    _isPaginationLoading.value = false;
+    _fetch.reset();
     _errorMessage.value = null;
     _eventList.clear();
     _currentPage = 1;

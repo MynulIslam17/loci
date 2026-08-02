@@ -19,7 +19,7 @@ class ReviewActivityModel {
       business: json['business'] ?? '',
       review: json['review'] ?? '',
       rating: json['rating'] ?? 0,
-      businessLogo: json['businessLogo'] ?? 0,
+      businessLogo: json['businessLogo']?.toString() ?? '',
     );
   }
 }

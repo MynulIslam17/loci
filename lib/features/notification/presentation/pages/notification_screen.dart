@@ -8,19 +8,33 @@ import 'package:loci/shared/widgets/empty_state.dart';
 import 'package:loci/shared/widgets/error_state.dart';
 import 'package:loci/shared/widgets/pagination_loading.dart';
 
-class NotificationScreen extends StatelessWidget {
+class NotificationScreen extends StatefulWidget {
   const NotificationScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    final controller = Get.find<NotificationController>();
+  State<NotificationScreen> createState() => _NotificationScreenState();
+}
 
+class _NotificationScreenState extends State<NotificationScreen> {
+  late final NotificationController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = Get.find<NotificationController>();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _controller.ensureLoaded();
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
       appBar: const CustomAppbar(title: "Notifications"),
       body: Obx(() {
-        final ctrl = controller;
+        final ctrl = _controller;
 
-        if (ctrl.isLoading && ctrl.notifications.isEmpty) {
+        if (ctrl.showInitialShimmer && ctrl.notifications.isEmpty) {
           return Padding(
             padding: const EdgeInsets.all(16),
             child: AppSkeleton.list(context: context, itemCount: 6),
@@ -73,7 +87,7 @@ class NotificationScreen extends StatelessWidget {
         return RefreshIndicator(
           onRefresh: () => ctrl.fetchNotifications(refresh: true),
           child: ListView.builder(
-            controller: controller.scrollController,
+            controller: _controller.scrollController,
             physics: const AlwaysScrollableScrollPhysics(),
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             itemCount:

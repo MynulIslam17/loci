@@ -29,7 +29,7 @@ class _AllReviewsScreenState extends State<AllReviewsScreen> {
     return Scaffold(
       appBar: AppBar(title: const Text('All Reviews')),
       body: Obx(() {
-        if (ctrl.isLoading.value && ctrl.reviews.isEmpty) {
+        if (ctrl.showInitialShimmer) {
           return ReviewsShimmer(itemCount: 5);
         }
 
@@ -45,7 +45,7 @@ class _AllReviewsScreenState extends State<AllReviewsScreen> {
 
         return NotificationListener<ScrollNotification>(
           onNotification: (scrollInfo) {
-            if (!ctrl.isPaginationLoading.value &&
+            if (!ctrl.isPaginationLoading &&
                 ctrl.hasMore.value &&
                 scrollInfo.metrics.pixels >=
                     scrollInfo.metrics.maxScrollExtent - 200) {
@@ -57,7 +57,7 @@ class _AllReviewsScreenState extends State<AllReviewsScreen> {
             padding: const EdgeInsets.all(16),
             children: [
               ReviewList(reviews: ctrl.reviews.toList()),
-              if (ctrl.isPaginationLoading.value)
+              if (ctrl.isPaginationLoading)
                 const Padding(
                   padding: EdgeInsets.symmetric(vertical: 16),
                   child: Center(

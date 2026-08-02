@@ -38,7 +38,7 @@ class _NetworkScreenState extends State<NetworkScreen> {
         }
 
         final counts = _controller.counts;
-        final isLoading = _controller.isLoading;
+        final showShimmer = _controller.showInitialShimmer;
         final checkIns = _controller.checkins;
 
         return RefreshIndicator(
@@ -66,7 +66,7 @@ class _NetworkScreenState extends State<NetworkScreen> {
                   ),
                 ),
                 const SizedBox(height: 16),
-                if (isLoading) ...[
+                if (showShimmer) ...[
                   AppSkeleton.grid(context: context),
                   const SizedBox(height: 24),
                   AppSkeleton.list(context: context),

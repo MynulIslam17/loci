@@ -48,7 +48,7 @@ class _MyBusinessAllReviewsScreenState
       body: Obx(() {
         final ctrl = Get.find<MyBusinessReviewController>();
         // ── Loading ────────────────────────────────────────────────────
-        if (ctrl.isLoading.value) return const AllReviewsShimmer();
+        if (ctrl.showInitialShimmer) return const AllReviewsShimmer();
 
         // ── Empty ──────────────────────────────────────────────────────
         if (ctrl.reviews.isEmpty) {
@@ -74,7 +74,7 @@ class _MyBusinessAllReviewsScreenState
               // Pagination loader
               final reviewIndex = index - 1;
               if (reviewIndex == ctrl.reviews.length) {
-                return ctrl.isPaginationLoading.value
+                return ctrl.isPaginationLoading
                     ? const PaginationLoader()
                     : const SizedBox.shrink();
               }

@@ -97,7 +97,7 @@ class BrowseBusinessListBody extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Obx(() {
-      if (controller.isLoading.value) {
+      if (controller.showInitialShimmer) {
         return const BrowseShimmer();
       }
 

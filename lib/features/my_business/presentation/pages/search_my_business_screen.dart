@@ -165,6 +165,7 @@ class _SearchMyBusinessState extends State<SearchMyBusiness> {
         return RefreshIndicator(
           onRefresh: () => myBusinessController.getMyBusinesses(
             category: selectedCategory.value?.label,
+            isRefresh: true,
           ),
           child: CustomScrollView(
             physics: const AlwaysScrollableScrollPhysics(),
@@ -321,7 +322,7 @@ class _SearchMyBusinessState extends State<SearchMyBusiness> {
       );
     }
 
-    if (controller.isLoading.value) {
+    if (controller.showInitialShimmer) {
       return SliverList(
         delegate: SliverChildBuilderDelegate(
           (_, _) => const MyBusinessCardShimmer(),

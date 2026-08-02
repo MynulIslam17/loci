@@ -34,6 +34,7 @@ import 'package:loci/features/explore_activity/presentation/pages/edit_event_scr
 import 'package:loci/features/explore_activity/presentation/pages/edit_raffles_screen.dart';
 import 'package:loci/features/explore_activity/presentation/pages/edit_routes_screen.dart';
 import 'package:loci/features/explore_activity/presentation/pages/explore_activity_screen.dart';
+import 'package:loci/features/recent_activity/presentation/bindings/recent_activity_binding.dart';
 import 'package:loci/features/recent_activity/presentation/pages/recent_activity_screen.dart';
 import 'package:loci/features/explore_activity/presentation/pages/total_checkin_screen.dart';
 import 'package:loci/features/explore_activity/presentation/pages/total_rsvp_screen.dart';
@@ -286,7 +287,7 @@ abstract class AppPages {
     GetPage(
       name: AppRoutes.recentActivity,
       page: () => RecentActivity(),
-      binding: DrawerBindings(),
+      binding: RecentActivityBinding(),
     ),
 
     //---community

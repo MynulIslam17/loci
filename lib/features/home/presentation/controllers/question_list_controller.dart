@@ -1,5 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:get/get.dart';
+import 'package:loci/core/utils/paginated_list_fetch_state.dart';
 import 'package:loci/shared/models/pagination_model.dart';
 import 'package:loci/features/home/data/models/poll_option_model.dart';
 import 'package:loci/features/home/data/models/question_model.dart';
@@ -15,12 +16,19 @@ class QuestionListController extends GetxController {
   final List<String> _questionIds = [];
   final Map<String, String> _votedOptionIds = {};
 
-  final isLoading = false.obs;
-  final isPaginationLoading = false.obs;
+  final PaginatedListFetchState _fetch = PaginatedListFetchState();
+
   final errorMessage = RxnString();
   final questions = <QuestionModel>[].obs;
   final _meta = Rxn<PaginationMeta>();
   int _currentPage = 1;
+
+  bool get isInitialLoading => _fetch.initialLoading.value;
+  bool get isRefreshing => _fetch.refreshing.value;
+  bool get showInitialShimmer => _fetch.showInitialShimmer;
+  bool get hasFetched => _fetch.hasFetched.value;
+  RxBool get isLoading => _fetch.initialLoading;
+  RxBool get isPaginationLoading => _fetch.loadingMore;
 
   final ScrollController scrollController = ScrollController();
 
@@ -58,34 +66,38 @@ class QuestionListController extends GetxController {
   }
 
   Future<void> fetchQuestions({bool isRefresh = false}) async {
-    if (isLoading.value) return;
+    if (isInitialLoading || isRefreshing) return;
+
+    if (isRefresh) {
+      _currentPage = 1;
+    }
+
+    _fetch.beginFirstPage(isRefresh: isRefresh);
+    errorMessage.value = null;
 
     try {
-      isLoading.value = true;
-      errorMessage.value = null;
-
+      final result = await _service.getQuestions(page: _currentPage, limit: 4);
       if (isRefresh) {
-        _currentPage = 1;
         _questionIds.clear();
         _questionMap.clear();
       }
-
-      final result = await _service.getQuestions(page: _currentPage, limit: 4);
       _append(result.data);
       _meta.value = result.meta;
       _syncQuestions();
+      _fetch.endFirstPage();
     } catch (e) {
       errorMessage.value = e.toString().replaceFirst('Exception: ', '');
-    } finally {
-      isLoading.value = false;
+      _fetch.endFirstPage(markFetched: hasFetched);
     }
   }
 
   Future<void> fetchMore() async {
-    if (!hasMore || isPaginationLoading.value || isLoading.value) return;
+    if (!hasMore || isPaginationLoading.value || isInitialLoading || isRefreshing) {
+      return;
+    }
 
     try {
-      isPaginationLoading.value = true;
+      _fetch.beginLoadMore();
       _currentPage++;
 
       final result = await _service.getQuestions(page: _currentPage, limit: 10);
@@ -96,7 +108,7 @@ class QuestionListController extends GetxController {
       _currentPage--;
       errorMessage.value = e.toString().replaceFirst('Exception: ', '');
     } finally {
-      isPaginationLoading.value = false;
+      _fetch.endLoadMore();
     }
   }
 

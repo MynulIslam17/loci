@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:get/get.dart';
+import 'package:loci/core/utils/paginated_list_fetch_state.dart';
 import 'package:loci/shared/models/pagination_model.dart';
 import 'package:loci/features/network/data/models/referral_response_model.dart';
 import 'package:loci/features/network/domain/services/network_service.dart';
@@ -9,16 +10,18 @@ class ReceivedReferralsController extends GetxController {
   ReceivedReferralsController(this._service);
 
   final NetworkService _service;
+  final PaginatedListFetchState _fetch = PaginatedListFetchState();
 
-  final RxBool _isLoading = false.obs;
-  final RxBool _isLoadingMore = false.obs;
   final Rxn<String> _errorMessage = Rxn<String>();
-
   final RxList<ReferralModel> _referrals = <ReferralModel>[].obs;
   final Rxn<PaginationMeta> _meta = Rxn<PaginationMeta>();
 
-  bool get isLoading => _isLoading.value;
-  bool get isLoadingMore => _isLoadingMore.value;
+  bool get isInitialLoading => _fetch.initialLoading.value;
+  bool get isRefreshing => _fetch.refreshing.value;
+  bool get showInitialShimmer => _fetch.showInitialShimmer;
+  bool get hasFetched => _fetch.hasFetched.value;
+  bool get isLoading => isInitialLoading;
+  bool get isLoadingMore => _fetch.loadingMore.value;
   String? get errorMessage => _errorMessage.value;
   List<ReferralModel> get referrals => List.unmodifiable(_referrals);
   PaginationMeta? get meta => _meta.value;
@@ -47,50 +50,63 @@ class ReceivedReferralsController extends GetxController {
     _debounce?.cancel();
     _debounce = Timer(const Duration(milliseconds: 400), () {
       _searchTerm = query.trim();
-      fetchReceivedReferrals();
+      fetchReceivedReferrals(isRefresh: true);
     });
   }
 
   void clearSearch() {
     _debounce?.cancel();
     _searchTerm = '';
-    fetchReceivedReferrals();
+    fetchReceivedReferrals(isRefresh: true);
   }
 
-  Future<void> fetchReceivedReferrals() async {
-    _isLoading.value = true;
+  Future<void> fetchReceivedReferrals({bool isRefresh = false}) async {
+    if (isInitialLoading || isRefreshing) return;
+
+    _fetch.beginFirstPage(isRefresh: isRefresh);
     _errorMessage.value = null;
     _currentPage = 1;
-    _referrals.clear();
 
-    await _loadPage(_currentPage);
-
-    _isLoading.value = false;
+    try {
+      await _loadPage(_currentPage, replace: true);
+      _fetch.endFirstPage();
+    } catch (_) {
+      _fetch.endFirstPage(markFetched: hasFetched);
+    }
   }
 
   Future<void> loadMore() async {
-    if (isLoadingMore || !hasNextPage) return;
+    if (isLoadingMore || !hasNextPage || isInitialLoading || isRefreshing) {
+      return;
+    }
 
-    _isLoadingMore.value = true;
+    _fetch.beginLoadMore();
     _currentPage++;
 
-    await _loadPage(_currentPage);
-
-    _isLoadingMore.value = false;
+    try {
+      await _loadPage(_currentPage, replace: false);
+    } finally {
+      _fetch.endLoadMore();
+    }
   }
 
-  Future<void> _loadPage(int page) async {
+  Future<void> _loadPage(int page, {required bool replace}) async {
     try {
       final result = await _service.getReceivedReferrals(
         page: page,
         limit: _limit,
         searchTerm: _searchTerm,
       );
-      _referrals.addAll(result.data);
+      if (replace) {
+        _referrals.assignAll(result.data);
+      } else {
+        _referrals.addAll(result.data);
+      }
       _meta.value = result.meta;
     } catch (e) {
       _errorMessage.value = e.toString().replaceFirst('Exception: ', '');
       if (page > 1) _currentPage--;
+      rethrow;
     }
   }
 

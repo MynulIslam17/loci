@@ -82,7 +82,7 @@ class _EventScreenState extends State<EventScreen> {
         child: Obx(() {
           final controller = eventController;
           final hasSearch = controller.searchQuery.trim().isNotEmpty;
-          final isInitialLoading = controller.isLoading;
+          final isInitialLoading = controller.showInitialShimmer;
           final hasFatalError =
               controller.errorMessage != null &&
               controller.eventList.isEmpty &&

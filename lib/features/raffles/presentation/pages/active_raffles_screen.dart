@@ -53,14 +53,15 @@ class _ActiveRafflesPageState extends State<ActiveRafflesPage> {
       padding: const EdgeInsets.symmetric(horizontal: 16.0),
       child: RefreshIndicator(
         onRefresh: () async {
-          if (!raffleListController.isLoading) {
+          if (!raffleListController.isInitialLoading &&
+              !raffleListController.isRefreshing) {
             await raffleListController.refreshRaffles();
           }
         },
         child: Obx(() {
           final controller = raffleListController;
           final hasSearch = controller.searchQuery.trim().isNotEmpty;
-          final isInitialLoading = controller.isLoading;
+          final isInitialLoading = controller.showInitialShimmer;
           final hasFatalError =
               controller.errorMessage != null &&
               controller.raffleList.isEmpty &&
