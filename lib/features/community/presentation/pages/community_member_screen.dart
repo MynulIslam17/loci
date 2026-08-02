@@ -144,13 +144,13 @@ class _CommunityMemberScreenState extends State<CommunityMemberScreen> {
                 child: MemberListHeader(
                   count: memberController.totalCount.value,
                   isLoading:
-                      memberController.isLoading.value &&
+                      memberController.isInitialLoading &&
                       memberController.totalCount.value == 0,
                   isExporting: memberController.isExporting.value,
                   onExport: communityId.isEmpty ? null : _onExport,
                 ),
               ),
-              if (memberController.isLoading.value &&
+              if (memberController.showInitialShimmer &&
                   memberController.members.isEmpty)
                 const MemberListShimmer()
               else if (memberController.members.isEmpty)

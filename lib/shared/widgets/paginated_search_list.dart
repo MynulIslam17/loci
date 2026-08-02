@@ -8,6 +8,7 @@ class PaginatedSearchDropdown<T> extends StatelessWidget {
   final ScrollController scrollController;
   final bool isLoading;
   final bool isLoadingMore;
+  final bool? showInitialLoading;
   final String? errorMessage;
   final VoidCallback? onRetry;
   final Widget Function(BuildContext context, T item, int index) itemBuilder;
@@ -21,6 +22,7 @@ class PaginatedSearchDropdown<T> extends StatelessWidget {
     required this.itemBuilder,
     this.isLoading = false,
     this.isLoadingMore = false,
+    this.showInitialLoading,
     this.errorMessage,
     this.onRetry,
     this.emptyWidget,
@@ -31,7 +33,9 @@ class PaginatedSearchDropdown<T> extends StatelessWidget {
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
 
-    if (isLoading && items.isEmpty) {
+    final initialLoading = showInitialLoading ?? (isLoading && items.isEmpty);
+
+    if (initialLoading) {
       return _DropdownContainer(
         maxHeight: maxHeight,
         colorScheme: colorScheme,
@@ -106,6 +110,7 @@ class PaginatedSearchListSliver<T> extends StatelessWidget {
   final List<T> items;
   final bool isLoading;
   final bool isLoadingMore;
+  final bool? showInitialLoading;
   final String? errorMessage;
   final VoidCallback? onRetry;
   final Widget Function(BuildContext context, T item, int index) itemBuilder;
@@ -118,6 +123,7 @@ class PaginatedSearchListSliver<T> extends StatelessWidget {
     required this.itemBuilder,
     this.isLoading = false,
     this.isLoadingMore = false,
+    this.showInitialLoading,
     this.errorMessage,
     this.onRetry,
     this.emptyWidget,
@@ -126,7 +132,9 @@ class PaginatedSearchListSliver<T> extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (isLoading && items.isEmpty) {
+    final initialLoading = showInitialLoading ?? (isLoading && items.isEmpty);
+
+    if (initialLoading) {
       return SliverToBoxAdapter(
         child: initialLoadingWidget ?? const _DefaultSearchShimmer(),
       );

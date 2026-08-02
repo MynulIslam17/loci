@@ -8,6 +8,7 @@ class ExploreActivityTabScroll extends StatelessWidget {
     required this.onRefresh,
     required this.onLoadMore,
     required this.isLoading,
+    required this.isRefreshing,
     required this.isPaginationLoading,
   });
 
@@ -15,6 +16,7 @@ class ExploreActivityTabScroll extends StatelessWidget {
   final Future<void> Function() onRefresh;
   final VoidCallback onLoadMore;
   final bool isLoading;
+  final bool isRefreshing;
   final bool isPaginationLoading;
 
   @override
@@ -26,6 +28,7 @@ class ExploreActivityTabScroll extends StatelessWidget {
             if (notification is ScrollUpdateNotification) {
               if (notification.metrics.extentAfter < 300 &&
                   !isLoading &&
+                  !isRefreshing &&
                   !isPaginationLoading) {
                 onLoadMore();
               }

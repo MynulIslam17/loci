@@ -27,13 +27,13 @@ class _ReceivedReferralsTabState extends State<ReceivedReferralsTab>
 
     final controller = Get.find<ReceivedReferralsController>();
     return Obx(() {
-      if (controller.isLoading) {
+      if (controller.showInitialShimmer) {
         return const NetworkListShimmer();
       }
 
       if (controller.errorMessage != null && controller.referrals.isEmpty) {
         return RefreshIndicator(
-          onRefresh: controller.fetchReceivedReferrals,
+          onRefresh: () => controller.fetchReceivedReferrals(isRefresh: true),
           child: LayoutBuilder(
             builder: (context, constraints) => SingleChildScrollView(
               physics: const AlwaysScrollableScrollPhysics(),
@@ -51,7 +51,7 @@ class _ReceivedReferralsTabState extends State<ReceivedReferralsTab>
 
       if (controller.referrals.isEmpty) {
         return RefreshIndicator(
-          onRefresh: controller.fetchReceivedReferrals,
+          onRefresh: () => controller.fetchReceivedReferrals(isRefresh: true),
           child: LayoutBuilder(
             builder: (context, constraints) => SingleChildScrollView(
               physics: const AlwaysScrollableScrollPhysics(),
@@ -70,7 +70,7 @@ class _ReceivedReferralsTabState extends State<ReceivedReferralsTab>
       }
 
       return RefreshIndicator(
-        onRefresh: controller.fetchReceivedReferrals,
+        onRefresh: () => controller.fetchReceivedReferrals(isRefresh: true),
         child: NotificationListener<ScrollNotification>(
           onNotification: (n) {
             if (n.metrics.pixels >= n.metrics.maxScrollExtent - 200) {

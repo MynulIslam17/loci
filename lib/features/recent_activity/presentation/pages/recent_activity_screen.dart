@@ -2,20 +2,20 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:loci/core/constants/app_text_style.dart';
 import 'package:loci/core/enums/recent_activity.dart';
+import 'package:loci/core/theme/theme_extention.dart';
 import 'package:loci/core/utils/date_parser.dart';
+import 'package:loci/core/utils/time_parser.dart';
+import 'package:loci/features/browse_business/presentation/controllers/remove_saved_business_controller.dart';
 import 'package:loci/features/recent_activity/presentation/controllers/recent_activity_controller.dart';
 import 'package:loci/features/recent_activity/presentation/widgets/answer_activity_card.dart';
 import 'package:loci/features/recent_activity/presentation/widgets/business_activity_card.dart';
 import 'package:loci/features/recent_activity/presentation/widgets/question_activity_card.dart';
+import 'package:loci/features/recent_activity/presentation/widgets/recent_activity_shimmer.dart';
+import 'package:loci/features/recent_activity/presentation/widgets/review_activity_card.dart';
 import 'package:loci/shared/widgets/custom_appbar.dart';
-import 'package:loci/shared/widgets/review_card.dart';
-import 'package:loci/core/theme/theme_extention.dart';
-import 'package:loci/core/utils/time_parser.dart';
-import 'package:loci/features/browse_business/presentation/controllers/remove_saved_business_controller.dart';
-import 'package:loci/shared/widgets/app_skeleton.dart';
 import 'package:loci/shared/widgets/custom_text_field.dart';
-import 'package:loci/shared/widgets/error_state.dart';
 import 'package:loci/shared/widgets/empty_state.dart';
+import 'package:loci/shared/widgets/error_state.dart';
 
 class RecentActivity extends StatefulWidget {
   const RecentActivity({super.key});
@@ -26,14 +26,12 @@ class RecentActivity extends StatefulWidget {
 
 class _RecentActivityState extends State<RecentActivity>
     with SingleTickerProviderStateMixin {
-  late TabController tabController;
-  late RecentActivityController ctrl = Get.find<RecentActivityController>();
-  final removeCtrl = Get.find<RemoveSavedBusinessController>();
-
-  final RxInt _activeTabIndex = 0.obs;
+  late final TabController _tabController;
+  late final RecentActivityController _ctrl;
+  late final RemoveSavedBusinessController _removeCtrl;
   final _searchController = TextEditingController();
 
-  final _tabTypes = const [
+  static const _tabTypes = [
     RecentActivityType.questions,
     RecentActivityType.answered,
     RecentActivityType.reviews,
@@ -43,27 +41,27 @@ class _RecentActivityState extends State<RecentActivity>
   @override
   void initState() {
     super.initState();
-    tabController = TabController(length: 4, vsync: this);
+    _ctrl = Get.find<RecentActivityController>();
+    _removeCtrl = Get.find<RemoveSavedBusinessController>();
+    _tabController = TabController(length: _tabTypes.length, vsync: this);
+
+    _tabController.addListener(_onTabChanged);
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      ctrl.fetchActivities(RecentActivityType.questions);
+      _ctrl.ensureLoaded(_tabTypes[_tabController.index]);
     });
+  }
 
-    tabController.addListener(() {
-      if (tabController.indexIsChanging ||
-          tabController.animation?.value == tabController.index) {
-        if (tabController.index != _activeTabIndex.value) {
-          _activeTabIndex.value = tabController.index;
-          ctrl.changeType(_tabTypes[tabController.index]);
-        }
-      }
-    });
+  void _onTabChanged() {
+    if (_tabController.indexIsChanging) return;
+    _ctrl.ensureLoaded(_tabTypes[_tabController.index]);
   }
 
   @override
   void dispose() {
+    _tabController.removeListener(_onTabChanged);
     _searchController.dispose();
-    tabController.dispose();
+    _tabController.dispose();
     super.dispose();
   }
 
@@ -73,7 +71,7 @@ class _RecentActivityState extends State<RecentActivity>
 
     return Scaffold(
       backgroundColor: colorScheme.surface,
-      appBar: CustomAppbar(title: "Recent Activity"),
+      appBar: const CustomAppbar(title: 'Recent Activity'),
       body: NestedScrollView(
         headerSliverBuilder: (context, innerBoxIsScrolled) {
           return [
@@ -85,7 +83,7 @@ class _RecentActivityState extends State<RecentActivity>
                   children: [
                     CustomTextField(
                       controller: _searchController,
-                      hintText: "Recent Activity...",
+                      hintText: 'Search activity...',
                       borderColor: colorScheme.outline,
                       showClearButton: true,
                       suffixIcon: Icon(
@@ -95,7 +93,7 @@ class _RecentActivityState extends State<RecentActivity>
                     ),
                     const SizedBox(height: 14),
                     Text(
-                      "Recent Activity",
+                      'Recent Activity',
                       style: AppTextStyle.textXl(
                         color: colorScheme.onSurface,
                         weight: FontWeight.w600,
@@ -103,7 +101,7 @@ class _RecentActivityState extends State<RecentActivity>
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      "Track your recent activity",
+                      'Track your questions, answers, reviews and saved businesses',
                       style: AppTextStyle.textXs(
                         color: colorScheme.onSurfaceVariant,
                         weight: FontWeight.w600,
@@ -117,7 +115,7 @@ class _RecentActivityState extends State<RecentActivity>
               pinned: true,
               delegate: _TabBarDelegate(
                 TabBar(
-                  controller: tabController,
+                  controller: _tabController,
                   isScrollable: true,
                   tabAlignment: TabAlignment.start,
                   labelColor: colorScheme.primary,
@@ -125,10 +123,10 @@ class _RecentActivityState extends State<RecentActivity>
                   indicatorColor: colorScheme.primary,
                   dividerColor: Colors.transparent,
                   tabs: const [
-                    Tab(text: "Question"),
-                    Tab(text: "Answered"),
-                    Tab(text: "Reviews"),
-                    Tab(text: "List"),
+                    Tab(text: 'Questions'),
+                    Tab(text: 'Answered'),
+                    Tab(text: 'Reviews'),
+                    Tab(text: 'Saved'),
                   ],
                 ),
                 color: colorScheme.surface,
@@ -136,186 +134,114 @@ class _RecentActivityState extends State<RecentActivity>
             ),
           ];
         },
-        body: Obx(() {
-          return TabBarView(
-            controller: tabController,
-            children: [
-              ///---question
-              _buildTabWrapper(
-                type: RecentActivityType.questions,
-                isEmpty: ctrl.questions.isEmpty,
-                onRefresh: () =>
-                    ctrl.fetchActivities(RecentActivityType.questions),
-                onLoadMore: () => ctrl.loadMore(RecentActivityType.questions),
-                itemCount: ctrl.questions.length,
-                hasNext: ctrl.hasNextPage(RecentActivityType.questions),
-                isLoading: ctrl.isLoadingType(RecentActivityType.questions),
-                itemBuilder: (index) {
-                  final item = ctrl.questions[index];
-                  return buildQuestionActivityCard(
-                    context: context,
-                    name: item.name,
-                    question: item.question,
-                    category: item.category,
-                    imageUrl: item.avatar,
-                    likeCount: item.likes,
-                    commentCount: item.comments,
-                    date: DateParserHelper.toFriendlyDate(item.date),
-                  );
-                },
+        body: TabBarView(
+          controller: _tabController,
+          children: [
+            _RecentActivityTab(
+              type: RecentActivityType.questions,
+              emptyState: const EmptyState(
+                icon: Icons.help_outline_rounded,
+                title: 'No questions yet',
+                subtitle: 'Questions you post will show up here.',
               ),
-
-              ///---answer
-              _buildTabWrapper(
-                type: RecentActivityType.answered,
-                isEmpty: ctrl.answered.isEmpty,
-                onRefresh: () =>
-                    ctrl.fetchActivities(RecentActivityType.answered),
-                onLoadMore: () => ctrl.loadMore(RecentActivityType.answered),
-                itemCount: ctrl.answered.length,
-                hasNext: ctrl.hasNextPage(RecentActivityType.answered),
-                isLoading: ctrl.isLoadingType(RecentActivityType.answered),
-                itemBuilder: (index) {
-                  final item = ctrl.answered[index];
-                  return buildAnswerActivityCard(
-                    context: context,
-                    question: item.question,
-                    answer: item.answer,
-                    timestamp: formatUtcToLocalTime(item.time),
-                    imageUrl: item.questionAuthorAvatar,
-                  );
-                },
+              itemBuilder: (context, index) {
+                final item = _ctrl.questions[index];
+                return buildQuestionActivityCard(
+                  context: context,
+                  name: item.name,
+                  question: item.question,
+                  category: item.category,
+                  imageUrl: item.avatar,
+                  likeCount: item.likes,
+                  commentCount: item.comments,
+                  date: DateParserHelper.toFriendlyDate(item.date),
+                );
+              },
+            ),
+            _RecentActivityTab(
+              type: RecentActivityType.answered,
+              emptyState: const EmptyState(
+                icon: Icons.chat_bubble_outline_rounded,
+                title: 'No answers yet',
+                subtitle: 'Answers you give on questions will appear here.',
               ),
-
-              ///---reviews
-              _buildTabWrapper(
-                type: RecentActivityType.reviews,
-                isEmpty: ctrl.reviews.isEmpty,
-                onRefresh: () =>
-                    ctrl.fetchActivities(RecentActivityType.reviews),
-                onLoadMore: () => ctrl.loadMore(RecentActivityType.reviews),
-                itemCount: ctrl.reviews.length,
-                hasNext: ctrl.hasNextPage(RecentActivityType.reviews),
-                isLoading: ctrl.isLoadingType(RecentActivityType.reviews),
-                itemBuilder: (index) {
-                  final item = ctrl.reviews[index];
-                  return ReviewCard(
-                    name: item.name,
-                    businessName: item.business,
-                    reviewText: item.review,
-                    imageUrl: item.businessLogo,
-                    rating: item.rating.toDouble(),
-                  );
-                },
+              itemBuilder: (context, index) {
+                final item = _ctrl.answered[index];
+                return buildAnswerActivityCard(
+                  context: context,
+                  question: item.question,
+                  answer: item.answer,
+                  timestamp: formatUtcToLocalTime(item.time),
+                  imageUrl: item.questionAuthorAvatar,
+                );
+              },
+            ),
+            _RecentActivityTab(
+              type: RecentActivityType.reviews,
+              emptyState: const EmptyState(
+                icon: Icons.star_outline_rounded,
+                title: 'No reviews yet',
+                subtitle: 'Reviews you leave for businesses will show here.',
               ),
+              itemBuilder: (context, index) {
+                final item = _ctrl.reviews[index];
+                return buildReviewActivityCard(
+                  context: context,
+                  name: item.name,
+                  businessName: item.business,
+                  reviewText: item.review,
+                  imageUrl: item.businessLogo,
+                  rating: item.rating.toDouble(),
+                );
+              },
+            ),
+            _RecentActivityTab(
+              type: RecentActivityType.business,
+              emptyState: const EmptyState(
+                icon: Icons.storefront_outlined,
+                title: 'No saved businesses',
+                subtitle: 'Businesses you save will appear in this list.',
+              ),
+              itemBuilder: (context, index) {
+                final item = _ctrl.businesses[index];
+                final visitedLabel = item.date != null
+                    ? 'Visited ${DateParserHelper.toFriendlyDate(item.date)}'
+                    : 'Not visited yet';
 
-              ///---business save list
-              Obx(() {
-                final deleteCtrl = removeCtrl;
-                return _buildTabWrapper(
-                  type: RecentActivityType.business,
-                  isEmpty: ctrl.businesses.isEmpty,
-                  onRefresh: () =>
-                      ctrl.fetchActivities(RecentActivityType.business),
-                  onLoadMore: () => ctrl.loadMore(RecentActivityType.business),
-                  itemCount: ctrl.businesses.length,
-                  hasNext: ctrl.hasNextPage(RecentActivityType.business),
-                  isLoading: ctrl.isLoadingType(RecentActivityType.business),
-
-                  itemBuilder: (index) {
-                    final item = ctrl.businesses[index];
-
-                    return buildBusinessActivityCard(
+                return buildBusinessActivityCard(
+                  context: context,
+                  businessName: item.businessName,
+                  category: item.category,
+                  imageUrl: item.businessLogo,
+                  lastVisited: visitedLabel,
+                  isDeleting: _removeCtrl.isLoading(item.id),
+                  onDelete: () async {
+                    final confirmed = await showDialog<bool>(
                       context: context,
-
-                      id: "69f05a7a6e6fe1eec653e091",
-
-                      businessName: item.businessName,
-                      category: item.category,
-                      imageUrl: item.businessLogo,
-                      lastVisited: DateParserHelper.toFriendlyDate(item.date),
-
-                      isDeleting: deleteCtrl.isLoading(
-                        "69f05a7a6e6fe1eec653e091",
+                      builder: (ctx) => AlertDialog(
+                        title: const Text('Remove business?'),
+                        content: Text(
+                          'Remove "${item.businessName}" from your saved list?',
+                        ),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.pop(ctx, false),
+                            child: const Text('Cancel'),
+                          ),
+                          TextButton(
+                            onPressed: () => Navigator.pop(ctx, true),
+                            child: const Text('Remove'),
+                          ),
+                        ],
                       ),
-
-                      ///DELETE LOGIC
-                      onDelete: () async {
-                        final success = await removeCtrl.removeBusiness(
-                          "69f05a7a6e6fe1eec653e091",
-                        );
-
-                        if (success) {
-                          // ctrl.businesses.removeWhere((e) => e."s" == item.id);
-                        }
-                      },
                     );
+                    if (confirmed != true) return;
+
+                    final success = await _removeCtrl.removeBusiness(item.id);
+                    if (success) _ctrl.removeBusiness(item.id);
                   },
                 );
-              }),
-            ],
-          );
-        }),
-      ),
-    );
-  }
-
-  // ═══════════════════════════════════════
-  // REUSABLE TAB WRAPPER (Updated with PageStorageKey)
-  // ═══════════════════════════════════════
-  Widget _buildTabWrapper({
-    required RecentActivityType type,
-    required bool isEmpty,
-    required int itemCount,
-    required bool hasNext,
-    required bool isLoading,
-    required Future<void> Function() onRefresh,
-    required VoidCallback onLoadMore,
-    required Widget Function(int index) itemBuilder,
-  }) {
-    if (isLoading && isEmpty) return AppSkeleton.list(context: context);
-    if (ctrl.errorMessage != null && isEmpty) {
-      return ErrorStateWidget(message: ctrl.errorMessage!, onRetry: onRefresh);
-    }
-    if (isEmpty) {
-      return const EmptyState(
-        icon: Icons.inbox_outlined,
-        title: 'No items found',
-      );
-    }
-
-    return NotificationListener<ScrollNotification>(
-      onNotification: (scrollInfo) {
-        if (!isLoading &&
-            scrollInfo.metrics.pixels >=
-                scrollInfo.metrics.maxScrollExtent - 200) {
-          onLoadMore();
-        }
-        return true;
-      },
-      child: RefreshIndicator(
-        onRefresh: onRefresh,
-        child: CustomScrollView(
-          // SOLUTION: Adding a PageStorageKey for each tab
-          key: PageStorageKey<String>(type.toString()),
-          slivers: [
-            SliverPadding(
-              padding: const EdgeInsets.all(12),
-              sliver: SliverList(
-                delegate: SliverChildBuilderDelegate((context, index) {
-                  if (index == itemCount) {
-                    return isLoading
-                        ? const Padding(
-                            padding: EdgeInsets.symmetric(vertical: 20),
-                            child: Center(
-                              child: CircularProgressIndicator(strokeWidth: 2),
-                            ),
-                          )
-                        : const SizedBox(height: 60);
-                  }
-                  return itemBuilder(index);
-                }, childCount: itemCount + (hasNext ? 1 : 0)),
-              ),
+              },
             ),
           ],
         ),
@@ -324,11 +250,111 @@ class _RecentActivityState extends State<RecentActivity>
   }
 }
 
+class _RecentActivityTab extends StatefulWidget {
+  const _RecentActivityTab({
+    required this.type,
+    required this.emptyState,
+    required this.itemBuilder,
+  });
+
+  final RecentActivityType type;
+  final EmptyState emptyState;
+  final Widget Function(BuildContext context, int index) itemBuilder;
+
+  @override
+  State<_RecentActivityTab> createState() => _RecentActivityTabState();
+}
+
+class _RecentActivityTabState extends State<_RecentActivityTab>
+    with AutomaticKeepAliveClientMixin {
+  late final RecentActivityController _ctrl = Get.find<RecentActivityController>();
+  late final RemoveSavedBusinessController _removeCtrl =
+      Get.find<RemoveSavedBusinessController>();
+
+  @override
+  bool get wantKeepAlive => true;
+
+  @override
+  Widget build(BuildContext context) {
+    super.build(context);
+
+    return Obx(() {
+      final type = widget.type;
+      final count = _ctrl.itemCount(type);
+      final isInitialLoading = _ctrl.isInitialLoading(type);
+      final isLoadingMore = _ctrl.isLoadingMore(type);
+      final error = _ctrl.errorFor(type);
+      final hasNext = _ctrl.hasNextPage(type);
+      final hasFetched = _ctrl.hasFetched(type);
+
+      // Rebuild business rows while a delete is in progress.
+      if (type == RecentActivityType.business) {
+        _removeCtrl.loadingId.value;
+      }
+
+      if (isInitialLoading && !hasFetched) {
+        return RecentActivityShimmer.forType(type, context: context);
+      }
+
+      if (error != null && count == 0) {
+        return ErrorStateWidget(
+          message: error,
+          onRetry: () => _ctrl.reload(type),
+        );
+      }
+
+      if (count == 0 && hasFetched) {
+        return RefreshIndicator(
+          onRefresh: () => _ctrl.reload(type),
+          child: ListView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            children: [widget.emptyState],
+          ),
+        );
+      }
+
+      return NotificationListener<ScrollNotification>(
+        onNotification: (scrollInfo) {
+          if (!isInitialLoading &&
+              !isLoadingMore &&
+              !_ctrl.isRefreshing(type) &&
+              scrollInfo.metrics.pixels >=
+                  scrollInfo.metrics.maxScrollExtent - 200) {
+            _ctrl.loadMore(type);
+          }
+          return false;
+        },
+        child: RefreshIndicator(
+          onRefresh: () => _ctrl.reload(type),
+          child: ListView.builder(
+            key: PageStorageKey<String>('recent_activity_${type.name}'),
+            padding: const EdgeInsets.all(12),
+            itemCount: count + (hasNext ? 1 : 0),
+            itemBuilder: (context, index) {
+              if (index >= count) {
+                return isLoadingMore
+                    ? const Padding(
+                        padding: EdgeInsets.symmetric(vertical: 20),
+                        child: Center(
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        ),
+                      )
+                    : const SizedBox(height: 60);
+              }
+              return widget.itemBuilder(context, index);
+            },
+          ),
+        ),
+      );
+    });
+  }
+}
+
 class _TabBarDelegate extends SliverPersistentHeaderDelegate {
+  const _TabBarDelegate(this.tabBar, {required this.color});
+
   final TabBar tabBar;
   final Color color;
-
-  const _TabBarDelegate(this.tabBar, {required this.color});
 
   @override
   Widget build(

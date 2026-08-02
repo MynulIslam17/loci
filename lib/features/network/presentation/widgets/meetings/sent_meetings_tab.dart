@@ -31,13 +31,13 @@ class _SentMeetingsTabState extends State<SentMeetingsTab>
 
     final controller = Get.find<SentMeetingsController>();
     return Obx(() {
-      if (controller.isLoading) {
+      if (controller.showInitialShimmer) {
         return const NetworkListShimmer(showMeetingDetails: true);
       }
 
       if (controller.errorMessage != null && controller.meetings.isEmpty) {
         return RefreshIndicator(
-          onRefresh: controller.fetchSentMeetings,
+          onRefresh: () => controller.fetchSentMeetings(isRefresh: true),
           child: LayoutBuilder(
             builder: (context, constraints) => SingleChildScrollView(
               physics: const AlwaysScrollableScrollPhysics(),
@@ -55,7 +55,7 @@ class _SentMeetingsTabState extends State<SentMeetingsTab>
 
       if (controller.meetings.isEmpty) {
         return RefreshIndicator(
-          onRefresh: controller.fetchSentMeetings,
+          onRefresh: () => controller.fetchSentMeetings(isRefresh: true),
           child: LayoutBuilder(
             builder: (context, constraints) => SingleChildScrollView(
               physics: const AlwaysScrollableScrollPhysics(),
@@ -74,7 +74,7 @@ class _SentMeetingsTabState extends State<SentMeetingsTab>
       }
 
       return RefreshIndicator(
-        onRefresh: controller.fetchSentMeetings,
+        onRefresh: () => controller.fetchSentMeetings(isRefresh: true),
         child: NotificationListener<ScrollNotification>(
           onNotification: (n) {
             if (n.metrics.pixels >= n.metrics.maxScrollExtent - 200) {

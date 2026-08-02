@@ -12,6 +12,7 @@ class AnnouncementTypeCache {
   PaginationMeta? meta;
   bool hasLoaded = false;
   bool isLoading = false;
+  bool isRefreshing = false;
   bool isPaginationLoading = false;
   String? errorMessage;
   String searchQuery = '';

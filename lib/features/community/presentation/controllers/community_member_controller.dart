@@ -3,6 +3,7 @@ import 'dart:convert';
 
 import 'package:file_picker/file_picker.dart';
 import 'package:get/get.dart';
+import 'package:loci/core/utils/paginated_list_fetch_state.dart';
 import 'package:loci/features/community/data/models/community_member_model.dart';
 import 'package:loci/features/community/domain/services/community_service.dart';
 import 'package:loci/features/community/presentation/controllers/my_community_controller.dart';
@@ -13,15 +14,22 @@ class CommunityMemberController extends GetxController {
 
   final CommunityService _service;
 
+  final PaginatedListFetchState _fetch = PaginatedListFetchState();
+
   final members = <CommunityMemberModel>[].obs;
 
-  final isLoading = false.obs;
-  final isPaginationLoading = false.obs;
   final isExporting = false.obs;
 
   final errorMessage = RxnString();
   final successMessage = RxnString();
   final meta = Rxn<PaginationMeta>();
+
+  bool get isInitialLoading => _fetch.initialLoading.value;
+  bool get isRefreshing => _fetch.refreshing.value;
+  bool get showInitialShimmer => _fetch.showInitialShimmer;
+  bool get hasFetched => _fetch.hasFetched.value;
+  RxBool get isLoading => _fetch.initialLoading;
+  RxBool get isPaginationLoading => _fetch.loadingMore;
 
   int _currentPage = 1;
   String? _communityId;
@@ -70,43 +78,52 @@ class CommunityMemberController extends GetxController {
   Future<void> fetchMembers({bool isRefresh = false}) async {
     final communityId = _communityId;
     if (communityId == null || communityId.isEmpty) return;
+    if (isInitialLoading || isRefreshing) return;
+
+    if (isRefresh) {
+      _currentPage = 1;
+    }
+
+    _fetch.beginFirstPage(isRefresh: isRefresh);
+    errorMessage.value = null;
 
     try {
-      isLoading.value = true;
-      errorMessage.value = null;
-
-      if (isRefresh) {
-        _currentPage = 1;
-        members.clear();
-      }
-
       final result = await _service.getCommunityMembers(
         communityId: communityId,
         page: _currentPage,
         limit: 20,
         searchTerm: _searchTerm.isNotEmpty ? _searchTerm : null,
       );
-      members.addAll(result.data);
+      if (isRefresh) {
+        members.assignAll(result.data);
+      } else {
+        members.addAll(result.data);
+      }
       meta.value = result.meta;
       _loadedCommunityId = communityId;
       if (_searchTerm.isEmpty) {
         totalCount.value = result.meta.total;
         _syncHeaderMemberCount();
       }
+      _fetch.endFirstPage();
     } catch (e) {
       errorMessage.value = e.toString().replaceFirst('Exception: ', '');
-    } finally {
-      isLoading.value = false;
+      _fetch.endFirstPage(markFetched: hasFetched);
     }
   }
 
   Future<void> fetchMoreMembers() async {
     final communityId = _communityId;
     if (communityId == null || communityId.isEmpty) return;
-    if (!hasMore || isLoading.value || isPaginationLoading.value) return;
+    if (!hasMore ||
+        isInitialLoading ||
+        isRefreshing ||
+        isPaginationLoading.value) {
+      return;
+    }
 
     try {
-      isPaginationLoading.value = true;
+      _fetch.beginLoadMore();
 
       final nextPage = _currentPage + 1;
 
@@ -123,7 +140,7 @@ class CommunityMemberController extends GetxController {
     } catch (e) {
       errorMessage.value = e.toString().replaceFirst('Exception: ', '');
     } finally {
-      isPaginationLoading.value = false;
+      _fetch.endLoadMore();
     }
   }
 

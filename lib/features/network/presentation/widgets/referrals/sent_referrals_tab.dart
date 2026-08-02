@@ -25,13 +25,13 @@ class _SentReferralsTabState extends State<SentReferralsTab>
 
     final controller = Get.find<SentReferralsController>();
     return Obx(() {
-      if (controller.isLoading) {
+      if (controller.showInitialShimmer) {
         return const NetworkListShimmer();
       }
 
       if (controller.errorMessage != null && controller.referrals.isEmpty) {
         return RefreshIndicator(
-          onRefresh: controller.fetchSentReferrals,
+          onRefresh: () => controller.fetchSentReferrals(isRefresh: true),
           child: LayoutBuilder(
             builder: (context, constraints) => SingleChildScrollView(
               physics: const AlwaysScrollableScrollPhysics(),
@@ -49,7 +49,7 @@ class _SentReferralsTabState extends State<SentReferralsTab>
 
       if (controller.referrals.isEmpty) {
         return RefreshIndicator(
-          onRefresh: controller.fetchSentReferrals,
+          onRefresh: () => controller.fetchSentReferrals(isRefresh: true),
           child: LayoutBuilder(
             builder: (context, constraints) => SingleChildScrollView(
               physics: const AlwaysScrollableScrollPhysics(),
@@ -68,7 +68,7 @@ class _SentReferralsTabState extends State<SentReferralsTab>
       }
 
       return RefreshIndicator(
-        onRefresh: controller.fetchSentReferrals,
+        onRefresh: () => controller.fetchSentReferrals(isRefresh: true),
         child: NotificationListener<ScrollNotification>(
           onNotification: (n) {
             if (n.metrics.pixels >= n.metrics.maxScrollExtent - 200) {

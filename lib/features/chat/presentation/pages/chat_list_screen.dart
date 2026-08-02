@@ -71,13 +71,13 @@ class _ChatListScreenState extends State<ChatListScreen> {
               child: Obx(() {
                 final ctrl = controller;
                 final query = _query.value;
-                if (ctrl.isLoading.value && ctrl.conversations.isEmpty) {
+                if (ctrl.showInitialShimmer && ctrl.conversations.isEmpty) {
                   return const Center(child: CircularProgressIndicator());
                 }
                 if (ctrl.errorMessage.value != null &&
                     ctrl.conversations.isEmpty) {
                   return RefreshIndicator(
-                    onRefresh: ctrl.fetchConversations,
+                    onRefresh: () => ctrl.fetchConversations(isRefresh: true),
                     child: LayoutBuilder(
                       builder: (context, constraints) {
                         return SingleChildScrollView(
@@ -100,7 +100,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
                 final items = _filter(ctrl.conversations.toList(), query);
                 if (items.isEmpty) {
                   return RefreshIndicator(
-                    onRefresh: ctrl.fetchConversations,
+                    onRefresh: () => ctrl.fetchConversations(isRefresh: true),
                     child: LayoutBuilder(
                       builder: (context, constraints) {
                         return SingleChildScrollView(
@@ -123,7 +123,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
                 }
 
                 return RefreshIndicator(
-                  onRefresh: ctrl.fetchConversations,
+                  onRefresh: () => ctrl.fetchConversations(isRefresh: true),
                   child: ListView.builder(
                     padding: const EdgeInsets.symmetric(horizontal: 12),
                     itemCount: items.length,

@@ -43,7 +43,7 @@ class _BusinessProfileScreenState extends State<BusinessProfileScreen> {
 
   Future<void> _refresh() async {
     await Future.wait([
-      profileController.getBusinessProfile(businessId),
+      profileController.getBusinessProfile(businessId, isRefresh: true),
       reviewController.fetchReviews(businessId, showLoading: false),
     ]);
   }
@@ -77,7 +77,7 @@ class _BusinessProfileScreenState extends State<BusinessProfileScreen> {
       body: RefreshIndicator(
         onRefresh: _refresh,
         child: Obx(() {
-          if (profileController.isLoading.value) {
+          if (profileController.showInitialShimmer) {
             return const BusinessProfileShimmer();
           }
 

@@ -45,7 +45,7 @@ enum RecentActivityType {
       case RecentActivityType.reviews:
         return 'reviews';
       case RecentActivityType.business:
-        return 'business';
+        return 'businesses';
     }
   }
 }

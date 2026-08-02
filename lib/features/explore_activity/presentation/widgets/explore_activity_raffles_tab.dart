@@ -41,6 +41,7 @@ class _ExploreActivityRafflesTabState extends State<ExploreActivityRafflesTab>
     return Obx(() {
       return ExploreActivityTabScroll(
         isLoading: _controller.showInitialLoader(widget.businessId),
+        isRefreshing: _controller.isRefreshing.value,
         isPaginationLoading: _controller.isPaginationLoading.value,
         onRefresh: () => _controller.fetchRaffles(
           businessId: widget.businessId,

@@ -22,7 +22,7 @@ class PlansSection extends StatelessWidget {
     return Obx(() {
       // Shimmer until BOTH the plans and the current subscription are known, so
       // cards don't flash "Subscribe" before flipping to "Current Plan".
-      if (controller.isLoading || checkout.isLoadingSubscription) {
+      if (controller.showInitialShimmer || checkout.isLoadingSubscription) {
         return const SubscriptionShimmer();
       }
       if (controller.errorMessage != null) {

@@ -1,5 +1,6 @@
 import 'package:get/get.dart';
 import 'package:loci/core/utils/date_parser.dart';
+import 'package:loci/core/utils/paginated_list_fetch_state.dart';
 import 'package:loci/shared/models/pagination_model.dart';
 import 'package:loci/features/network/data/models/meeting_models.dart';
 import 'package:loci/features/network/domain/services/network_service.dart';
@@ -8,9 +9,8 @@ class SentMeetingsController extends GetxController {
   SentMeetingsController(this._service);
 
   final NetworkService _service;
+  final PaginatedListFetchState _fetch = PaginatedListFetchState();
 
-  final RxBool _isLoading = false.obs;
-  final RxBool _isLoadingMore = false.obs;
   final Rxn<String> _errorMessage = Rxn<String>();
 
   /// Server-filtered list for the currently selected day.
@@ -25,8 +25,12 @@ class SentMeetingsController extends GetxController {
   /// Active date filter (`date=YYYY-MM-DD`). Defaults to today.
   final Rxn<DateTime> _selectedDate = Rxn<DateTime>();
 
-  bool get isLoading => _isLoading.value;
-  bool get isLoadingMore => _isLoadingMore.value;
+  bool get isInitialLoading => _fetch.initialLoading.value;
+  bool get isRefreshing => _fetch.refreshing.value;
+  bool get showInitialShimmer => _fetch.showInitialShimmer;
+  bool get hasFetched => _fetch.hasFetched.value;
+  bool get isLoading => isInitialLoading;
+  bool get isLoadingMore => _fetch.loadingMore.value;
   String? get errorMessage => _errorMessage.value;
   List<SentMeetingModel> get meetings => _meetings;
   PaginationMeta? get meta => _meta.value;
@@ -57,26 +61,34 @@ class SentMeetingsController extends GetxController {
     await fetchSentMeetings();
   }
 
-  Future<void> fetchSentMeetings() async {
-    _isLoading.value = true;
+  Future<void> fetchSentMeetings({bool isRefresh = false}) async {
+    if (isInitialLoading || isRefreshing) return;
+
+    _fetch.beginFirstPage(isRefresh: isRefresh);
     _errorMessage.value = null;
     _currentPage = 1;
-    _meetings.clear();
 
-    await _loadPage(_currentPage);
-
-    _isLoading.value = false;
+    try {
+      await _loadPage(_currentPage, replace: true);
+      _fetch.endFirstPage();
+    } catch (_) {
+      _fetch.endFirstPage(markFetched: hasFetched);
+    }
   }
 
   Future<void> loadMore() async {
-    if (isLoadingMore || !hasNextPage) return;
+    if (isLoadingMore || !hasNextPage || isInitialLoading || isRefreshing) {
+      return;
+    }
 
-    _isLoadingMore.value = true;
+    _fetch.beginLoadMore();
     _currentPage++;
 
-    await _loadPage(_currentPage);
-
-    _isLoadingMore.value = false;
+    try {
+      await _loadPage(_currentPage, replace: false);
+    } finally {
+      _fetch.endLoadMore();
+    }
   }
 
   void _addMarker(String raw) {
@@ -102,7 +114,7 @@ class SentMeetingsController extends GetxController {
     }
   }
 
-  Future<void> _loadPage(int page) async {
+  Future<void> _loadPage(int page, {required bool replace}) async {
     try {
       final result = await _service.getSentMeetings(
         page: page,
@@ -111,7 +123,11 @@ class SentMeetingsController extends GetxController {
             ? DateParserHelper.toApiDate(selectedDate)
             : null,
       );
-      _meetings.addAll(result.data);
+      if (replace) {
+        _meetings.assignAll(result.data);
+      } else {
+        _meetings.addAll(result.data);
+      }
       _meta.value = result.meta;
       for (final m in result.data) {
         _addMarker(m.meetingDate);
@@ -119,6 +135,7 @@ class SentMeetingsController extends GetxController {
     } catch (e) {
       _errorMessage.value = e.toString().replaceFirst('Exception: ', '');
       if (page > 1) _currentPage--;
+      rethrow;
     }
   }
 }

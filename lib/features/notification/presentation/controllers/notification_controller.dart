@@ -2,6 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:get/get.dart';
 import 'package:loci/core/enums/action_type.dart';
 import 'package:loci/core/utils/app_error_messages.dart';
+import 'package:loci/core/utils/paginated_list_fetch_state.dart';
 import 'package:loci/core/utils/show_snackbar.dart';
 import 'package:loci/features/auth/presentation/controllers/auth_controller.dart';
 import 'package:loci/features/notification/data/models/notification_model.dart';
@@ -12,11 +13,10 @@ class NotificationController extends GetxController {
 
   final NotificationService _service;
   final ScrollController scrollController = ScrollController();
+  final PaginatedListFetchState _fetch = PaginatedListFetchState();
 
   final RxList<NotificationModel> _notifications = <NotificationModel>[].obs;
-  final RxBool _isLoading = false.obs;
-  final RxBool _isPaginationLoading = false.obs;
-  final Rxn<String> _errorMessage = Rxn<String>();
+  final RxnString _errorMessage = RxnString();
   final RxSet<String> _acceptingIds = <String>{}.obs;
   final RxSet<String> _rejectingIds = <String>{}.obs;
 
@@ -25,8 +25,12 @@ class NotificationController extends GetxController {
   bool _hasMore = true;
 
   List<NotificationModel> get notifications => List.unmodifiable(_notifications);
-  bool get isLoading => _isLoading.value;
-  bool get isPaginationLoading => _isPaginationLoading.value;
+  bool get isInitialLoading => _fetch.initialLoading.value;
+  bool get isRefreshing => _fetch.refreshing.value;
+  bool get showInitialShimmer => _fetch.showInitialShimmer;
+  bool get hasFetched => _fetch.hasFetched.value;
+  bool get isLoading => isInitialLoading;
+  bool get isPaginationLoading => _fetch.loadingMore.value;
   bool get hasMore => _hasMore;
   String? get errorMessage => _errorMessage.value;
 
@@ -43,9 +47,14 @@ class NotificationController extends GetxController {
   void onInit() {
     super.onInit();
     scrollController.addListener(_onScroll);
-    if (Get.find<AuthController>().isLoggedIn) {
-      fetchNotifications(refresh: true);
-    }
+    ensureLoaded();
+  }
+
+  /// Loads the first page once the user is authenticated.
+  Future<void> ensureLoaded() async {
+    if (!Get.find<AuthController>().isLoggedIn) return;
+    if (hasFetched || isInitialLoading || isRefreshing) return;
+    await fetchNotifications();
   }
 
   @override
@@ -63,36 +72,40 @@ class NotificationController extends GetxController {
   }
 
   Future<void> fetchNotifications({bool refresh = false}) async {
-    if (_isLoading.value) return;
+    if (isInitialLoading || isRefreshing) return;
+
+    if (refresh) {
+      _currentPage = 1;
+      _hasMore = true;
+    }
+
+    _fetch.beginFirstPage(isRefresh: refresh);
+    _errorMessage.value = null;
 
     try {
-      _isLoading.value = true;
-      _errorMessage.value = null;
-
-      if (refresh) {
-        _currentPage = 1;
-        _notifications.clear();
-        _hasMore = true;
-      }
-
       final model = await _service.getNotifications(
         page: _currentPage,
         limit: _limit,
       );
       _notifications.assignAll(model.data);
       _hasMore = model.meta.hasNextPage;
+      _fetch.endFirstPage();
     } catch (e) {
       _errorMessage.value = AppErrorMessages.sanitize(e);
-    } finally {
-      _isLoading.value = false;
+      _fetch.endFirstPage(markFetched: hasFetched);
     }
   }
 
   Future<void> fetchMore() async {
-    if (!_hasMore || _isPaginationLoading.value || _isLoading.value) return;
+    if (!_hasMore ||
+        isPaginationLoading ||
+        isInitialLoading ||
+        isRefreshing) {
+      return;
+    }
 
     try {
-      _isPaginationLoading.value = true;
+      _fetch.beginLoadMore();
       _currentPage++;
 
       final model = await _service.getNotifications(
@@ -105,7 +118,7 @@ class NotificationController extends GetxController {
       _currentPage--;
       _errorMessage.value = AppErrorMessages.sanitize(e);
     } finally {
-      _isPaginationLoading.value = false;
+      _fetch.endLoadMore();
     }
   }
 

@@ -1,7 +1,9 @@
 import 'package:get/get.dart';
 
 /// Tracks whether a business tab list was loaded at least once (in-memory cache).
-mixin ExploreTabListCache {
+mixin ExploreTabListCache on GetxController {
+  final RxBool isRefreshing = false.obs;
+
   final RxnString _cachedBusinessId = RxnString();
   final RxnString _cachedSearchQuery = RxnString();
 
@@ -46,6 +48,37 @@ mixin ExploreTabListCache {
     return isCachedFor(businessId, search: search) &&
         isEmpty &&
         !isLoading &&
+        !isRefreshing.value &&
         errorMessage == null;
+  }
+
+  /// Sets [isLoading] / [isRefreshing] so pull-to-refresh keeps the list visible.
+  void beginExploreFetch({
+    required RxBool isLoading,
+    required bool forceRefresh,
+    required String businessId,
+    String? errorMessage,
+    String search = '',
+  }) {
+    final initial = showExploreInitialLoader(
+      businessId,
+      errorMessage: errorMessage,
+      search: search,
+    );
+    if (initial) {
+      isLoading.value = true;
+      isRefreshing.value = false;
+    } else if (forceRefresh) {
+      isRefreshing.value = true;
+      isLoading.value = false;
+    } else {
+      isLoading.value = true;
+      isRefreshing.value = false;
+    }
+  }
+
+  void endExploreFetch({required RxBool isLoading}) {
+    isLoading.value = false;
+    isRefreshing.value = false;
   }
 }

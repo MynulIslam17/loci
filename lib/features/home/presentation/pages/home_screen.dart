@@ -187,7 +187,7 @@ class _HomeScreenState extends State<HomeScreen> {
         onRefresh: () async {
           await Future.wait([
             questionListController.fetchQuestions(isRefresh: true),
-            _adListController.fetchAds(),
+            _adListController.fetchAds(isRefresh: true),
           ]);
         },
         child: SingleChildScrollView(
@@ -200,7 +200,7 @@ class _HomeScreenState extends State<HomeScreen> {
               // --- 1️⃣ Carousel Slider (live ads from /ads) ---
               Obx(() {
                 final adCtrl = _adListController;
-                if (adCtrl.isLoading.value && adCtrl.ads.isEmpty) {
+                if (adCtrl.showInitialShimmer) {
                   return const BannerShimmer();
                 }
                 // No ads to show: render a purpose-built branded banner rather
@@ -311,7 +311,7 @@ class _HomeScreenState extends State<HomeScreen> {
               Obx(() {
                 final controller = questionListController;
 
-                if (controller.isLoading.value) {
+                if (controller.showInitialShimmer) {
                   return const HomeShimmer();
                 }
                 if (controller.errorMessage.value != null &&

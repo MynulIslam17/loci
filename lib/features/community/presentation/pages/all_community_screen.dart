@@ -108,7 +108,7 @@ class _AllCommunityScreenState extends State<AllCommunityScreen> {
   }
 
   Widget _buildMyCommunitiesSection() {
-    final isLoading = _listController.isLoading.value;
+    final showShimmer = _listController.showInitialShimmer;
     final joined = _listController.displayedJoined;
     final hasSource = _listController.joined.isNotEmpty;
     final searching = _listController.isSearching;
@@ -121,7 +121,7 @@ class _AllCommunityScreenState extends State<AllCommunityScreen> {
           style: AppTextStyle.textLg(weight: FontWeight.bold),
         ),
         const SizedBox(height: _listGap),
-        if (isLoading && !hasSource)
+        if (showShimmer && !hasSource)
           CommunitySkeleton.list(count: 2)
         else if (!hasSource)
           const EmptyState(
@@ -163,7 +163,7 @@ class _AllCommunityScreenState extends State<AllCommunityScreen> {
   }
 
   Widget _buildBusinessCommunitiesSection(ColorScheme colorScheme) {
-    final isLoading = _listController.isLoading.value;
+    final showShimmer = _listController.showInitialShimmer;
     final available = _listController.displayedAvailable;
     final hasSource = _listController.available.isNotEmpty;
     final searching = _listController.isSearching;
@@ -176,7 +176,7 @@ class _AllCommunityScreenState extends State<AllCommunityScreen> {
           style: AppTextStyle.textLg(weight: FontWeight.bold),
         ),
         const SizedBox(height: _listGap),
-        if (isLoading && !hasSource)
+        if (showShimmer && !hasSource)
           CommunitySkeleton.list(count: 2)
         else if (!hasSource)
           const EmptyState(

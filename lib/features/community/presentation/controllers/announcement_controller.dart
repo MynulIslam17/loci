@@ -50,6 +50,8 @@ class AnnouncementController extends GetxController {
 
   bool isLoadingFor(AnnouncementType type) => _cacheFor(type).isLoading;
 
+  bool isRefreshingFor(AnnouncementType type) => _cacheFor(type).isRefreshing;
+
   bool isPaginationLoadingFor(AnnouncementType type) =>
       _cacheFor(type).isPaginationLoading;
 
@@ -144,14 +146,37 @@ class AnnouncementController extends GetxController {
 
   /// Loads tab data the first time it is shown (or after cache clear).
   void ensureLoaded(AnnouncementType type) {
-    if (_communityId == null || hasLoadedFor(type) || isLoadingFor(type)) {
+    if (_communityId == null ||
+        hasLoadedFor(type) ||
+        isLoadingFor(type) ||
+        isRefreshingFor(type)) {
       return;
     }
     final cache = _cacheFor(type);
     cache.isLoading = true;
+    cache.isRefreshing = false;
     cache.errorMessage = null;
     _bump(type);
     fetchAnnouncements(type: type, isRefresh: true);
+  }
+
+  void _beginAnnouncementFetch(AnnouncementTypeCache cache, {required bool isRefresh}) {
+    final isFirstLoad = !cache.hasLoaded;
+    if (isFirstLoad) {
+      cache.isLoading = true;
+      cache.isRefreshing = false;
+    } else if (isRefresh) {
+      cache.isRefreshing = true;
+      cache.isLoading = false;
+    } else {
+      cache.isLoading = true;
+      cache.isRefreshing = false;
+    }
+  }
+
+  void _endAnnouncementFetch(AnnouncementTypeCache cache) {
+    cache.isLoading = false;
+    cache.isRefreshing = false;
   }
 
   Future<void> fetchAnnouncements({
@@ -164,12 +189,11 @@ class AnnouncementController extends GetxController {
     final cache = _cacheFor(type);
 
     try {
-      cache.isLoading = true;
+      _beginAnnouncementFetch(cache, isRefresh: isRefresh);
       cache.errorMessage = null;
 
       if (isRefresh) {
         cache.currentPage = 1;
-        cache.ids.clear();
       }
 
       _bump(type);
@@ -186,6 +210,9 @@ class AnnouncementController extends GetxController {
         return;
       }
 
+      if (isRefresh) {
+        cache.ids.clear();
+      }
       _appendAnnouncements(result.data, cache);
       cache.meta = result.meta;
       cache.hasLoaded = true;
@@ -195,7 +222,7 @@ class AnnouncementController extends GetxController {
       }
       cache.errorMessage = e.toString().replaceFirst('Exception: ', '');
     } finally {
-      cache.isLoading = false;
+      _endAnnouncementFetch(cache);
       if (loadGeneration == null || loadGeneration == _feedLoadGeneration) {
         _bump(type);
       }
@@ -209,6 +236,7 @@ class AnnouncementController extends GetxController {
     if (!cache.hasMore ||
         cache.isPaginationLoading ||
         cache.isLoading ||
+        cache.isRefreshing ||
         _communityId == null) {
       return;
     }
