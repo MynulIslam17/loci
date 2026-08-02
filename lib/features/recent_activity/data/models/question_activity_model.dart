@@ -23,7 +23,9 @@ class QuestionActivityModel {
     return QuestionActivityModel(
       name: json['name'] ?? '',
       category: json['category'] ?? '',
-      date: DateTime.parse(json['date']),
+      date: DateTime.tryParse(json['date']?.toString() ?? '') ??
+          DateTime.tryParse(json['time']?.toString() ?? '') ??
+          DateTime.now(),
       time: json['time'] ?? '',
       avatar: json['avatar'] ?? '',
       question: json['question'] ?? '',

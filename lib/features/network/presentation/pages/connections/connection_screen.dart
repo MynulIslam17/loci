@@ -42,7 +42,7 @@ class _ConnectionScreenState extends State<ConnectionScreen> {
         ),
       ),
       body: Obx(() {
-        if (_controller.isInitialLoading) {
+        if (_controller.showInitialShimmer) {
           return RefreshIndicator(
             onRefresh: _onRefresh,
             child: const ConnectionScreenShimmer(),

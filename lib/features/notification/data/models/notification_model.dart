@@ -25,16 +25,32 @@ class NotificationModel {
 
   factory NotificationModel.fromJson(Map<String, dynamic> json) {
     return NotificationModel(
-      id: json['_id'] ?? '',
-      recipient: json['recipient'] ?? '',
-      type: json['type'] ?? '',
-      title: json['title'] ?? '',
-      body: json['body'] ?? '',
-      data: Map<String, dynamic>.from(json['data'] ?? {}),
-      actionRequired: json['actionRequired'] ?? false,
-      isRead: json['isRead'] ?? false,
-      createdAt: json['createdAt'] ?? "",
+      id: _readId(json['_id'] ?? json['id']),
+      recipient: _readId(json['recipient']),
+      type: json['type']?.toString() ?? '',
+      title: json['title']?.toString() ?? '',
+      body: json['body']?.toString() ?? '',
+      data: _readPayload(json['data']),
+      actionRequired: json['actionRequired'] == true,
+      isRead: json['isRead'] == true,
+      createdAt: json['createdAt']?.toString() ?? '',
     );
+  }
+
+  static String _readId(dynamic value) {
+    if (value == null) return '';
+    if (value is String) return value;
+    if (value is Map) {
+      return (value['_id'] ?? value['id'] ?? '').toString();
+    }
+    return value.toString();
+  }
+
+  static Map<String, dynamic> _readPayload(dynamic value) {
+    if (value is Map) {
+      return Map<String, dynamic>.from(value);
+    }
+    return const {};
   }
 
   Map<String, dynamic> toJson() => {

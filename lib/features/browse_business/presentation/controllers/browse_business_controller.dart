@@ -1,5 +1,6 @@
 import 'package:get/get.dart';
 import 'package:loci/core/enums/category_enum.dart';
+import 'package:loci/core/utils/paginated_list_fetch_state.dart';
 import 'package:loci/features/browse_business/data/models/browse_business_model.dart';
 import 'package:loci/features/browse_business/domain/services/browse_business_service.dart';
 
@@ -7,23 +8,24 @@ class BrowseBusinessController extends GetxController {
   BrowseBusinessController(this._service);
 
   final BrowseBusinessService _service;
+  final PaginatedListFetchState _fetch = PaginatedListFetchState();
 
-  final isLoading = false.obs;
-  final isPaginationLoading = false.obs;
   final errorMessage = RxnString();
-
   final businesses = <BrowseBusinessModel>[].obs;
-
   final selectedCategory = Rxn<BusinessCategory>();
 
-  // ================= PAGINATION =================
   int _currentPage = 1;
   final int _limit = 10;
   final hasNextPage = true.obs;
 
   bool get hasMore => hasNextPage.value;
+  bool get isInitialLoading => _fetch.initialLoading.value;
+  bool get isRefreshing => _fetch.refreshing.value;
+  bool get showInitialShimmer => _fetch.showInitialShimmer;
+  bool get hasFetched => _fetch.hasFetched.value;
+  RxBool get isLoading => _fetch.initialLoading;
+  RxBool get isPaginationLoading => _fetch.loadingMore;
 
-  // ================= INIT =================
   @override
   void onInit() {
     super.onInit();
@@ -37,7 +39,6 @@ class BrowseBusinessController extends GetxController {
     }
   }
 
-  // ================= FETCH FIRST PAGE =================
   Future<void> fetchBusinesses(
     BusinessCategory? category, {
     bool isRefresh = false,
@@ -46,10 +47,9 @@ class BrowseBusinessController extends GetxController {
       if (isRefresh) {
         _currentPage = 1;
         hasNextPage.value = true;
-        businesses.clear();
       }
 
-      isLoading.value = true;
+      _fetch.beginFirstPage(isRefresh: isRefresh);
       errorMessage.value = null;
       selectedCategory.value = category;
 
@@ -61,23 +61,23 @@ class BrowseBusinessController extends GetxController {
 
       businesses.assignAll(model.data);
       hasNextPage.value = model.meta.hasNextPage;
+      _fetch.endFirstPage();
     } catch (e) {
       errorMessage.value = e.toString().replaceFirst('Exception: ', '');
-    } finally {
-      isLoading.value = false;
+      _fetch.endFirstPage(markFetched: hasFetched);
     }
   }
 
-  // ================= LOAD MORE =================
   Future<void> loadMore() async {
-    // Also guard on isLoading so a scroll during the first/refresh load can't
-    // kick off page 2 before page 1 has arrived.
-    if (!hasNextPage.value || isPaginationLoading.value || isLoading.value) {
+    if (!hasNextPage.value ||
+        isPaginationLoading.value ||
+        isInitialLoading ||
+        isRefreshing) {
       return;
     }
 
     try {
-      isPaginationLoading.value = true;
+      _fetch.beginLoadMore();
       _currentPage++;
 
       final model = await _service.browseBusinesses(
@@ -89,18 +89,16 @@ class BrowseBusinessController extends GetxController {
       businesses.addAll(model.data);
       hasNextPage.value = model.meta.hasNextPage;
     } catch (e) {
-      _currentPage--; // rollback
+      _currentPage--;
     } finally {
-      isPaginationLoading.value = false;
+      _fetch.endLoadMore();
     }
   }
 
-  // ================= CHANGE CATEGORY =================
   void changeCategory(BusinessCategory? category) {
     fetchBusinesses(category, isRefresh: true);
   }
 
-  // ================= REFRESH =================
   Future<void> refreshData() async {
     await fetchBusinesses(selectedCategory.value, isRefresh: true);
   }

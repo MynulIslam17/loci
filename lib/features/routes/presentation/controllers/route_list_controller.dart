@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:get/get.dart';
+import 'package:loci/core/utils/paginated_list_fetch_state.dart';
 import 'package:loci/features/routes/data/models/route_list_model.dart';
 import 'package:loci/features/routes/domain/services/routes_service.dart';
 
@@ -8,9 +9,8 @@ class RouteListController extends GetxController {
   RouteListController(this._service);
 
   final RoutesService _service;
+  final PaginatedListFetchState _fetch = PaginatedListFetchState();
 
-  final RxBool _isLoading = false.obs;
-  final RxBool _isPaginationLoading = false.obs;
   final Rxn<String> _errorMessage = Rxn<String>();
   final RxList<RouteModel> _routeList = <RouteModel>[].obs;
   int _currentPage = 1;
@@ -20,14 +20,17 @@ class RouteListController extends GetxController {
   String _searchQuery = '';
   Timer? _searchDebounce;
 
-  bool get isLoading => _isLoading.value;
-  bool get isPaginationLoading => _isPaginationLoading.value;
+  bool get isInitialLoading => _fetch.initialLoading.value;
+  bool get isRefreshing => _fetch.refreshing.value;
+  bool get showInitialShimmer => _fetch.showInitialShimmer;
+  bool get hasFetched => _fetch.hasFetched.value;
+  bool get isLoading => isInitialLoading;
+  bool get isPaginationLoading => _fetch.loadingMore.value;
   String? get errorMessage => _errorMessage.value;
   List<RouteModel> get routeList => _routeList;
   bool get hasMore => _hasNextPage;
   String get searchQuery => _searchQuery;
 
-  /// Debounced search — updates the query and refetches from the API.
   void onSearchChanged(String query) {
     _searchQuery = query;
     _searchDebounce?.cancel();
@@ -46,10 +49,9 @@ class RouteListController extends GetxController {
     if (isRefresh) {
       _currentPage = 1;
       _hasNextPage = true;
-      _routeList.clear();
     }
 
-    _isLoading.value = true;
+    _fetch.beginFirstPage(isRefresh: isRefresh);
     _errorMessage.value = null;
 
     try {
@@ -61,18 +63,22 @@ class RouteListController extends GetxController {
       );
       _routeList.assignAll(model.routes);
       _hasNextPage = model.meta.hasNextPage;
+      _fetch.endFirstPage();
     } catch (e) {
       _errorMessage.value = e.toString().replaceFirst('Exception: ', '');
-    } finally {
-      _isLoading.value = false;
+      _fetch.endFirstPage(markFetched: hasFetched);
     }
   }
 
-  /// Load next page for pagination
   Future<void> loadMoreRoutes({String? businessId}) async {
-    if (!_hasNextPage || _isPaginationLoading.value) return;
+    if (!_hasNextPage ||
+        isPaginationLoading ||
+        isInitialLoading ||
+        isRefreshing) {
+      return;
+    }
 
-    _isPaginationLoading.value = true;
+    _fetch.beginLoadMore();
     _currentPage++;
 
     try {
@@ -88,14 +94,12 @@ class RouteListController extends GetxController {
       _currentPage--;
       _errorMessage.value = 'Pagination error: $e';
     } finally {
-      _isPaginationLoading.value = false;
+      _fetch.endLoadMore();
     }
   }
 
-  /// reset the controller
   void reset() {
-    _isLoading.value = false;
-    _isPaginationLoading.value = false;
+    _fetch.reset();
     _errorMessage.value = null;
     _routeList.clear();
     _currentPage = 1;

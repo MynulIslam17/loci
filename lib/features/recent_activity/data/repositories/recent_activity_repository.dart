@@ -11,7 +11,7 @@ class RecentActivityRepository {
   Future<Map<String, dynamic>> getActivities({
     required RecentActivityType type,
     required int page,
-    int limit = 10,
+    int limit = 20,
   }) async {
     final url =
         '${AppUrl.recentActivity}?type=${type.toJson}&page=$page&limit=$limit';

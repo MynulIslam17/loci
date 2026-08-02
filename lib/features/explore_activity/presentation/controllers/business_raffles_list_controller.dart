@@ -53,6 +53,7 @@ class BusinessRafflesListController extends GetxController with ExploreTabListCa
   }) async {
     if (!forceRefresh && isCachedFor(businessId, search: _searchQuery)) return;
     if (isLoading.value && !forceRefresh) return;
+    if (isRefreshing.value && !forceRefresh) return;
 
     if (businessChanged(businessId)) {
       _currentPage = 1;
@@ -67,7 +68,13 @@ class BusinessRafflesListController extends GetxController with ExploreTabListCa
       hasMore.value = true;
     }
 
-    isLoading.value = true;
+    beginExploreFetch(
+      isLoading: isLoading,
+      forceRefresh: forceRefresh,
+      businessId: businessId,
+      errorMessage: errorMessage.value,
+      search: _searchQuery,
+    );
     errorMessage.value = null;
 
     try {
@@ -89,12 +96,17 @@ class BusinessRafflesListController extends GetxController with ExploreTabListCa
     } catch (e) {
       errorMessage.value = e.toString().replaceFirst('Exception: ', '');
     } finally {
-      isLoading.value = false;
+      endExploreFetch(isLoading: isLoading);
     }
   }
 
   Future<void> loadMoreRaffles({required String businessId}) async {
-    if (!hasMore.value || isPaginationLoading.value || isLoading.value) return;
+    if (!hasMore.value ||
+        isPaginationLoading.value ||
+        isLoading.value ||
+        isRefreshing.value) {
+      return;
+    }
 
     isPaginationLoading.value = true;
     _currentPage++;
@@ -134,7 +146,7 @@ class BusinessRafflesListController extends GetxController with ExploreTabListCa
   }
 
   void reset() {
-    isLoading.value = false;
+    endExploreFetch(isLoading: isLoading);
     isPaginationLoading.value = false;
     errorMessage.value = null;
     raffleList.clear();

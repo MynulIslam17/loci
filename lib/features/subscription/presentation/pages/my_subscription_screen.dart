@@ -25,7 +25,7 @@ class MySubscriptionScreen extends StatelessWidget {
       backgroundColor: colorScheme.surface,
       appBar: const CustomAppbar(title: "My Subscription"),
       body: Obx(() {
-        if (controller.isLoading && controller.subscription == null) {
+        if (controller.showInitialShimmer && controller.subscription == null) {
           return const Center(child: CircularProgressIndicator());
         }
 
@@ -42,7 +42,7 @@ class MySubscriptionScreen extends StatelessWidget {
         }
 
         return RefreshIndicator(
-          onRefresh: controller.fetchSubscription,
+          onRefresh: () => controller.fetchSubscription(isRefresh: true),
           child: ListView(
             physics: const AlwaysScrollableScrollPhysics(),
             padding: const EdgeInsets.all(16),

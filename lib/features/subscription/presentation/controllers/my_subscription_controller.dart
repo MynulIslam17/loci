@@ -1,4 +1,5 @@
 import 'package:get/get.dart';
+import 'package:loci/core/utils/paginated_list_fetch_state.dart';
 import 'package:loci/core/utils/show_snackbar.dart';
 import 'package:loci/features/subscription/data/models/my_subscription_model.dart';
 import 'package:loci/features/subscription/domain/services/subscription_service.dart';
@@ -10,8 +11,8 @@ class MySubscriptionController extends GetxController {
   MySubscriptionController(this._service);
 
   final SubscriptionService _service;
+  final PaginatedListFetchState _fetch = PaginatedListFetchState();
 
-  final RxBool _isLoading = false.obs;
   final RxBool _isCancelling = false.obs;
   final RxnString _errorMessage = RxnString();
   final Rxn<MySubscriptionModel> _subscription = Rxn<MySubscriptionModel>();
@@ -21,7 +22,11 @@ class MySubscriptionController extends GetxController {
   // caller's first business — the same one checkout defaults to.
   String? _businessId;
 
-  bool get isLoading => _isLoading.value;
+  bool get isInitialLoading => _fetch.initialLoading.value;
+  bool get isRefreshing => _fetch.refreshing.value;
+  bool get showInitialShimmer => _fetch.showInitialShimmer;
+  bool get hasFetched => _fetch.hasFetched.value;
+  bool get isLoading => isInitialLoading;
   bool get isCancelling => _isCancelling.value;
   String? get errorMessage => _errorMessage.value;
   MySubscriptionModel? get subscription => _subscription.value;
@@ -32,21 +37,25 @@ class MySubscriptionController extends GetxController {
     fetchSubscription();
   }
 
-  Future<void> fetchSubscription() async {
-    _isLoading.value = true;
+  Future<void> fetchSubscription({bool isRefresh = false}) async {
+    if (isInitialLoading || isRefreshing) return;
+
+    _fetch.beginFirstPage(isRefresh: isRefresh);
     _errorMessage.value = null;
+
     try {
       final String? businessId = await _resolveBusinessId();
       if (businessId == null) {
         _errorMessage.value =
             'You need a business before viewing a subscription.';
+        _fetch.endFirstPage();
         return;
       }
       _subscription.value = await _service.getMySubscription(businessId);
+      _fetch.endFirstPage();
     } catch (e) {
       _errorMessage.value = e.toString().replaceFirst('Exception: ', '');
-    } finally {
-      _isLoading.value = false;
+      _fetch.endFirstPage(markFetched: hasFetched);
     }
   }
 

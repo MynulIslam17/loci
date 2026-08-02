@@ -1,4 +1,5 @@
 import 'package:get/get.dart';
+import 'package:loci/core/utils/paginated_list_fetch_state.dart';
 import 'package:loci/features/my_business/data/models/business_profile_model.dart';
 import 'package:loci/features/my_business/data/models/my_business_list_model.dart';
 import 'package:loci/features/auth/presentation/controllers/auth_controller.dart';
@@ -8,31 +9,33 @@ class GetMyBusinessController extends GetxController {
   GetMyBusinessController(this._service);
 
   final MyBusinessService _service;
+  final PaginatedListFetchState _fetch = PaginatedListFetchState();
 
   final RxnString errorMessage = RxnString();
-
   final RxBool isBusinessOwner = false.obs;
-
-  final RxBool isLoading = false.obs;
   final RxList<BusinessModel> businessList = <BusinessModel>[].obs;
 
-  void _setLoading(bool value) {
-    isLoading.value = value;
-  }
+  bool get isInitialLoading => _fetch.initialLoading.value;
+  bool get isRefreshing => _fetch.refreshing.value;
+  bool get showInitialShimmer => _fetch.showInitialShimmer;
+  bool get hasFetched => _fetch.hasFetched.value;
+  RxBool get isLoading => _fetch.initialLoading;
 
-  Future<void> getMyBusinesses({String? category}) async {
+  Future<void> getMyBusinesses({String? category, bool isRefresh = false}) async {
+    if (isInitialLoading || isRefreshing) return;
+
+    _fetch.beginFirstPage(isRefresh: isRefresh);
     errorMessage.value = null;
-    _setLoading(true);
 
     try {
       businessList.assignAll(
         await _service.getMyBusinesses(category: category),
       );
+      _fetch.endFirstPage();
     } catch (e) {
       errorMessage.value = e.toString().replaceFirst('Exception: ', '');
-      businessList.clear();
-    } finally {
-      _setLoading(false);
+      if (!hasFetched) businessList.clear();
+      _fetch.endFirstPage(markFetched: hasFetched);
     }
   }
 

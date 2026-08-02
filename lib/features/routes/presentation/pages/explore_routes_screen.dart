@@ -64,7 +64,7 @@ class _ExploreRoutesPageState extends State<ExploreRoutesPage> {
       child: Obx(() {
         final controller = routeController;
         final hasSearch = controller.searchQuery.trim().isNotEmpty;
-        final isInitialLoading = controller.isLoading;
+        final isInitialLoading = controller.showInitialShimmer;
         final hasFatalError =
             controller.errorMessage != null &&
             controller.routeList.isEmpty &&

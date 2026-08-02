@@ -1,27 +1,31 @@
 class BusinessActivityModel {
+  final String id;
   final String businessName;
   final String category;
-  final String lastVisited;
+  final String? lastVisited;
   final String businessLogo;
 
   BusinessActivityModel({
+    required this.id,
     required this.businessName,
     required this.category,
-    required this.lastVisited,
+    this.lastVisited,
     required this.businessLogo,
   });
 
   factory BusinessActivityModel.fromJson(Map<String, dynamic> json) {
     return BusinessActivityModel(
+      id: json['_id']?.toString() ?? json['id']?.toString() ?? '',
       businessName: json['businessName'] ?? '',
       category: json['category'] ?? '',
-      lastVisited: json['lastVisited'] ?? '',
+      lastVisited: json['lastVisited']?.toString(),
       businessLogo: json['businessLogo'] ?? '',
     );
   }
 
   DateTime? get date {
-    if (lastVisited.isEmpty) return null;
-    return DateTime.tryParse(lastVisited);
+    final value = lastVisited;
+    if (value == null || value.isEmpty) return null;
+    return DateTime.tryParse(value);
   }
 }

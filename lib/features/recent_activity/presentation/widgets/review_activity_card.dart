@@ -2,14 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:loci/core/constants/app_text_style.dart';
 import 'package:loci/core/theme/theme_extention.dart';
 import 'package:loci/features/recent_activity/presentation/widgets/activity_card_shell.dart';
-import 'package:loci/shared/widgets/custom_image_container.dart';
+import 'package:loci/shared/widgets/business_avatar.dart';
 
-Widget buildAnswerActivityCard({
+Widget buildReviewActivityCard({
   required BuildContext context,
-  required String question,
-  required String answer,
-  required String timestamp,
-  String? imageUrl,
+  required String name,
+  required String businessName,
+  required String reviewText,
+  required String imageUrl,
+  required double rating,
 }) {
   final colorScheme = context.colorScheme;
 
@@ -18,51 +19,36 @@ Widget buildAnswerActivityCard({
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
-          children: [
-            ActivityCategoryChip(label: 'Your answer'),
-            const Spacer(),
-            ActivityMetaChip(
-              icon: Icons.schedule_rounded,
-              label: timestamp,
-            ),
-          ],
-        ),
-        const SizedBox(height: 12),
-        Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            CustomCachedImage(
-              imageUrl: imageUrl,
-              width: 36,
-              height: 36,
-              isCircle: true,
-              fallbackIcon: Icons.person_outline_rounded,
-            ),
-            const SizedBox(width: 10),
+            BusinessAvatar(imageUrl: imageUrl, size: 48),
+            const SizedBox(width: 12),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'On',
-                    style: AppTextStyle.textXs(
-                      color: colorScheme.onSurfaceVariant,
-                      weight: FontWeight.w500,
-                    ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    question,
+                    businessName,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                     style: AppTextStyle.textSm(
                       color: colorScheme.onSurface,
-                      weight: FontWeight.w600,
+                      weight: FontWeight.w700,
                     ),
-                    maxLines: 2,
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'Reviewed by $name',
+                    maxLines: 1,
                     overflow: TextOverflow.ellipsis,
+                    style: AppTextStyle.textXs(
+                      color: colorScheme.onSurfaceVariant,
+                    ),
                   ),
                 ],
               ),
             ),
+            _RatingBadge(rating: rating),
           ],
         ),
         const SizedBox(height: 12),
@@ -87,7 +73,7 @@ Widget buildAnswerActivityCard({
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
-                  answer,
+                  reviewText,
                   style: AppTextStyle.textSm(
                     color: colorScheme.onSurface,
                     weight: FontWeight.w500,
@@ -102,4 +88,36 @@ Widget buildAnswerActivityCard({
       ],
     ),
   );
+}
+
+class _RatingBadge extends StatelessWidget {
+  const _RatingBadge({required this.rating});
+
+  final double rating;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: Colors.amber.withValues(alpha: 0.15),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: Colors.amber.withValues(alpha: 0.35)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(Icons.star_rounded, size: 16, color: Colors.amber),
+          const SizedBox(width: 4),
+          Text(
+            rating.toStringAsFixed(1),
+            style: AppTextStyle.textXs(
+              color: Colors.amber.shade800,
+              weight: FontWeight.w700,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }

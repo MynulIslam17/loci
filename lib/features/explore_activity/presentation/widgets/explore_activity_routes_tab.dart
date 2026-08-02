@@ -39,6 +39,7 @@ class _ExploreActivityRoutesTabState extends State<ExploreActivityRoutesTab>
     return Obx(() {
       return ExploreActivityTabScroll(
         isLoading: _controller.showInitialLoader(widget.businessId),
+        isRefreshing: _controller.isRefreshing.value,
         isPaginationLoading: _controller.isPaginationLoading.value,
         onRefresh: () => _controller.fetchRoutes(
           businessId: widget.businessId,

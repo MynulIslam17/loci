@@ -16,7 +16,7 @@ class AnsweredActivityModel {
       question: json['question'] ?? '',
       answer: json['answer'] ?? '',
       time: json['time'] ?? '',
-      questionAuthorAvatar: json['questionAuthorAvatar'],
+      questionAuthorAvatar: json['questionAuthorAvatar']?.toString() ?? '',
     );
   }
 }

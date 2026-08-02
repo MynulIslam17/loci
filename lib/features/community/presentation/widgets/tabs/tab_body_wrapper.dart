@@ -36,15 +36,19 @@ class TabBodyWrapper extends StatelessWidget {
         controller.announcementMap.length;
 
         final isLoading = controller.isLoadingFor(tabType);
+        final isRefreshing = controller.isRefreshingFor(tabType);
         final hasLoaded = controller.hasLoadedFor(tabType);
         final items = controller.announcementsFor(tabType);
         final error = controller.errorFor(tabType);
         final colors = Theme.of(context).colorScheme;
 
-        final showListShimmer = error == null && isLoading;
+        final showListShimmer = error == null && isLoading && !hasLoaded;
         final showError = hasLoaded && error != null && items.isEmpty;
-        final showEmpty =
-            hasLoaded && !isLoading && items.isEmpty && error == null;
+        final showEmpty = hasLoaded &&
+            !isLoading &&
+            !isRefreshing &&
+            items.isEmpty &&
+            error == null;
 
         // The pinned tab bar always absorbs overlap (see [CommunityScreenBody]),
         // so every scroll state — including the loading shimmer — must inject it
@@ -64,6 +68,7 @@ class TabBodyWrapper extends StatelessWidget {
           shimmerBuilder: shimmerBuilder,
           builder: builder,
           isPaginationLoading: controller.isPaginationLoadingFor(tabType),
+          isRefreshing: isRefreshing,
           onRefresh: () => controller.refreshTabWithCommunityMeta(tabType),
           onRetry: () => controller.fetchAnnouncements(
             type: tabType,
@@ -101,6 +106,7 @@ class _TabScrollContent extends StatelessWidget {
     required this.shimmerBuilder,
     required this.builder,
     required this.isPaginationLoading,
+    required this.isRefreshing,
     required this.onRefresh,
     required this.onRetry,
     required this.onLoadMore,
@@ -120,6 +126,7 @@ class _TabScrollContent extends StatelessWidget {
   final Widget Function(BuildContext context)? shimmerBuilder;
   final Widget Function() builder;
   final bool isPaginationLoading;
+  final bool isRefreshing;
   final Future<void> Function() onRefresh;
   final VoidCallback onRetry;
   final VoidCallback onLoadMore;
@@ -156,7 +163,8 @@ class _TabScrollContent extends StatelessWidget {
             final metrics = notification.metrics;
             if (metrics.pixels >= metrics.maxScrollExtent - 200 &&
                 canLoadMore &&
-                !isPaginationLoading) {
+                !isPaginationLoading &&
+                !isRefreshing) {
               onLoadMore();
             }
           }

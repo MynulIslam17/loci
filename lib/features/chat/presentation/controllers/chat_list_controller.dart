@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:get/get.dart';
 import 'package:loci/core/services/chat_socket_service.dart';
 import 'package:loci/core/utils/app_error_messages.dart';
+import 'package:loci/core/utils/paginated_list_fetch_state.dart';
 import 'package:loci/features/auth/presentation/controllers/auth_controller.dart';
 import 'package:loci/features/chat/data/models/conversation_model.dart';
 import 'package:loci/features/chat/domain/services/chat_service.dart';
@@ -15,13 +16,19 @@ class ChatListController extends GetxController {
 
   final ChatService _service;
   final ChatSocketService _socket = Get.find<ChatSocketService>();
+  final PaginatedListFetchState _fetch = PaginatedListFetchState();
 
-  final isLoading = false.obs;
   final errorMessage = RxnString();
   final conversations = <ConversationModel>[].obs;
 
   /// userIds currently online (driven by presence events).
   final onlineUserIds = <String>{}.obs;
+
+  bool get isInitialLoading => _fetch.initialLoading.value;
+  bool get isRefreshing => _fetch.refreshing.value;
+  bool get showInitialShimmer => _fetch.showInitialShimmer;
+  bool get hasFetched => _fetch.hasFetched.value;
+  RxBool get isLoading => _fetch.initialLoading;
 
   String get _myId => Get.find<AuthController>().userModel?.id ?? '';
 
@@ -40,15 +47,17 @@ class ChatListController extends GetxController {
     _subs.add(_socket.onPresence.listen(_onPresence));
   }
 
-  Future<void> fetchConversations() async {
-    isLoading.value = true;
+  Future<void> fetchConversations({bool isRefresh = false}) async {
+    if (isInitialLoading || isRefreshing) return;
+
+    _fetch.beginFirstPage(isRefresh: isRefresh);
     errorMessage.value = null;
     try {
       conversations.assignAll(await _service.getConversations());
+      _fetch.endFirstPage();
     } catch (e) {
       errorMessage.value = AppErrorMessages.sanitize(e);
-    } finally {
-      isLoading.value = false;
+      _fetch.endFirstPage(markFetched: hasFetched);
     }
   }
 
@@ -59,7 +68,7 @@ class ChatListController extends GetxController {
     final idx = conversations.indexWhere((c) => c.id == msg.conversationId);
 
     if (idx == -1) {
-      fetchConversations();
+      fetchConversations(isRefresh: true);
       return;
     }
 
