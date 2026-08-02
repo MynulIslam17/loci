@@ -1,4 +1,3 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 import 'package:loci/core/constants/app_text_style.dart';
@@ -17,13 +16,13 @@ class RaffleCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colorScheme = context.colorScheme;
-    const accentColor = Color(0xFF66B9AD);
 
     return Card(
       margin: const EdgeInsets.only(bottom: 20),
       color: colorScheme.surfaceContainerHigh,
       clipBehavior: Clip.antiAlias,
       elevation: 2,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -65,7 +64,7 @@ class RaffleCard extends StatelessWidget {
                     horizontal: 16,
                   ),
                   decoration: BoxDecoration(
-                    color: colorScheme.primary.withOpacity(0.2),
+                    color: colorScheme.primaryContainer,
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Text(
@@ -81,15 +80,18 @@ class RaffleCard extends StatelessWidget {
                 // Date Row
                 Row(
                   children: [
-                    const Icon(
+                    Icon(
                       Icons.calendar_today_outlined,
                       size: 14,
-                      color: accentColor,
+                      color: colorScheme.primary,
                     ),
                     const SizedBox(width: 6),
                     Text(
                       dateRangeHelper(raffle.startDate, raffle.endDate),
-                      style: AppTextStyle.textXs(weight: FontWeight.w500),
+                      style: AppTextStyle.textXs(
+                        weight: FontWeight.w500,
+                        color: colorScheme.onSurfaceVariant,
+                      ),
                     ),
                   ],
                 ),

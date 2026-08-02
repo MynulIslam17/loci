@@ -2,17 +2,24 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:loci/core/constants/app_text_style.dart';
 import 'package:loci/core/theme/theme_extention.dart';
+import 'package:loci/core/utils/date_parser.dart';
+import 'package:loci/features/explore_activity/presentation/widgets/explore_activity_detail_hero.dart';
+import 'package:loci/features/explore_activity/presentation/widgets/explore_activity_detail_scroll.dart';
+import 'package:loci/features/explore_activity/presentation/widgets/explore_activity_info_row.dart';
+import 'package:loci/features/explore_activity/presentation/widgets/explore_activity_organizer_section.dart';
+import 'package:loci/features/explore_activity/presentation/widgets/explore_activity_raffle_prize_chip.dart';
+import 'package:loci/features/explore_activity/presentation/widgets/explore_activity_raffle_progress.dart';
+import 'package:loci/features/explore_activity/presentation/widgets/explore_activity_section.dart';
+import 'package:loci/features/explore_activity/presentation/widgets/explore_activity_status_badge.dart';
+import 'package:loci/features/explore_activity/presentation/widgets/explore_activity_visibility_badge.dart';
+import 'package:loci/features/raffles/data/models/raffle_detail_model.dart';
 import 'package:loci/features/raffles/domain/services/raffles_service.dart';
 import 'package:loci/features/raffles/presentation/controllers/raffle_details_controller.dart';
-import 'package:loci/features/raffles/presentation/widgets/date_range_helper.dart';
+import 'package:loci/features/raffles/presentation/widgets/raffles_details_shimmer.dart';
+import 'package:loci/routes/app_routes.dart';
 import 'package:loci/shared/widgets/custom_appbar.dart';
 import 'package:loci/shared/widgets/error_state.dart';
-import 'package:loci/routes/app_routes.dart';
-import 'package:percent_indicator/linear_percent_indicator.dart';
-
-import 'package:loci/core/theme/app_colors.dart';
-import 'package:loci/features/raffles/data/models/raffle_detail_model.dart';
-import 'package:loci/shared/widgets/custom_image_container.dart';
+import 'package:loci/shared/widgets/task_card.dart';
 
 class RafflesDetailsScreen extends StatefulWidget {
   final String? raffleId;
@@ -29,48 +36,48 @@ class RafflesDetailsScreen extends StatefulWidget {
 }
 
 class _RafflesDetailsScreenState extends State<RafflesDetailsScreen> {
-  late final RaffleDetailsController rafflesDetailsController;
-
-  late final String activeRaffleId;
-  late final bool showAppBar;
+  late final RaffleDetailsController _controller;
+  late final String _activeRaffleId;
+  late final bool _showAppBar;
 
   @override
   void initState() {
     super.initState();
 
-    rafflesDetailsController = Get.isRegistered<RaffleDetailsController>()
+    _controller = Get.isRegistered<RaffleDetailsController>()
         ? Get.find<RaffleDetailsController>()
         : Get.put(RaffleDetailsController(Get.find<RafflesService>()));
 
     final args = Get.arguments;
-
     if (args is Map<String, dynamic>) {
-      activeRaffleId = args["raffleId"];
-      showAppBar = args["showAppBar"] ?? true;
+      _activeRaffleId = args['raffleId']?.toString() ?? '';
+      _showAppBar = args['showAppBar'] ?? true;
     } else {
-      activeRaffleId = widget.raffleId!;
-      showAppBar = widget.showAppBar;
+      _activeRaffleId = widget.raffleId ?? '';
+      _showAppBar = widget.showAppBar;
     }
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      rafflesDetailsController.fetchRaffleDetails(activeRaffleId);
+      if (_activeRaffleId.isNotEmpty) {
+        _controller.fetchRaffleDetails(_activeRaffleId);
+      }
     });
   }
 
-  void _taskHandler(RaffleTaskModel task) async {
+  Future<void> _taskHandler(RaffleTaskModel task) async {
     if (task.isCompleted) return;
 
     final activity = task.activity;
+    if (activity == null || activity.id.isEmpty) return;
 
     await Get.toNamed(
       task.isRouteTask ? AppRoutes.routeDetails : AppRoutes.eventDetails,
       arguments: task.isRouteTask
-          ? {"routeName": activity?.title, "routeId": activity?.id}
-          : {"eventTitle": activity?.title, "eventId": activity?.id},
+          ? {'routeName': activity.title, 'routeId': activity.id}
+          : {'eventTitle': activity.title, 'eventId': activity.id},
     );
 
-    // AFTER COMING BACK → refresh raffle
-    rafflesDetailsController.fetchRaffleDetails(activeRaffleId);
+    await _controller.fetchRaffleDetails(_activeRaffleId);
   }
 
   @override
@@ -79,341 +86,153 @@ class _RafflesDetailsScreenState extends State<RafflesDetailsScreen> {
 
     return Scaffold(
       backgroundColor: colorScheme.surface,
-      appBar: showAppBar ? CustomAppbar(title: "Raffles Details") : null,
+      appBar: _showAppBar ? const CustomAppbar(title: 'Raffle Details') : null,
       body: Obx(() {
-        final controller = rafflesDetailsController;
-        if (controller.isLoading) {
-          return const Center(child: CircularProgressIndicator());
+        if (_controller.isLoading) {
+          return const RafflesDetailsShimmer();
         }
 
-        if (controller.errorMessage != null) {
+        if (_controller.errorMessage != null &&
+            _controller.raffleDetails == null) {
           return ErrorStateWidget(
-            message: controller.errorMessage!,
-            onRetry: () => controller.fetchRaffleDetails(activeRaffleId),
+            message: _controller.errorMessage!,
+            onRetry: () => _controller.fetchRaffleDetails(_activeRaffleId),
           );
         }
 
-        if (controller.raffleDetails == null) {
-          return const Center(child: Text("No data"));
+        final details = _controller.raffleDetails;
+        if (details == null) {
+          return const Center(child: Text('No raffle found'));
         }
 
-        final raffleDetails = controller.raffleDetails!;
-        final raffle = raffleDetails.raffleModel;
-
-        final tasks = raffleDetails.tasks;
-        final total = tasks.length;
-        final completed = tasks.where((e) => e.isCompleted).length;
-        final percent = total == 0 ? 0.0 : completed / total;
-
-        return SingleChildScrollView(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const SizedBox(height: 15),
-
-              /// ─── Banner ─────────────────────────────
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                child: CustomCachedImage(
-                  imageUrl: raffle.banner,
-                  height: 200,
-                  width: double.infinity,
-                  fit: BoxFit.cover,
-                  customBorderRadius: BorderRadius.circular(16),
-                ),
-              ),
-
-              Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    /// ─── Title ─────────────────────────────
-                    Text(
-                      raffle.title,
-                      style: AppTextStyle.textLg(weight: FontWeight.w600),
-                    ),
-
-                    const SizedBox(height: 8),
-
-                    Text(
-                      raffle.description,
-                      style: AppTextStyle.textXs(
-                        color: colorScheme.onSurfaceVariant,
-                      ),
-                    ),
-
-                    const SizedBox(height: 16),
-
-                    /// ─── Bundle ─────────────────────────────
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: colorScheme.primary.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Text(
-                        raffle.bundleName,
-                        style: AppTextStyle.textSm(
-                          color: colorScheme.primary,
-                          weight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
-
-                    const SizedBox(height: 12),
-
-                    Text(
-                      dateRangeHelper(raffle.startDate, raffle.endDate),
-                      style: AppTextStyle.textXs(color: AppColors.danger),
-                    ),
-
-                    const SizedBox(height: 24),
-
-                    /// ─── Progress Section ─────────────────────────────
-                    _buildProgressSection(
-                      colorScheme,
-                      percent,
-                      total,
-                      completed,
-                    ),
-
-                    const SizedBox(height: 24),
-
-                    /// ─── Task List ─────────────────────────────
-                    Card(
-                      color: colorScheme.surfaceContainerHigh,
-                      elevation: 2,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      child: Padding(
-                        padding: const EdgeInsets.all(8.0),
-                        child: Column(
-                          children: tasks.map((task) {
-                            final activity = task.activity;
-
-                            return _buildTaskItem(
-                              name: activity?.title ?? "Unknown",
-                              image: activity?.banner ?? "",
-                              isCompleted: task.isCompleted,
-                              colorScheme: colorScheme,
-                              task: task,
-                            );
-                          }).toList(),
-                        ),
-                      ),
-                    ),
-
-                    const SizedBox(height: 24),
-
-                    /// ─── Sponsor ─────────────────────────────
-                    Text(
-                      "Sponsor",
-                      style: AppTextStyle.textMd(weight: FontWeight.bold),
-                    ),
-
-                    const SizedBox(height: 12),
-
-                    _buildSponsorCard(colorScheme, raffleDetails.sponsor),
-                  ],
-                ),
-              ),
-            ],
+        return RefreshIndicator(
+          onRefresh: () => _controller.refreshRaffleDetails(_activeRaffleId),
+          child: _RaffleDetailsBody(
+            details: details,
+            onTaskTap: _taskHandler,
           ),
         );
       }),
     );
   }
+}
 
-  // ─────────────────────────────────────────
-  // Progress Section
-  // ─────────────────────────────────────────
-  Widget _buildProgressSection(
-    ColorScheme colorScheme,
-    double percent,
-    int total,
-    int completed,
-  ) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+class _RaffleDetailsBody extends StatelessWidget {
+  const _RaffleDetailsBody({
+    required this.details,
+    required this.onTaskTap,
+  });
+
+  final RaffleDetailsModel details;
+  final void Function(RaffleTaskModel task) onTaskTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = context.colorScheme;
+    final raffle = details.raffleModel;
+    final tasks = details.tasks;
+    final sponsor = details.sponsor;
+
+    final dateRange =
+        '${DateParserHelper.shortDate(DateTime.parse(raffle.startDate))} - '
+        '${DateParserHelper.shortDate(DateTime.parse(raffle.endDate))}';
+
+    return ExploreActivityDetailScroll(
       children: [
-        Text(
-          "Checked-in status:",
-          style: AppTextStyle.textMd(
-            weight: FontWeight.bold,
-            color: colorScheme.onSurface,
+        ExploreActivitySection(
+          child: ExploreActivityDetailHero(
+            imageUrl: raffle.banner,
+            title: raffle.title,
+            description: raffle.description,
+            badges: Wrap(
+              spacing: 8,
+              runSpacing: 6,
+              children: [
+                if (details.status.isNotEmpty)
+                  ExploreActivityStatusBadge(status: details.status),
+                ExploreActivityVisibilityBadge(isPublic: details.isPublic),
+              ],
+            ),
+            belowTitle: ExploreActivityInfoRow(
+              icon: Icons.calendar_today_outlined,
+              text: dateRange,
+              textColor: colorScheme.primary,
+            ),
           ),
         ),
-        const SizedBox(height: 12),
-
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(
-              "You're doing great! Keep it up.",
-              style: AppTextStyle.textXs(color: colorScheme.onSurfaceVariant),
-            ),
-            Text(
-              "${(percent * 100).toInt()}%",
-              style: AppTextStyle.textSm(
-                weight: FontWeight.bold,
-                color: colorScheme.onSurface,
-              ),
-            ),
-          ],
-        ),
-
-        const SizedBox(height: 8),
-
-        LinearPercentIndicator(
-          lineHeight: 8.0,
-          percent: percent,
-          padding: EdgeInsets.zero,
-          backgroundColor: colorScheme.surfaceContainerHigh,
-          progressColor: colorScheme.primary,
-          barRadius: const Radius.circular(10),
-          animation: true,
-        ),
-
-        const SizedBox(height: 8),
-
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(
-              "$completed of $total tasks completed",
-              style: AppTextStyle.textXs(color: colorScheme.onSurfaceVariant),
-            ),
-            Text(
-              "${total - completed} remaining",
-              style: AppTextStyle.textXs(color: colorScheme.onSurfaceVariant),
-            ),
-          ],
-        ),
-      ],
-    );
-  }
-
-  // ─────────────────────────────────────────
-  // Task Item
-  // ─────────────────────────────────────────
-  Widget _buildTaskItem({
-    required String name,
-    required String image,
-    required bool isCompleted,
-    required ColorScheme colorScheme,
-    required RaffleTaskModel task,
-  }) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 6.0),
-      child: Container(
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: colorScheme.surface,
-          borderRadius: BorderRadius.circular(40),
-        ),
-        child: InkWell(
-          onTap: () => _taskHandler(task),
-
+        ExploreActivitySection(
+          title: 'Prize',
+          highlightTitle: true,
           child: Row(
             children: [
-              Icon(
-                isCompleted ? Icons.check_circle : Icons.add_circle,
-                color: isCompleted ? Colors.green : colorScheme.primary,
-                size: 32,
-              ),
-
-              const SizedBox(width: 12),
-
               Container(
-                width: 50,
-                height: 50,
+                padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  border: Border.all(
-                    color: isCompleted ? Colors.green : colorScheme.primary,
-                  ),
-                  shape: BoxShape.circle,
+                  color: colorScheme.primaryContainer,
+                  borderRadius: BorderRadius.circular(12),
                 ),
-                child: CustomCachedImage(imageUrl: image, isCircle: true),
+                child: Icon(
+                  Icons.card_giftcard_rounded,
+                  color: colorScheme.primary,
+                  size: 22,
+                ),
               ),
-
               const SizedBox(width: 12),
-
               Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      name,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: AppTextStyle.textSm(weight: FontWeight.bold),
-                    ),
-                    Text(
-                      isCompleted ? "Completed" : "Tap to check-in",
-                      style: AppTextStyle.textXs(
-                        color: colorScheme.onSurfaceVariant,
-                      ),
-                    ),
-                  ],
-                ),
+                child: ExploreActivityRafflePrizeChip(label: raffle.bundleName),
               ),
             ],
           ),
         ),
-      ),
-    );
-  }
-
-  // ─────────────────────────────────────────
-  // Sponsor Card
-  // ─────────────────────────────────────────
-  Widget _buildSponsorCard(ColorScheme colorScheme, SponsorModel sponsor) {
-    return Card(
-      margin: EdgeInsets.zero,
-      color: colorScheme.surfaceContainerHigh,
-      elevation: 2,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      child: Padding(
-        padding: const EdgeInsets.all(14),
-        child: Row(
-          children: [
-            Container(
-              height: 60,
-              width: 80,
-              child: CustomCachedImage(
-                imageUrl: sponsor.logo,
-                fit: BoxFit.contain,
-              ),
-            ),
-            const SizedBox(width: 12),
-
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    sponsor.name,
-                    style: AppTextStyle.textSm(
-                      weight: FontWeight.bold,
-                      color: colorScheme.primary,
-                    ),
-                  ),
-                  Text(
-                    sponsor.description,
-                    maxLines: 2,
-                    style: AppTextStyle.textXs(
-                      color: colorScheme.onSurfaceVariant,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
+        ExploreActivitySection(
+          title: 'Your progress',
+          highlightTitle: true,
+          child: ExploreActivityRaffleProgress(tasks: tasks),
         ),
-      ),
+        ExploreActivitySection(
+          title: 'Entry requirements',
+          subtitle: 'Complete each task to enter the raffle',
+          highlightTitle: true,
+          child: tasks.isEmpty
+              ? Text(
+                  'No entry requirements for this raffle.',
+                  style: AppTextStyle.textSm(
+                    color: colorScheme.onSurfaceVariant,
+                  ),
+                )
+              : ListView.separated(
+                  shrinkWrap: true,
+                  padding: EdgeInsets.zero,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: tasks.length,
+                  separatorBuilder: (_, _) => const SizedBox(height: 8),
+                  itemBuilder: (context, index) {
+                    final task = tasks[index];
+                    final activity = task.activity;
+
+                    return TaskCard(
+                      id: activity?.id ?? 'task_${task.order}',
+                      step: task.order,
+                      typeLabel: task.isRouteTask ? 'Route' : 'Event',
+                      title: activity?.title ?? 'Unknown activity',
+                      description: task.isCompleted
+                          ? 'Completed'
+                          : 'Tap to check-in',
+                      imageUrl: activity?.banner,
+                      isCompleted: task.isCompleted,
+                      onTap: task.isCompleted ? null : () => onTaskTap(task),
+                    );
+                  },
+                ),
+        ),
+        ExploreActivityOrganizerSection(
+          title: 'Sponsor',
+          name: sponsor.name,
+          description: sponsor.description,
+          logo: sponsor.logo,
+          highlightTitle: true,
+        ),
+      ],
     );
   }
 }

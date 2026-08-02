@@ -122,15 +122,27 @@ class RaffleTaskModel {
 
   factory RaffleTaskModel.fromJson(Map<String, dynamic> json) {
     return RaffleTaskModel(
-      routeActivity: json['routeActivity'] != null
-          ? TaskActivityModel.fromJson(json['routeActivity'])
-          : null,
-      eventActivity: json['eventActivity'] != null
-          ? TaskActivityModel.fromJson(json['eventActivity'])
-          : null,
+      routeActivity: _parseTaskActivity(json['routeActivity']),
+      eventActivity: _parseTaskActivity(json['eventActivity']),
       order: json['order'] ?? 0,
       isCompleted: json['isCompleted'] ?? false,
     );
+  }
+
+  static TaskActivityModel? _parseTaskActivity(dynamic value) {
+    if (value == null) return null;
+    if (value is String && value.isNotEmpty) {
+      return TaskActivityModel(
+        id: value,
+        banner: '',
+        title: '',
+        details: '',
+      );
+    }
+    if (value is Map<String, dynamic>) {
+      return TaskActivityModel.fromJson(value);
+    }
+    return null;
   }
 
   /// Helper — returns whichever activity is present

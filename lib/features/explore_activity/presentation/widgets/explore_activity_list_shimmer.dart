@@ -9,8 +9,8 @@ class ExploreActivityListShimmer {
   static Widget sliver({int itemCount = 4}) {
     return SliverList.separated(
       itemCount: itemCount,
-      separatorBuilder: (_, __) => const SizedBox(height: 10),
-      itemBuilder: (_, __) => const _ExploreActivityCardShimmer(),
+      separatorBuilder: (_, _) => const SizedBox(height: 10),
+      itemBuilder: (_, _) => const _ExploreActivityCardShimmer(),
     );
   }
 }
@@ -34,19 +34,35 @@ class _ExploreActivityCardShimmer extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.all(12),
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                AppSkeleton.box(width: 180, height: 16, radius: 4),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          AppSkeleton.box(width: 200, height: 14, radius: 4),
+                          const SizedBox(height: 6),
+                          AppSkeleton.box(width: 150, height: 14, radius: 4),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    AppSkeleton.box(width: 56, height: 22, radius: 20),
+                  ],
+                ),
                 const SizedBox(height: 8),
                 AppSkeleton.box(width: double.infinity, height: 11, radius: 4),
                 const SizedBox(height: 6),
                 AppSkeleton.box(width: 220, height: 11, radius: 4),
                 const SizedBox(height: 12),
-                AppSkeleton.box(width: 140, height: 11, radius: 4),
+                const _MetaRowSkeleton(twoLines: true),
                 const SizedBox(height: 8),
-                AppSkeleton.box(width: 120, height: 11, radius: 4),
+                const _MetaRowSkeleton(),
                 const SizedBox(height: 8),
-                AppSkeleton.box(width: 100, height: 11, radius: 4),
+                const _MetaRowSkeleton(),
                 const SizedBox(height: 16),
                 Row(
                   children: [
@@ -64,6 +80,35 @@ class _ExploreActivityCardShimmer extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+class _MetaRowSkeleton extends StatelessWidget {
+  const _MetaRowSkeleton({this.twoLines = false});
+
+  final bool twoLines;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const SkeletonBox(width: 14, height: 14, radius: 4),
+        const SizedBox(width: 6),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              AppSkeleton.box(width: double.infinity, height: 10, radius: 4),
+              if (twoLines) ...[
+                const SizedBox(height: 4),
+                AppSkeleton.box(width: 180, height: 10, radius: 4),
+              ],
+            ],
+          ),
+        ),
+      ],
     );
   }
 }

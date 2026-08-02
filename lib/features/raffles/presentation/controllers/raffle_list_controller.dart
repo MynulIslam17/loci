@@ -17,7 +17,7 @@ class RaffleListController extends GetxController {
   final RxList<RaffleModel> _raffleList = <RaffleModel>[].obs;
 
   int _currentPage = 1;
-  final int _limit = 20;
+  final int _limit = 10;
   bool _hasNextPage = true;
 
   String _searchQuery = '';

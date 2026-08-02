@@ -40,15 +40,18 @@ class ExploreActivityRaffleProgress extends StatelessWidget {
           ],
         ),
         const SizedBox(height: 10),
-        LinearPercentIndicator(
-          lineHeight: 10,
-          percent: progressValue.clamp(0.0, 1.0),
-          backgroundColor: colorScheme.surface,
-          progressColor: colorScheme.primary,
-          barRadius: const Radius.circular(10),
-          animation: true,
-          animationDuration: 800,
-          padding: EdgeInsets.zero,
+        SizedBox(
+          width: double.infinity,
+          child: LinearPercentIndicator(
+            lineHeight: 12,
+            percent: progressValue.clamp(0.0, 1.0),
+            backgroundColor: colorScheme.outline.withValues(alpha: 0.35),
+            progressColor: colorScheme.primary,
+            barRadius: const Radius.circular(10),
+            animation: true,
+            animationDuration: 800,
+            padding: EdgeInsets.zero,
+          ),
         ),
         const SizedBox(height: 10),
         Row(
