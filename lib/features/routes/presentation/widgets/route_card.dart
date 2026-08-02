@@ -51,13 +51,22 @@ class RouteCard extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    title,
-                    style: AppTextStyle.textMd(
-                      color: colorScheme.onSurface,
-                      weight: FontWeight.w600,
+                  Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      child: Text(
+                        title,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: AppTextStyle.textMd(
+                          color: colorScheme.onSurface,
+                          weight: FontWeight.w600,
+                        ),
+                      ),
                     ),
-                  ),
+                  ],
+                ),
                   const SizedBox(height: 8),
                   Text(
                     description,
@@ -67,32 +76,28 @@ class RouteCard extends StatelessWidget {
                       color: colorScheme.onSurfaceVariant,
                     ),
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 12),
 
-                  // Info Row
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  _buildInfoItem(
+                    context,
+                    Icons.location_on_outlined,
+                    location,
+                    maxLines: 2,
+                  ),
+                  const SizedBox(height: 8),
+                  Wrap(
+                    spacing: 16,
+                    runSpacing: 8,
                     children: [
-                      Expanded(
-                        child: _buildInfoItem(
-                          context,
-                          Icons.location_on_outlined,
-                          location,
-                        ),
+                      _buildInfoChip(
+                        context,
+                        Icons.access_time,
+                        openingTime,
                       ),
-                      Expanded(
-                        child: _buildInfoItem(
-                          context,
-                          Icons.access_time,
-                          openingTime,
-                        ),
-                      ),
-                      Expanded(
-                        child: _buildInfoItem(
-                          context,
-                          Icons.explore_outlined,
-                          availabilityType,
-                        ),
+                      _buildInfoChip(
+                        context,
+                        Icons.explore_outlined,
+                        availabilityType,
                       ),
                     ],
                   ),
@@ -105,19 +110,44 @@ class RouteCard extends StatelessWidget {
     );
   }
 
-  // Helper for the small info items (Location, Duration, etc.)
-  Widget _buildInfoItem(BuildContext context, IconData icon, String label) {
+  Widget _buildInfoItem(
+    BuildContext context,
+    IconData icon,
+    String label, {
+    int maxLines = 1,
+  }) {
+    final colorScheme = context.colorScheme;
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(icon, size: 14, color: colorScheme.primary),
+        const SizedBox(width: 6),
+        Expanded(
+          child: Text(
+            label,
+            maxLines: maxLines,
+            overflow: TextOverflow.ellipsis,
+            style: AppTextStyle.textXs(color: colorScheme.onSurfaceVariant),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildInfoChip(BuildContext context, IconData icon, String label) {
     final colorScheme = context.colorScheme;
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
         Icon(icon, size: 14, color: colorScheme.primary),
         const SizedBox(width: 4),
-        Expanded(
+        ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 140),
           child: Text(
             label,
-            style: AppTextStyle.textXs(color: colorScheme.onSurfaceVariant),
+            maxLines: 1,
             overflow: TextOverflow.ellipsis,
+            style: AppTextStyle.textXs(color: colorScheme.onSurfaceVariant),
           ),
         ),
       ],

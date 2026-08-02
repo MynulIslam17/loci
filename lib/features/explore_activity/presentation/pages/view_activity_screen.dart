@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:loci/core/enums/activity_type.dart';
 import 'package:loci/core/theme/theme_extention.dart';
+import 'package:loci/features/explore_activity/presentation/controllers/business_event_details_controller.dart';
+import 'package:loci/features/explore_activity/presentation/controllers/business_raffle_details_controller.dart';
+import 'package:loci/features/explore_activity/presentation/controllers/business_route_details_controller.dart';
 import 'package:loci/features/explore_activity/presentation/controllers/view_activity_controller.dart';
 import 'package:loci/features/explore_activity/presentation/widgets/explore_activity_async_body.dart';
 import 'package:loci/features/explore_activity/presentation/widgets/view_activity_detail_content.dart';
@@ -22,6 +26,7 @@ class _ViewActivityScreenState extends State<ViewActivityScreen> {
     super.initState();
     _controller = Get.find<ViewActivityController>();
     _controller.parseRouteArguments();
+    _controller.prepareForLoad();
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       await _controller.loadCurrentActivity();
       if (mounted) setState(() {});
@@ -34,15 +39,24 @@ class _ViewActivityScreenState extends State<ViewActivityScreen> {
       backgroundColor: context.colorScheme.surface,
       appBar: CustomAppbar(title: _controller.screenTitle),
       body: Obx(() {
-        _controller.activityType;
+        final type = _controller.activityType;
+        final isLoading = switch (type) {
+          ActivityType.event =>
+            Get.find<BusinessEventDetailsController>().isLoading.value,
+          ActivityType.routes =>
+            Get.find<BusinessRouteDetailsController>().isLoading.value,
+          ActivityType.raffles =>
+            Get.find<BusinessRaffleDetailsController>().isLoading.value,
+        };
+
         return ExploreActivityAsyncBody(
-          isLoading: _controller.isLoading,
+          isLoading: isLoading,
           errorMessage: _controller.errorMessage,
           onRetry: _controller.retryLoad,
           isEmpty: _controller.isEmpty,
           emptyMessage: _controller.emptyMessage,
           builder: (context) => ViewActivityDetailContent(
-            activityType: _controller.activityType,
+            activityType: type,
           ),
         );
       }),

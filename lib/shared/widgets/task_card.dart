@@ -17,6 +17,7 @@ class TaskCard extends StatelessWidget {
     this.typeLabel,
     this.onRemove,
     this.onTap,
+    this.isCompleted = false,
   });
 
   final String id;
@@ -27,6 +28,7 @@ class TaskCard extends StatelessWidget {
   final String? typeLabel;
   final VoidCallback? onRemove;
   final VoidCallback? onTap;
+  final bool isCompleted;
 
   static String typeLabelFromActivityType(String activityType) {
     return activityType.toLowerCase().contains('route') ? 'Route' : 'Event';
@@ -94,6 +96,13 @@ class TaskCard extends StatelessWidget {
                   color: AppColors.base50,
                 ),
               ),
+            ),
+          ] else if (isCompleted) ...[
+            const SizedBox(width: 4),
+            const Icon(
+              Icons.check_circle,
+              color: AppColors.success,
+              size: 24,
             ),
           ] else if (onTap != null) ...[
             const SizedBox(width: 4),

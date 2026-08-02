@@ -18,14 +18,14 @@ class ExploreActivityCompactMeta extends StatelessWidget {
     final colorScheme = context.colorScheme;
 
     return Row(
-      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Icon(icon, size: 14, color: colorScheme.primary),
-        const SizedBox(width: 4),
-        Flexible(
+        const SizedBox(width: 6),
+        Expanded(
           child: Text(
             label,
-            maxLines: 1,
+            maxLines: 2,
             overflow: TextOverflow.ellipsis,
             style: AppTextStyle.textXs(
               color: colorScheme.onSurfaceVariant,

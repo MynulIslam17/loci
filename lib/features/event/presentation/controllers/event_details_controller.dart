@@ -21,6 +21,7 @@ class EventDetailsController extends GetxController {
   Future<void> fetchEventDetails(String eventId) async {
     _isLoading.value = true;
     _errorMessage.value = null;
+    _eventDetails.value = null;
 
     try {
       _eventDetails.value = await _service.getEventDetails(eventId);

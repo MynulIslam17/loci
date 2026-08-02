@@ -67,6 +67,8 @@ class ExploreActivityListCard extends StatelessWidget {
                     Expanded(
                       child: Text(
                         title,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
                         style: AppTextStyle.textMd(
                           weight: FontWeight.w700,
                           color: colorScheme.onSurface,
@@ -91,7 +93,15 @@ class ExploreActivityListCard extends StatelessWidget {
                 ],
                 if (meta.isNotEmpty) ...[
                   const SizedBox(height: 12),
-                  Wrap(spacing: 16, runSpacing: 10, children: meta),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      for (var i = 0; i < meta.length; i++) ...[
+                        meta[i],
+                        if (i < meta.length - 1) const SizedBox(height: 8),
+                      ],
+                    ],
+                  ),
                 ],
                 if (organizerLine != null) ...[
                   const SizedBox(height: 12),

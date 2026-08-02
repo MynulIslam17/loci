@@ -14,6 +14,7 @@ class RaffleCardSkeleton extends StatelessWidget {
       color: colorScheme.surfaceContainerHigh,
       clipBehavior: Clip.antiAlias,
       elevation: 2,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
