@@ -23,177 +23,200 @@ class ProfileScreen extends StatelessWidget {
     final colorScheme = context.colorScheme;
 
     return Scaffold(
-      body: Obx(() {
-        final c = _controller;
-        return RefreshIndicator(
-          onRefresh: _controller.silentFetchProfile,
-          child: SingleChildScrollView(
-            physics: const AlwaysScrollableScrollPhysics(),
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                const SizedBox(height: 20),
-
-                // ================= PROFILE IMAGE =================
-                Stack(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(3),
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        border: Border.all(color: colorScheme.primary),
-                      ),
-                      child: CustomCachedImage(
-                        imageFile: c.profileImage,
-                        imageUrl: c.profileImageUrl,
-                        height: 110,
-                        width: 110,
-                        isCircle: true,
-                      ),
-                    ),
-                    Positioned(
-                      right: 0,
-                      top: 0,
-                      child: _editButton(
-                        onTap: () => CustomImagePicker.pickImageSimple(
-                          context: context,
-                          onImageSelected: c.updateImage,
-                        ),
-                      ),
-                    ),
-                  ],
+      body: Stack(
+        children: [
+          Obx(() {
+            final c = _controller;
+            return RefreshIndicator(
+              onRefresh: _controller.silentFetchProfile,
+              child: SingleChildScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 12,
                 ),
-
-                const SizedBox(height: 10),
-
-                // ================= USER NAME =================
-                Stack(
-                  alignment: Alignment.center,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 40),
-                      child: Text(
-                        c.userName,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        textAlign: TextAlign.center,
-                        style: AppTextStyle.textXl(
-                          color: colorScheme.primary,
-                          weight: FontWeight.w600,
+                    const SizedBox(height: 20),
+
+                    // ================= PROFILE IMAGE =================
+                    Stack(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(3),
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            border: Border.all(color: colorScheme.primary),
+                          ),
+                          child: CustomCachedImage(
+                            imageFile: c.profileImage,
+                            imageUrl: c.profileImageUrl,
+                            height: 110,
+                            width: 110,
+                            isCircle: true,
+                          ),
                         ),
-                      ),
-                    ),
-                    Positioned(
-                      right: 0,
-                      child: _editButton(
-                        onTap: () => _showEditBottomSheet(
-                          context: context,
-                          title: "Edit Name",
-                          hintText: "Edit Name",
-                          initialValue: c.userName,
-                          onSave: c.updateName,
-                          validator: validateFullName,
-                          isNameField: true,
+                        Positioned(
+                          right: 0,
+                          top: 0,
+                          child: _editButton(
+                            onTap: () => CustomImagePicker.pickImageSimple(
+                              context: context,
+                              onImageSelected: c.updateImage,
+                            ),
+                          ),
                         ),
-                      ),
+                      ],
                     ),
-                  ],
-                ),
 
-                const SizedBox(height: 5),
+                    const SizedBox(height: 10),
 
-                if (c.memberSince.isNotEmpty)
-                  Text(
-                    "Member since ${c.memberSince}",
-                    style: AppTextStyle.textXs(
-                      color: colorScheme.onSurfaceVariant,
+                    // ================= USER NAME =================
+                    Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 40),
+                          child: Text(
+                            c.userName,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            textAlign: TextAlign.center,
+                            style: AppTextStyle.textXl(
+                              color: colorScheme.primary,
+                              weight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                        Positioned(
+                          right: 0,
+                          child: _editButton(
+                            onTap: () => _showEditBottomSheet(
+                              context: context,
+                              title: "Edit Name",
+                              hintText: "Edit Name",
+                              initialValue: c.userName,
+                              onSave: c.updateName,
+                              validator: validateFullName,
+                              isNameField: true,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
-                  ),
 
-                const SizedBox(height: 20),
+                    const SizedBox(height: 5),
 
-                // ================= ABOUT =================
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(
-                      "About",
-                      style: AppTextStyle.textMd(color: colorScheme.onSurface),
-                    ),
-                    const SizedBox(width: 5),
-                    _editButton(
-                      onTap: () => _showEditBottomSheet(
-                        context: context,
-                        title: "Edit About",
-                        hintText: "Edit About",
-                        initialValue: c.about,
-                        maxLines: 3,
-                        onSave: c.updateAbout,
-                      ),
-                    ),
-                  ],
-                ),
-
-                const SizedBox(height: 10),
-
-                SizedBox(
-                  width: double.infinity,
-                  child: Card(
-                    color: colorScheme.surfaceContainer,
-                    child: Padding(
-                      padding: const EdgeInsets.all(12),
-                      child: Text(
-                        c.about,
-                        textAlign: TextAlign.center,
+                    if (c.memberSince.isNotEmpty)
+                      Text(
+                        "Member since ${c.memberSince}",
                         style: AppTextStyle.textXs(
                           color: colorScheme.onSurfaceVariant,
                         ),
                       ),
+
+                    const SizedBox(height: 20),
+
+                    // ================= ABOUT =================
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          "About",
+                          style: AppTextStyle.textMd(
+                            color: colorScheme.onSurface,
+                          ),
+                        ),
+                        const SizedBox(width: 5),
+                        _editButton(
+                          onTap: () => _showEditBottomSheet(
+                            context: context,
+                            title: "Edit About",
+                            hintText: "Edit About",
+                            initialValue: c.about,
+                            maxLines: 3,
+                            onSave: c.updateAbout,
+                          ),
+                        ),
+                      ],
                     ),
-                  ),
-                ),
 
-                const SizedBox(height: 20),
+                    const SizedBox(height: 10),
 
-                // ================= ACHIEVEMENTS =================
-                Align(
-                  alignment: Alignment.topLeft,
-                  child: Text(
-                    "Progress and achievements",
-                    style: AppTextStyle.textXl(color: colorScheme.primary),
-                  ),
-                ),
-
-                const SizedBox(height: 10),
-
-                Row(
-                  children: [
-                    _buildStatCard(
-                      title: "Events",
-                      icon: "assets/icons/calander.svg",
-                      value: c.stats?.eventsCheckedIn,
-                      colorScheme: colorScheme,
+                    SizedBox(
+                      width: double.infinity,
+                      child: Card(
+                        color: colorScheme.surfaceContainer,
+                        child: Padding(
+                          padding: const EdgeInsets.all(12),
+                          child: Text(
+                            c.about,
+                            textAlign: TextAlign.center,
+                            style: AppTextStyle.textXs(
+                              color: colorScheme.onSurfaceVariant,
+                            ),
+                          ),
+                        ),
+                      ),
                     ),
-                    _buildStatCard(
-                      title: "Routes",
-                      icon: "assets/icons/map.svg",
-                      value: c.stats?.routesCheckedIn,
-                      colorScheme: colorScheme,
+
+                    const SizedBox(height: 20),
+
+                    // ================= ACHIEVEMENTS =================
+                    Align(
+                      alignment: Alignment.topLeft,
+                      child: Text(
+                        "Progress and achievements",
+                        style: AppTextStyle.textXl(color: colorScheme.primary),
+                      ),
                     ),
-                    _buildStatCard(
-                      title: "Raffles",
-                      icon: "assets/icons/rafel.svg",
-                      value: c.stats?.rafflesWon,
-                      colorScheme: colorScheme,
+
+                    const SizedBox(height: 10),
+
+                    Row(
+                      children: [
+                        _buildStatCard(
+                          title: "Events",
+                          icon: "assets/icons/calander.svg",
+                          value: c.stats?.eventsCheckedIn,
+                          colorScheme: colorScheme,
+                        ),
+                        _buildStatCard(
+                          title: "Routes",
+                          icon: "assets/icons/map.svg",
+                          value: c.stats?.routesCheckedIn,
+                          colorScheme: colorScheme,
+                        ),
+                        _buildStatCard(
+                          title: "Raffles",
+                          icon: "assets/icons/rafel.svg",
+                          value: c.stats?.rafflesWon,
+                          colorScheme: colorScheme,
+                        ),
+                      ],
                     ),
                   ],
                 ),
-              ],
-            ),
-          ),
-        );
-      }),
+              ),
+            );
+          }),
+
+          // ================= CENTER LOADER =================
+          // Shown while a profile update (image / name / about) is in flight.
+          Obx(() {
+            if (!_controller.isLoading) return const SizedBox.shrink();
+            return SizedBox.expand(
+              child: AbsorbPointer(
+                child: ColoredBox(
+                  color: Colors.black.withValues(alpha: 0.35),
+                  child: const Center(child: CircularProgressIndicator()),
+                ),
+              ),
+            );
+          }),
+        ],
+      ),
     );
   }
 
@@ -344,20 +367,25 @@ class _EditFieldSheetState extends State<_EditFieldSheet> {
             children: [
               Text(
                 widget.title,
-                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
               const SizedBox(height: 10),
               CustomTextField(
                 controller: _textController,
                 maxLine: widget.maxLines,
                 hintText: widget.hintText,
-                keyboardType:
-                    widget.isNameField ? TextInputType.name : TextInputType.text,
+                keyboardType: widget.isNameField
+                    ? TextInputType.name
+                    : TextInputType.text,
                 textCapitalization: widget.isNameField
                     ? TextCapitalization.words
                     : TextCapitalization.none,
-                inputFormatters:
-                    widget.isNameField ? nameInputFormatters : null,
+                inputFormatters: widget.isNameField
+                    ? nameInputFormatters
+                    : null,
                 validator: widget.validator,
               ),
               const SizedBox(height: 15),

@@ -16,6 +16,8 @@ import 'package:loci/features/chat/domain/services/chat_service.dart';
 import 'package:loci/features/chat/presentation/controllers/chat_list_controller.dart';
 import 'package:loci/features/common/data/repositories/common_repository.dart';
 import 'package:loci/features/common/domain/services/common_service.dart';
+import 'package:loci/features/places/data/repositories/places_repository.dart';
+import 'package:loci/features/places/domain/services/places_service.dart';
 import 'package:loci/features/community/data/repositories/community_repository.dart';
 import 'package:loci/features/community/domain/services/community_service.dart';
 import 'package:loci/features/community/presentation/controllers/vote_controller.dart';
@@ -207,6 +209,15 @@ class AppBindings extends Bindings {
     );
     Get.put<CommonService>(
       CommonService(Get.find<CommonRepository>()),
+      permanent: true,
+    );
+
+    Get.put<PlacesRepository>(
+      PlacesRepository(Get.find<NetworkCaller>()),
+      permanent: true,
+    );
+    Get.put<PlacesService>(
+      PlacesService(Get.find<PlacesRepository>()),
       permanent: true,
     );
 

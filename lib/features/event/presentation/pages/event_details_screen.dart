@@ -1,13 +1,8 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:get/get_core/src/get_main.dart';
-import 'package:get/get_instance/src/extension_instance.dart';
-import 'package:get/get_navigation/src/extension_navigation.dart';
 import 'package:loci/core/constants/app_text_style.dart';
 import 'package:loci/core/enums/rsvp_status.dart';
 import 'package:loci/core/theme/theme_extention.dart';
-import 'package:loci/features/event/domain/services/event_service.dart';
 import 'package:loci/features/event/presentation/controllers/event_list_controller.dart';
 import 'package:loci/features/event/presentation/controllers/rsvp_controller.dart';
 import 'package:loci/shared/widgets/custom_button.dart';
@@ -21,6 +16,7 @@ import 'package:loci/gen/assets.gen.dart';
 import 'package:loci/features/event/presentation/controllers/event_details_controller.dart';
 import 'package:loci/shared/widgets/common/company_info_card.dart';
 import '../widgets/event_card.dart';
+import '../widgets/event_details_skeleton.dart';
 
 class EventDetails extends StatefulWidget {
   const EventDetails({super.key});
@@ -41,21 +37,10 @@ class _EventDetailsState extends State<EventDetails> {
   void initState() {
     super.initState();
 
-    // EventDetailsController check
-    if (Get.isRegistered<EventDetailsController>()) {
-      eventDetailsController = Get.find<EventDetailsController>();
-    } else {
-      eventDetailsController = Get.put(
-        EventDetailsController(Get.find<EventService>()),
-      );
-    }
-
-    // RSVPController check
-    if (Get.isRegistered<RSVPController>()) {
-      rsvpController = Get.find<RSVPController>();
-    } else {
-      rsvpController = Get.put(RSVPController(Get.find<EventService>()));
-    }
+    // Controllers are provided by EventBinding (route) and app bindings —
+    // the UI only resolves them; it never wires domain services itself.
+    eventDetailsController = Get.find<EventDetailsController>();
+    rsvpController = Get.find<RSVPController>();
 
     //---get the event id
     final args = Get.arguments as Map<String, dynamic>?;
@@ -103,7 +88,7 @@ class _EventDetailsState extends State<EventDetails> {
         final controller = eventDetailsController;
         // --- Loading state
         if (controller.isLoading) {
-          return const Center(child: CircularProgressIndicator());
+          return const EventDetailsSkeleton();
         }
 
         // --- Error state
@@ -117,8 +102,6 @@ class _EventDetailsState extends State<EventDetails> {
         // --- Content state
         final event = controller.eventDetails?.eventModel;
         final business = controller.eventDetails?.organizerBusiness;
-        final lat = controller.eventDetails?.lat;
-        final lng = controller.eventDetails?.lng;
 
         return SingleChildScrollView(
           padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 12),
@@ -154,13 +137,15 @@ class _EventDetailsState extends State<EventDetails> {
                       children: [
                         IconTextRow(
                           icon: Icons.calendar_today_outlined,
-                          text: event?.date ?? "__",
+                          text: event?.dateLabel ?? "__",
                           iconColor: context.colorScheme.primary,
                         ),
                         const SizedBox(height: 8),
                         IconTextRow(
                           icon: Icons.location_on_outlined,
-                          text: "Downtown District",
+                          text: (event?.location.trim().isNotEmpty ?? false)
+                              ? event!.location
+                              : "__",
                           iconColor: context.colorScheme.primary,
                         ),
                         const SizedBox(height: 8),

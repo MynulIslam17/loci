@@ -8,6 +8,8 @@ class EventUpdateRequest {
   final String? eventTime;
   final int? maxParticipants;
   final String? location;
+  final double? lat;
+  final double? lng;
   final String? url;
   final bool? isPublic;
   final String? status;
@@ -21,6 +23,8 @@ class EventUpdateRequest {
     this.eventTime,
     this.maxParticipants,
     this.location,
+    this.lat,
+    this.lng,
     this.url,
     this.isPublic,
     this.status,
@@ -39,6 +43,11 @@ class EventUpdateRequest {
       data['maxParticipants'] = maxParticipants.toString();
     }
     if (location != null) data['location'] = location!;
+    // Coordinates go as bracketed multipart fields; send both or neither.
+    if (lat != null && lng != null) {
+      data['mapCoordinates[lat]'] = lat.toString();
+      data['mapCoordinates[lng]'] = lng.toString();
+    }
     if (url != null) data['url'] = url!;
     if (isPublic != null) data['isPublic'] = isPublic.toString();
     if (status != null) data['status'] = status!;

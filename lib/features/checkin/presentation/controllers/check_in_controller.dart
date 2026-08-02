@@ -29,9 +29,9 @@ class CheckInController extends GetxController {
 
       if (name != null || email != null || avatar != null) {
         body['leadData'] = {
-          if (name != null) 'name': name,
-          if (email != null) 'email': email,
-          if (avatar != null) 'avatar': avatar,
+          'name': ?name,
+          'email': ?email,
+          'avatar': ?avatar,
         };
       }
 

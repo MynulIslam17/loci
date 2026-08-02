@@ -8,6 +8,8 @@ class RouteUpdateRequest {
   final String? title;
   final String? details;
   final String? location;
+  final double? lat;
+  final double? lng;
   final String? url;
   final String? openingTime;
   final RouteType? availabilityType;
@@ -19,6 +21,8 @@ class RouteUpdateRequest {
     this.title,
     this.details,
     this.location,
+    this.lat,
+    this.lng,
     this.url,
     this.openingTime,
     this.availabilityType,
@@ -34,6 +38,11 @@ class RouteUpdateRequest {
     if (title != null) map['title'] = title!;
     if (details != null) map['details'] = details!;
     if (location != null) map['location'] = location!;
+    // Coordinates go as bracketed multipart fields; send both or neither.
+    if (lat != null && lng != null) {
+      map['mapCoordinates[lat]'] = lat.toString();
+      map['mapCoordinates[lng]'] = lng.toString();
+    }
     if (url != null) map['url'] = url!;
     if (openingTime != null) map['openingTime'] = openingTime!;
     if (isPublic != null) map['isPublic'] = isPublic.toString();

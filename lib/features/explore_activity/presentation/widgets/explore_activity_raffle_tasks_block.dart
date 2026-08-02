@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:loci/core/constants/app_text_style.dart';
 import 'package:loci/core/theme/theme_extention.dart';
 import 'package:loci/shared/widgets/custom_button.dart';
+import 'package:loci/shared/widgets/form_labels.dart';
 
 /// Entry requirements list + add button (create & edit raffle).
 class ExploreActivityRaffleTasksBlock extends StatelessWidget {
@@ -24,13 +25,7 @@ class ExploreActivityRaffleTasksBlock extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         if (showHeader) ...[
-          Text(
-            'Entry requirements',
-            style: AppTextStyle.textMd(
-              weight: FontWeight.w700,
-              color: colorScheme.onSurface,
-            ),
-          ),
+          const FormFieldLabel(label: 'Entry requirements', isRequired: true),
           const SizedBox(height: 4),
           Text(
             'Tasks participants must complete to enter',
