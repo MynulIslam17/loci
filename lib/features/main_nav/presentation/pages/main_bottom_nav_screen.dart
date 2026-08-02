@@ -67,19 +67,9 @@ class _MainBottomNavState extends State<MainBottomNav> {
 
       /// Custom back button handling
       onPopInvokedWithResult: (didPop, result) {
-        /// If raffles drawer page is open
+        /// If a drawer overlay page is open, close it first.
         if (navController.drawerPage.value != null) {
-          final nestedNav =
-              navController.drawerNavigatorKey.value?.currentState;
-
-          /// Pop nested navigation first
-          if (nestedNav != null && nestedNav.canPop()) {
-            nestedNav.pop();
-          } else {
-            /// Otherwise close drawer page
-            navController.drawerPage.value = null;
-            navController.drawerNavigatorKey.value = null;
-          }
+          navController.closeDrawer();
           return;
         }
 

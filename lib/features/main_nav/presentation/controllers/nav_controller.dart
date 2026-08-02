@@ -5,21 +5,25 @@ import 'package:loci/features/home/presentation/pages/home_navigator.dart';
 class NavController extends GetxController {
   final currentIndex = 0.obs;
   final drawerPage = Rxn<Widget>();
-  final drawerNavigatorKey = Rxn<GlobalKey<NavigatorState>>();
+  final drawerTitle = RxnString();
 
   void changeIndex(int index) {
     if (index == 0) {
       HomeNavigator.reset();
     }
 
-    drawerPage.value = null;
-    drawerNavigatorKey.value = null;
+    closeDrawer();
     currentIndex.value = index;
   }
 
-  void openDrawerPage(Widget page, {GlobalKey<NavigatorState>? navigatorKey}) {
+  void openDrawerPage(Widget page, {required String title}) {
     drawerPage.value = page;
-    drawerNavigatorKey.value = navigatorKey;
+    drawerTitle.value = title;
+  }
+
+  void closeDrawer() {
+    drawerPage.value = null;
+    drawerTitle.value = null;
   }
 
   void resetIndex() {

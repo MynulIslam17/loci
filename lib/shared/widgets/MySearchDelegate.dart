@@ -88,10 +88,10 @@ class MySearchDelegate extends SearchDelegate {
     void goToDrawerPage(
       BuildContext context,
       Widget page,
-      GlobalKey<NavigatorState> navigatorKey,
+      String title,
     ) {
       close(context, null);
-      nav.openDrawerPage(page, navigatorKey: navigatorKey);
+      nav.openDrawerPage(page, title: title);
     }
 
     return [
@@ -242,8 +242,8 @@ class MySearchDelegate extends SearchDelegate {
         keywords: const ['map', 'trail', 'discover'],
         onSelect: (ctx) => goToDrawerPage(
           ctx,
-          const ExploreRoutesScreen(),
-          ExploreRoutesScreen.navigatorKey,
+          const ExploreRoutesPage(),
+          'Explore Routes',
         ),
       ),
       _FeatureEntry(
@@ -255,8 +255,8 @@ class MySearchDelegate extends SearchDelegate {
         keywords: const ['ticket', 'prize', 'win', 'lottery'],
         onSelect: (ctx) => goToDrawerPage(
           ctx,
-          const ActiveRafflesScreen(),
-          ActiveRafflesScreen.navigatorKey,
+          const ActiveRafflesPage(),
+          'Active Raffles',
         ),
       ),
       _FeatureEntry(

@@ -30,6 +30,7 @@ class RouteDetailsScreen extends StatefulWidget {
 class _RouteDetailsScreenState extends State<RouteDetailsScreen> {
   late String routeName;
   late String routeId;
+  late bool showAppbar;
 
   ///get x controller
   late final RouteDetailsController controller;
@@ -38,11 +39,11 @@ class _RouteDetailsScreenState extends State<RouteDetailsScreen> {
   void initState() {
     super.initState();
 
-    // Get arguments from either Get.arguments or constructor
     final args = Get.arguments as Map<String, dynamic>?;
 
-    routeId = widget.routeId ?? args?['routeId'] ?? '';
-    routeName = widget.routeName ?? args?['routeName'] ?? '';
+    routeId = widget.routeId ?? args?['routeId']?.toString() ?? '';
+    routeName = widget.routeName ?? args?['routeName']?.toString() ?? '';
+    showAppbar = args?['showAppBar'] as bool? ?? widget.showAppbar;
 
     // Initialize controller if it exists, else put it
     if (Get.isRegistered<RouteDetailsController>()) {
@@ -62,9 +63,8 @@ class _RouteDetailsScreenState extends State<RouteDetailsScreen> {
 
     return Scaffold(
       backgroundColor: colorScheme.surface,
-      appBar: widget.showAppbar
+      appBar: showAppbar
           ? AppBar(
-              // Dynamic title from arguments
               title: Text(
                 routeName,
                 style: AppTextStyle.textMd(weight: FontWeight.w600),

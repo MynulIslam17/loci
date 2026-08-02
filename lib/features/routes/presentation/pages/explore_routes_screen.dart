@@ -2,28 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:loci/core/constants/app_text_style.dart';
 import 'package:loci/core/theme/theme_extention.dart';
-import 'package:loci/features/routes/presentation/pages/route_details_screen.dart';
+import 'package:loci/features/routes/presentation/controllers/route_list_controller.dart';
+import 'package:loci/routes/app_routes.dart';
 import 'package:loci/shared/widgets/custom_text_field.dart';
 import 'package:loci/shared/widgets/error_state.dart';
-import 'package:loci/features/routes/presentation/controllers/route_list_controller.dart';
 import '../widgets/route_card.dart';
 import '../widgets/route_card_skeleton.dart';
 
-class ExploreRoutesScreen extends StatelessWidget {
-  const ExploreRoutesScreen({super.key});
-
-  static final navigatorKey = GlobalKey<NavigatorState>();
-
-  @override
-  Widget build(BuildContext context) {
-    return Navigator(
-      key: navigatorKey,
-      onGenerateRoute: (_) =>
-          MaterialPageRoute(builder: (_) => const ExploreRoutesPage()),
-    );
-  }
-}
-
+/// List of routes shown inside the main shell drawer overlay.
 class ExploreRoutesPage extends StatefulWidget {
   const ExploreRoutesPage({super.key});
 
@@ -59,21 +45,13 @@ class _ExploreRoutesPageState extends State<ExploreRoutesPage> {
     super.dispose();
   }
 
-  //----- onTapRouteHandler----------------------------
-  void _onTapRouteHandler(
-    BuildContext context,
-    String routeId,
-    String routeName,
-  ) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => RouteDetailsScreen(
-          showAppbar: false,
-          routeId: routeId,
-          routeName: routeName,
-        ),
-      ),
+  void _onTapRouteHandler(String routeId, String routeName) {
+    Get.toNamed(
+      AppRoutes.routeDetails,
+      arguments: {
+        'routeId': routeId,
+        'routeName': routeName,
+      },
     );
   }
 
@@ -205,7 +183,6 @@ class _ExploreRoutesPageState extends State<ExploreRoutesPage> {
                           imageUrl: route.banner,
                           onTap: () {
                             _onTapRouteHandler(
-                              context,
                               route.routeId,
                               route.title,
                             );
