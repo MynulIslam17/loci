@@ -19,6 +19,7 @@ class RaffleDetailsController extends GetxController {
   Future<void> fetchRaffleDetails(String raffleId) async {
     _isLoading.value = true;
     _errorMessage.value = null;
+    _raffleDetails.value = null;
 
     try {
       _raffleDetails.value = await _service.getRaffleDetails(raffleId);

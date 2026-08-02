@@ -21,6 +21,7 @@ class RouteDetailsController extends GetxController {
     try {
       _isLoading.value = true;
       _errorMessage.value = null;
+      _routeDetails.value = null;
 
       _routeDetails.value = await _service.getRouteDetails(routeId);
     } catch (e) {

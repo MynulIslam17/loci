@@ -16,6 +16,24 @@ class ViewActivityController extends GetxController {
   BusinessRaffleDetailsController get _raffleDetails =>
       Get.find<BusinessRaffleDetailsController>();
 
+  /// Clears stale data and marks loading before the network call starts.
+  void prepareForLoad() {
+    switch (activityType) {
+      case ActivityType.event:
+        _eventDetails.isLoading.value = true;
+        _eventDetails.errorMessage.value = null;
+        _eventDetails.eventDetails.value = null;
+      case ActivityType.routes:
+        _routeDetails.isLoading.value = true;
+        _routeDetails.errorMessage.value = null;
+        _routeDetails.routeDetails.value = null;
+      case ActivityType.raffles:
+        _raffleDetails.isLoading.value = true;
+        _raffleDetails.errorMessage.value = null;
+        _raffleDetails.raffleDetails.value = null;
+    }
+  }
+
   /// Reads [Get.arguments] synchronously — call when the screen opens.
   void parseRouteArguments() {
     final args = Get.arguments as Map<String, dynamic>? ?? {};
