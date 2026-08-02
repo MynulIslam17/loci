@@ -32,6 +32,7 @@ class ChatAvatar extends StatelessWidget {
             height: size,
             imageUrl: avatarUrl,
             isCircle: true,
+            fallbackIcon: Icons.person_outline_rounded,
           )
         else
           Container(

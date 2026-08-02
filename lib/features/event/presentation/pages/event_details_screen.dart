@@ -15,6 +15,7 @@ import 'package:loci/core/utils/show_snackbar.dart';
 import 'package:loci/gen/assets.gen.dart';
 import 'package:loci/features/event/presentation/controllers/event_details_controller.dart';
 import 'package:loci/shared/widgets/company_info_card.dart';
+import 'package:loci/shared/widgets/custom_appbar.dart';
 import '../widgets/event_card.dart';
 import '../widgets/event_details_skeleton.dart';
 
@@ -31,7 +32,6 @@ class _EventDetailsState extends State<EventDetails> {
   late final RSVPController rsvpController;
 
   late final String eventId;
-  late final String eventTitle;
 
   @override
   void initState() {
@@ -42,12 +42,9 @@ class _EventDetailsState extends State<EventDetails> {
     eventDetailsController = Get.find<EventDetailsController>();
     rsvpController = Get.find<RSVPController>();
 
-    //---get the event id
     final args = Get.arguments as Map<String, dynamic>?;
     eventId = args?["eventId"] ?? "";
-    eventTitle = args?["eventTitle"] ?? "";
 
-    // fetch event details
     eventDetailsController.fetchEventDetails(eventId);
   }
 
@@ -78,12 +75,7 @@ class _EventDetailsState extends State<EventDetails> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text(
-          eventTitle,
-          style: AppTextStyle.textLg(weight: FontWeight.w600),
-        ),
-      ),
+      appBar: const CustomAppbar(title: 'Event Details'),
       body: Obx(() {
         final controller = eventDetailsController;
         // --- Loading state
