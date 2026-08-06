@@ -8,6 +8,7 @@ import 'package:loci/features/raffles/presentation/widgets/raffle_card_skeleton.
 import 'package:loci/routes/app_routes.dart';
 import 'package:loci/shared/widgets/custom_text_field.dart';
 import 'package:loci/shared/widgets/error_state.dart';
+import 'package:loci/shared/widgets/pagination_loading.dart';
 
 /// List of active raffles shown inside the main shell drawer overlay.
 class ActiveRafflesPage extends StatefulWidget {
@@ -42,6 +43,7 @@ class _ActiveRafflesPageState extends State<ActiveRafflesPage> {
   void dispose() {
     _scrollController.dispose();
     _searchController.dispose();
+    raffleListController.clearSearch();
     super.dispose();
   }
 
@@ -69,6 +71,7 @@ class _ActiveRafflesPageState extends State<ActiveRafflesPage> {
 
           return CustomScrollView(
             controller: _scrollController,
+            keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
             physics: const AlwaysScrollableScrollPhysics(),
             slivers: [
               SliverToBoxAdapter(
@@ -85,6 +88,11 @@ class _ActiveRafflesPageState extends State<ActiveRafflesPage> {
                       hintTextColor: colorScheme.onSurfaceVariant,
                       onChanged: controller.onSearchChanged,
                       showClearButton: true,
+                      onClear: () {
+                        _searchController.clear();
+                        FocusScope.of(context).unfocus();
+                        controller.clearSearch();
+                      },
                       suffixIcon: Icon(
                         Icons.search,
                         color: colorScheme.onSurfaceVariant,
@@ -153,15 +161,16 @@ class _ActiveRafflesPageState extends State<ActiveRafflesPage> {
                 SliverList(
                   delegate: SliverChildBuilderDelegate(
                     (context, index) {
-                      // Pagination skeleton
+                      // Pagination loader
                       if (index == controller.raffleList.length) {
-                        return const RaffleCardSkeleton();
+                        return const PaginationLoader();
                       }
 
                       final raffle = controller.raffleList[index];
                       return RaffleCard(
                         raffle: raffle,
                         onTap: () {
+                          FocusScope.of(context).unfocus();
                           Get.toNamed(
                             AppRoutes.rafflesDetails,
                             arguments: {'raffleId': raffle.id},

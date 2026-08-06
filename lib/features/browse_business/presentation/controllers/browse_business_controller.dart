@@ -1,5 +1,7 @@
+import 'dart:async';
 import 'package:get/get.dart';
 import 'package:loci/core/enums/category_enum.dart';
+import 'package:loci/core/utils/app_error_messages.dart';
 import 'package:loci/core/utils/paginated_list_fetch_state.dart';
 import 'package:loci/features/browse_business/data/models/browse_business_model.dart';
 import 'package:loci/features/browse_business/domain/services/browse_business_service.dart';
@@ -17,6 +19,11 @@ class BrowseBusinessController extends GetxController {
   int _currentPage = 1;
   final int _limit = 10;
   final hasNextPage = true.obs;
+
+  String _searchQuery = '';
+  Timer? _searchDebounce;
+
+  String get searchQuery => _searchQuery;
 
   bool get hasMore => hasNextPage.value;
   bool get isInitialLoading => _fetch.initialLoading.value;
@@ -39,17 +46,44 @@ class BrowseBusinessController extends GetxController {
     }
   }
 
+  @override
+  void onClose() {
+    _searchDebounce?.cancel();
+    super.onClose();
+  }
+
+  void onSearchChanged(String query) {
+    _searchQuery = query;
+    _searchDebounce?.cancel();
+    _searchDebounce = Timer(const Duration(milliseconds: 400), () {
+      fetchBusinesses(selectedCategory.value, isSearch: true);
+    });
+  }
+
+  void clearSearch() {
+    _searchQuery = '';
+    _searchDebounce?.cancel();
+    fetchBusinesses(selectedCategory.value, isSearch: true);
+  }
+
   Future<void> fetchBusinesses(
     BusinessCategory? category, {
     bool isRefresh = false,
+    bool isSearch = false,
   }) async {
     try {
-      if (isRefresh) {
+      if (isRefresh || isSearch) {
         _currentPage = 1;
         hasNextPage.value = true;
       }
 
-      _fetch.beginFirstPage(isRefresh: isRefresh);
+      if (isSearch) {
+        _fetch.initialLoading.value = true;
+        _fetch.refreshing.value = false;
+        _fetch.hasFetched.value = false;
+      } else {
+        _fetch.beginFirstPage(isRefresh: isRefresh);
+      }
       errorMessage.value = null;
       selectedCategory.value = category;
 
@@ -57,13 +91,14 @@ class BrowseBusinessController extends GetxController {
         page: _currentPage,
         limit: _limit,
         category: category?.toJson,
+        search: _searchQuery,
       );
 
       businesses.assignAll(model.data);
       hasNextPage.value = model.meta.hasNextPage;
       _fetch.endFirstPage();
     } catch (e) {
-      errorMessage.value = e.toString().replaceFirst('Exception: ', '');
+      errorMessage.value = AppErrorMessages.sanitize(e);
       _fetch.endFirstPage(markFetched: hasFetched);
     }
   }
@@ -84,6 +119,7 @@ class BrowseBusinessController extends GetxController {
         page: _currentPage,
         limit: _limit,
         category: selectedCategory.value?.toJson,
+        search: _searchQuery,
       );
 
       businesses.addAll(model.data);

@@ -1,8 +1,12 @@
 import 'package:get/get.dart';
 import 'package:loci/core/enums/network_type.dart';
+import 'package:loci/core/utils/app_error_messages.dart';
 import 'package:loci/core/utils/paginated_list_fetch_state.dart';
+import 'package:loci/core/utils/show_snackbar.dart';
 import 'package:loci/features/network/data/models/connection_item.dart';
 import 'package:loci/features/network/domain/services/network_service.dart';
+
+import 'package:loci/features/network/presentation/controllers/network_dashboard_controller.dart';
 
 /// Connections list, search, and refresh for [ConnectionScreen].
 class ConnectionsController extends GetxController {
@@ -14,6 +18,7 @@ class ConnectionsController extends GetxController {
   final Rxn<String> _errorMessage = Rxn<String>();
   final RxList<ConnectionModel> _connections = <ConnectionModel>[].obs;
   final RxString _searchQuery = ''.obs;
+  final RxSet<String> _removingIds = <String>{}.obs;
 
   bool get isInitialLoading => _fetch.initialLoading.value;
   bool get isRefreshing => _fetch.refreshing.value;
@@ -23,6 +28,8 @@ class ConnectionsController extends GetxController {
   String? get errorMessage => _errorMessage.value;
   String get searchQuery => _searchQuery.value;
   List<ConnectionModel> get connections => List.unmodifiable(_connections);
+
+  bool isRemoving(String id) => _removingIds.contains(id);
 
   List<ConnectionModel> get filteredConnections {
     final query = _searchQuery.value.trim().toLowerCase();
@@ -61,10 +68,34 @@ class ConnectionsController extends GetxController {
       );
       _fetch.endFirstPage();
     } catch (e) {
-      _errorMessage.value = e.toString().replaceFirst('Exception: ', '');
+      _errorMessage.value = AppErrorMessages.sanitize(e);
       _fetch.endFirstPage(markFetched: hasFetched);
     }
   }
 
   Future<void> refreshConnections() => fetchConnections(isRefresh: true);
+
+  Future<bool> removeConnection(ConnectionModel connection) async {
+    final targetId =
+        connection.userId.isNotEmpty ? connection.userId : connection.id;
+    if (targetId.isEmpty) return false;
+
+    _removingIds.add(connection.id);
+    try {
+      await _service.removeConnection(otherUserId: targetId);
+      _connections.removeWhere((item) => item.id == connection.id);
+
+      if (Get.isRegistered<NetworkDashboardController>()) {
+        Get.find<NetworkDashboardController>().fetchDashboard(isRefresh: true);
+      }
+
+      SnackbarService.success('Connection removed');
+      return true;
+    } catch (e) {
+      SnackbarService.error(AppErrorMessages.sanitize(e));
+      return false;
+    } finally {
+      _removingIds.remove(connection.id);
+    }
+  }
 }

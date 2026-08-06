@@ -14,11 +14,13 @@ class BrowseBusinessService {
     required int page,
     required int limit,
     String? category,
+    String? search,
   }) async {
     final body = await _repository.browseBusinesses(
       page: page,
       limit: limit,
       category: category,
+      search: search,
     );
     return BrowseBusinessResponseModel.fromJson(body);
   }

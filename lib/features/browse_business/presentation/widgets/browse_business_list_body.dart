@@ -12,18 +12,25 @@ import 'package:loci/shared/widgets/custom_dropdown.dart';
 import 'package:loci/shared/widgets/custom_text_field.dart';
 import 'package:loci/shared/widgets/empty_state.dart';
 import 'package:loci/shared/widgets/error_state.dart';
+import 'package:loci/shared/widgets/pagination_loading.dart';
 
 class BrowseBusinessSearchHeader extends StatelessWidget {
   const BrowseBusinessSearchHeader({
     super.key,
     required this.screenWidth,
+    required this.searchController,
     required this.selectedCategory,
     required this.onCategoryChanged,
+    required this.onSearchChanged,
+    required this.onClearSearch,
   });
 
   final double screenWidth;
+  final TextEditingController searchController;
   final Rx<BusinessCategory> selectedCategory;
   final ValueChanged<BusinessCategory> onCategoryChanged;
+  final ValueChanged<String> onSearchChanged;
+  final VoidCallback onClearSearch;
 
   @override
   Widget build(BuildContext context) {
@@ -35,10 +42,18 @@ class BrowseBusinessSearchHeader extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           CustomTextField(
+            controller: searchController,
             borderColor: colorScheme.outline,
             hintText: 'Search Business',
             hintTextColor: colorScheme.onSurfaceVariant,
             textColor: colorScheme.onSurface,
+            onChanged: onSearchChanged,
+            showClearButton: true,
+            onClear: () {
+              searchController.clear();
+              FocusScope.of(context).unfocus();
+              onClearSearch();
+            },
             suffixIcon: Icon(
               Icons.search,
               color: colorScheme.onSurfaceVariant,
@@ -115,13 +130,21 @@ class BrowseBusinessListBody extends StatelessWidget {
       }
 
       if (controller.businesses.isEmpty) {
+        final hasSearch = controller.searchQuery.trim().isNotEmpty;
+
         return ConstrainedBox(
           constraints: BoxConstraints(minHeight: emptyMinHeight),
-          child: const Center(
+          child: Center(
             child: EmptyState(
-              icon: Icons.storefront_outlined,
-              title: 'No businesses found',
-              subtitle: 'Try a different category or pull to refresh.',
+              icon: hasSearch
+                  ? Icons.search_off_outlined
+                  : Icons.storefront_outlined,
+              title: hasSearch
+                  ? 'No matching businesses'
+                  : 'No businesses found',
+              subtitle: hasSearch
+                  ? 'Try searching with a different name or category.'
+                  : 'Try a different category or pull to refresh.',
             ),
           ),
         );
@@ -157,19 +180,10 @@ class _BrowseBusinessList extends StatelessWidget {
         physics: const NeverScrollableScrollPhysics(),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         itemCount: itemCount,
-        separatorBuilder: (_, __) => const SizedBox(height: 12),
+        separatorBuilder: (context, index) => const SizedBox(height: 12),
         itemBuilder: (context, index) {
           if (index >= controller.businesses.length) {
-            return const Padding(
-              padding: EdgeInsets.symmetric(vertical: 12),
-              child: Center(
-                child: SizedBox(
-                  width: 24,
-                  height: 24,
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                ),
-              ),
-            );
+            return const PaginationLoader();
           }
 
           final item = controller.businesses[index];
@@ -178,9 +192,13 @@ class _BrowseBusinessList extends StatelessWidget {
             () => BrowseBusinessCard(
               item: item,
               isExpanded: index == expandedIndex.value,
-              onTap: () => expandedIndex.value = index,
+              onTap: () {
+                FocusScope.of(context).unfocus();
+                expandedIndex.value = index;
+              },
               onAdd: () => saveController.saveBusiness(item.id),
               onView: () {
+                FocusScope.of(context).unfocus();
                 Get.toNamed(
                   AppRoutes.businessProfile,
                   arguments: {'businessId': item.id},

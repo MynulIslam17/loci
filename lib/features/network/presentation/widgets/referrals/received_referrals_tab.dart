@@ -6,6 +6,7 @@ import 'package:loci/features/network/presentation/controllers/received_referral
 import 'package:loci/features/network/presentation/controllers/respond_referral_controller.dart';
 import 'package:loci/shared/widgets/empty_state.dart';
 import 'package:loci/shared/widgets/error_state.dart';
+import 'package:loci/shared/widgets/pagination_loading.dart';
 import 'package:loci/features/network/presentation/widgets/referrals/referral_invitation_card.dart';
 import 'package:loci/features/network/presentation/widgets/network_list_shimmer.dart';
 
@@ -50,6 +51,8 @@ class _ReceivedReferralsTabState extends State<ReceivedReferralsTab>
       }
 
       if (controller.referrals.isEmpty) {
+        final hasSearch = controller.searchTerm.trim().isNotEmpty;
+
         return RefreshIndicator(
           onRefresh: () => controller.fetchReceivedReferrals(isRefresh: true),
           child: LayoutBuilder(
@@ -57,10 +60,17 @@ class _ReceivedReferralsTabState extends State<ReceivedReferralsTab>
               physics: const AlwaysScrollableScrollPhysics(),
               child: ConstrainedBox(
                 constraints: BoxConstraints(minHeight: constraints.maxHeight),
-                child: const Center(
+                child: Center(
                   child: EmptyState(
-                    icon: Icons.inbox_outlined,
-                    title: 'No referrals received yet',
+                    icon: hasSearch
+                        ? Icons.search_off_outlined
+                        : Icons.inbox_outlined,
+                    title: hasSearch
+                        ? 'No matching referrals'
+                        : 'No referrals received yet',
+                    subtitle: hasSearch
+                        ? 'Try searching with a different keyword'
+                        : null,
                   ),
                 ),
               ),
@@ -86,10 +96,7 @@ class _ReceivedReferralsTabState extends State<ReceivedReferralsTab>
                 (controller.isLoadingMore ? 1 : 0),
             itemBuilder: (context, index) {
               if (index == controller.referrals.length) {
-                return const Padding(
-                  padding: EdgeInsets.symmetric(vertical: 16),
-                  child: Center(child: CircularProgressIndicator()),
-                );
+                return const PaginationLoader();
               }
               final referral = controller.referrals[index];
               final respondController = Get.find<RespondReferralController>();
@@ -114,7 +121,7 @@ class _ReceivedReferralsTabState extends State<ReceivedReferralsTab>
                 );
               });
             },
-            separatorBuilder: (_, __) => const SizedBox(height: 12),
+            separatorBuilder: (context, index) => const SizedBox(height: 12),
           ),
         ),
       );

@@ -37,8 +37,14 @@ class RaffleListController extends GetxController {
     _searchQuery = query;
     _searchDebounce?.cancel();
     _searchDebounce = Timer(const Duration(milliseconds: 400), () {
-      fetchRaffles(isRefresh: true);
+      fetchRaffles(isSearch: true);
     });
+  }
+
+  void clearSearch() {
+    _searchQuery = '';
+    _searchDebounce?.cancel();
+    fetchRaffles(isSearch: true);
   }
 
   @override
@@ -47,13 +53,22 @@ class RaffleListController extends GetxController {
     super.onClose();
   }
 
-  Future<void> fetchRaffles({bool isRefresh = false}) async {
-    if (isRefresh) {
+  Future<void> fetchRaffles({
+    bool isRefresh = false,
+    bool isSearch = false,
+  }) async {
+    if (isRefresh || isSearch) {
       _currentPage = 1;
       _hasNextPage = true;
     }
 
-    _fetch.beginFirstPage(isRefresh: isRefresh);
+    if (isSearch) {
+      _fetch.initialLoading.value = true;
+      _fetch.refreshing.value = false;
+      _fetch.hasFetched.value = false;
+    } else {
+      _fetch.beginFirstPage(isRefresh: isRefresh);
+    }
     _errorMessage.value = null;
 
     try {

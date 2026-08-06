@@ -148,4 +148,8 @@ class NetworkService {
     }
     return null;
   }
+
+  Future<void> removeConnection({required String otherUserId}) async {
+    await _repository.deleteConnection(otherUserId: otherUserId);
+  }
 }

@@ -139,4 +139,20 @@ class NetworkRepository {
     }
     return res.body!;
   }
+
+  Future<Map<String, dynamic>> deleteConnection({
+    required String otherUserId,
+  }) async {
+    final res = await _network.deleteRequest(
+      url: AppUrl.deleteConnection(otherUserId),
+    );
+    if (!res.isSuccess) {
+      throw Exception(
+        res.body?['message'] ??
+            res.errorMessage ??
+            'Failed to remove connection',
+      );
+    }
+    return res.body ?? {};
+  }
 }

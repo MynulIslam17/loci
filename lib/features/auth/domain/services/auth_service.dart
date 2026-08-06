@@ -116,5 +116,11 @@ class AuthService {
 
   Future<void> updateUser(UserModel user) => _repository.updateUser(user);
 
+  Future<void> saveRememberMe({required bool remember, String? email}) =>
+      _repository.saveRememberMe(remember: remember, email: email);
+
+  Future<({bool remember, String? email})> getRememberMe() =>
+      _repository.getRememberMe();
+
   Future<void> clearSession() => _repository.clearUserData();
 }

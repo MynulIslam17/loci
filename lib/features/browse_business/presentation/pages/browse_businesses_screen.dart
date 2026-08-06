@@ -15,6 +15,7 @@ class BrowseBusinesses extends StatefulWidget {
 class _BrowseBusinessesState extends State<BrowseBusinesses> {
   final browseBusinessController = Get.find<BrowseBusinessController>();
   final ScrollController _scrollController = ScrollController();
+  final TextEditingController _searchController = TextEditingController();
   final expandedIndex = 0.obs;
   late final Rx<BusinessCategory> selectedCategory;
 
@@ -23,7 +24,10 @@ class _BrowseBusinessesState extends State<BrowseBusinesses> {
     super.initState();
 
     final arg = Get.arguments;
-    selectedCategory = (arg is BusinessCategory ? arg : BusinessCategory.foodie).obs;
+    selectedCategory =
+        (arg is BusinessCategory ? arg : BusinessCategory.foodie).obs;
+
+    _searchController.text = browseBusinessController.searchQuery;
 
     _scrollController.addListener(() {
       if (_scrollController.position.pixels >=
@@ -37,6 +41,8 @@ class _BrowseBusinessesState extends State<BrowseBusinesses> {
 
   @override
   void dispose() {
+    _searchController.dispose();
+    browseBusinessController.clearSearch();
     _scrollController.dispose();
     super.dispose();
   }
@@ -61,14 +67,18 @@ class _BrowseBusinessesState extends State<BrowseBusinesses> {
         onRefresh: browseBusinessController.refreshData,
         child: SingleChildScrollView(
           controller: _scrollController,
+          keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
           physics: const AlwaysScrollableScrollPhysics(),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               BrowseBusinessSearchHeader(
                 screenWidth: size.width,
+                searchController: _searchController,
                 selectedCategory: selectedCategory,
                 onCategoryChanged: _onCategoryChanged,
+                onSearchChanged: browseBusinessController.onSearchChanged,
+                onClearSearch: browseBusinessController.clearSearch,
               ),
               BrowseBusinessListBody(
                 controller: browseBusinessController,

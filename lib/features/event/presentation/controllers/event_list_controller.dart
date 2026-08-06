@@ -17,7 +17,7 @@ class EventListController extends GetxController {
 
   int _currentPage = 1;
   bool _hasNextPage = true;
-  final int _limit = 20;
+  final int _limit = 6;
 
   String _searchQuery = '';
   Timer? _searchDebounce;
@@ -37,8 +37,14 @@ class EventListController extends GetxController {
     _searchQuery = query;
     _searchDebounce?.cancel();
     _searchDebounce = Timer(const Duration(milliseconds: 400), () {
-      fetchEvents(isRefresh: true);
+      fetchEvents(isSearch: true);
     });
+  }
+
+  void clearSearch() {
+    _searchQuery = '';
+    _searchDebounce?.cancel();
+    fetchEvents(isSearch: true);
   }
 
   @override
@@ -47,13 +53,23 @@ class EventListController extends GetxController {
     super.onClose();
   }
 
-  Future<void> fetchEvents({bool isRefresh = false, String? businessId}) async {
-    if (isRefresh) {
+  Future<void> fetchEvents({
+    bool isRefresh = false,
+    bool isSearch = false,
+    String? businessId,
+  }) async {
+    if (isRefresh || isSearch) {
       _currentPage = 1;
       _hasNextPage = true;
     }
 
-    _fetch.beginFirstPage(isRefresh: isRefresh);
+    if (isSearch) {
+      _fetch.initialLoading.value = true;
+      _fetch.refreshing.value = false;
+      _fetch.hasFetched.value = false;
+    } else {
+      _fetch.beginFirstPage(isRefresh: isRefresh);
+    }
     _errorMessage.value = null;
 
     try {
