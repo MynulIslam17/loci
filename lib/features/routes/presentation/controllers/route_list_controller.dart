@@ -15,7 +15,7 @@ class RouteListController extends GetxController {
   final RxList<RouteModel> _routeList = <RouteModel>[].obs;
   int _currentPage = 1;
   bool _hasNextPage = true;
-  final int _limit = 10;
+  final int _limit = 5;
 
   String _searchQuery = '';
   Timer? _searchDebounce;
@@ -35,8 +35,14 @@ class RouteListController extends GetxController {
     _searchQuery = query;
     _searchDebounce?.cancel();
     _searchDebounce = Timer(const Duration(milliseconds: 400), () {
-      fetchRoutes(isRefresh: true);
+      fetchRoutes(isSearch: true);
     });
+  }
+
+  void clearSearch() {
+    _searchQuery = '';
+    _searchDebounce?.cancel();
+    fetchRoutes(isSearch: true);
   }
 
   @override
@@ -45,13 +51,23 @@ class RouteListController extends GetxController {
     super.onClose();
   }
 
-  Future<void> fetchRoutes({bool isRefresh = false, String? businessId}) async {
-    if (isRefresh) {
+  Future<void> fetchRoutes({
+    bool isRefresh = false,
+    bool isSearch = false,
+    String? businessId,
+  }) async {
+    if (isRefresh || isSearch) {
       _currentPage = 1;
       _hasNextPage = true;
     }
 
-    _fetch.beginFirstPage(isRefresh: isRefresh);
+    if (isSearch) {
+      _fetch.initialLoading.value = true;
+      _fetch.refreshing.value = false;
+      _fetch.hasFetched.value = false;
+    } else {
+      _fetch.beginFirstPage(isRefresh: isRefresh);
+    }
     _errorMessage.value = null;
 
     try {

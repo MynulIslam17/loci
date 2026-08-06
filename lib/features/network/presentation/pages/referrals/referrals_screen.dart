@@ -54,6 +54,7 @@ class _ReferralsScreenState extends State<ReferralsScreen>
 
   void _onClearSearch() {
     _searchController.clear();
+    FocusScope.of(context).unfocus();
     _sentController.clearSearch();
     _receivedController.clearSearch();
   }

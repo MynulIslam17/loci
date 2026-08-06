@@ -123,6 +123,8 @@ class _CustomTextFieldState extends State<CustomTextField> {
 
   void _clearText() {
     widget.controller?.clear();
+    widget.focusNode?.unfocus();
+    FocusScope.of(context).unfocus();
     widget.onClear?.call();
     widget.onChanged?.call('');
   }

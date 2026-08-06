@@ -85,6 +85,9 @@ class EditEventScreen extends StatelessWidget {
                     sectionSubtitle: 'Where participants will meet',
                     locationHint: 'e.g. 456 New St, Austin TX',
                     highlightTitle: true,
+                    mapImage: details.mapImage,
+                    latitude: controller.pickedLat.value,
+                    longitude: controller.pickedLng.value,
                   ),
                   ExploreActivityEditSaveSection(
                     isPublic: controller.isPublic.value,

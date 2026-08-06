@@ -6,6 +6,7 @@ import 'package:loci/features/routes/presentation/controllers/route_list_control
 import 'package:loci/routes/app_routes.dart';
 import 'package:loci/shared/widgets/custom_text_field.dart';
 import 'package:loci/shared/widgets/error_state.dart';
+import 'package:loci/shared/widgets/pagination_loading.dart';
 import '../widgets/route_card.dart';
 import '../widgets/route_card_skeleton.dart';
 
@@ -42,10 +43,12 @@ class _ExploreRoutesPageState extends State<ExploreRoutesPage> {
   void dispose() {
     _scrollController.dispose();
     _searchController.dispose();
+    routeController.clearSearch();
     super.dispose();
   }
 
   void _onTapRouteHandler(String routeId, String routeName) {
+    FocusScope.of(context).unfocus();
     Get.toNamed(
       AppRoutes.routeDetails,
       arguments: {
@@ -74,6 +77,7 @@ class _ExploreRoutesPageState extends State<ExploreRoutesPage> {
           onRefresh: () => controller.fetchRoutes(isRefresh: true),
           child: CustomScrollView(
             controller: _scrollController,
+            keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
             slivers: [
               // Search + Header
               SliverToBoxAdapter(
@@ -90,6 +94,11 @@ class _ExploreRoutesPageState extends State<ExploreRoutesPage> {
                       textColor: colorScheme.onSurface,
                       onChanged: controller.onSearchChanged,
                       showClearButton: true,
+                      onClear: () {
+                        _searchController.clear();
+                        FocusScope.of(context).unfocus();
+                        controller.clearSearch();
+                      },
                       suffixIcon: Icon(
                         Icons.search,
                         color: colorScheme.onSurfaceVariant,
@@ -162,12 +171,9 @@ class _ExploreRoutesPageState extends State<ExploreRoutesPage> {
                 SliverList(
                   delegate: SliverChildBuilderDelegate(
                     (context, index) {
-                      // Pagination skeleton
+                      // Pagination loader
                       if (index == controller.routeList.length) {
-                        return const Padding(
-                          padding: EdgeInsets.only(bottom: 16.0),
-                          child: RouteCardSkeleton(),
-                        );
+                        return const PaginationLoader();
                       }
 
                       final route = controller.routeList[index];

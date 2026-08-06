@@ -22,8 +22,7 @@ class _MyQrCodeScreenState extends State<MyQrCodeScreen> {
   final _controller = Get.find<MyQrCodeController>();
   final _scannerController = MobileScannerController(autoStart: false);
   final _pageController = PageController();
-
-  QrScreenTab _selectedTab = QrScreenTab.scan;
+  Worker? _tabWorker;
 
   @override
   void initState() {
@@ -31,18 +30,28 @@ class _MyQrCodeScreenState extends State<MyQrCodeScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _controller.ensureLoaded();
     });
+    _tabWorker = ever(_controller.selectedTabRx, (tab) {
+      if (_pageController.hasClients &&
+          _pageController.page?.round() != tab.index) {
+        _pageController.animateToPage(
+          tab.index,
+          duration: const Duration(milliseconds: 280),
+          curve: Curves.easeInOut,
+        );
+      }
+    });
   }
 
   @override
   void dispose() {
+    _tabWorker?.dispose();
     _scannerController.dispose();
     _pageController.dispose();
     super.dispose();
   }
 
-  void _selectTab(QrScreenTab tab) {
-    if (_selectedTab == tab) return;
-    setState(() => _selectedTab = tab);
+  void _onTabSelected(QrScreenTab tab) {
+    _controller.changeTab(tab);
     _pageController.animateToPage(
       tab.index,
       duration: const Duration(milliseconds: 280),
@@ -52,11 +61,7 @@ class _MyQrCodeScreenState extends State<MyQrCodeScreen> {
 
   void _onPageChanged(int index) {
     final tab = QrScreenTab.values[index];
-    if (_selectedTab == tab) return;
-    setState(() => _selectedTab = tab);
-    if (tab == QrScreenTab.myQr) {
-      _controller.ensureLoaded();
-    }
+    _controller.changeTab(tab);
   }
 
   @override
@@ -64,28 +69,32 @@ class _MyQrCodeScreenState extends State<MyQrCodeScreen> {
     return Scaffold(
       backgroundColor: context.colorScheme.surface,
       appBar: const CustomAppbar(title: 'Connect'),
-      body: Column(
-        children: [
-          Expanded(
-            child: PageView(
-              controller: _pageController,
-              onPageChanged: _onPageChanged,
-              children: [
-                QrScanTab(
-                  controller: _controller,
-                  scannerController: _scannerController,
-                  isActive: _selectedTab == QrScreenTab.scan,
-                ),
-                MyQrDisplayTab(controller: _controller),
-              ],
+      body: Obx(() {
+        final currentTab = _controller.selectedTab;
+
+        return Column(
+          children: [
+            Expanded(
+              child: PageView(
+                controller: _pageController,
+                onPageChanged: _onPageChanged,
+                children: [
+                  QrScanTab(
+                    controller: _controller,
+                    scannerController: _scannerController,
+                    isActive: currentTab == QrScreenTab.scan,
+                  ),
+                  MyQrDisplayTab(controller: _controller),
+                ],
+              ),
             ),
-          ),
-          QrScreenTabBar(
-            selected: _selectedTab,
-            onSelected: _selectTab,
-          ),
-        ],
-      ),
+            QrScreenTabBar(
+              selected: currentTab,
+              onSelected: _onTabSelected,
+            ),
+          ],
+        );
+      }),
     );
   }
 }

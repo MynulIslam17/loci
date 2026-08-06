@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import 'package:loci/features/network/presentation/controllers/sent_referrals_controller.dart';
 import 'package:loci/shared/widgets/empty_state.dart';
 import 'package:loci/shared/widgets/error_state.dart';
+import 'package:loci/shared/widgets/pagination_loading.dart';
 import 'package:loci/features/network/presentation/widgets/referrals/referral_card.dart';
 import 'package:loci/features/network/presentation/widgets/network_list_shimmer.dart';
 
@@ -48,6 +49,8 @@ class _SentReferralsTabState extends State<SentReferralsTab>
       }
 
       if (controller.referrals.isEmpty) {
+        final hasSearch = controller.searchTerm.trim().isNotEmpty;
+
         return RefreshIndicator(
           onRefresh: () => controller.fetchSentReferrals(isRefresh: true),
           child: LayoutBuilder(
@@ -55,10 +58,17 @@ class _SentReferralsTabState extends State<SentReferralsTab>
               physics: const AlwaysScrollableScrollPhysics(),
               child: ConstrainedBox(
                 constraints: BoxConstraints(minHeight: constraints.maxHeight),
-                child: const Center(
+                child: Center(
                   child: EmptyState(
-                    icon: Icons.send_outlined,
-                    title: 'No referrals sent yet',
+                    icon: hasSearch
+                        ? Icons.search_off_outlined
+                        : Icons.send_outlined,
+                    title: hasSearch
+                        ? 'No matching referrals'
+                        : 'No referrals sent yet',
+                    subtitle: hasSearch
+                        ? 'Try searching with a different keyword'
+                        : null,
                   ),
                 ),
               ),
@@ -84,14 +94,11 @@ class _SentReferralsTabState extends State<SentReferralsTab>
                 (controller.isLoadingMore ? 1 : 0),
             itemBuilder: (context, index) {
               if (index == controller.referrals.length) {
-                return const Padding(
-                  padding: EdgeInsets.symmetric(vertical: 16),
-                  child: Center(child: CircularProgressIndicator()),
-                );
+                return const PaginationLoader();
               }
               return ReferralCard(referral: controller.referrals[index]);
             },
-            separatorBuilder: (_, __) => const SizedBox(height: 12),
+            separatorBuilder: (context, index) => const SizedBox(height: 12),
           ),
         ),
       );

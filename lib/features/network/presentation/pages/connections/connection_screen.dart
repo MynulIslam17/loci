@@ -22,7 +22,14 @@ class _ConnectionScreenState extends State<ConnectionScreen> {
   final _searchController = TextEditingController();
 
   @override
+  void initState() {
+    super.initState();
+    _searchController.text = _controller.searchQuery;
+  }
+
+  @override
   void dispose() {
+    _controller.clearSearch();
     _searchController.dispose();
     super.dispose();
   }
@@ -58,6 +65,7 @@ class _ConnectionScreenState extends State<ConnectionScreen> {
         return RefreshIndicator(
           onRefresh: _onRefresh,
           child: CustomScrollView(
+            keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
             physics: const AlwaysScrollableScrollPhysics(),
             slivers: [
               SliverToBoxAdapter(
@@ -75,6 +83,7 @@ class _ConnectionScreenState extends State<ConnectionScreen> {
                         showClearButton: true,
                         onClear: () {
                           _searchController.clear();
+                          FocusScope.of(context).unfocus();
                           _controller.clearSearch();
                         },
                         suffixIcon: Icon(
@@ -147,7 +156,14 @@ class _ConnectionScreenState extends State<ConnectionScreen> {
         itemCount: connections.length,
         separatorBuilder: (context, index) => const SizedBox(height: 12),
         itemBuilder: (context, index) {
-          return ConnectionCard(connection: connections[index]);
+          final connection = connections[index];
+          return Obx(
+            () => ConnectionCard(
+              connection: connection,
+              isRemoving: _controller.isRemoving(connection.id),
+              onRemove: () => _controller.removeConnection(connection),
+            ),
+          );
         },
       ),
     );

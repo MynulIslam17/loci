@@ -11,12 +11,17 @@ class LoginController extends GetxController {
   final isLoading = false.obs;
   final errorMessage = RxnString();
 
-  Future<bool> login({required String email, required String password}) async {
+  Future<bool> login({
+    required String email,
+    required String password,
+    bool isRememberMe = false,
+  }) async {
     isLoading.value = true;
     errorMessage.value = null;
 
     try {
       final result = await _service.login(email: email, password: password);
+      await _service.saveRememberMe(remember: isRememberMe, email: email);
       await Get.find<AuthController>().saveUserData(
         model: result.user,
         token: result.token,
@@ -31,5 +36,9 @@ class LoginController extends GetxController {
     } finally {
       isLoading.value = false;
     }
+  }
+
+  Future<({bool remember, String? email})> getRememberedPreference() {
+    return _service.getRememberMe();
   }
 }

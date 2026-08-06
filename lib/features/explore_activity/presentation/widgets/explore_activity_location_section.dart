@@ -64,6 +64,9 @@ class ExploreActivityLocationSection extends StatelessWidget {
     this.locationHint = 'Search address or place',
     this.mapHeight = 160,
     this.highlightTitle = false,
+    this.mapImage,
+    this.latitude,
+    this.longitude,
   });
 
   final TextEditingController locationController;
@@ -74,6 +77,10 @@ class ExploreActivityLocationSection extends StatelessWidget {
   final String locationHint;
   final double mapHeight;
   final bool highlightTitle;
+
+  final String? mapImage;
+  final double? latitude;
+  final double? longitude;
 
   @override
   Widget build(BuildContext context) {
@@ -90,7 +97,13 @@ class ExploreActivityLocationSection extends StatelessWidget {
             locationHint: locationHint,
           ),
           const SizedBox(height: 16),
-          ExploreActivityMapPreview(height: mapHeight),
+          ExploreActivityMapPreview(
+            mapImage: mapImage,
+            latitude: latitude,
+            longitude: longitude,
+            locationLabel: locationController.text,
+            height: mapHeight,
+          ),
         ],
       ),
     );

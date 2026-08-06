@@ -10,6 +10,7 @@ class EventDetailsModel {
   final int rsvpCount;
   final int checkInCount;
   final String? mapUrl;
+  final String? mapImage;
 
   final List<Rsvp> rsvpList;
   final String checkInCode;
@@ -34,6 +35,7 @@ class EventDetailsModel {
     required this.qrCode,
     required this.status,
     this.mapUrl,
+    this.mapImage,
   });
 
   factory EventDetailsModel.fromJson(Map<String, dynamic> json) {
@@ -57,6 +59,7 @@ class EventDetailsModel {
           .map((e) => Rsvp.fromJson(e))
           .toList(),
       mapUrl: data['url'] ?? '',
+      mapImage: data['mapImage']?.toString(),
 
       checkInCode: data['checkInCode'] ?? '',
       qrCode: data["qrCode"] ?? '',
@@ -76,6 +79,7 @@ class EventDetailsModel {
     int? checkInCount,
     CheckInStatus? myCheckInStatus,
     String? mapUrl,
+    String? mapImage,
   }) {
     return EventDetailsModel(
       eventModel: eventModel ?? this.eventModel,
@@ -91,6 +95,7 @@ class EventDetailsModel {
       qrCode: qrCode,
       status: status,
       mapUrl: mapUrl ?? this.mapUrl,
+      mapImage: mapImage ?? this.mapImage,
     );
   }
 }

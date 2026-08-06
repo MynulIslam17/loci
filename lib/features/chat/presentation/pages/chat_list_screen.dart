@@ -7,6 +7,7 @@ import 'package:loci/features/chat/data/models/conversation_model.dart';
 import 'package:loci/features/auth/presentation/controllers/auth_controller.dart';
 import 'package:loci/features/chat/presentation/controllers/chat_list_controller.dart';
 import 'package:loci/features/chat/presentation/widgets/chat_avatar.dart';
+import 'package:loci/features/chat/presentation/widgets/chat_list_shimmer.dart';
 import 'package:loci/shared/widgets/custom_appbar.dart';
 import 'package:loci/routes/app_routes.dart';
 import 'package:loci/shared/widgets/custom_text_field.dart';
@@ -72,7 +73,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
                 final ctrl = controller;
                 final query = _query.value;
                 if (ctrl.showInitialShimmer && ctrl.conversations.isEmpty) {
-                  return const Center(child: CircularProgressIndicator());
+                  return const ChatListShimmer();
                 }
                 if (ctrl.errorMessage.value != null &&
                     ctrl.conversations.isEmpty) {
@@ -189,24 +190,26 @@ class _ChatListScreenState extends State<ChatListScreen> {
             weight: unread > 0 ? FontWeight.w600 : FontWeight.w400,
           ),
         ),
-        trailing: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.end,
-          children: [
-            Text(
-              _timeLabel(conv.lastActivityAt),
-              style: AppTextStyle.textXs(color: colorScheme.onSurfaceVariant),
-            ),
-            const SizedBox(height: 6),
-            if (unread > 0)
-              Container(
-                padding: const EdgeInsets.all(6),
-                constraints: const BoxConstraints(minWidth: 22, minHeight: 22),
-                decoration: BoxDecoration(
-                  color: colorScheme.primary,
-                  shape: BoxShape.circle,
-                ),
-                child: Center(
+        trailing: SizedBox(
+          width: 72,
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.end,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                _timeLabel(conv.lastActivityAt),
+                style: AppTextStyle.textXs(color: colorScheme.onSurfaceVariant),
+              ),
+              const SizedBox(height: 6),
+              if (unread > 0)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  constraints: const BoxConstraints(minWidth: 20, minHeight: 20),
+                  decoration: BoxDecoration(
+                    color: colorScheme.primary,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
                   child: Text(
                     unread > 99 ? '99+' : '$unread',
                     style: AppTextStyle.textXs(
@@ -214,15 +217,15 @@ class _ChatListScreenState extends State<ChatListScreen> {
                       weight: FontWeight.w700,
                     ),
                   ),
+                )
+              else
+                Icon(
+                  Icons.arrow_forward_ios,
+                  size: 14,
+                  color: colorScheme.outlineVariant,
                 ),
-              )
-            else
-              Icon(
-                Icons.arrow_forward_ios,
-                size: 14,
-                color: colorScheme.outlineVariant,
-              ),
-          ],
+            ],
+          ),
         ),
         onTap: () {
           ctrl.clearUnread(conv.id);
@@ -244,8 +247,9 @@ class _ChatListScreenState extends State<ChatListScreen> {
     final lm = conv.lastMessage;
     if (lm == null) return 'Say hello 👋';
     if (lm.isDeleted) return 'Message deleted';
-    if ((lm.content ?? '').isEmpty && lm.attachments.isNotEmpty)
+    if ((lm.content ?? '').isEmpty && lm.attachments.isNotEmpty) {
       return '📎 Attachment';
+    }
     return lm.content ?? '';
   }
 

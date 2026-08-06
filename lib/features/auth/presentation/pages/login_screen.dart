@@ -1,9 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
-import 'package:get/get_core/src/get_main.dart';
-import 'package:get/get_instance/src/extension_instance.dart';
-import 'package:get/get_navigation/src/extension_navigation.dart';
 import 'package:loci/core/constants/app_text_style.dart';
 import 'package:loci/core/theme/theme_extention.dart';
 import 'package:loci/core/utils/validators.dart';
@@ -45,6 +42,7 @@ class _LoginScreenState extends State<LoginScreen> {
     final isSuccess = await _loginController.login(
       email: emailTEController.text.trim(),
       password: passwordTEController.text,
+      isRememberMe: isRememberMe.value,
     );
 
     if (isSuccess) {
@@ -61,8 +59,15 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   void initState() {
     super.initState();
-    // IF THIS PRINTS AFTER A FAILED LOGIN, THE SCREEN RESTARTED
-    print("DEBUG: 📥 LoginScreen Init - Fields are resetting now!");
+    _loadRememberedPreference();
+  }
+
+  Future<void> _loadRememberedPreference() async {
+    final pref = await _loginController.getRememberedPreference();
+    if (pref.remember && pref.email != null && pref.email!.isNotEmpty) {
+      emailTEController.text = pref.email!;
+      isRememberMe.value = true;
+    }
   }
 
   @override

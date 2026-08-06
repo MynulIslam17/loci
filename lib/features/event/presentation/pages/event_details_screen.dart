@@ -12,12 +12,12 @@ import 'package:loci/routes/app_routes.dart';
 
 import 'package:loci/core/enums/checkin_status.dart';
 import 'package:loci/core/utils/show_snackbar.dart';
-import 'package:loci/gen/assets.gen.dart';
 import 'package:loci/features/event/presentation/controllers/event_details_controller.dart';
 import 'package:loci/shared/widgets/company_info_card.dart';
 import 'package:loci/shared/widgets/custom_appbar.dart';
 import '../widgets/event_card.dart';
 import '../widgets/event_details_skeleton.dart';
+import '../widgets/event_map_preview.dart';
 
 class EventDetails extends StatefulWidget {
   const EventDetails({super.key});
@@ -239,14 +239,11 @@ class _EventDetailsState extends State<EventDetails> {
 
               const SizedBox(height: 16),
 
-              Card(
-                color: context.colorScheme.surfaceContainerHigh,
-                child: Padding(
-                  padding: const EdgeInsets.all(12),
-                  child: ClipRRect(
-                    child: Image.asset(Assets.images.location.path),
-                  ),
-                ),
+              EventMapPreview(
+                mapImage: controller.eventDetails?.mapImage,
+                lat: controller.eventDetails?.lat,
+                lng: controller.eventDetails?.lng,
+                locationLabel: event?.title,
               ),
 
               const SizedBox(height: 16),

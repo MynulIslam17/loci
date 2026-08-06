@@ -9,6 +9,7 @@ import 'package:loci/features/raffles/presentation/pages/active_raffles_screen.d
 import 'package:loci/features/routes/presentation/pages/explore_routes_screen.dart';
 import 'package:loci/features/chat/presentation/widgets/chat_avatar.dart';
 import 'package:loci/routes/app_routes.dart';
+import 'package:loci/shared/widgets/confirm_dialog.dart';
 
 /// Side navigation drawer for the main shell.
 ///
@@ -143,7 +144,7 @@ class AppNavigationDrawer extends StatelessWidget {
     final color = isDanger ? Colors.red : context.colorScheme.onSurface;
 
     return ListTile(
-      onTap: () => _handleItem(item['title']),
+      onTap: () => _handleItem(context, item['title']),
       leading: SvgPicture.asset(
         'assets/icons/${item["icon"]}.svg',
         width: 20,
@@ -171,7 +172,7 @@ class AppNavigationDrawer extends StatelessWidget {
   }
 
   /// Routes a tapped drawer item. Closes the drawer first, then navigates.
-  void _handleItem(String title) {
+  void _handleItem(BuildContext context, String title) {
     Get.back();
 
     final navController = Get.find<NavController>();
@@ -224,8 +225,24 @@ class AppNavigationDrawer extends StatelessWidget {
         break;
 
       case "Sign Out":
-        Get.find<AuthController>().logout();
+        _showSignOutConfirmation(context);
         break;
+    }
+  }
+
+  Future<void> _showSignOutConfirmation(BuildContext context) async {
+    final confirmed = await showConfirmDialog(
+      context,
+      title: 'Sign Out',
+      message: 'Are you sure you want to sign out?',
+      confirmText: 'Sign Out',
+      cancelText: 'Cancel',
+      icon: Icons.logout_rounded,
+      isDestructive: true,
+    );
+
+    if (confirmed) {
+      Get.find<AuthController>().logout();
     }
   }
 }

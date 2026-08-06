@@ -11,11 +11,13 @@ class BrowseBusinessRepository {
     required int page,
     required int limit,
     String? category,
+    String? search,
   }) async {
     final queryParams = <String, dynamic>{
       'page': page,
       'limit': limit,
       'category': ?category,
+      if (search != null && search.trim().isNotEmpty) 'search': search.trim(),
     };
 
     final res = await _network.getRequest(

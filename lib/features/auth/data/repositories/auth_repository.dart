@@ -150,6 +150,14 @@ class AuthRepository {
     await _storage.saveUserModel(updatedUser);
   }
 
+  Future<void> saveRememberMe({required bool remember, String? email}) async {
+    await _storage.saveRememberMe(remember: remember, email: email);
+  }
+
+  Future<({bool remember, String? email})> getRememberMe() async {
+    return _storage.getRememberMe();
+  }
+
   Future<void> clearUserData() async {
     await _storage.clearAll();
   }

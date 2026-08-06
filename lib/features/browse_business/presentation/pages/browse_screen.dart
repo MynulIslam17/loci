@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
 import 'package:loci/core/enums/category_enum.dart';
 import 'package:loci/core/theme/theme_extention.dart';
