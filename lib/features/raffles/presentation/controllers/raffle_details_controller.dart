@@ -16,23 +16,28 @@ class RaffleDetailsController extends GetxController {
   RaffleDetailsModel? get raffleDetails => _raffleDetails.value;
 
   /// Fetch raffle details by ID
-  Future<void> fetchRaffleDetails(String raffleId) async {
-    _isLoading.value = true;
+  Future<void> fetchRaffleDetails(
+    String raffleId, {
+    bool silent = false,
+  }) async {
+    if (!silent) {
+      _isLoading.value = true;
+      _raffleDetails.value = null;
+    }
     _errorMessage.value = null;
-    _raffleDetails.value = null;
 
     try {
       _raffleDetails.value = await _service.getRaffleDetails(raffleId);
     } catch (e) {
       _errorMessage.value = e.toString().replaceFirst('Exception: ', '');
     } finally {
-      _isLoading.value = false;
+      if (!silent) _isLoading.value = false;
     }
   }
 
-  /// Refresh (pull-to-refresh use)
+  /// Refresh (pull-to-refresh) — keeps current UI visible.
   Future<void> refreshRaffleDetails(String raffleId) async {
-    await fetchRaffleDetails(raffleId);
+    await fetchRaffleDetails(raffleId, silent: true);
   }
 
   /// Toggle participation locally
@@ -68,6 +73,20 @@ class RaffleDetailsController extends GetxController {
       );
 
       _raffleDetails.value = current.copyWith(tasks: updatedTasks);
+      _raffleDetails.refresh();
     }
+  }
+
+  /// Marks the task linked to [activityId] as completed (no API call).
+  void markTaskCompletedByActivityId(String activityId) {
+    if (activityId.isEmpty) return;
+    final current = _raffleDetails.value;
+    if (current == null) return;
+
+    final index = current.tasks.indexWhere(
+      (task) => task.activity?.id == activityId,
+    );
+    if (index < 0) return;
+    updateTaskCompletion(index, true);
   }
 }

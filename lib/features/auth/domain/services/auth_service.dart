@@ -17,8 +17,8 @@ class AuthService {
     if (inner is! Map) throw Exception('Invalid login response');
 
     final userJson = inner['user'];
-    final token = inner['accessToken'] as String?;
-    if (userJson == null || token == null) {
+    final token = (inner['accessToken'] ?? inner['token'])?.toString();
+    if (userJson == null || token == null || token.isEmpty) {
       throw Exception('Invalid login response');
     }
 

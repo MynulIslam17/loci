@@ -99,6 +99,30 @@ class ViewActivityController extends GetxController {
     }
   }
 
+  /// Pull-to-refresh: keeps current content visible (no shimmer).
+  Future<void> refreshCurrentActivity() async {
+    switch (activityType) {
+      case ActivityType.event:
+        await _eventDetails.refreshDetails();
+        if (screenTitle.isEmpty) {
+          screenTitle = _eventDetails.screenTitle;
+        }
+        return;
+      case ActivityType.routes:
+        await _routeDetails.refreshDetails();
+        if (screenTitle.isEmpty) {
+          screenTitle = _routeDetails.screenTitle;
+        }
+        return;
+      case ActivityType.raffles:
+        await _raffleDetails.refreshDetails();
+        if (screenTitle.isEmpty) {
+          screenTitle = _raffleDetails.screenTitle;
+        }
+        return;
+    }
+  }
+
   bool get isLoading {
     switch (activityType) {
       case ActivityType.event:

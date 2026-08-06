@@ -70,14 +70,24 @@ class _RafflesDetailsScreenState extends State<RafflesDetailsScreen> {
     final activity = task.activity;
     if (activity == null || activity.id.isEmpty) return;
 
-    await Get.toNamed(
+    final result = await Get.toNamed(
       task.isRouteTask ? AppRoutes.routeDetails : AppRoutes.eventDetails,
       arguments: task.isRouteTask
-          ? {'routeName': activity.title, 'routeId': activity.id}
-          : {'eventTitle': activity.title, 'eventId': activity.id},
+          ? {
+              'routeName': activity.title,
+              'routeId': activity.id,
+            }
+          : {
+              'eventTitle': activity.title,
+              'eventId': activity.id,
+            },
     );
 
-    await _controller.fetchRaffleDetails(_activeRaffleId);
+    // No re-fetch — pull-to-refresh covers that. Update the matching task locally.
+    if (result is Map && result['checkedIn'] == true) {
+      final checkedInId = result['entityId']?.toString() ?? activity.id;
+      _controller.markTaskCompletedByActivityId(checkedInId);
+    }
   }
 
   @override

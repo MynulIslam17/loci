@@ -47,11 +47,21 @@ class EventDetailsController extends GetxController {
     );
   }
 
-  /// update check-in status locally
-  void updateCheckInStatus(CheckInStatus status) {
+  /// update check-in status locally.
+  /// When [onlyIfId] is set, updates only if it matches the open event.
+  void updateCheckInStatus(
+    CheckInStatus status, {
+    String? onlyIfId,
+  }) {
     final current = _eventDetails.value;
     if (current == null) return;
+    if (onlyIfId != null &&
+        onlyIfId.isNotEmpty &&
+        current.eventModel.id != onlyIfId) {
+      return;
+    }
 
     _eventDetails.value = current.copyWith(myCheckInStatus: status);
+    _eventDetails.refresh();
   }
 }

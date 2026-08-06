@@ -452,8 +452,15 @@ class _RaffleDetailContent extends StatelessWidget {
                     return TaskCard(
                       id: activity?.id ?? 'task_$index',
                       step: task.order,
-                      title: activity?.title ?? 'Untitled activity',
-                      description: activity?.details ?? 'No description',
+                      title: (activity?.title.trim().isNotEmpty ?? false)
+                          ? activity!.title
+                          : (task.isRouteTask
+                              ? 'Route requirement'
+                              : 'Event requirement'),
+                      description:
+                          (activity?.details.trim().isNotEmpty ?? false)
+                              ? activity!.details
+                              : 'Tap to open linked activity',
                       imageUrl: activity?.banner ?? '',
                       typeLabel: task.isRouteTask ? 'Route' : 'Event',
                       onTap: () => _openLinkedActivity(task),

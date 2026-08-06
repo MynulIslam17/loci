@@ -13,6 +13,9 @@ class CameraPermissionView extends StatelessWidget {
     required this.onAllow,
     required this.onOpenSettings,
     this.onEnterManually,
+    this.title,
+    this.description,
+    this.manualActionLabel,
   });
 
   /// When true, the OS won't show the prompt again — send the user to settings.
@@ -22,6 +25,9 @@ class CameraPermissionView extends StatelessWidget {
 
   /// Optional shortcut to the manual-code tab.
   final VoidCallback? onEnterManually;
+  final String? title;
+  final String? description;
+  final String? manualActionLabel;
 
   @override
   Widget build(BuildContext context) {
@@ -48,7 +54,7 @@ class CameraPermissionView extends StatelessWidget {
             ),
             const SizedBox(height: 24),
             Text(
-              'Camera access needed',
+              title ?? 'Camera access needed',
               textAlign: TextAlign.center,
               style: AppTextStyle.textLg(
                 color: colorScheme.onSurface,
@@ -57,9 +63,10 @@ class CameraPermissionView extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             Text(
-              permanentlyDenied
-                  ? 'Enable camera access in Settings to scan QR codes, or enter the code manually.'
-                  : 'We need your camera to scan the check-in QR code. You can also enter the code manually.',
+              description ??
+                  (permanentlyDenied
+                      ? 'Enable camera access in Settings to scan QR codes, or enter the code manually.'
+                      : 'We need your camera to scan the check-in QR code. You can also enter the code manually.'),
               textAlign: TextAlign.center,
               style: AppTextStyle.textSm(color: colorScheme.onSurfaceVariant),
             ),
@@ -76,7 +83,7 @@ class CameraPermissionView extends StatelessWidget {
               TextButton(
                 onPressed: onEnterManually,
                 child: Text(
-                  'Enter code manually',
+                  manualActionLabel ?? 'Enter code manually',
                   style: AppTextStyle.textSm(color: colorScheme.primary),
                 ),
               ),

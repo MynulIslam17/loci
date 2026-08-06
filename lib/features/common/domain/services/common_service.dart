@@ -47,16 +47,14 @@ class CommonService {
     return PaginatedResponse<T>.fromJson(body, fromJson);
   }
 
-  Future<String> checkIn(Map<String, dynamic> body) async {
-    final res = await _repository.checkIn(body);
-    return res['message']?.toString() ?? 'Check-in successful';
+  Future<Map<String, dynamic>> checkIn(Map<String, dynamic> body) async {
+    return _repository.checkIn(body);
   }
 
-  Future<String> manualCheckIn({
+  Future<Map<String, dynamic>> manualCheckIn({
     required String type,
     required Map<String, dynamic> body,
   }) async {
-    final res = await _repository.manualCheckIn(type: type, body: body);
-    return res['message']?.toString() ?? 'Check-in successful';
+    return _repository.manualCheckIn(type: type, body: body);
   }
 }

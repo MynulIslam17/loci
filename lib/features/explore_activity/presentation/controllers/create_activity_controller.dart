@@ -103,12 +103,17 @@ class CreateActivityController extends GetxController {
     showCreateActivityTaskSheet(
       context: context,
       businessId: businessId,
-      onAddTask: (task) {
-        if (isDuplicateTask(task)) {
-          SnackbarService.warning('Task already added');
-          return;
+      alreadyAddedIds: tasks.map((t) => t.id).toSet(),
+      onAddTasks: (selected) {
+        var added = 0;
+        for (final task in selected) {
+          if (isDuplicateTask(task)) continue;
+          addTask(task);
+          added++;
         }
-        addTask(task);
+        if (added == 0 && selected.isNotEmpty) {
+          SnackbarService.warning('Selected tasks were already added');
+        }
       },
     );
   }
@@ -198,7 +203,7 @@ class CreateActivityController extends GetxController {
   Future<void> pickRaffleCoupon() async {
     final result = await FilePicker.platform.pickFiles(
       type: FileType.custom,
-      allowedExtensions: ['jpg', 'jpeg', 'png', 'pdf'],
+      allowedExtensions: ['jpg', 'jpeg', 'png', 'webp'],
     );
     if (result == null) return;
     final path = result.files.single.path;

@@ -31,7 +31,11 @@ class LocalStorageService {
     final prefs = await SharedPreferences.getInstance();
     final userJson = prefs.getString(_userDataKey);
     if (userJson != null) {
-      return UserModel.fromJson(jsonDecode(userJson));
+      try {
+        return UserModel.fromJson(jsonDecode(userJson));
+      } catch (e) {
+        return null;
+      }
     }
     return null;
   }
