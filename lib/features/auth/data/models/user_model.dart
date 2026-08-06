@@ -29,18 +29,18 @@ class UserModel {
 
   factory UserModel.fromJson(Map<String, dynamic> json) {
     return UserModel(
-      id: json['id'] ?? '',
-      name: json['name'] ?? '',
-      email: json['email'] ?? '',
-      role: json['role'] ?? 'user',
-      about: json['about'] ?? " ",
-      status: json['status'] ?? 'active',
-      avatar: json['avatar'],
-      phone: json['phone'],
-      dateOfBirth: json['dateOfBirth'],
-      zipCode: json['zipCode'],
-      lastLoginAt: json['lastLoginAt'],
-      createdAt: json['createdAt'] ?? '',
+      id: (json['id'] ?? json['_id'])?.toString() ?? '',
+      name: json['name']?.toString() ?? '',
+      email: json['email']?.toString() ?? '',
+      role: json['role']?.toString() ?? 'user',
+      about: json['about']?.toString() ?? " ",
+      status: json['status']?.toString() ?? 'active',
+      avatar: json['avatar']?.toString(),
+      phone: json['phone']?.toString(),
+      dateOfBirth: json['dateOfBirth']?.toString(),
+      zipCode: json['zipCode']?.toString(),
+      lastLoginAt: json['lastLoginAt']?.toString(),
+      createdAt: json['createdAt']?.toString() ?? '',
     );
   }
 

@@ -43,6 +43,7 @@ import 'package:loci/features/routes/presentation/pages/explore_routes_screen.da
 import 'package:loci/features/routes/presentation/pages/route_details_screen.dart';
 import 'package:loci/features/chat/presentation/pages/chat_list_screen.dart';
 import 'package:loci/features/chat/presentation/pages/message_screen.dart';
+import 'package:loci/features/qr_code/presentation/bindings/qr_code_binding.dart';
 import 'package:loci/features/qr_code/presentation/pages/my_qr_code_screen.dart';
 import 'package:loci/features/network/presentation/pages/connections/connection_screen.dart';
 import 'package:loci/features/network/presentation/pages/meetings/meeting_invitation_screen.dart';
@@ -179,8 +180,8 @@ abstract class AppPages {
     //----myQrcode
     GetPage(
       name: AppRoutes.myQrCode,
-      page: () => MyQrcodeScreen(),
-      binding: DrawerBindings(),
+      page: () => const MyQrCodeScreen(),
+      binding: QrCodeBinding(),
     ),
 
     //--explore routes

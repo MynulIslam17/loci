@@ -13,6 +13,7 @@ class ExploreActivityAsyncBody extends StatelessWidget {
     required this.emptyMessage,
     required this.builder,
     this.loading,
+    this.onRefresh,
   });
 
   final bool isLoading;
@@ -25,13 +26,17 @@ class ExploreActivityAsyncBody extends StatelessWidget {
   /// Defaults to [ExploreActivityDetailShimmer] (view + edit).
   final Widget? loading;
 
+  /// When set, wraps content in [RefreshIndicator] (no shimmer on pull).
+  final Future<void> Function()? onRefresh;
+
   @override
   Widget build(BuildContext context) {
-    if (isLoading) {
+    // First load only — keep existing content visible during pull refresh.
+    if (isLoading && isEmpty) {
       return loading ?? const ExploreActivityDetailShimmer();
     }
 
-    if (errorMessage != null) {
+    if (errorMessage != null && isEmpty) {
       return ErrorStateWidget(message: errorMessage!, onRetry: onRetry);
     }
 
@@ -39,6 +44,12 @@ class ExploreActivityAsyncBody extends StatelessWidget {
       return Center(child: Text(emptyMessage));
     }
 
-    return builder(context);
+    final content = builder(context);
+    if (onRefresh == null) return content;
+
+    return RefreshIndicator(
+      onRefresh: onRefresh!,
+      child: content,
+    );
   }
 }

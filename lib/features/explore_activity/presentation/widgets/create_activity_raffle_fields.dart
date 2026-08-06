@@ -120,7 +120,7 @@ class CreateActivityRaffleFields extends StatelessWidget {
           },
         ),
         const SizedBox(height: 16),
-        const FormFieldLabel(label: 'Prize image or coupon', isRequired: true),
+        const FormFieldLabel(label: 'Prize image', isRequired: true),
         const SizedBox(height: 6),
         CouponUploadCard(
           file: rafflePrizeImage,

@@ -32,13 +32,22 @@ class BusinessEventDetailsController extends GetxController {
         businessId: _businessId.isNotEmpty ? _businessId : null,
       );
 
+  Future<void> refreshDetails() => fetchEventDetails(
+        _eventId,
+        businessId: _businessId.isNotEmpty ? _businessId : null,
+        silent: true,
+      );
+
   Future<void> fetchEventDetails(
     String eventId, {
     String? businessId,
+    bool silent = false,
   }) async {
-    isLoading.value = true;
+    if (!silent) {
+      isLoading.value = true;
+      eventDetails.value = null;
+    }
     errorMessage.value = null;
-    eventDetails.value = null;
 
     try {
       eventDetails.value = await _service.getEventDetails(
@@ -48,7 +57,7 @@ class BusinessEventDetailsController extends GetxController {
     } catch (e) {
       errorMessage.value = e.toString().replaceFirst('Exception: ', '');
     } finally {
-      isLoading.value = false;
+      if (!silent) isLoading.value = false;
     }
   }
 }

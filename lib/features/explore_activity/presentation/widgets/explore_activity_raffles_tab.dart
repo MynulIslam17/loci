@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:loci/core/enums/activity_type.dart';
 import 'package:loci/core/utils/date_parser.dart';
 import 'package:loci/features/explore_activity/presentation/controllers/business_raffles_list_controller.dart';
 import 'package:loci/features/explore_activity/presentation/utils/explore_activity_search_focus.dart';
@@ -125,6 +126,7 @@ class _ExploreActivityRafflesTabState extends State<ExploreActivityRafflesTab>
                   'raffleId': raffle.id,
                   'rafflesName': raffle.title,
                   'businessId': widget.businessId,
+                  'activityType': ActivityType.raffles.name,
                 },
               ),
             );

@@ -83,7 +83,7 @@ class TaskActivityModel {
 
   factory TaskActivityModel.fromJson(Map<String, dynamic> json) {
     return TaskActivityModel(
-      id: json['_id'] ?? '',
+      id: (json['_id'] ?? json['id'] ?? '').toString(),
       banner: json['banner'] ?? '',
       title: json['title'] ?? '',
       details: json['details'] ?? '',
@@ -139,8 +139,8 @@ class RaffleTaskModel {
         details: '',
       );
     }
-    if (value is Map<String, dynamic>) {
-      return TaskActivityModel.fromJson(value);
+    if (value is Map) {
+      return TaskActivityModel.fromJson(Map<String, dynamic>.from(value));
     }
     return null;
   }

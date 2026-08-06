@@ -327,7 +327,7 @@ class RaffleEditController extends GetxController {
   Future<void> pickCouponFile() async {
     final result = await FilePicker.platform.pickFiles(
       type: FileType.custom,
-      allowedExtensions: ['jpg', 'png', 'pdf'],
+      allowedExtensions: ['jpg', 'jpeg', 'png', 'webp'],
     );
     if (result != null && result.files.single.path != null) {
       setCoupon(File(result.files.single.path!));
@@ -342,7 +342,15 @@ class RaffleEditController extends GetxController {
     showCreateActivityTaskSheet(
       context: context,
       businessId: businessId,
-      onAddTask: addTask,
+      alreadyAddedIds: tasks
+          .map((t) => t.activity?.id ?? '')
+          .where((id) => id.isNotEmpty)
+          .toSet(),
+      onAddTasks: (selected) {
+        for (final task in selected) {
+          addTask(task);
+        }
+      },
     );
   }
 

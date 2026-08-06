@@ -10,7 +10,7 @@ import 'package:loci/features/subscription/presentation/controllers/subscription
 class DrawerBindings extends Bindings {
   @override
   void dependencies() {
-    // GetMyQrCodeController is registered permanently in AppBindings so its
+    // MyQrCodeController is registered permanently in AppBindings so its
     // QR is cached for the session — no per-visit registration here.
     Get.lazyPut(
       () => RecentActivityController(Get.find<RecentActivityService>()),

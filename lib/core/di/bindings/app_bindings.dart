@@ -40,7 +40,7 @@ import 'package:loci/features/profile/data/repositories/profile_repository.dart'
 import 'package:loci/features/profile/domain/services/profile_service.dart';
 import 'package:loci/features/qr_code/data/repositories/qr_code_repository.dart';
 import 'package:loci/features/qr_code/domain/services/qr_code_service.dart';
-import 'package:loci/features/qr_code/presentation/controllers/get_my_qr_controller.dart';
+import 'package:loci/features/qr_code/presentation/controllers/my_qr_code_controller.dart';
 import 'package:loci/features/raffles/data/repositories/raffles_repository.dart';
 import 'package:loci/features/raffles/domain/services/raffles_service.dart';
 import 'package:loci/features/recent_activity/data/repositories/recent_activity_repository.dart';
@@ -264,8 +264,8 @@ class AppBindings extends Bindings {
     );
     // Kept alive so the user's QR is fetched once per session and served from
     // memory on subsequent drawer visits (cleared on logout).
-    Get.put<GetMyQrCodeController>(
-      GetMyQrCodeController(Get.find<QrCodeService>()),
+    Get.put<MyQrCodeController>(
+      MyQrCodeController(Get.find<QrCodeService>()),
       permanent: true,
     );
     Get.lazyPut<NotificationController>(

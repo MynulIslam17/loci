@@ -55,6 +55,7 @@ class _CheckInScreenState extends State<CheckInScreen>
   final RxBool _torchOn = false.obs;
 
   late final String _type;
+  String? _openedFromEntityId;
 
   // ── Lifecycle ─────────────────────────────────────────────────────────────
   @override
@@ -62,7 +63,8 @@ class _CheckInScreenState extends State<CheckInScreen>
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     final args = Get.arguments as Map<String, dynamic>?;
-    _type = args?['type'] ?? 'event';
+    _type = args?['type']?.toString() ?? 'event';
+    _openedFromEntityId = args?['entityId']?.toString();
     _requestCameraPermission();
   }
 
@@ -134,6 +136,8 @@ class _CheckInScreenState extends State<CheckInScreen>
 
     final user = _authController.userModel;
     try {
+      // QR always encodes `qrCode` → POST /checkins/scan with qrPayload.
+      // Manual codes (e.g. ROUTE-xxx / CHK-xxx) use entity check-in endpoints.
       final success = await _checkInController.doCheckIn(
         checkInCode: code,
         name: user?.name ?? '',
@@ -145,7 +149,8 @@ class _CheckInScreenState extends State<CheckInScreen>
         message: success
             ? _checkInController.successMessage
             : _checkInController.errorMessage,
-        // Resume scanning so the user can retry after a failed scan.
+        entityId: _checkInController.checkedInEntityId,
+        activityType: _checkInController.checkedInActivityType,
         onFailureResumeScan: true,
       );
     } finally {
@@ -170,6 +175,8 @@ class _CheckInScreenState extends State<CheckInScreen>
       message: success
           ? _manualController.successMessage
           : _manualController.errorMessage,
+      entityId: _manualController.checkedInEntityId,
+      activityType: _manualController.checkedInActivityType ?? _type,
     );
   }
 
@@ -177,11 +184,26 @@ class _CheckInScreenState extends State<CheckInScreen>
   void _finish({
     required bool success,
     required String? message,
+    String? entityId,
+    String? activityType,
     bool onFailureResumeScan = false,
   }) {
     if (success) {
-      _syncLocalCheckInStatus();
-      Get.back();
+      final checkedInId = (entityId != null && entityId.isNotEmpty)
+          ? entityId
+          : _openedFromEntityId;
+
+      _syncLocalCheckInStatus(
+        entityId: checkedInId,
+        activityType: activityType,
+      );
+      Get.back(
+        result: <String, dynamic>{
+          'checkedIn': true,
+          'entityId': checkedInId,
+          'activityType': activityType ?? _type,
+        },
+      );
       SnackbarService.success(message ?? 'Check-in successful');
     } else {
       SnackbarService.error(message ?? 'Check-in failed');
@@ -192,20 +214,31 @@ class _CheckInScreenState extends State<CheckInScreen>
     }
   }
 
-  /// Optimistically reflects the check-in on the originating details screen.
-  /// The single place to extend when adding a new check-in [_type].
-  void _syncLocalCheckInStatus() {
-    switch (_type) {
-      case 'event':
-        if (Get.isRegistered<EventDetailsController>()) {
-          Get.find<EventDetailsController>()
-              .updateCheckInStatus(CheckInStatus.checkedIn);
-        }
-      case 'route':
-        if (Get.isRegistered<RouteDetailsController>()) {
-          Get.find<RouteDetailsController>()
-              .updateCheckInStatus(CheckInStatus.checkedIn);
-        }
+  /// Updates check-in UI only for the activity returned by the API.
+  /// Checking in route/event B while opened from A must not disable A's button.
+  void _syncLocalCheckInStatus({
+    String? entityId,
+    String? activityType,
+  }) {
+    if (entityId == null || entityId.isEmpty) return;
+
+    final type = (activityType ?? _type).toLowerCase();
+
+    if (type.contains('event')) {
+      if (!Get.isRegistered<EventDetailsController>()) return;
+      Get.find<EventDetailsController>().updateCheckInStatus(
+        CheckInStatus.checkedIn,
+        onlyIfId: entityId,
+      );
+      return;
+    }
+
+    if (type.contains('route')) {
+      if (!Get.isRegistered<RouteDetailsController>()) return;
+      Get.find<RouteDetailsController>().updateCheckInStatus(
+        CheckInStatus.checkedIn,
+        onlyIfId: entityId,
+      );
     }
   }
 
