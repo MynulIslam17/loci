@@ -28,10 +28,16 @@ class BusinessRaffleDetailsController extends GetxController {
 
   Future<void> retryLoad() => fetchRaffleDetails(_raffleId);
 
-  Future<void> fetchRaffleDetails(String raffleId) async {
-    if (isLoading.value) return;
+  Future<void> refreshDetails([String? raffleId]) =>
+      fetchRaffleDetails(raffleId ?? _raffleId, silent: true);
 
-    isLoading.value = true;
+  Future<void> fetchRaffleDetails(
+    String raffleId, {
+    bool silent = false,
+  }) async {
+    if (!silent) {
+      isLoading.value = true;
+    }
     errorMessage.value = null;
 
     try {
@@ -39,12 +45,8 @@ class BusinessRaffleDetailsController extends GetxController {
     } catch (e) {
       errorMessage.value = e.toString().replaceFirst('Exception: ', '');
     } finally {
-      isLoading.value = false;
+      if (!silent) isLoading.value = false;
     }
-  }
-
-  Future<void> refreshDetails(String raffleId) async {
-    await fetchRaffleDetails(raffleId);
   }
 
   void clearDetails() {

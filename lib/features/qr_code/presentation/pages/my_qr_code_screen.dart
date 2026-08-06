@@ -1,213 +1,89 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:loci/features/qr_code/presentation/controllers/get_my_qr_controller.dart';
-import 'package:loci/shared/widgets/error_state.dart';
+import 'package:loci/core/theme/theme_extention.dart';
+import 'package:loci/features/qr_code/presentation/controllers/my_qr_code_controller.dart';
+import 'package:loci/features/qr_code/presentation/widgets/my_qr_display_tab.dart';
+import 'package:loci/features/qr_code/presentation/widgets/qr_scan_tab.dart';
+import 'package:loci/features/qr_code/presentation/widgets/qr_screen_tab_bar.dart';
+import 'package:loci/shared/widgets/custom_appbar.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
-import 'package:qr_flutter/qr_flutter.dart';
 
-class MyQrcodeScreen extends StatefulWidget {
-  const MyQrcodeScreen({super.key});
+/// Scan another member's QR or share your own connection code.
+///
+/// Flow: UI → [MyQrCodeController] → [QrCodeService] → [QrCodeRepository] → API.
+class MyQrCodeScreen extends StatefulWidget {
+  const MyQrCodeScreen({super.key});
 
   @override
-  State<MyQrcodeScreen> createState() => _MyQrcodeScreenState();
+  State<MyQrCodeScreen> createState() => _MyQrCodeScreenState();
 }
 
-class _MyQrcodeScreenState extends State<MyQrcodeScreen> {
-  final qrCodeController = Get.find<GetMyQrCodeController>();
+class _MyQrCodeScreenState extends State<MyQrCodeScreen> {
+  final _controller = Get.find<MyQrCodeController>();
+  final _scannerController = MobileScannerController(autoStart: false);
+  final _pageController = PageController();
 
-  final MobileScannerController scannerController = MobileScannerController();
-  final PageController _pageController = PageController();
+  QrScreenTab _selectedTab = QrScreenTab.scan;
 
-  final RxInt _currentIndex = 0.obs;
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _controller.ensureLoaded();
+    });
+  }
 
   @override
   void dispose() {
-    scannerController.dispose();
+    _scannerController.dispose();
     _pageController.dispose();
     super.dispose();
   }
 
-  @override
-  void initState() {
-    // TODO: implement initState
-    super.initState();
-
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      qrCodeController.getMyQrCode();
-    });
+  void _selectTab(QrScreenTab tab) {
+    if (_selectedTab == tab) return;
+    setState(() => _selectedTab = tab);
+    _pageController.animateToPage(
+      tab.index,
+      duration: const Duration(milliseconds: 280),
+      curve: Curves.easeInOut,
+    );
   }
 
   void _onPageChanged(int index) {
-    _currentIndex.value = index;
-    index == 1 ? scannerController.stop() : scannerController.start();
+    final tab = QrScreenTab.values[index];
+    if (_selectedTab == tab) return;
+    setState(() => _selectedTab = tab);
+    if (tab == QrScreenTab.myQr) {
+      _controller.ensureLoaded();
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    final color = Theme.of(context).colorScheme;
-
     return Scaffold(
-      appBar: AppBar(title: const Text("My QR Code"), centerTitle: true),
+      backgroundColor: context.colorScheme.surface,
+      appBar: const CustomAppbar(title: 'Connect'),
       body: Column(
         children: [
           Expanded(
             child: PageView(
               controller: _pageController,
               onPageChanged: _onPageChanged,
-              children: [_buildScannerTab(), _buildMyQrTab(color)],
+              children: [
+                QrScanTab(
+                  controller: _controller,
+                  scannerController: _scannerController,
+                  isActive: _selectedTab == QrScreenTab.scan,
+                ),
+                MyQrDisplayTab(controller: _controller),
+              ],
             ),
           ),
-          Obx(() => _buildBottomNav(color)),
-        ],
-      ),
-    );
-  }
-
-  // -------------------------
-  // Scanner Tab (same as before)
-  // -------------------------
-  Widget _buildScannerTab() {
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        Text(
-          "Scan QR Code",
-          style: TextStyle(
-            color: Theme.of(context).colorScheme.onSurfaceVariant,
+          QrScreenTabBar(
+            selected: _selectedTab,
+            onSelected: _selectTab,
           ),
-        ),
-        const SizedBox(height: 20),
-        SizedBox(
-          width: 280,
-          height: 280,
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(20),
-            child: MobileScanner(
-              controller: scannerController,
-              onDetect: (capture) {
-                final code = capture.barcodes.firstOrNull?.rawValue ?? '';
-                if (code.isNotEmpty) {
-                  ScaffoldMessenger.of(
-                    context,
-                  ).showSnackBar(SnackBar(content: Text("Scanned: $code")));
-                }
-              },
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  // -------------------------
-  // My QR Code Tab
-  // -------------------------
-  Widget _buildMyQrTab(ColorScheme color) {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Text(
-            "My QR Code",
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w600,
-              color: color.onSurface,
-            ),
-          ),
-          const SizedBox(height: 20),
-
-          Obx(() {
-            final controller = qrCodeController;
-
-            if (controller.isLoading) {
-              return SizedBox(
-                height: 260,
-                child: Center(child: CircularProgressIndicator()),
-              );
-            }
-
-            if (controller.errorMessage != null) {
-              return ErrorStateWidget(
-                message: controller.errorMessage!,
-                onRetry: controller.refreshQr,
-              );
-            }
-
-            if (controller.myQrCode == null) {
-              return Text("No QR Code");
-            }
-
-            return Container(
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: color.surfaceContainerHigh,
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: QrImageView(
-                data: controller.myQrCode!.myQrCode,
-                size: 220,
-                backgroundColor: Colors.white,
-              ),
-            );
-          }),
-          const SizedBox(height: 20),
-
-          Text(
-            "Let others scan to connect with you",
-            style: TextStyle(color: color.onSurfaceVariant),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // -------------------------
-  // Bottom Nav
-  // -------------------------
-  Widget _buildBottomNav(ColorScheme color) {
-    return Container(
-      height: 90,
-      decoration: BoxDecoration(
-        color: color.surfaceContainerHigh,
-        borderRadius: const BorderRadius.only(
-          topLeft: Radius.circular(24),
-          topRight: Radius.circular(24),
-        ),
-        boxShadow: const [
-          BoxShadow(
-            color: Colors.black12,
-            blurRadius: 20,
-            spreadRadius: 2,
-            offset: Offset(0, -5),
-          ),
-        ],
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-        children: [
-          _navButton("Scan", Icons.qr_code_scanner, 0),
-          _navButton("My QR", Icons.qr_code, 1),
-        ],
-      ),
-    );
-  }
-
-  Widget _navButton(String label, IconData icon, int index) {
-    final isSelected = _currentIndex.value == index;
-
-    return GestureDetector(
-      onTap: () => _pageController.animateToPage(
-        index,
-        duration: const Duration(milliseconds: 300),
-        curve: Curves.easeInOut,
-      ),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(icon, color: isSelected ? Colors.blue : Colors.grey),
-          const SizedBox(height: 4),
-          Text(label),
         ],
       ),
     );

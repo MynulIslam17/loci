@@ -3,13 +3,13 @@ import 'package:loci/core/constants/app_text_style.dart';
 import 'package:loci/core/theme/theme_extention.dart';
 import 'package:get/get.dart';
 import 'package:loci/features/routes/domain/services/routes_service.dart';
-import 'package:loci/shared/widgets/custom_button.dart';
 import 'package:loci/shared/widgets/error_state.dart';
 import 'package:loci/routes/app_routes.dart';
 import 'package:loci/core/enums/checkin_status.dart';
 import 'package:loci/features/routes/presentation/controllers/route_details_controller.dart';
 import 'package:loci/features/routes/presentation/widgets/route_details_skeleton.dart';
 import 'package:loci/shared/widgets/company_info_card.dart';
+import 'package:loci/shared/widgets/authenticated_map_image.dart';
 import 'package:loci/shared/widgets/custom_image_container.dart';
 
 class RouteDetailsScreen extends StatefulWidget {
@@ -34,6 +34,7 @@ class _RouteDetailsScreenState extends State<RouteDetailsScreen> {
 
   ///get x controller
   late final RouteDetailsController controller;
+  bool _checkedInThisVisit = false;
 
   @override
   void initState() {
@@ -57,11 +58,54 @@ class _RouteDetailsScreenState extends State<RouteDetailsScreen> {
     }
   }
 
+  void _popWithResult() {
+    Get.back(
+      result: _checkedInThisVisit
+          ? <String, dynamic>{
+              'checkedIn': true,
+              'entityId':
+                  controller.routeDetails?.routeModel.routeId ?? routeId,
+              'activityType': 'route',
+            }
+          : null,
+    );
+  }
+
+  Future<void> _openCheckIn() async {
+    final openRouteId =
+        controller.routeDetails?.routeModel.routeId ?? routeId;
+
+    final result = await Get.toNamed(
+      AppRoutes.checkIn,
+      arguments: {
+        'type': 'route',
+        'entityId': openRouteId,
+      },
+    );
+
+    if (result is Map && result['checkedIn'] == true) {
+      final checkedInId = result['entityId']?.toString();
+      if (checkedInId == openRouteId) {
+        controller.updateCheckInStatus(
+          CheckInStatus.checkedIn,
+          onlyIfId: openRouteId,
+        );
+        _checkedInThisVisit = true;
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final colorScheme = context.colorScheme;
 
-    return Scaffold(
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, _) {
+        if (didPop) return;
+        _popWithResult();
+      },
+      child: Scaffold(
       backgroundColor: colorScheme.surface,
       appBar: showAppbar
           ? AppBar(
@@ -131,7 +175,6 @@ class _RouteDetailsScreenState extends State<RouteDetailsScreen> {
                     Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // Left side: Info Items
                         Expanded(
                           child: _buildInfoRow(
                             colorScheme,
@@ -140,35 +183,48 @@ class _RouteDetailsScreenState extends State<RouteDetailsScreen> {
                             route?.availabilityType ?? "",
                           ),
                         ),
-
-                        // Right side: Check In Button
+                        const SizedBox(width: 8),
                         Obx(() {
                           final checkInStatus =
                               controller.routeDetails?.myCheckInStatus;
                           final isCheckedIn =
                               checkInStatus == CheckInStatus.checkedIn;
 
-                          return ElevatedButton.icon(
-                            icon: Icon(
-                              isCheckedIn ? Icons.check_circle : Icons.qr_code,
-                              color: context.colorScheme.onSurface,
-                            ),
-                            onPressed: isCheckedIn
-                                ? null
-                                : () => Get.toNamed(
-                                    AppRoutes.checkIn,
-                                    arguments: {'type': 'route'},
-                                  ),
-                            style: ElevatedButton.styleFrom(
-                              foregroundColor: context.colorScheme.onSurface,
-                              backgroundColor: isCheckedIn
-                                  ? context.colorScheme.surfaceContainerHigh
-                                  : context.colorScheme.primary,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(6),
+                          return ConstrainedBox(
+                            constraints: const BoxConstraints(maxWidth: 140),
+                            child: ElevatedButton.icon(
+                              icon: Icon(
+                                isCheckedIn
+                                    ? Icons.check_circle
+                                    : Icons.qr_code,
+                                size: 18,
+                                color: context.colorScheme.onSurface,
+                              ),
+                              onPressed: isCheckedIn ? null : _openCheckIn,
+                              style: ElevatedButton.styleFrom(
+                                foregroundColor:
+                                    context.colorScheme.onSurface,
+                                backgroundColor: isCheckedIn
+                                    ? context
+                                        .colorScheme.surfaceContainerHigh
+                                    : context.colorScheme.primary,
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 10,
+                                  vertical: 10,
+                                ),
+                                visualDensity: VisualDensity.compact,
+                                tapTargetSize:
+                                    MaterialTapTargetSize.shrinkWrap,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(6),
+                                ),
+                              ),
+                              label: Text(
+                                checkInStatus?.label ?? 'Check In',
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
                               ),
                             ),
-                            label: Text(checkInStatus?.label ?? 'Check In'),
                           );
                         }),
                       ],
@@ -184,11 +240,12 @@ class _RouteDetailsScreenState extends State<RouteDetailsScreen> {
                       ),
                       child: Padding(
                         padding: const EdgeInsets.all(8.0),
-                        child: CustomCachedImage(
-                          imageUrl: "assets/images/location.png",
+                        child: AuthenticatedMapImage(
+                          imageUrl: controller.routeDetails?.mapImage,
                           height: 180,
-                          width: double.infinity,
-                          fit: BoxFit.cover,
+                          latitude: controller.routeDetails?.coordinates.lat,
+                          longitude: controller.routeDetails?.coordinates.lng,
+                          locationLabel: route?.title,
                         ),
                       ),
                     ),
@@ -216,6 +273,7 @@ class _RouteDetailsScreenState extends State<RouteDetailsScreen> {
           ),
         );
       }),
+      ),
     );
   }
 
@@ -239,18 +297,23 @@ class _RouteDetailsScreenState extends State<RouteDetailsScreen> {
 
   Widget _buildInfoItem(IconData icon, String label, ColorScheme colorScheme) {
     return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Icon(
           icon,
           size: 18,
           color: const Color(0xFF66B9AD),
-        ), // Using accent teal
+        ),
         const SizedBox(width: 8),
-        Text(
-          label,
-          style: AppTextStyle.textXs(
-            color: colorScheme.onSurfaceVariant,
-            weight: FontWeight.w500,
+        Expanded(
+          child: Text(
+            label.isEmpty ? '—' : label,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: AppTextStyle.textXs(
+              color: colorScheme.onSurfaceVariant,
+              weight: FontWeight.w500,
+            ),
           ),
         ),
       ],

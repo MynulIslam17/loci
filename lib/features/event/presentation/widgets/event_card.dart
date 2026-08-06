@@ -146,12 +146,15 @@ class IconTextRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Icon(icon, size: 18, color: iconColor ?? context.colorScheme.primary),
         const SizedBox(width: 8),
         Expanded(
           child: Text(
             text,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
             style: AppTextStyle.textXs(
               color: textColor ?? context.colorScheme.onSurface,
               weight: FontWeight.w500,

@@ -55,11 +55,17 @@ class AuthController extends GetxController {
   }
 
   Future<void> loadUserData() async {
-    final data = await _service.loadSession();
-    accessTokenRx.value = data.token;
-    userModelRx.value = data.user;
-    roleRx.value = data.role;
-    if (accessToken != null && accessToken!.isNotEmpty) _onAuthenticated();
+    try {
+      final data = await _service.loadSession();
+      accessTokenRx.value = data.token;
+      userModelRx.value = data.user;
+      roleRx.value = data.role;
+      if (accessToken != null && accessToken!.trim().isNotEmpty) {
+        _onAuthenticated();
+      }
+    } catch (e) {
+      // Non-fatal exception handling during session initialization
+    }
   }
 
   Future<void> updateUser(UserModel updatedUser) async {
@@ -121,7 +127,7 @@ class AuthController extends GetxController {
     Get.offAllNamed(AppRoutes.login);
   }
 
-  bool get isLoggedIn => accessToken != null;
+  bool get isLoggedIn => accessToken != null && accessToken!.trim().isNotEmpty;
 
   void _onAuthenticated() {
     if (Get.isRegistered<ChatSocketService>()) {

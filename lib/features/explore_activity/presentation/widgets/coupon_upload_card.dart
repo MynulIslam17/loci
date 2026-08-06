@@ -72,7 +72,7 @@ class CouponUploadCard extends StatelessWidget {
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        "PDF or image accepted",
+                        "JPG, PNG, or WEBP",
                         style: AppTextStyle.textXs(
                           color: colorScheme.onSurfaceVariant,
                         ),

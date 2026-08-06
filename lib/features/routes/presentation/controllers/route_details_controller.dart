@@ -31,11 +31,21 @@ class RouteDetailsController extends GetxController {
     }
   }
 
-  /// update check-in status locally
-  void updateCheckInStatus(CheckInStatus status) {
+  /// update check-in status locally.
+  /// When [onlyIfId] is set, updates only if it matches the open route.
+  void updateCheckInStatus(
+    CheckInStatus status, {
+    String? onlyIfId,
+  }) {
     final current = _routeDetails.value;
     if (current == null) return;
+    if (onlyIfId != null &&
+        onlyIfId.isNotEmpty &&
+        current.routeModel.routeId != onlyIfId) {
+      return;
+    }
 
     _routeDetails.value = current.copyWith(myCheckInStatus: status);
+    _routeDetails.refresh();
   }
 }

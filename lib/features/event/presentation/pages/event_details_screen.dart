@@ -32,6 +32,7 @@ class _EventDetailsState extends State<EventDetails> {
   late final RSVPController rsvpController;
 
   late final String eventId;
+  bool _checkedInThisVisit = false;
 
   @override
   void initState() {
@@ -46,6 +47,19 @@ class _EventDetailsState extends State<EventDetails> {
     eventId = args?["eventId"] ?? "";
 
     eventDetailsController.fetchEventDetails(eventId);
+  }
+
+  void _popWithResult() {
+    Get.back(
+      result: _checkedInThisVisit
+          ? <String, dynamic>{
+              'checkedIn': true,
+              'entityId':
+                  eventDetailsController.eventDetails?.eventModel.id ?? eventId,
+              'activityType': 'event',
+            }
+          : null,
+    );
   }
 
   ///------ Rsvp  handle
@@ -72,9 +86,40 @@ class _EventDetailsState extends State<EventDetails> {
     }
   }
 
+  Future<void> _openCheckIn() async {
+    final openEventId =
+        eventDetailsController.eventDetails?.eventModel.id ?? eventId;
+
+    final result = await Get.toNamed(
+      AppRoutes.checkIn,
+      arguments: {
+        'type': 'event',
+        'entityId': openEventId,
+      },
+    );
+
+    if (result is Map && result['checkedIn'] == true) {
+      final checkedInId = result['entityId']?.toString();
+      // Disable only when the successful check-in is for this event.
+      if (checkedInId == openEventId) {
+        eventDetailsController.updateCheckInStatus(
+          CheckInStatus.checkedIn,
+          onlyIfId: openEventId,
+        );
+        _checkedInThisVisit = true;
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, _) {
+        if (didPop) return;
+        _popWithResult();
+      },
+      child: Scaffold(
       appBar: const CustomAppbar(title: 'Event Details'),
       body: Obx(() {
         final controller = eventDetailsController;
@@ -121,10 +166,9 @@ class _EventDetailsState extends State<EventDetails> {
 
               //--- event Info Rows
               Row(
-                crossAxisAlignment: CrossAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Expanded(
-                    flex: 3,
                     child: Column(
                       children: [
                         IconTextRow(
@@ -147,11 +191,10 @@ class _EventDetailsState extends State<EventDetails> {
                               "${event?.goingCount.toString()} going / ${event?.maxAttendees} max",
                           iconColor: context.colorScheme.primary,
                         ),
-                        const SizedBox(height: 20),
                       ],
                     ),
                   ),
-
+                  const SizedBox(width: 8),
                   Obx(() {
                     final controller = eventDetailsController;
                     final checkInStatus =
@@ -159,27 +202,36 @@ class _EventDetailsState extends State<EventDetails> {
                     final isCheckedIn =
                         checkInStatus == CheckInStatus.checkedIn;
 
-                    return ElevatedButton.icon(
-                      icon: Icon(
-                        isCheckedIn ? Icons.check_circle : Icons.qr_code,
-                        color: context.colorScheme.onSurface,
-                      ),
-                      onPressed: isCheckedIn
-                          ? null
-                          : () => Get.toNamed(
-                              AppRoutes.checkIn,
-                              arguments: {'type': 'event'},
-                            ),
-                      style: ElevatedButton.styleFrom(
-                        foregroundColor: context.colorScheme.onSurface,
-                        backgroundColor: isCheckedIn
-                            ? context.colorScheme.surfaceContainerHigh
-                            : context.colorScheme.primary,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(6),
+                    return ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 140),
+                      child: ElevatedButton.icon(
+                        icon: Icon(
+                          isCheckedIn ? Icons.check_circle : Icons.qr_code,
+                          size: 18,
+                          color: context.colorScheme.onSurface,
+                        ),
+                        onPressed: isCheckedIn ? null : _openCheckIn,
+                        style: ElevatedButton.styleFrom(
+                          foregroundColor: context.colorScheme.onSurface,
+                          backgroundColor: isCheckedIn
+                              ? context.colorScheme.surfaceContainerHigh
+                              : context.colorScheme.primary,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 10,
+                          ),
+                          visualDensity: VisualDensity.compact,
+                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                        ),
+                        label: Text(
+                          checkInStatus?.label ?? 'Check In',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
-                      label: Text(checkInStatus?.label ?? 'Check In'),
                     );
                   }),
                 ],
@@ -232,6 +284,7 @@ class _EventDetailsState extends State<EventDetails> {
           ),
         );
       }),
+      ),
     );
   }
 

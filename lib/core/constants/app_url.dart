@@ -78,7 +78,8 @@ abstract class AppUrl {
   static const String deleteAccount="$baseUrl/users/me/delete"; // DELETE
 
   ///-----------my qr code
-  static const String myQrCode="$baseUrl/connections/my-qr";
+  static const String myQrCode = "$baseUrl/connections/my-qr";
+  static const String connectViaQr = "$baseUrl/connections/scan";
 
 
 

@@ -31,14 +31,23 @@ class BusinessRouteDetailsController extends GetxController {
         businessId: _businessId.isNotEmpty ? _businessId : null,
       );
 
+  Future<void> refreshDetails() => fetchRouteDetails(
+        _routeId,
+        businessId: _businessId.isNotEmpty ? _businessId : null,
+        silent: true,
+      );
+
   Future<void> fetchRouteDetails(
     String routeId, {
     String? businessId,
+    bool silent = false,
   }) async {
     try {
-      isLoading.value = true;
+      if (!silent) {
+        isLoading.value = true;
+        routeDetails.value = null;
+      }
       errorMessage.value = null;
-      routeDetails.value = null;
 
       routeDetails.value = await _service.getRouteDetails(
         routeId,
@@ -47,7 +56,7 @@ class BusinessRouteDetailsController extends GetxController {
     } catch (e) {
       errorMessage.value = e.toString().replaceFirst('Exception: ', '');
     } finally {
-      isLoading.value = false;
+      if (!silent) isLoading.value = false;
     }
   }
 }

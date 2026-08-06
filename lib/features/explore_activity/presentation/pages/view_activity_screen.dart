@@ -55,6 +55,7 @@ class _ViewActivityScreenState extends State<ViewActivityScreen> {
           onRetry: _controller.retryLoad,
           isEmpty: _controller.isEmpty,
           emptyMessage: _controller.emptyMessage,
+          onRefresh: _controller.refreshCurrentActivity,
           builder: (context) => ViewActivityDetailContent(
             activityType: type,
           ),
