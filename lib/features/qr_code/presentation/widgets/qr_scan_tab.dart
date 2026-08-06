@@ -165,13 +165,15 @@ class _QrScanTabState extends State<QrScanTab> with WidgetsBindingObserver {
     _isProcessingScan.value = true;
     try {
       await widget.scannerController.stop();
-      final ok = await widget.controller.connectViaQr(code);
+      final result = await widget.controller.connectViaQr(code);
       if (!mounted || !widget.isActive) return;
 
-      if (ok) {
+      if (result != null && result.isAlreadyConnected) {
         await Future<void>.delayed(const Duration(milliseconds: 900));
+        await _restartCamera();
+      } else if (result == null) {
+        await _restartCamera();
       }
-      await _restartCamera();
     } on MobileScannerException {
       // Ignore stop/start races while processing a scan.
     } finally {

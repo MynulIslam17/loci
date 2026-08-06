@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:loci/core/constants/app_text_style.dart';
 import 'package:loci/core/theme/theme_extention.dart';
-import 'package:loci/core/utils/show_snackbar.dart';
 import 'package:loci/features/auth/presentation/controllers/auth_controller.dart';
 import 'package:loci/features/chat/presentation/widgets/chat_avatar.dart';
 import 'package:loci/features/qr_code/presentation/controllers/my_qr_code_controller.dart';
@@ -10,49 +9,12 @@ import 'package:loci/features/qr_code/presentation/widgets/my_qr_code_shimmer.da
 import 'package:loci/shared/widgets/custom_button.dart';
 import 'package:loci/shared/widgets/empty_state.dart';
 import 'package:loci/shared/widgets/error_state.dart';
-import 'package:loci/shared/widgets/qrcode_maker.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 
-class MyQrDisplayTab extends StatefulWidget {
+class MyQrDisplayTab extends StatelessWidget {
   const MyQrDisplayTab({super.key, required this.controller});
 
   final MyQrCodeController controller;
-
-  @override
-  State<MyQrDisplayTab> createState() => _MyQrDisplayTabState();
-}
-
-class _MyQrDisplayTabState extends State<MyQrDisplayTab> {
-  bool _isSaving = false;
-
-  Future<void> _saveToGallery(
-    BuildContext context,
-    String code,
-    String? userName,
-  ) async {
-    if (_isSaving) return;
-
-    setState(() => _isSaving = true);
-    try {
-      await CustomQrCode.download(
-        code,
-        context: context,
-        title: userName ?? 'My QR Code',
-        subtitle: 'Scan to connect on Loci',
-      );
-      if (!mounted) return;
-      SnackbarService.success('QR code saved to gallery');
-    } catch (e) {
-      if (!mounted) return;
-      SnackbarService.error(
-        e.toString().replaceFirst('Exception: ', ''),
-      );
-    } finally {
-      if (mounted) {
-        setState(() => _isSaving = false);
-      }
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -60,7 +22,7 @@ class _MyQrDisplayTabState extends State<MyQrDisplayTab> {
     final auth = Get.find<AuthController>();
 
     return RefreshIndicator(
-      onRefresh: widget.controller.refreshMyQr,
+      onRefresh: controller.refreshMyQr,
       child: LayoutBuilder(
         builder: (context, constraints) {
           return SingleChildScrollView(
@@ -69,21 +31,21 @@ class _MyQrDisplayTabState extends State<MyQrDisplayTab> {
             child: ConstrainedBox(
               constraints: BoxConstraints(minHeight: constraints.maxHeight - 40),
               child: Obx(() {
-                if (widget.controller.showInitialShimmer) {
+                if (controller.showInitialShimmer) {
                   return const Center(child: MyQrCodeShimmer());
                 }
 
-                if (widget.controller.errorMessage != null &&
-                    widget.controller.qrCodeValue == null) {
+                if (controller.errorMessage != null &&
+                    controller.qrCodeValue == null) {
                   return Center(
                     child: ErrorStateWidget(
-                      message: widget.controller.errorMessage!,
-                      onRetry: widget.controller.refreshMyQr,
+                      message: controller.errorMessage!,
+                      onRetry: controller.refreshMyQr,
                     ),
                   );
                 }
 
-                final code = widget.controller.qrCodeValue;
+                final code = controller.qrCodeValue;
                 if (code == null || code.isEmpty) {
                   return const Center(
                     child: EmptyState(
@@ -157,10 +119,10 @@ class _MyQrDisplayTabState extends State<MyQrDisplayTab> {
                       width: double.infinity,
                       child: CustomButton(
                         text: 'Save to gallery',
-                        isLoading: _isSaving,
-                        onPressed: _isSaving
+                        isLoading: controller.isSavingGallery,
+                        onPressed: controller.isSavingGallery
                             ? null
-                            : () => _saveToGallery(
+                            : () => controller.saveQrToGallery(
                                   context,
                                   code,
                                   auth.userModel?.name,

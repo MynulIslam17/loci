@@ -9,6 +9,7 @@ import 'package:loci/shared/widgets/error_state.dart';
 import 'package:loci/routes/app_routes.dart';
 import 'package:loci/core/enums/rsvp_status.dart';
 import 'package:loci/features/event/presentation/controllers/event_list_controller.dart';
+import 'package:loci/shared/widgets/pagination_loading.dart';
 import '../widgets/event_card.dart';
 import '../widgets/event_card_skeleton.dart';
 
@@ -47,11 +48,13 @@ class _EventScreenState extends State<EventScreen> {
   void dispose() {
     _scrollController.dispose();
     _searchController.dispose();
+    eventController.clearSearch();
     super.dispose();
   }
 
   //------ event details screen
   void _eventOnTapHandler(String eventId, String eventTitle) {
+    FocusScope.of(context).unfocus();
     Get.toNamed(
       AppRoutes.eventDetails,
       arguments: {'eventId': eventId, "eventTitle": eventTitle},
@@ -92,6 +95,7 @@ class _EventScreenState extends State<EventScreen> {
             onRefresh: () => controller.fetchEvents(isRefresh: true),
             child: CustomScrollView(
               controller: _scrollController,
+              keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
               slivers: [
                 // Search + Header
                 SliverToBoxAdapter(
@@ -106,6 +110,11 @@ class _EventScreenState extends State<EventScreen> {
                         textColor: context.colorScheme.onSurface,
                         onChanged: controller.onSearchChanged,
                         showClearButton: true,
+                        onClear: () {
+                          _searchController.clear();
+                          FocusScope.of(context).unfocus();
+                          controller.clearSearch();
+                        },
                         suffixIcon: Icon(
                           Icons.search,
                           color: context.colorScheme.onSurfaceVariant,
@@ -180,12 +189,9 @@ class _EventScreenState extends State<EventScreen> {
                   SliverList(
                     delegate: SliverChildBuilderDelegate(
                       (context, index) {
-                        // Pagination skeleton
+                        // Pagination loader
                         if (index == controller.eventList.length) {
-                          return const Padding(
-                            padding: EdgeInsets.only(bottom: 6),
-                            child: EventCardSkeleton(),
-                          );
+                          return const PaginationLoader();
                         }
 
                         //get single event from data

@@ -85,6 +85,9 @@ class EditRoutesScreen extends StatelessWidget {
                     sectionSubtitle: 'Starting point',
                     locationHint: 'e.g. Downtown Austin, TX',
                     highlightTitle: true,
+                    mapImage: routeDetails.mapImage,
+                    latitude: controller.pickedLat.value,
+                    longitude: controller.pickedLng.value,
                   ),
                   ExploreActivityEditSaveSection(
                     isPublic: controller.isPublic.value,

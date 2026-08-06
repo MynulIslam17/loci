@@ -54,7 +54,7 @@ class PostReviewController extends GetxController {
       id: review.id,
       author: ReviewAuthor(
         id: review.author.id,
-        name: me.name ?? '',
+        name: me.name,
         avatar: me.avatar ?? '',
       ),
       businessId: review.businessId,

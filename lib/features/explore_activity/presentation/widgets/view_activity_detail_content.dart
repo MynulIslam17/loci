@@ -152,10 +152,16 @@ class _EventDetailContent extends StatelessWidget {
             },
           ),
         ),
-        const ExploreActivitySection(
+        ExploreActivitySection(
           title: 'Location',
           highlightTitle: true,
-          child: ExploreActivityMapPreview(height: 150),
+          child: ExploreActivityMapPreview(
+            mapImage: eventDetails.mapImage,
+            latitude: eventDetails.lat,
+            longitude: eventDetails.lng,
+            locationLabel: event.location,
+            height: 150,
+          ),
         ),
         ExploreActivityOrganizerSection(
           name: organization.name,
@@ -266,10 +272,16 @@ class _RouteDetailContent extends StatelessWidget {
             },
           ),
         ),
-        const ExploreActivitySection(
+        ExploreActivitySection(
           title: 'Location',
           highlightTitle: true,
-          child: ExploreActivityMapPreview(),
+          child: ExploreActivityMapPreview(
+            mapImage: routeDetails.mapImage,
+            latitude: routeDetails.coordinates.lat,
+            longitude: routeDetails.coordinates.lng,
+            locationLabel: route.location,
+            height: 150,
+          ),
         ),
         ExploreActivityOrganizerSection(
           name: organizer.name,

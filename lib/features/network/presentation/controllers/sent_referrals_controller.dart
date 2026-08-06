@@ -50,20 +50,29 @@ class SentReferralsController extends GetxController {
     _debounce?.cancel();
     _debounce = Timer(const Duration(milliseconds: 400), () {
       _searchTerm = query.trim();
-      fetchSentReferrals(isRefresh: true);
+      fetchSentReferrals(isSearch: true);
     });
   }
 
   void clearSearch() {
     _debounce?.cancel();
     _searchTerm = '';
-    fetchSentReferrals(isRefresh: true);
+    fetchSentReferrals(isSearch: true);
   }
 
-  Future<void> fetchSentReferrals({bool isRefresh = false}) async {
-    if (isInitialLoading || isRefreshing) return;
+  Future<void> fetchSentReferrals({
+    bool isRefresh = false,
+    bool isSearch = false,
+  }) async {
+    if (isSearch) {
+      _fetch.initialLoading.value = true;
+      _fetch.refreshing.value = false;
+      _fetch.hasFetched.value = false;
+    } else {
+      if (isInitialLoading || isRefreshing) return;
+      _fetch.beginFirstPage(isRefresh: isRefresh);
+    }
 
-    _fetch.beginFirstPage(isRefresh: isRefresh);
     _errorMessage.value = null;
     _currentPage = 1;
 

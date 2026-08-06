@@ -80,6 +80,7 @@ abstract class AppUrl {
   ///-----------my qr code
   static const String myQrCode = "$baseUrl/connections/my-qr";
   static const String connectViaQr = "$baseUrl/connections/scan";
+  static String deleteConnection(String otherUserId) => "$baseUrl/connections/$otherUserId";
 
 
 
