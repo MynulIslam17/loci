@@ -6,11 +6,16 @@ class ChatUserModel {
   final String? avatar;
   final String? lastSeen;
 
+  /// Presence snapshot from the conversations list (`otherParticipant.online`);
+  /// null when the payload doesn't carry it.
+  final bool? online;
+
   ChatUserModel({
     required this.id,
     required this.name,
     this.avatar,
     this.lastSeen,
+    this.online,
   });
 
   factory ChatUserModel.fromJson(dynamic json) {
@@ -24,6 +29,7 @@ class ChatUserModel {
       name: map['name'] ?? '',
       avatar: map['avatar'],
       lastSeen: map['lastSeen']?.toString(),
+      online: map['online'] is bool ? map['online'] as bool : null,
     );
   }
 }

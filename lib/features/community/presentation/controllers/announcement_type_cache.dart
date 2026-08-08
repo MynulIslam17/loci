@@ -1,4 +1,3 @@
-import 'package:get/get.dart';
 import 'package:loci/core/enums/announcement_type.dart';
 import 'package:loci/shared/models/pagination_model.dart';
 

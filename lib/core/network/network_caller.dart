@@ -1,4 +1,4 @@
-import 'dart:async';
+﻿import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
@@ -20,12 +20,12 @@ class NetworkCaller {
   NetworkCaller({required this.onUnAuthorize, required this.accessToken});
 
   // ===========================================================
-  // CENTRAL STATUS CODE → ERROR MESSAGE RESOLVER
+  // CENTRAL STATUS CODE â†’ ERROR MESSAGE RESOLVER
   // Controllers never need to touch a status code directly.
   // Prefers detailed field-level "errors" from the server,
   // then the server's own "message" field, then a fallback.
   // Non-JSON bodies (e.g. Cloudflare "error code: 502") still
-  // resolve via status code — they never become FormatException.
+  // resolve via status code â€” they never become FormatException.
   // ===========================================================
   String _resolveErrorMessage(int statusCode, Map<String, dynamic>? decoded) {
     // Field-level validation messages (e.g. "Please provide a valid email
@@ -33,7 +33,7 @@ class NetworkCaller {
     // ("Validation failed"), so prefer them when present. Auth failures (wrong
     // email/password) intentionally don't carry an `errors` map, so this never
     // turns those into an enumeration ("no such email" vs "wrong password")
-    // leak — it only ever surfaces genuine per-field input validation problems.
+    // leak â€” it only ever surfaces genuine per-field input validation problems.
     // Shape: {"errors": {"field": ["msg1", "msg2"]}}
     final fieldErrors = _extractFieldErrors(decoded);
     if (fieldErrors != null) return fieldErrors;
@@ -79,7 +79,7 @@ class NetworkCaller {
   // Call this after every non-success response.
   // ===========================================================
   void _handleAuthErrors(int statusCode, {required bool hadToken}) {
-    // Only redirect when a token was sent but rejected — not for logged-out calls.
+    // Only redirect when a token was sent but rejected â€” not for logged-out calls.
     if (statusCode == 401 && hadToken) {
       onUnAuthorize();
     }
@@ -122,7 +122,7 @@ class NetworkCaller {
 
       final decoded = _tryDecodeBody(response.body);
 
-      if (response.statusCode == 200 || response.statusCode == 201) {
+      if (response.statusCode >= 200 && response.statusCode < 300) {
         return NetworkResponse(
           isSuccess: true,
           statusCode: response.statusCode,
@@ -164,7 +164,7 @@ class NetworkCaller {
 
       _logResponse(uri.toString(), response);
 
-      if (response.statusCode == 200 || response.statusCode == 201) {
+      if (response.statusCode >= 200 && response.statusCode < 300) {
         return response.body;
       }
 
@@ -206,7 +206,7 @@ class NetworkCaller {
 
       final decoded = _tryDecodeBody(response.body);
 
-      if (response.statusCode == 200 || response.statusCode == 201) {
+      if (response.statusCode >= 200 && response.statusCode < 300) {
         return NetworkResponse(
           isSuccess: true,
           statusCode: response.statusCode,
@@ -261,7 +261,7 @@ class NetworkCaller {
 
       final decoded = _tryDecodeBody(response.body);
 
-      if (response.statusCode == 200 || response.statusCode == 201) {
+      if (response.statusCode >= 200 && response.statusCode < 300) {
         return NetworkResponse(
           isSuccess: true,
           statusCode: response.statusCode,
@@ -315,7 +315,7 @@ class NetworkCaller {
 
       final decoded = _tryDecodeBody(response.body);
 
-      if (response.statusCode == 200 || response.statusCode == 201) {
+      if (response.statusCode >= 200 && response.statusCode < 300) {
         return NetworkResponse(
           isSuccess: true,
           statusCode: response.statusCode,
@@ -369,7 +369,7 @@ class NetworkCaller {
 
       final decoded = _tryDecodeBody(response.body);
 
-      if (response.statusCode == 200 || response.statusCode == 201) {
+      if (response.statusCode >= 200 && response.statusCode < 300) {
         return NetworkResponse(
           isSuccess: true,
           statusCode: response.statusCode,
@@ -472,7 +472,7 @@ class NetworkCaller {
 
       // Wrap for logging. Force UTF-8: the default Response(String) constructor
       // re-encodes the body as Latin-1, which throws "Contains invalid
-      // characters" on non-Latin scripts (e.g. Bengali) — turning a successful
+      // characters" on non-Latin scripts (e.g. Bengali) â€” turning a successful
       // response into a false failure.
       final logResponse = Response(
         responseBody,
@@ -511,14 +511,14 @@ class NetworkCaller {
   }
 
   // ===========================================================
-  // EXCEPTION → USER-FRIENDLY MESSAGE
+  // EXCEPTION â†’ USER-FRIENDLY MESSAGE
   // Converts dart:io and other common exceptions to readable strings.
   // ===========================================================
   String _networkExceptionMessage(Object e) {
     if (e is TimeoutException) return AppErrorMessages.timeout;
     if (e is SocketException) return AppErrorMessages.noInternet;
     if (e is HttpException) return AppErrorMessages.network;
-    // FormatException used to surface as "Unexpected server response" —
+    // FormatException used to surface as "Unexpected server response" â€”
     // treat it as a transient server/gateway failure instead.
     if (e is FormatException) return AppErrorMessages.serverUnavailable;
     return AppErrorMessages.sanitize(e);
@@ -564,7 +564,7 @@ FIELDS  : $fields
       multiFiles.forEach((key, fileList) {
         _logger.i(" - $key =>");
         for (final file in fileList) {
-          _logger.i("    • ${file.path.split('/').last}");
+          _logger.i("    â€¢ ${file.path.split('/').last}");
         }
       });
     }
