@@ -4,6 +4,7 @@ import 'package:loci/core/utils/app_error_messages.dart';
 import 'package:loci/core/utils/paginated_list_fetch_state.dart';
 import 'package:loci/core/utils/show_snackbar.dart';
 import 'package:loci/features/auth/presentation/controllers/auth_controller.dart';
+import 'package:loci/features/chat/presentation/controllers/new_chat_controller.dart';
 import 'package:loci/features/network/presentation/controllers/connections_controller.dart';
 import 'package:loci/features/network/presentation/controllers/network_dashboard_controller.dart';
 import 'package:loci/features/qr_code/data/models/my_qr_code_model.dart';
@@ -106,6 +107,9 @@ class MyQrCodeController extends GetxController {
         }
         if (Get.isRegistered<NetworkDashboardController>()) {
           Get.find<NetworkDashboardController>().fetchDashboard(isRefresh: true);
+        }
+        if (Get.isRegistered<NewChatController>()) {
+          Get.find<NewChatController>().markStale();
         }
 
         Get.back();

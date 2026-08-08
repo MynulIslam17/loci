@@ -2,7 +2,7 @@ import 'package:get/get.dart';
 import 'package:loci/core/di/bindings/app_bindings.dart';
 import 'package:loci/features/auth/data/models/user_model.dart';
 import 'package:loci/features/auth/domain/services/auth_service.dart';
-import 'package:loci/core/services/chat_socket_service.dart';
+import 'package:loci/core/services/socket/chat_socket_service.dart';
 import 'package:loci/core/services/stripe_service.dart';
 import 'package:loci/routes/app_routes.dart';
 

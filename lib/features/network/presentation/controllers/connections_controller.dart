@@ -3,6 +3,7 @@ import 'package:loci/core/enums/network_type.dart';
 import 'package:loci/core/utils/app_error_messages.dart';
 import 'package:loci/core/utils/paginated_list_fetch_state.dart';
 import 'package:loci/core/utils/show_snackbar.dart';
+import 'package:loci/features/chat/presentation/controllers/new_chat_controller.dart';
 import 'package:loci/features/network/data/models/connection_item.dart';
 import 'package:loci/features/network/domain/services/network_service.dart';
 
@@ -87,6 +88,9 @@ class ConnectionsController extends GetxController {
 
       if (Get.isRegistered<NetworkDashboardController>()) {
         Get.find<NetworkDashboardController>().fetchDashboard(isRefresh: true);
+      }
+      if (Get.isRegistered<NewChatController>()) {
+        Get.find<NewChatController>().markStale();
       }
 
       SnackbarService.success('Connection removed');

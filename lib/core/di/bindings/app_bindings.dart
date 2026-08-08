@@ -1,7 +1,7 @@
 import 'package:get/get.dart';
 import 'package:loci/core/network/network_caller.dart';
 import 'package:loci/core/network/network_setup.dart';
-import 'package:loci/core/services/chat_socket_service.dart';
+import 'package:loci/core/services/socket/chat_socket_service.dart';
 import 'package:loci/core/services/stripe_service.dart';
 import 'package:loci/core/storage/local_storage_service.dart';
 import 'package:loci/core/utils/show_snackbar.dart';
@@ -14,6 +14,7 @@ import 'package:loci/features/browse_business/domain/services/browse_business_se
 import 'package:loci/features/chat/data/repositories/chat_repository.dart';
 import 'package:loci/features/chat/domain/services/chat_service.dart';
 import 'package:loci/features/chat/presentation/controllers/chat_list_controller.dart';
+import 'package:loci/features/chat/presentation/controllers/new_chat_controller.dart';
 import 'package:loci/features/common/data/repositories/common_repository.dart';
 import 'package:loci/features/common/domain/services/common_service.dart';
 import 'package:loci/features/places/data/repositories/places_repository.dart';
@@ -246,6 +247,13 @@ class AppBindings extends Bindings {
 
     Get.lazyPut<ChatListController>(
       () => ChatListController(Get.find<ChatService>()),
+      fenix: true,
+    );
+    Get.lazyPut<NewChatController>(
+      () => NewChatController(
+        Get.find<NetworkService>(),
+        Get.find<ChatService>(),
+      ),
       fenix: true,
     );
 
