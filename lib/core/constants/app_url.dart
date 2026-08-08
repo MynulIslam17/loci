@@ -118,6 +118,7 @@ abstract class AppUrl {
   static String conversationRead(String id)=>"$baseUrl/conversations/$id/read"; // POST
   static String conversationMessages(String conversationId)=>"$baseUrl/conversations/$conversationId/messages"; // GET, POST
   static String conversationMessagesRead(String conversationId)=>"$baseUrl/conversations/$conversationId/messages/read"; // POST
+  static const String messagesDelivered="$baseUrl/messages/delivered"; // POST — delivery receipt on app launch/push
   static String editMessage(String id)=>"$baseUrl/messages/$id"; // PATCH, DELETE (for everyone)
   static String deleteMessageForMe(String id)=>"$baseUrl/messages/$id/me"; // DELETE
   static String messageReactions(String id)=>"$baseUrl/messages/$id/reactions"; // POST, DELETE
