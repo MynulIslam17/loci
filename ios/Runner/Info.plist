@@ -51,27 +51,8 @@
 	<key>NSPhotoLibraryAddUsageDescription</key>
 	<string>This app needs access to save QR codes to your photo library.</string>
 
-	<!-- Google Sign-In (required for TestFlight / device — app crashes without these) -->
-	<!-- TODO: Replace BOTH values with your iOS OAuth client from Google Cloud Console
-	     (APIs & Services → Credentials → OAuth 2.0 Client IDs → iOS,
-	      bundle ID must be ui.neatboutique.jacobi).
-	     CLIENT_ID example: 123-abc.apps.googleusercontent.com
-	     REVERSED_CLIENT_ID example: com.googleusercontent.apps.123-abc
+	<!-- Google Sign-In: add GIDClientID, GIDServerClientID, and CFBundleURLTypes
+	     (reversed client ID) when an iOS OAuth client is ready.
 	     Keep in sync with lib/core/constants/google_auth_config.dart -->
-	<key>GIDClientID</key>
-	<string>REPLACE_WITH_IOS_CLIENT_ID.apps.googleusercontent.com</string>
-	<key>GIDServerClientID</key>
-	<string>965450815025-1rhqr7srtc73ot384coira9emsndf9gc.apps.googleusercontent.com</string>
-	<key>CFBundleURLTypes</key>
-	<array>
-		<dict>
-			<key>CFBundleTypeRole</key>
-			<string>Editor</string>
-			<key>CFBundleURLSchemes</key>
-			<array>
-				<string>com.googleusercontent.apps.REPLACE_WITH_IOS_CLIENT_ID</string>
-			</array>
-		</dict>
-	</array>
 </dict>
 </plist>
