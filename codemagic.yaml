@@ -36,6 +36,189 @@ definitions:
         set -e
         xcode-project use-profiles
 
+    # Reads latest App Store / TestFlight version + build from ASC, then
+    # exports FLUTTER_BUILD_NAME / FLUTTER_BUILD_NUMBER for later steps.
+    # Reuses an open version; bumps patch if the latest version is closed.
+    - &set_next_version_from_asc
+      name: Set next version from App Store Connect
+      script: |
+        #!/usr/bin/env bash
+        set -euo pipefail
+
+        export BUNDLE_ID="${BUNDLE_ID:-ui.neatboutique.jacobi}"
+
+        if [ -z "${APP_STORE_APPLE_ID:-}" ]; then
+          echo "Resolving App Store Apple ID from bundle id: $BUNDLE_ID"
+          APP_STORE_APPLE_ID="$(
+            app-store-connect apps list \
+              --bundle-id-identifier "$BUNDLE_ID" \
+              --json \
+            | python3 -c '
+        import json, sys
+        data = json.load(sys.stdin)
+        apps = data if isinstance(data, list) else data.get("data", data.get("apps", []))
+        if not apps:
+            sys.exit("No App Store Connect app found for bundle id")
+        print(apps[0]["id"] if isinstance(apps[0], dict) else apps[0])
+        '
+          )"
+          export APP_STORE_APPLE_ID
+        fi
+
+        echo "App Store Apple ID: $APP_STORE_APPLE_ID"
+
+        python3 <<'PY'
+        import json
+        import os
+        import re
+        import subprocess
+        from pathlib import Path
+
+        app_id = os.environ["APP_STORE_APPLE_ID"]
+        cm_env = Path(os.environ["CM_ENV"])
+
+        OPEN_STATES = {
+            "PREPARE_FOR_SUBMISSION",
+            "DEVELOPER_REJECTED",
+            "METADATA_REJECTED",
+            "REJECTED",
+            "INVALID_BINARY",
+        }
+
+        def run(cmd):
+            proc = subprocess.run(cmd, capture_output=True, text=True)
+            return proc.returncode, proc.stdout.strip(), proc.stderr.strip()
+
+        def parse_semver(version):
+            parts = [int(p) for p in re.findall(r"\d+", version or "0")]
+            while len(parts) < 3:
+                parts.append(0)
+            return tuple(parts[:3])
+
+        def bump_patch(version):
+            major, minor, patch = parse_semver(version)
+            return f"{major}.{minor}.{patch + 1}"
+
+        def parse_build(value):
+            if value is None:
+                return None
+            text = str(value).strip()
+            if re.fullmatch(r"\d+", text):
+                return int(text)
+            nums = re.findall(r"\d+", text)
+            return int(nums[-1]) if nums else None
+
+        def load_json(text):
+            if not text:
+                return None
+            try:
+                return json.loads(text)
+            except json.JSONDecodeError:
+                return None
+
+        def extract_version_build(payload):
+            version = None
+            build = None
+            if isinstance(payload, dict):
+                version = (
+                    payload.get("version")
+                    or payload.get("versionString")
+                    or payload.get("version_string")
+                )
+                build = (
+                    payload.get("build")
+                    or payload.get("buildNumber")
+                    or payload.get("build_number")
+                )
+            elif isinstance(payload, (int, float, str)):
+                build = payload
+            return version, parse_build(build)
+
+        versions = []  # (version_string, state_or_None)
+        builds = []
+
+        # All App Store versions (needed to detect a closed later version).
+        code, out, err = run(
+            ["app-store-connect", "apps", "app-store-versions", app_id, "--json"]
+        )
+        data = load_json(out) if code == 0 else None
+        items = []
+        if isinstance(data, list):
+            items = data
+        elif isinstance(data, dict):
+            items = data.get("data", data.get("appStoreVersions", []))
+        for item in items:
+            attrs = item.get("attributes", item) if isinstance(item, dict) else {}
+            vs = attrs.get("versionString") or attrs.get("version_string")
+            state = attrs.get("appStoreState") or attrs.get("app_store_state")
+            if vs:
+                versions.append((str(vs), state))
+
+        # Latest App Store + TestFlight build/version pairs.
+        for action in (
+            "get-latest-app-store-build-number",
+            "get-latest-testflight-build-number",
+        ):
+            code, out, err = run(
+                ["app-store-connect", action, app_id, "--include-version", "--json"]
+            )
+            if code != 0:
+                print(f"{action} unavailable: {err or out}")
+                continue
+            version, build = extract_version_build(load_json(out) or out)
+            if version:
+                versions.append((version, None))
+            if build is not None:
+                builds.append(build)
+
+        # Fallback: pubspec.yaml version: x.y.z+build
+        pubspec = Path("pubspec.yaml").read_text(encoding="utf-8")
+        match = re.search(
+            r"^version:\s*([0-9]+(?:\.[0-9]+){0,2})(?:\+(\d+))?",
+            pubspec,
+            re.MULTILINE,
+        )
+        fallback_version = match.group(1) if match else "1.0.0"
+        fallback_build = int(match.group(2)) if match and match.group(2) else 0
+        if fallback_build:
+            builds.append(fallback_build)
+
+        if versions:
+            latest_version = max((v for v, _ in versions), key=parse_semver)
+            latest_states = [s for v, s in versions if v == latest_version and s]
+            latest_state = latest_states[0] if latest_states else None
+        else:
+            latest_version, latest_state = fallback_version, None
+            latest_states = []
+
+        # Reuse only when ASC still accepts builds for that marketing version.
+        # Otherwise bump patch so uploads never target a closed older version.
+        if any(state in OPEN_STATES for state in latest_states):
+            next_version = latest_version
+            reason = (
+                f"reusing open ASC version {latest_version} "
+                f"({', '.join(latest_states)})"
+            )
+        else:
+            next_version = bump_patch(latest_version)
+            reason = (
+                f"latest ASC version {latest_version} "
+                f"({latest_state or 'unknown/closed'}) cannot take new builds; "
+                f"using {next_version}"
+            )
+
+        next_build = (max(builds) if builds else 0) + 1
+
+        with cm_env.open("a", encoding="utf-8") as env_file:
+            env_file.write(f"FLUTTER_BUILD_NAME={next_version}\n")
+            env_file.write(f"FLUTTER_BUILD_NUMBER={next_build}\n")
+            env_file.write(f"APP_STORE_APPLE_ID={app_id}\n")
+
+        print(f"Latest version seen: {latest_version}")
+        print(f"Decision: {reason}")
+        print(f"Next Flutter version: {next_version}+{next_build}")
+        PY
+
 workflows:
   flutter-ci:
     name: Flutter CI
@@ -70,6 +253,11 @@ workflows:
         <<: *ios_signing_config
       groups:
         - HireHub Ja
+      # Optional: set this to skip auto-resolve from bundle id
+      # (App Store Connect → App → General → App Information → Apple ID)
+      vars:
+        BUNDLE_ID: ui.neatboutique.jacobi
+        # APP_STORE_APPLE_ID: "1234567890"
     cache:
       cache_paths:
         - $FLUTTER_ROOT/.pub-cache
@@ -85,16 +273,23 @@ workflows:
     scripts:
       - *get_flutter_deps
       - *analyze_project
+      - *set_next_version_from_asc
       - *install_pods
       - *ios_code_signing
       - name: Build Android App Bundle
         script: |
           set -e
-          flutter build appbundle --release
+          echo "Building AAB with $FLUTTER_BUILD_NAME+$FLUTTER_BUILD_NUMBER"
+          flutter build appbundle --release \
+            --build-name="$FLUTTER_BUILD_NAME" \
+            --build-number="$FLUTTER_BUILD_NUMBER"
       - name: Build iOS IPA
         script: |
           set -e
+          echo "Building IPA with $FLUTTER_BUILD_NAME+$FLUTTER_BUILD_NUMBER"
           flutter build ipa --release \
+            --build-name="$FLUTTER_BUILD_NAME" \
+            --build-number="$FLUTTER_BUILD_NUMBER" \
             --export-options-plist=/Users/builder/export_options.plist
     artifacts:
       - build/app/outputs/bundle/release/*.aab
