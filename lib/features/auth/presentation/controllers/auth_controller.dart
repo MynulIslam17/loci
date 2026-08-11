@@ -1,6 +1,7 @@
 import 'package:get/get.dart';
 import 'package:loci/core/di/bindings/app_bindings.dart';
 import 'package:loci/features/auth/data/models/user_model.dart';
+import 'package:loci/features/auth/data/services/google_sign_in_service.dart';
 import 'package:loci/features/auth/domain/services/auth_service.dart';
 import 'package:loci/core/services/socket/chat_socket_service.dart';
 import 'package:loci/core/services/stripe_service.dart';
@@ -101,18 +102,24 @@ class AuthController extends GetxController {
   }
 
   Future<void> _performLogout() async {
-    // 1. Gracefully close realtime + clear the persisted session first.
+    // 1. Google + server logout first so the next Google tap shows the picker.
+    if (Get.isRegistered<GoogleSignInService>()) {
+      await Get.find<GoogleSignInService>().signOut();
+    }
+    await _service.logoutRemote();
+
+    // 2. Gracefully close realtime + clear the persisted session.
     if (Get.isRegistered<ChatSocketService>()) {
       Get.find<ChatSocketService>().disconnect();
     }
     await _service.clearSession();
 
-    // 2. Clear reactive session state for anything still mounted this frame.
+    // 3. Clear reactive session state for anything still mounted this frame.
     accessTokenRx.value = null;
     userModelRx.value = null;
     roleRx.value = null;
 
-    // 3. Wipe EVERY GetX dependency and rebuild the app-permanent graph from
+    // 4. Wipe EVERY GetX dependency and rebuild the app-permanent graph from
     // scratch. This is the single guarantee that no controller or service
     // holds the previous user's data or a cached API response:
     //   - permanent controllers (subscription, votes, QR…) are recreated fresh;
@@ -123,7 +130,7 @@ class AuthController extends GetxController {
     Get.deleteAll(force: true);
     AppBindings().dependencies();
 
-    // 4. Reset navigation to the login screen (fresh dependency graph in place).
+    // 5. Reset navigation to the login screen (fresh dependency graph in place).
     Get.offAllNamed(AppRoutes.login);
   }
 
