@@ -7,6 +7,7 @@ import 'package:loci/core/storage/local_storage_service.dart';
 import 'package:loci/core/utils/show_snackbar.dart';
 import 'package:loci/features/subscription/presentation/widgets/upgrade_required_sheet.dart';
 import 'package:loci/features/auth/data/repositories/auth_repository.dart';
+import 'package:loci/features/auth/data/services/google_sign_in_service.dart';
 import 'package:loci/features/auth/domain/services/auth_service.dart';
 import 'package:loci/features/auth/presentation/controllers/auth_controller.dart';
 import 'package:loci/features/browse_business/data/repositories/browse_business_repository.dart';
@@ -85,6 +86,7 @@ class AppBindings extends Bindings {
       AuthController(Get.find<AuthService>()),
       permanent: true,
     );
+    Get.put<GoogleSignInService>(GoogleSignInService(), permanent: true);
 
     // Feature repositories + services
     Get.put<HomeRepository>(

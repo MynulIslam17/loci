@@ -1,4 +1,4 @@
-package com.example.loci
+package ui.neatboutique.jacobi
 
 import io.flutter.embedding.android.FlutterFragmentActivity
 

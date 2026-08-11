@@ -53,8 +53,20 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   /// Login with google handler
+  void _loginWithGoogleHandler() async {
+    FocusScope.of(context).unfocus();
 
-  void _loginWithGoogleHandler() async {}
+    final result = await _loginController.loginWithGoogle();
+    if (result == null) return; // user cancelled — no toast
+    if (result) {
+      Get.offAllNamed(AppRoutes.bottomNav);
+    } else {
+      final msg = _loginController.errorMessage.value;
+      if (msg != null && msg.isNotEmpty) {
+        SnackbarService.error(msg);
+      }
+    }
+  }
 
   @override
   void initState() {
@@ -335,24 +347,36 @@ class _LoginScreenState extends State<LoginScreen> {
 
             // Social Login
             const SizedBox(height: 24),
-            OutlinedButton.icon(
-              onPressed: _loginWithGoogleHandler,
-              icon: SvgPicture.asset("assets/icons/google.svg"),
-              label: Text(
-                "Continue with Google",
-                style: AppTextStyle.textSm(
-                  color: context.colorScheme.onSurface,
-                  weight: FontWeight.w600,
+            Obx(() {
+              final loading = _loginController.isGoogleLoading.value;
+              return OutlinedButton.icon(
+                onPressed: loading ? null : _loginWithGoogleHandler,
+                icon: loading
+                    ? SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: context.colorScheme.primary,
+                        ),
+                      )
+                    : SvgPicture.asset("assets/icons/google.svg"),
+                label: Text(
+                  "Continue with Google",
+                  style: AppTextStyle.textSm(
+                    color: context.colorScheme.onSurface,
+                    weight: FontWeight.w600,
+                  ),
                 ),
-              ),
-              style: OutlinedButton.styleFrom(
-                minimumSize: const Size(double.infinity, 56),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
+                style: OutlinedButton.styleFrom(
+                  minimumSize: const Size(double.infinity, 56),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  side: BorderSide(color: context.colorScheme.outlineVariant),
                 ),
-                side: BorderSide(color: context.colorScheme.outlineVariant),
-              ),
-            ),
+              );
+            }),
 
             // Registration Link
             const SizedBox(height: 32),
