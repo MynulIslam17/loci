@@ -2,10 +2,10 @@ abstract class AppUrl {
 
   /// base url=================================
   //static const String baseUrl="https://jakuan5000.syedbipul.me/api/v1";//local
-  static const String baseUrl="https://jakuan5000.syedbipul.me/api/v1"; //live
+  static const String baseUrl="https://api.lociapp.io/api/v1"; //live
 
   /// Socket.io connects to the server root (no /api/v1 prefix).
-  static const String socketUrl="https://jakuan5000.syedbipul.me";
+  static const String socketUrl="https://api.lociapp.io/";
 
 
   /// ========================auth===================================
