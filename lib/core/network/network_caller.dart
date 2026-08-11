@@ -1,4 +1,4 @@
-import 'dart:async';
+﻿import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
@@ -7,77 +7,85 @@ import 'package:http/http.dart';
 import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart';
 import 'package:logger/logger.dart';
+import 'package:loci/core/utils/app_error_messages.dart';
 import 'package:mime/mime.dart';
 import 'network_response.dart';
 
-
-
 class NetworkCaller {
-  final String _defaultErrorMessage = 'Something went wrong. Please try again.';
   final Logger _logger = Logger();
 
   final VoidCallback onUnAuthorize;
   final String Function() accessToken;
 
-  NetworkCaller({
-    required this.onUnAuthorize,
-    required this.accessToken,
-  });
+  NetworkCaller({required this.onUnAuthorize, required this.accessToken});
 
   // ===========================================================
-  // CENTRAL STATUS CODE → ERROR MESSAGE RESOLVER
-  // Controllers never need to touch raffles status code directly.
-  // Always tries the server's own "message" field first.
+  // CENTRAL STATUS CODE â†’ ERROR MESSAGE RESOLVER
+  // Controllers never need to touch a status code directly.
+  // Prefers detailed field-level "errors" from the server,
+  // then the server's own "message" field, then a fallback.
+  // Non-JSON bodies (e.g. Cloudflare "error code: 502") still
+  // resolve via status code â€” they never become FormatException.
   // ===========================================================
   String _resolveErrorMessage(int statusCode, Map<String, dynamic>? decoded) {
-    final serverMsg = decoded?['message'] as String?;
+    // Field-level validation messages (e.g. "Please provide a valid email
+    // address") are far more useful than the generic wrapper message
+    // ("Validation failed"), so prefer them when present. Auth failures (wrong
+    // email/password) intentionally don't carry an `errors` map, so this never
+    // turns those into an enumeration ("no such email" vs "wrong password")
+    // leak â€” it only ever surfaces genuine per-field input validation problems.
+    // Shape: {"errors": {"field": ["msg1", "msg2"]}}
+    final fieldErrors = _extractFieldErrors(decoded);
+    if (fieldErrors != null) return fieldErrors;
 
-    switch (statusCode) {
-      case 400:
-        return serverMsg ?? 'Bad request. Please check your input.';
-      case 401:
-        return serverMsg ?? 'Session expired. Please log in again.';
-      case 403:
-        return serverMsg ?? 'You don\'t have permission to perform this action.';
-      case 404:
-        return serverMsg ?? 'The requested resource was not found.';
-      case 408:
-        return serverMsg ?? 'Request timed out. Please try again.';
-      case 409:
-        return serverMsg ?? 'Conflict. This resource already exists.';
-      case 422:
-        return serverMsg ?? 'Invalid data submitted. Please review your input.';
-      case 429:
-        return serverMsg ?? 'Too many requests. Please wait raffles moment and try again.';
-      case 500:
-        return serverMsg ?? 'Server error. Please try again later.';
-      case 502:
-        return serverMsg ?? 'Bad gateway. The server is temporarily unavailable.';
-      case 503:
-        return serverMsg ?? 'Service unavailable. Please try again later.';
-      case 504:
-        return serverMsg ?? 'Gateway timeout. Please check your connection and try again.';
-      default:
-        return serverMsg ?? _defaultErrorMessage;
+    final serverMsg = decoded?['message'] as String?;
+    return AppErrorMessages.forStatusCode(statusCode, serverMessage: serverMsg);
+  }
+
+  /// Safely decode JSON. Gateways often return plain text / HTML on 5xx.
+  Map<String, dynamic>? _tryDecodeBody(String body) {
+    final trimmed = body.trim();
+    if (trimmed.isEmpty) return null;
+    try {
+      final decoded = jsonDecode(trimmed);
+      if (decoded is Map<String, dynamic>) return decoded;
+      return null;
+    } catch (_) {
+      return null;
     }
+  }
+
+  /// Flattens {"errors": {"field": ["msg1", ...]}} into a readable,
+  /// line-separated list of messages. Returns null if none present.
+  String? _extractFieldErrors(Map<String, dynamic>? decoded) {
+    final errors = decoded?['errors'];
+    if (errors is! Map) return null;
+
+    final messages = <String>[];
+    for (final value in errors.values) {
+      if (value is List) {
+        messages.addAll(value.map((e) => e.toString()));
+      } else if (value is String) {
+        messages.add(value);
+      }
+    }
+
+    if (messages.isEmpty) return null;
+    return messages.join('\n');
   }
 
   // ===========================================================
   // CENTRAL UNAUTHORIZED + FORBIDDEN HANDLER
   // Call this after every non-success response.
   // ===========================================================
-  void _handleAuthErrors(int statusCode) {
-    if (statusCode == 401) {
+  void _handleAuthErrors(int statusCode, {required bool hadToken}) {
+    // Only redirect when a token was sent but rejected â€” not for logged-out calls.
+    if (statusCode == 401 && hadToken) {
       onUnAuthorize();
     }
-    // 403 does not call onUnAuthorize because the token is still valid —
-    // the user simply lacks permission. Handle UI feedback via errorMessage.
   }
 
   // ===========================================================
-  // GET REQUEST
-  // ===========================================================
-// ===========================================================
   // GET REQUEST
   // ===========================================================
   Future<NetworkResponse> getRequest({
@@ -91,27 +99,30 @@ class NetworkCaller {
       if (queryParams != null && queryParams.isNotEmpty) {
         final existingParams = Map<String, String>.from(uri.queryParameters);
         final newParams = queryParams.map(
-              (key, value) => MapEntry(key, value.toString()),
+          (key, value) => MapEntry(key, value.toString()),
         );
         existingParams.addAll(newParams);
         uri = uri.replace(queryParameters: existingParams);
       }
 
+      final token = accessToken();
       final headers = {
-        'Authorization': 'Bearer ${accessToken()}',
         'Content-Type': 'application/json',
+        if (token.isNotEmpty) 'Authorization': 'Bearer $token',
       };
 
       _logRequest(uri.toString(), null, headers);
 
-      final response = await get(uri, headers: headers)
-          .timeout(const Duration(seconds: 30));
+      final response = await get(
+        uri,
+        headers: headers,
+      ).timeout(const Duration(seconds: 30));
 
       _logResponse(uri.toString(), response);
 
-      final decoded = jsonDecode(response.body) as Map<String, dynamic>?;
+      final decoded = _tryDecodeBody(response.body);
 
-      if (response.statusCode == 200 || response.statusCode == 201) {
+      if (response.statusCode >= 200 && response.statusCode < 300) {
         return NetworkResponse(
           isSuccess: true,
           statusCode: response.statusCode,
@@ -119,7 +130,7 @@ class NetworkCaller {
         );
       }
 
-      _handleAuthErrors(response.statusCode);
+      _handleAuthErrors(response.statusCode, hadToken: token.isNotEmpty);
 
       return NetworkResponse(
         isSuccess: false,
@@ -133,6 +144,37 @@ class NetworkCaller {
         statusCode: -1,
         errorMessage: _networkExceptionMessage(e),
       );
+    }
+  }
+
+  /// GET whose successful body is plain text (e.g. CSV export).
+  Future<String> getTextBody({required String url}) async {
+    try {
+      final uri = Uri.parse(url);
+      final token = accessToken();
+      final headers = {
+        if (token.isNotEmpty) 'Authorization': 'Bearer $token',
+      };
+
+      _logRequest(uri.toString(), null, headers);
+
+      final response = await get(uri, headers: headers).timeout(
+        const Duration(seconds: 30),
+      );
+
+      _logResponse(uri.toString(), response);
+
+      if (response.statusCode >= 200 && response.statusCode < 300) {
+        return response.body;
+      }
+
+      final decoded = _tryDecodeBody(response.body);
+      _handleAuthErrors(response.statusCode, hadToken: token.isNotEmpty);
+      throw Exception(_resolveErrorMessage(response.statusCode, decoded));
+    } catch (e) {
+      _logger.e('GET text request failed: $e');
+      if (e is Exception) rethrow;
+      throw Exception(_networkExceptionMessage(e));
     }
   }
 
@@ -154,14 +196,17 @@ class NetworkCaller {
       };
 
       _logRequest(url, body, headers);
-      final response = await post(uri, headers: headers, body: jsonEncode(body))
-          .timeout(const Duration(seconds: 30));
+      final response = await post(
+        uri,
+        headers: headers,
+        body: jsonEncode(body),
+      ).timeout(const Duration(seconds: 30));
 
       _logResponse(url, response);
 
-      final decoded = jsonDecode(response.body) as Map<String, dynamic>?;
+      final decoded = _tryDecodeBody(response.body);
 
-      if (response.statusCode == 200 || response.statusCode == 201) {
+      if (response.statusCode >= 200 && response.statusCode < 300) {
         return NetworkResponse(
           isSuccess: true,
           statusCode: response.statusCode,
@@ -169,7 +214,9 @@ class NetworkCaller {
         );
       }
 
-      if (!isFromLogin) _handleAuthErrors(response.statusCode);
+      if (!isFromLogin) {
+        _handleAuthErrors(response.statusCode, hadToken: token.isNotEmpty);
+      }
 
       return NetworkResponse(
         isSuccess: false,
@@ -197,20 +244,24 @@ class NetworkCaller {
   }) async {
     try {
       final uri = Uri.parse(url);
+      final token = accessToken();
       final headers = {
         'Content-Type': 'application/json',
-        'Authorization': 'Bearer ${accessToken()}',
+        if (token.isNotEmpty) 'Authorization': 'Bearer $token',
       };
 
       _logRequest(url, body, headers);
-      final response = await patch(uri, headers: headers, body: jsonEncode(body))
-          .timeout(const Duration(seconds: 30));
+      final response = await patch(
+        uri,
+        headers: headers,
+        body: jsonEncode(body),
+      ).timeout(const Duration(seconds: 30));
 
       _logResponse(url, response);
 
-      final decoded = jsonDecode(response.body) as Map<String, dynamic>?;
+      final decoded = _tryDecodeBody(response.body);
 
-      if (response.statusCode == 200 || response.statusCode == 201) {
+      if (response.statusCode >= 200 && response.statusCode < 300) {
         return NetworkResponse(
           isSuccess: true,
           statusCode: response.statusCode,
@@ -218,7 +269,9 @@ class NetworkCaller {
         );
       }
 
-      if (!isFromLogin) _handleAuthErrors(response.statusCode);
+      if (!isFromLogin) {
+        _handleAuthErrors(response.statusCode, hadToken: token.isNotEmpty);
+      }
 
       return NetworkResponse(
         isSuccess: false,
@@ -245,20 +298,24 @@ class NetworkCaller {
   }) async {
     try {
       final uri = Uri.parse(url);
+      final token = accessToken();
       final headers = {
         'Content-Type': 'application/json',
-        'Authorization': 'Bearer ${accessToken()}',
+        if (token.isNotEmpty) 'Authorization': 'Bearer $token',
       };
 
       _logRequest(url, body, headers);
-      final response = await put(uri, headers: headers, body: jsonEncode(body))
-          .timeout(const Duration(seconds: 30));
+      final response = await put(
+        uri,
+        headers: headers,
+        body: jsonEncode(body),
+      ).timeout(const Duration(seconds: 30));
 
       _logResponse(url, response);
 
-      final decoded = jsonDecode(response.body) as Map<String, dynamic>?;
+      final decoded = _tryDecodeBody(response.body);
 
-      if (response.statusCode == 200 || response.statusCode == 201) {
+      if (response.statusCode >= 200 && response.statusCode < 300) {
         return NetworkResponse(
           isSuccess: true,
           statusCode: response.statusCode,
@@ -266,7 +323,9 @@ class NetworkCaller {
         );
       }
 
-      if (!isFromLogin) _handleAuthErrors(response.statusCode);
+      if (!isFromLogin) {
+        _handleAuthErrors(response.statusCode, hadToken: token.isNotEmpty);
+      }
 
       return NetworkResponse(
         isSuccess: false,
@@ -293,9 +352,10 @@ class NetworkCaller {
   }) async {
     try {
       final uri = Uri.parse(url);
+      final token = accessToken();
       final headers = {
         'Content-Type': 'application/json',
-        'Authorization': 'Bearer ${accessToken()}',
+        if (token.isNotEmpty) 'Authorization': 'Bearer $token',
       };
 
       _logRequest(url, body, headers);
@@ -307,9 +367,9 @@ class NetworkCaller {
 
       _logResponse(url, response);
 
-      final decoded = jsonDecode(response.body) as Map<String, dynamic>?;
+      final decoded = _tryDecodeBody(response.body);
 
-      if (response.statusCode == 200 || response.statusCode == 201) {
+      if (response.statusCode >= 200 && response.statusCode < 300) {
         return NetworkResponse(
           isSuccess: true,
           statusCode: response.statusCode,
@@ -317,7 +377,9 @@ class NetworkCaller {
         );
       }
 
-      if (!isFromLogin) _handleAuthErrors(response.statusCode);
+      if (!isFromLogin) {
+        _handleAuthErrors(response.statusCode, hadToken: token.isNotEmpty);
+      }
 
       return NetworkResponse(
         isSuccess: false,
@@ -348,10 +410,12 @@ class NetworkCaller {
   }) async {
     try {
       final uri = Uri.parse(url);
+      final token = accessToken();
       final request = http.MultipartRequest(method.toUpperCase(), uri);
 
-      request.headers['Authorization'] = 'Bearer ${accessToken()}';
-
+      if (token.isNotEmpty) {
+        request.headers['Authorization'] = 'Bearer $token';
+      }
       if (fields != null) request.fields.addAll(fields);
 
       if (files != null) {
@@ -372,7 +436,6 @@ class NetworkCaller {
         }
       }
 
-
       // ADD THIS BLOCK (multiple files support ( optional)) ===========================================
       if (multiFiles != null) {
         for (final entry in multiFiles.entries) {
@@ -389,27 +452,34 @@ class NetworkCaller {
                 file.readAsBytes().asStream(),
                 file.lengthSync(),
                 filename: fileName,
-                contentType:
-                mimeType != null ? MediaType.parse(mimeType) : null,
+                contentType: mimeType != null
+                    ? MediaType.parse(mimeType)
+                    : null,
               ),
             );
           }
         }
       }
 
-
-
       _logMultipartRequest(url, fields, files, multiFiles, request.headers);
 
-      final streamed = await request.send()
-          .timeout(const Duration(seconds: 120));
+      final streamed = await request.send().timeout(
+        const Duration(seconds: 120),
+      );
 
       final responseBody = await streamed.stream.bytesToString();
-      final decoded = jsonDecode(responseBody) as Map<String, dynamic>?;
+      final decoded = _tryDecodeBody(responseBody);
 
-      // Wrap for logging
-      final logResponse = Response(responseBody, streamed.statusCode,
-          reasonPhrase: streamed.reasonPhrase ?? '');
+      // Wrap for logging. Force UTF-8: the default Response(String) constructor
+      // re-encodes the body as Latin-1, which throws "Contains invalid
+      // characters" on non-Latin scripts (e.g. Bengali) â€” turning a successful
+      // response into a false failure.
+      final logResponse = Response(
+        responseBody,
+        streamed.statusCode,
+        headers: const {'content-type': 'application/json; charset=utf-8'},
+        reasonPhrase: streamed.reasonPhrase ?? '',
+      );
       _logResponse(url, logResponse);
 
       if (streamed.statusCode == 200 || streamed.statusCode == 201) {
@@ -420,7 +490,9 @@ class NetworkCaller {
         );
       }
 
-      if (!isFromLogin) _handleAuthErrors(streamed.statusCode);
+      if (!isFromLogin) {
+        _handleAuthErrors(streamed.statusCode, hadToken: token.isNotEmpty);
+      }
 
       return NetworkResponse(
         isSuccess: false,
@@ -439,24 +511,17 @@ class NetworkCaller {
   }
 
   // ===========================================================
-  // EXCEPTION → USER-FRIENDLY MESSAGE
+  // EXCEPTION â†’ USER-FRIENDLY MESSAGE
   // Converts dart:io and other common exceptions to readable strings.
   // ===========================================================
   String _networkExceptionMessage(Object e) {
-
-    if (e is TimeoutException) {
-      return 'Request timed out. Please check your connection.';
-    }
-    if (e is SocketException) {
-      return 'No internet connection. Please check your network.';
-    }
-    if (e is HttpException) {
-      return 'Network error. Please try again.';
-    }
-    if (e is FormatException) {
-      return 'Unexpected server response. Please try again.';
-    }
-    return 'Something went wrong. Please try again.';
+    if (e is TimeoutException) return AppErrorMessages.timeout;
+    if (e is SocketException) return AppErrorMessages.noInternet;
+    if (e is HttpException) return AppErrorMessages.network;
+    // FormatException used to surface as "Unexpected server response" â€”
+    // treat it as a transient server/gateway failure instead.
+    if (e is FormatException) return AppErrorMessages.serverUnavailable;
+    return AppErrorMessages.sanitize(e);
   }
 
   // ===========================================================
@@ -472,12 +537,12 @@ BODY    : $body
   }
 
   void _logMultipartRequest(
-      String url,
-      Map<String, String>? fields,
-      Map<String, File>? files,
-      Map<String, List<File>>? multiFiles,
-      Map<String, String>? headers,
-      ) {
+    String url,
+    Map<String, String>? fields,
+    Map<String, File>? files,
+    Map<String, List<File>>? multiFiles,
+    Map<String, String>? headers,
+  ) {
     _logger.i('''
 ================== MULTIPART REQUEST ==============
 URL     : $url
@@ -499,7 +564,7 @@ FIELDS  : $fields
       multiFiles.forEach((key, fileList) {
         _logger.i(" - $key =>");
         for (final file in fileList) {
-          _logger.i("    • ${file.path.split('/').last}");
+          _logger.i("    â€¢ ${file.path.split('/').last}");
         }
       });
     }

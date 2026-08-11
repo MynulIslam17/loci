@@ -1,6 +1,7 @@
 enum ReferralStatus {
   sent,
   pending,
+  accepted,
   confirmed,
   rejected;
 
@@ -11,6 +12,8 @@ enum ReferralStatus {
         return ReferralStatus.sent;
       case 'pending':
         return ReferralStatus.pending;
+      case 'accepted':
+        return ReferralStatus.accepted;
       case 'confirmed':
         return ReferralStatus.confirmed;
       case 'rejected':
@@ -27,6 +30,8 @@ enum ReferralStatus {
         return 'Sent';
       case ReferralStatus.pending:
         return 'Pending';
+      case ReferralStatus.accepted:
+        return 'Accepted';
       case ReferralStatus.confirmed:
         return 'Confirmed';
       case ReferralStatus.rejected:
@@ -41,6 +46,8 @@ enum ReferralStatus {
         return 'sent';
       case ReferralStatus.pending:
         return 'pending';
+      case ReferralStatus.accepted:
+        return 'accepted';
       case ReferralStatus.confirmed:
         return 'confirmed';
       case ReferralStatus.rejected:

@@ -1,30 +1,41 @@
-// This is raffles basic Flutter widget test.
-//
-// To perform an interaction with raffles widget in your test, use the WidgetTester
-// utility in the flutter_test package. For example, you can send tap and scroll
-// gestures. You can also use WidgetTester to find child widgets in the widget
-// tree, read text, and verify that the values of widget properties are correct.
+import 'dart:io';
 
-import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
-
+import 'package:get/get.dart';
+import 'package:get_storage/get_storage.dart';
 import 'package:loci/main.dart';
 
 void main() {
-  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
-    // Build our app and trigger raffles frame.
-    await tester.pumpWidget( Loci());
+  TestWidgetsFlutterBinding.ensureInitialized();
+  const pathProviderChannel = MethodChannel('plugins.flutter.io/path_provider');
 
-    // Verify that our counter starts at 0.
-    expect(find.text('0'), findsOneWidget);
-    expect(find.text('1'), findsNothing);
+  setUpAll(() async {
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(
+          pathProviderChannel,
+          (_) async => Directory.systemTemp.path,
+        );
+    await GetStorage.init('loci_widget_test');
+  });
 
-    // Tap the '+' icon and trigger raffles frame.
-    await tester.tap(find.byIcon(Icons.add));
+  tearDownAll(() {
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(pathProviderChannel, null);
+  });
+
+  tearDown(Get.reset);
+
+  testWidgets('builds the application shell', (tester) async {
+    await tester.pumpWidget(const Loci());
     await tester.pump();
 
-    // Verify that our counter has incremented.
-    expect(find.text('0'), findsNothing);
-    expect(find.text('1'), findsOneWidget);
+    expect(find.byType(GetMaterialApp), findsOneWidget);
+
+    // Drain the splash navigation and GetStorage's deferred write timer.
+    await tester.pump(const Duration(seconds: 5));
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pump();
   });
 }

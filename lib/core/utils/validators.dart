@@ -1,5 +1,6 @@
 
 
+import 'package:flutter/services.dart';
 import 'package:intl_phone_field/phone_number.dart';
 
 /// Standalone Validation Functions
@@ -7,14 +8,41 @@ import 'package:intl_phone_field/phone_number.dart';
 
 // ==================== NAME VALIDATORS ====================
 
+/// Letters, numbers, spaces, and common characters used in modern display names.
+final RegExp _nameCharacterPattern = RegExp(
+  r"[\p{L}\p{N}\s\-'@.]",
+  unicode: true,
+);
+
+/// Allowed characters in a person / display name (letters, numbers, common punctuation).
+final RegExp _nameAllowedPattern = RegExp(
+  r"^[\p{L}\p{N}\s\-'@.]+$",
+  unicode: true,
+);
+
+/// Restricts input to characters allowed in person-name fields.
+List<TextInputFormatter> get nameInputFormatters => [
+  FilteringTextInputFormatter.allow(_nameCharacterPattern),
+];
+
+/// Validates a person name. Use [fieldName] to match the label shown in the UI.
+String? validateName(String? value, {String fieldName = 'Name'}) {
+  return _validateName(value, fieldName: fieldName);
+}
+
+/// Validates full name (first + last).
+String? validateFullName(String? value) {
+  return _validateName(value, fieldName: 'Full name');
+}
+
 /// Validates first name
 String? validateFirstName(String? value) {
-  return _validateName(value, fieldName: "First name");
+  return _validateName(value, fieldName: 'First name');
 }
 
 /// Validates last name
 String? validateLastName(String? value) {
-  return _validateName(value, fieldName: "Last name");
+  return _validateName(value, fieldName: 'Last name');
 }
 
 /// Validates middle name (optional field)
@@ -22,37 +50,42 @@ String? validateMiddleName(String? value) {
   if (value == null || value.trim().isEmpty) {
     return null; // Optional field
   }
-  return _validateName(value, fieldName: "Middle name");
+  return _validateName(value, fieldName: 'Middle name');
 }
 
-/// Internal name validation logic
+/// Internal name validation logic shared across person-name fields.
 String? _validateName(String? value, {required String fieldName}) {
   if (value == null || value.trim().isEmpty) {
-    return "Name is required";
+    return '$fieldName is required';
   }
 
   final trimmedValue = value.trim();
 
   if (trimmedValue.length < 2) {
-    return "Name is too short";
+    return '$fieldName must be at least 2 characters';
   }
 
   if (trimmedValue.length > 50) {
-    return "$fieldName must be less than 50 characters";
+    return '$fieldName must be less than 50 characters';
   }
 
-  // Disallow multiple consecutive spaces
   if (trimmedValue.contains(RegExp(r'\s{2,}'))) {
-    return "$fieldName cannot contain multiple consecutive spaces";
+    return '$fieldName cannot contain multiple consecutive spaces';
   }
 
-  // Allow letters, spaces, hyphens, apostrophes (including international chars)
-  if (!RegExp(r"^[\p{L}]+(?:[\s\-'][\p{L}]+)*$", unicode: true)
-      .hasMatch(trimmedValue)) {
-    return "$fieldName can only contain letters, spaces, hyphens, or apostrophes";
+  if (RegExp(r"^[\s\-'.]|[\s\-'.]$").hasMatch(trimmedValue)) {
+    return '$fieldName cannot start or end with spaces or punctuation';
   }
 
-  return null; // ✅ Valid
+  if (!RegExp(r'[\p{L}\p{N}]', unicode: true).hasMatch(trimmedValue)) {
+    return '$fieldName must contain at least one letter or number';
+  }
+
+  if (!_nameAllowedPattern.hasMatch(trimmedValue)) {
+    return '$fieldName can only contain letters, numbers, spaces, and - \' @ .';
+  }
+
+  return null;
 }
 
 // ==================== EMAIL VALIDATOR ====================
@@ -79,31 +112,27 @@ String? validateEmail(String? value) {
 // ==================== PASSWORD VALIDATORS ====================
 
 /// Validates password with default requirements
-/// Min 8 chars, uppercase, lowercase, number, special char
+/// Min 8 chars, uppercase, lowercase, number (matches backend rules)
 String? validatePassword(String? value) {
   if (value == null || value.isEmpty) {
     return "Password is required";
   }
 
-  if (value.length < 6) {
-    return "Password must be at least 6 characters";
+  if (value.length < 8) {
+    return "Password must be at least 8 characters";
   }
 
-  // if (!value.contains(RegExp(r'[A-Z]'))) {
-  //   return "Password must contain at least one uppercase letter";
-  // }
-  //
-  // if (!value.contains(RegExp(r'[raffles-z]'))) {
-  //   return "Password must contain at least one lowercase letter";
-  // }
-  //
-  // if (!value.contains(RegExp(r'[0-9]'))) {
-  //   return "Password must contain at least one number";
-  // }
-  //
-  // if (!value.contains(RegExp(r'[!@#$%^&*(),.?":{}|<>]'))) {
-  //   return "Password must contain at least one special character";
-  // }
+  if (!value.contains(RegExp(r'[A-Z]'))) {
+    return "Password must contain at least one uppercase letter";
+  }
+
+  if (!value.contains(RegExp(r'[a-z]'))) {
+    return "Password must contain at least one lowercase letter";
+  }
+
+  if (!value.contains(RegExp(r'[0-9]'))) {
+    return "Password must contain at least one number";
+  }
 
   return null;
 }
@@ -189,11 +218,11 @@ String? validateDateOfBirth(String? value, {int minAge = 13}) {
 
     if (date.isAfter(now)) return "Date of birth cannot be in the future";
     if (age < minAge) return "You must be at least $minAge years old";
-    if (age > 120) return "Please enter raffles valid date of birth";
+    if (age > 120) return "Please enter a valid date of birth";
 
     return null; // ✅ valid
   } catch (e) {
-    return "Please enter raffles valid date";
+    return "Please enter a valid date";
   }
 }
 
@@ -209,7 +238,7 @@ String? validateDate(String? value, {String? fieldName}) {
     DateTime.parse(value);
     return null;
   } catch (e) {
-    return "Please enter raffles valid date";
+    return "Please enter a valid date";
   }
 }
 
@@ -232,7 +261,7 @@ String? validateUsername(String? value, {int minLength = 3, int maxLength = 20})
   }
 
   // Allow letters, numbers, underscores, hyphens
-  if (!RegExp(r'^[raffles-zA-Z0-9_-]+$').hasMatch(trimmedValue)) {
+  if (!RegExp(r'^[a-zA-Z0-9_-]+$').hasMatch(trimmedValue)) {
     return "Username can only contain letters, numbers, underscores, and hyphens";
   }
 
@@ -296,7 +325,7 @@ String? validateNumber(String? value, {String? fieldName}) {
   }
 
   if (int.tryParse(value.trim()) == null && double.tryParse(value.trim()) == null) {
-    return "$name must be raffles valid number";
+    return "$name must be a valid number";
   }
 
   return null;
@@ -311,7 +340,7 @@ String? validateInteger(String? value, {String? fieldName}) {
   }
 
   if (int.tryParse(value.trim()) == null) {
-    return "$name must be raffles valid whole number";
+    return "$name must be a valid whole number";
   }
 
   return null;
@@ -333,7 +362,7 @@ String? validateNumberInRange(
   final number = num.tryParse(value.trim());
 
   if (number == null) {
-    return "$name must be raffles valid number";
+    return "$name must be a valid number";
   }
 
   if (number < min || number > max) {
@@ -354,11 +383,11 @@ String? validateUrl(String? value, {String? fieldName}) {
   }
 
   final urlPattern = RegExp(
-    r'^https?:\/\/(www\.)?[-raffles-zA-Z0-9@:%._\+~#=]{1,256}\.[raffles-zA-Z0-9()]{1,6}\b([-raffles-zA-Z0-9()@:%_\+.~#?&//=]*)$',
+    r'^https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)$',
   );
 
   if (!urlPattern.hasMatch(value.trim())) {
-    return "Please enter raffles valid URL";
+    return "Please enter a valid URL";
   }
 
   return null; // ✅ Valid
@@ -415,7 +444,7 @@ String? validateZipCode(String? value, {int length = 5}) {
     return "Zip code must be at least $length characters";
   }
 
-  if (!RegExp(r'^[raffles-zA-Z0-9]+$').hasMatch(trimmedValue)) {
+  if (!RegExp(r'^[a-zA-Z0-9]+$').hasMatch(trimmedValue)) {
     return "Zip code can only contain letters and numbers";
   }
 
