@@ -18,8 +18,7 @@ class GoogleSignInService {
 
     if (_isIos && !GoogleAuthConfig.isIosClientConfigured) {
       throw Exception(
-        'iOS Google client ID is not configured. '
-        'Set GoogleAuthConfig.iosClientId and Info.plist GIDClientID / URL scheme.',
+        'Google Sign-In is not available yet. Please use email and password.',
       );
     }
 
