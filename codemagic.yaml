@@ -1,0 +1,111 @@
+definitions:
+  env_versions: &env_versions
+    flutter: stable
+    xcode: latest
+    cocoapods: default
+
+  ios_signing_config: &ios_signing_config
+    distribution_type: app_store
+    bundle_identifier: ui.neatboutique.jacobi
+
+  scripts:
+    - &get_flutter_deps
+      name: Get Flutter packages
+      script: |
+        set -e
+        flutter pub get
+
+    - &analyze_project
+      name: Analyze project
+      script: |
+        set -e
+        # flutter analyze exits 1 on ANY issue, including info-level style
+        # notes (avoid_print, unnecessary_underscores, etc). Only let real
+        # errors/warnings fail the build.
+        flutter analyze --no-fatal-infos
+
+    - &install_pods
+      name: Install CocoaPods
+      script: |
+        set -e
+        find ios -name "Podfile" -execdir pod install \;
+
+    - &ios_code_signing
+      name: Set up iOS code signing
+      script: |
+        set -e
+        xcode-project use-profiles
+
+workflows:
+  flutter-ci:
+    name: Flutter CI
+    instance_type: mac_mini_m2
+    max_build_duration: 30
+    environment:
+      <<: *env_versions
+    cache:
+      cache_paths:
+        - $FLUTTER_ROOT/.pub-cache
+        - $HOME/.pub-cache
+    triggering:
+      events:
+        - push
+        - pull_request
+      branch_patterns:
+        - pattern: "*"
+          include: true
+    scripts:
+      - *get_flutter_deps
+      - *analyze_project
+
+  release:
+    name: Release (Android + iOS)
+    instance_type: mac_mini_m2
+    max_build_duration: 120
+    integrations:
+      app_store_connect: loci
+    environment:
+      <<: *env_versions
+      ios_signing:
+        <<: *ios_signing_config
+      groups:
+        - HireHub Ja
+    cache:
+      cache_paths:
+        - $FLUTTER_ROOT/.pub-cache
+        - $HOME/.pub-cache
+        - $HOME/.gradle/caches
+        - $HOME/Library/Caches/CocoaPods
+    triggering:
+      events:
+        - push
+      branch_patterns:
+        - pattern: main
+          include: true
+    scripts:
+      - *get_flutter_deps
+      - *analyze_project
+      - *install_pods
+      - *ios_code_signing
+      - name: Build Android App Bundle
+        script: |
+          set -e
+          flutter build appbundle --release
+      - name: Build iOS IPA
+        script: |
+          set -e
+          flutter build ipa --release \
+            --export-options-plist=/Users/builder/export_options.plist
+    artifacts:
+      - build/app/outputs/bundle/release/*.aab
+      - build/ios/ipa/*.ipa
+      - /tmp/xcodebuild_logs/*.log
+    publishing:
+      app_store_connect:
+        auth: integration
+        submit_to_testflight: true
+      # Uncomment once a Google Play integration + service account are set up
+      # in Codemagic (Team settings > Integrations > Google Play):
+      # google_play:
+      #   credentials: $GCLOUD_SERVICE_ACCOUNT_CREDENTIALS
+      #   track: internal

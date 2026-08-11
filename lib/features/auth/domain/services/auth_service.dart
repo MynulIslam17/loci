@@ -13,6 +13,20 @@ class AuthService {
     required String password,
   }) async {
     final body = await _repository.login(email: email, password: password);
+    return _persistAuthResponse(body);
+  }
+
+  /// Google Sign-In — response matches [login]; reuse same session handling.
+  Future<({UserModel user, String token})> loginWithGoogle({
+    required String idToken,
+  }) async {
+    final body = await _repository.loginWithGoogle(idToken: idToken);
+    return _persistAuthResponse(body);
+  }
+
+  Future<({UserModel user, String token})> _persistAuthResponse(
+    Map<String, dynamic> body,
+  ) async {
     final inner = body['data'];
     if (inner is! Map) throw Exception('Invalid login response');
 
@@ -25,6 +39,15 @@ class AuthService {
     final user = UserModel.fromJson(Map<String, dynamic>.from(userJson as Map));
     await _repository.saveUserData(model: user, token: token);
     return (user: user, token: token);
+  }
+
+  /// Best-effort remote logout. Does not clear local session.
+  Future<void> logoutRemote() async {
+    try {
+      await _repository.logoutRemote();
+    } catch (_) {
+      // Local logout must still proceed.
+    }
   }
 
   Future<String> signup({
