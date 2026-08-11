@@ -1,0 +1,158 @@
+import 'package:loci/core/enums/checkin_status.dart';
+import 'package:loci/core/utils/date_parser.dart';
+import 'package:loci/features/event/data/models/event_list_model.dart';
+
+class EventDetailsModel {
+  final EventModel eventModel;
+  final double lat;
+  final double lng;
+
+  final int rsvpCount;
+  final int checkInCount;
+  final String? mapUrl;
+  final String? mapImage;
+
+  final List<Rsvp> rsvpList;
+  final String checkInCode;
+  final String qrCode;
+  final bool isPublic;
+  final CheckInStatus myCheckInStatus;
+
+  final OrganizerBusiness organizerBusiness;
+  final String status;
+
+  EventDetailsModel({
+    required this.eventModel,
+    required this.lat,
+    required this.lng,
+    required this.rsvpCount,
+    required this.checkInCount,
+    required this.rsvpList,
+    required this.checkInCode,
+    required this.isPublic,
+    required this.organizerBusiness,
+    required this.myCheckInStatus,
+    required this.qrCode,
+    required this.status,
+    this.mapUrl,
+    this.mapImage,
+  });
+
+  factory EventDetailsModel.fromJson(Map<String, dynamic> json) {
+    final data = json['data'] ?? json;
+    final coordinates = data['mapCoordinates'] ?? {};
+
+    return EventDetailsModel(
+      // pass data instead of json
+      eventModel: EventModel.fromJson(data),
+
+      lat: (coordinates['lat'] ?? 0).toDouble(),
+      lng: (coordinates['lng'] ?? 0).toDouble(),
+
+      rsvpCount:
+          int.tryParse(data['rsvpCount'].toString()) ??
+          (data['rsvpList'] as List?)?.length ??
+          0,
+      checkInCount: int.tryParse(data["checkInCount"].toString()) ?? 0,
+
+      rsvpList: (data['rsvpList'] as List? ?? [])
+          .map((e) => Rsvp.fromJson(e))
+          .toList(),
+      mapUrl: data['url'] ?? '',
+      mapImage: data['mapImage']?.toString(),
+
+      checkInCode: data['checkInCode'] ?? '',
+      qrCode: data["qrCode"] ?? '',
+      myCheckInStatus: CheckInStatus.fromString(data['myCheckInStatus']),
+      isPublic: data['isPublic'] ?? false,
+      organizerBusiness: OrganizerBusiness.fromJson(
+        data['organizerBusiness'] ?? {},
+      ),
+      status: data['status']?.toString() ?? '',
+    );
+  }
+
+  // for update the model
+  EventDetailsModel copyWith({
+    EventModel? eventModel,
+    int? rsvpCount,
+    int? checkInCount,
+    CheckInStatus? myCheckInStatus,
+    String? mapUrl,
+    String? mapImage,
+  }) {
+    return EventDetailsModel(
+      eventModel: eventModel ?? this.eventModel,
+      lat: lat,
+      lng: lng,
+      rsvpCount: rsvpCount ?? this.rsvpCount,
+      checkInCount: checkInCount ?? this.checkInCount,
+      rsvpList: rsvpList,
+      checkInCode: checkInCode,
+      isPublic: isPublic,
+      myCheckInStatus: myCheckInStatus ?? this.myCheckInStatus,
+      organizerBusiness: organizerBusiness,
+      qrCode: qrCode,
+      status: status,
+      mapUrl: mapUrl ?? this.mapUrl,
+      mapImage: mapImage ?? this.mapImage,
+    );
+  }
+}
+
+class Rsvp {
+  final String userId;
+  final String status;
+  final String rsvpAt;
+
+  Rsvp({required this.userId, required this.status, required this.rsvpAt});
+
+  factory Rsvp.fromJson(Map<String, dynamic> json) {
+    return Rsvp(
+      userId: json['user']?.toString() ?? '',
+      status: json['status'] ?? '',
+      rsvpAt: json['rsvpAt'] != null
+          ? DateParserHelper.eventDateTime(
+              DateTime.tryParse(json['rsvpAt']) ?? DateTime.now(),
+            )
+          : '',
+    );
+  }
+}
+
+class OrganizerBusiness {
+  final String id;
+  final String name;
+  final String? logo;
+  final String address;
+  final String description;
+
+  OrganizerBusiness({
+    required this.id,
+    required this.name,
+    this.logo,
+    required this.address,
+    required this.description,
+  });
+
+  factory OrganizerBusiness.fromJson(Map<String, dynamic> json) {
+    final addressJson = json['address'] ?? {};
+
+    final formattedAddress = [
+      addressJson['street'],
+      addressJson['city'],
+      addressJson['state'],
+      addressJson['zip'],
+    ].where((e) => e != null && e.toString().isNotEmpty).join(', ');
+
+    final locationText = json['location']?.toString().trim() ?? '';
+
+    return OrganizerBusiness(
+      id: json['_id'] ?? '',
+      name: json['name'] ?? '',
+      logo: json['logo'],
+      description: json['description']?.toString() ?? '',
+      address: formattedAddress.isNotEmpty ? formattedAddress : locationText,
+    );
+  }
+}

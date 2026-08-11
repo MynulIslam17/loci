@@ -1,0 +1,51 @@
+import 'package:get/get.dart';
+import 'package:loci/core/enums/checkin_status.dart';
+import 'package:loci/features/routes/data/models/route_detail_model.dart';
+import 'package:loci/features/routes/domain/services/routes_service.dart';
+
+class RouteDetailsController extends GetxController {
+  RouteDetailsController(this._service);
+
+  final RoutesService _service;
+
+  final RxBool _isLoading = false.obs;
+  final Rxn<String> _errorMessage = Rxn<String>();
+  final Rxn<RouteDetails> _routeDetails = Rxn<RouteDetails>();
+
+  bool get isLoading => _isLoading.value;
+  String? get errorMessage => _errorMessage.value;
+  RouteDetails? get routeDetails => _routeDetails.value;
+
+  /// Fetch route details by route ID
+  Future<void> fetchRouteDetails(String routeId) async {
+    try {
+      _isLoading.value = true;
+      _errorMessage.value = null;
+      _routeDetails.value = null;
+
+      _routeDetails.value = await _service.getRouteDetails(routeId);
+    } catch (e) {
+      _errorMessage.value = e.toString().replaceFirst('Exception: ', '');
+    } finally {
+      _isLoading.value = false;
+    }
+  }
+
+  /// update check-in status locally.
+  /// When [onlyIfId] is set, updates only if it matches the open route.
+  void updateCheckInStatus(
+    CheckInStatus status, {
+    String? onlyIfId,
+  }) {
+    final current = _routeDetails.value;
+    if (current == null) return;
+    if (onlyIfId != null &&
+        onlyIfId.isNotEmpty &&
+        current.routeModel.routeId != onlyIfId) {
+      return;
+    }
+
+    _routeDetails.value = current.copyWith(myCheckInStatus: status);
+    _routeDetails.refresh();
+  }
+}

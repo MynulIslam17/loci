@@ -19,7 +19,7 @@ enum BusinessCategory {
         return BusinessCategory.foodie;
       case 'Adventure':
         return BusinessCategory.adventure;
-      case 'Party Like raffles Loci':
+      case 'Party Like a Loci':
         return BusinessCategory.partyLikeALoci;
       case 'Wellness':
         return BusinessCategory.wellness;
@@ -46,7 +46,7 @@ enum BusinessCategory {
       case BusinessCategory.adventure:
         return 'Adventure';
       case BusinessCategory.partyLikeALoci:
-        return 'Party Like raffles Loci';
+        return 'Party Like a Loci';
       case BusinessCategory.wellness:
         return 'Wellness';
       case BusinessCategory.homeAndRepair:

@@ -1,5 +1,6 @@
 package com.example.loci
 
-import io.flutter.embedding.android.FlutterActivity
+import io.flutter.embedding.android.FlutterFragmentActivity
 
-class MainActivity : FlutterActivity()
+// flutter_stripe requires the host activity to extend FlutterFragmentActivity.
+class MainActivity : FlutterFragmentActivity()
