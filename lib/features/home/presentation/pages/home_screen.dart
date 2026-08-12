@@ -181,8 +181,15 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Scaffold clears viewInsets for the body; read the raw inset so we can
+    // leave scroll room to lift the post composer above the keyboard.
+    final keyboardInset = MediaQueryData.fromView(
+      View.of(context),
+    ).viewInsets.bottom;
+
     return Scaffold(
       backgroundColor: context.colorScheme.surface,
+      resizeToAvoidBottomInset: true,
       body: RefreshIndicator(
         onRefresh: () async {
           await Future.wait([
@@ -193,6 +200,8 @@ class _HomeScreenState extends State<HomeScreen> {
         child: SingleChildScrollView(
           controller: questionListController.scrollController,
           physics: const AlwaysScrollableScrollPhysics(),
+          keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+          padding: EdgeInsets.only(bottom: keyboardInset > 0 ? 24 : 0),
           child: Column(
             children: [
               const SizedBox(height: 16),
@@ -372,7 +381,9 @@ class _HomeScreenState extends State<HomeScreen> {
                   },
                 );
               }),
-              const SizedBox(height: 20),
+              // Extra scroll extent so [PostInputField] can move fully above
+              // the keyboard when poll/post tools expand.
+              SizedBox(height: keyboardInset > 0 ? keyboardInset + 48 : 20),
             ],
           ),
         ),

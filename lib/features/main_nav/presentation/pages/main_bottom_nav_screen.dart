@@ -41,8 +41,13 @@ class _MainBottomNavState extends State<MainBottomNav> {
 
   @override
   Widget build(BuildContext context) {
+    // Free vertical space for composers (home/community post field) so the
+    // keyboard does not trap the expanded poll/post toolbar under the nav bar.
+    final keyboardOpen = MediaQuery.viewInsetsOf(context).bottom > 0;
+
     return Scaffold(
       backgroundColor: context.colorScheme.surface,
+      resizeToAvoidBottomInset: true,
 
       /// Left drawer menu
       drawer: const AppNavigationDrawer(),
@@ -53,8 +58,9 @@ class _MainBottomNavState extends State<MainBottomNav> {
       /// Main screen body
       body: _buildBody(context),
 
-      /// Bottom navigation bar
-      bottomNavigationBar: const MainBottomNavBar(),
+      /// Bottom navigation bar — hide while typing so the composer can sit
+      /// above the keyboard.
+      bottomNavigationBar: keyboardOpen ? null : const MainBottomNavBar(),
     );
   }
 
