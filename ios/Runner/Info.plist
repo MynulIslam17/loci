@@ -46,13 +46,23 @@
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
 
-	<key>NSCameraUsageDescription</key>
-        <string>This app needs camera access to scan barcodes and QR codes.</string>
-	<key>NSPhotoLibraryAddUsageDescription</key>
-	<string>This app needs access to save QR codes to your photo library.</string>
+	<!-- Only standard HTTPS/TLS encryption; skips ASC export-compliance prompt. -->
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
 
-	<!-- Google Sign-In: add GIDClientID, GIDServerClientID, and CFBundleURLTypes
-	     (reversed client ID) when an iOS OAuth client is ready.
-	     Keep in sync with lib/core/constants/google_auth_config.dart -->
+	<key>NSCameraUsageDescription</key>
+	<string>This app needs camera access to scan QR codes, take profile photos, and capture payment card details.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>This app needs photo library access to choose images for your profile and activities, and to scan QR codes from photos.</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>This app needs access to save QR codes and images to your photo library.</string>
+
+	<!-- Opens Apple Maps / HTTPS links from map previews (url_launcher). -->
+	<key>LSApplicationQueriesSchemes</key>
+	<array>
+		<string>https</string>
+		<string>http</string>
+		<string>maps</string>
+	</array>
 </dict>
 </plist>
