@@ -1,9 +1,18 @@
 import 'dart:io';
 import 'package:file_picker/file_picker.dart';
+import 'package:loci/core/utils/image_upload_preparer.dart';
 
 class AppFilePicker {
   static const List<String> defaultExtensions = [
-    'jpg', 'jpeg', 'png', 'pdf', 'doc', 'docx'
+    'jpg',
+    'jpeg',
+    'png',
+    'webp',
+    'heic',
+    'heif',
+    'pdf',
+    'doc',
+    'docx',
   ];
 
   static Future<File?> pickSingle({
@@ -18,7 +27,8 @@ class AppFilePicker {
     );
 
     final path = result?.files.single.path;
-    return path != null ? File(path) : null;
+    if (path == null) return null;
+    return ImageUploadPreparer.fromAnyPickedFile(File(path));
   }
 
   static Future<List<File>> pickMultiple({
@@ -33,19 +43,31 @@ class AppFilePicker {
           : null,
     );
 
-    return result?.files
-        .where((f) => f.path != null)
-        .map((f) => File(f.path!))
-        .toList() ??
+    final files = result?.files
+            .where((f) => f.path != null)
+            .map((f) => File(f.path!))
+            .toList() ??
         [];
+    final prepared = <File>[];
+    Object? lastError;
+    for (final file in files) {
+      try {
+        prepared.add(await ImageUploadPreparer.fromAnyPickedFile(file));
+      } catch (e) {
+        lastError = e;
+      }
+    }
+    if (files.isNotEmpty && prepared.isEmpty) {
+      throw lastError ??
+          ImagePickException("Couldn't read those files. Please try again.");
+    }
+    return prepared;
   }
 
-  /// IMAGE ONLY
   static Future<File?> pickImage() {
     return pickSingle(type: FileType.image);
   }
 
-  /// MULTIPLE IMAGES
   static Future<List<File>> pickImages() {
     return pickMultiple(type: FileType.image);
   }

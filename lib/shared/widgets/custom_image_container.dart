@@ -22,6 +22,7 @@ class CustomCachedImage extends StatelessWidget {
   /// Used when no [fallbackAsset] is given. Reads as "no image" rather than
   /// an error.
   final IconData? fallbackIcon;
+  final String? cacheKey;
 
   const CustomCachedImage({
     super.key,
@@ -35,6 +36,7 @@ class CustomCachedImage extends StatelessWidget {
     this.customBorderRadius,
     this.fallbackAsset,
     this.fallbackIcon,
+    this.cacheKey,
   });
 
   @override
@@ -72,6 +74,7 @@ class CustomCachedImage extends StatelessWidget {
         borderRadius: effectiveRadius,
         child: CachedNetworkImage(
           imageUrl: url,
+          cacheKey: cacheKey,
           height: height,
           width: width,
           fit: fit,

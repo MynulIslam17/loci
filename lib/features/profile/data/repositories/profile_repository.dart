@@ -34,10 +34,19 @@ class ProfileRepository {
       method: 'PATCH',
       files: {'avatar': file},
     );
-    if (!res.isSuccess || res.body == null) {
+    if (!res.isSuccess) {
+      if (res.statusCode < 0) {
+        final retry = await _network.multipartRequest(
+          url: AppUrl.updateMyProfile,
+          method: 'PATCH',
+          files: {'avatar': file},
+        );
+        if (retry.isSuccess) return retry.body ?? const {};
+        throw Exception(retry.errorMessage ?? 'Upload failed');
+      }
       throw Exception(res.errorMessage ?? 'Upload failed');
     }
-    return res.body!;
+    return res.body ?? const {};
   }
 
   Future<Map<String, dynamic>> changePassword({

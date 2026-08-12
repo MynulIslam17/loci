@@ -97,23 +97,25 @@ class _CreateAnnouncementScreenState extends State<CreateAnnouncementScreen> {
   }
 
   // Offers accept images only — the backend rejects other file types.
-  static const _offerImageExtensions = ['jpg', 'jpeg', 'png', 'webp'];
+  static const _offerImageExtensions = [
+    'jpg',
+    'jpeg',
+    'png',
+    'webp',
+    'heic',
+    'heif',
+  ];
 
   Future<void> _pickOfferAttachment() async {
-    // 1. Restrict the picker to image types.
-    final file = await AppFilePicker.pickSingle(
-      allowedExtensions: _offerImageExtensions,
-    );
-    if (file == null) return;
-
-    // 2. Validate the selection (some pickers still allow browsing to a PDF).
-    final extension = file.path.split('.').last.toLowerCase();
-    if (!_offerImageExtensions.contains(extension)) {
-      SnackbarService.error('Please choose an image (JPG, PNG or WEBP)');
-      return;
+    try {
+      final file = await AppFilePicker.pickSingle(
+        allowedExtensions: _offerImageExtensions,
+      );
+      if (file == null) return;
+      _controller.setAttachment(file);
+    } catch (e) {
+      SnackbarService.error(e.toString().replaceFirst('Exception: ', ''));
     }
-
-    _controller.setAttachment(file);
   }
 
   void _onActivitySelected(ActivityModel activity) {

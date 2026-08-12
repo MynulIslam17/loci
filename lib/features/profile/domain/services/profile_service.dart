@@ -37,7 +37,21 @@ class ProfileService {
 
   Future<String?> updateAvatar(File file) async {
     final body = await _repository.updateAvatar(file);
-    return body['data']?['avatar']?.toString();
+    return _avatarFromResponse(body);
+  }
+
+  String? _avatarFromResponse(Map<String, dynamic> body) {
+    final data = body['data'];
+    if (data is Map) {
+      final direct = data['avatar']?.toString();
+      if (direct != null && direct.isNotEmpty) return direct;
+      final user = data['user'];
+      if (user is Map) {
+        final nested = user['avatar']?.toString();
+        if (nested != null && nested.isNotEmpty) return nested;
+      }
+    }
+    return body['avatar']?.toString();
   }
 
   Future<String> changePassword({

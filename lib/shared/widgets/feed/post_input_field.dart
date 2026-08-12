@@ -57,8 +57,32 @@ class _PostInputFieldState extends State<PostInputField>
   void _onFocusChange() {
     if (_focusNode.hasFocus && !_isExpanded.value) {
       _isExpanded.value = true;
-      _expandAnim.forward();
+      _expandAnim.forward().whenComplete(_scrollComposerIntoView);
     }
+    if (_focusNode.hasFocus) {
+      _scrollComposerIntoView();
+    }
+  }
+
+  /// Lift the expanded composer above the keyboard. Pinning near the top of
+  /// the remaining viewport is the reliable option on small screens; softer
+  /// "only scroll if needed" policies can leave the field under the keyboard.
+  void _scrollComposerIntoView() {
+    void ensure() {
+      if (!mounted || !_focusNode.hasFocus) return;
+      Scrollable.ensureVisible(
+        context,
+        alignment: 0.0,
+        duration: const Duration(milliseconds: 250),
+        curve: Curves.easeOut,
+      );
+    }
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ensure();
+      // Second pass after keyboard + expand animation settle.
+      Future<void>.delayed(const Duration(milliseconds: 320), ensure);
+    });
   }
 
   void _collapse() {

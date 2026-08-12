@@ -1,7 +1,9 @@
 import 'dart:io';
 
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:get/get.dart';
 import 'package:loci/core/utils/date_parser.dart';
+import 'package:loci/core/utils/image_upload_preparer.dart';
 import 'package:loci/core/utils/show_snackbar.dart';
 import 'package:loci/features/auth/presentation/controllers/auth_controller.dart';
 import 'package:loci/features/profile/data/models/profile_state.dart';
@@ -16,10 +18,12 @@ class ProfileController extends GetxController {
   final RxBool _isLoading = false.obs;
   final Rxn<File> _profileImage = Rxn<File>();
   final Rxn<ProfileStats> _stats = Rxn<ProfileStats>();
+  final RxInt _avatarRevision = 0.obs;
 
   bool get isLoading => _isLoading.value;
   File? get profileImage => _profileImage.value;
   ProfileStats? get stats => _stats.value;
+  int get avatarRevision => _avatarRevision.value;
 
   String get userName => _auth.userModel?.name ?? '';
   String get about => _auth.userModel?.about ?? '';
@@ -128,8 +132,48 @@ class ProfileController extends GetxController {
     _setLoading(true);
 
     try {
-      final newAvatar = await _service.updateAvatar(file);
-      await _updateUserModel(avatar: newAvatar);
+      File toUpload = file;
+      String? newAvatar;
+      Object? lastError;
+
+      for (var attempt = 0; attempt < 2; attempt++) {
+        try {
+          if (attempt == 1) {
+            toUpload = await ImageUploadPreparer.recompress(
+              file,
+              quality: 55,
+              maxSide: 720,
+            );
+            _profileImage.value = toUpload;
+          }
+          newAvatar = await _service.updateAvatar(toUpload);
+          lastError = null;
+          break;
+        } catch (e) {
+          lastError = e;
+        }
+      }
+
+      if (lastError != null) throw lastError;
+
+      if (newAvatar == null || newAvatar.isEmpty) {
+        try {
+          final result = await _service.getMyProfile();
+          newAvatar = result.user['avatar']?.toString();
+        } catch (_) {}
+      }
+
+      final previousUrl = profileImageUrl;
+      if (newAvatar != null && newAvatar.isNotEmpty) {
+        await _updateUserModel(avatar: newAvatar);
+      }
+      if (previousUrl != null && previousUrl.isNotEmpty) {
+        await CachedNetworkImage.evictFromCache(previousUrl);
+      }
+      if (newAvatar != null && newAvatar.isNotEmpty) {
+        await CachedNetworkImage.evictFromCache(newAvatar);
+      }
+      _avatarRevision.value++;
       _profileImage.value = null;
       SnackbarService.success('Profile image updated');
     } catch (e) {

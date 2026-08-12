@@ -52,6 +52,8 @@
 
 	<key>NSCameraUsageDescription</key>
 	<string>This app needs camera access to scan QR codes, take profile photos, and capture payment card details.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>This app needs microphone access when capturing photos or video with the camera.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>This app needs photo library access to choose images for your profile and activities, and to scan QR codes from photos.</string>
 	<key>NSPhotoLibraryAddUsageDescription</key>

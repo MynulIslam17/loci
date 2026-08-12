@@ -1,6 +1,5 @@
 import 'dart:io';
 
-import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:loci/core/utils/acitvity_validator.dart';
@@ -14,6 +13,7 @@ import 'package:loci/features/explore_activity/domain/services/explore_activity_
 import 'package:loci/features/explore_activity/presentation/controllers/business_raffle_details_controller.dart';
 import 'package:loci/features/explore_activity/presentation/controllers/explore_activity_edit_form.dart';
 import 'package:loci/features/explore_activity/presentation/widgets/create_activity_task_sheet.dart';
+import 'package:loci/shared/widgets/file_picker.dart';
 
 class RaffleEditController extends GetxController {
   RaffleEditController(this._service);
@@ -325,12 +325,12 @@ class RaffleEditController extends GetxController {
   }
 
   Future<void> pickCouponFile() async {
-    final result = await FilePicker.platform.pickFiles(
-      type: FileType.custom,
-      allowedExtensions: ['jpg', 'jpeg', 'png', 'webp'],
-    );
-    if (result != null && result.files.single.path != null) {
-      setCoupon(File(result.files.single.path!));
+    try {
+      final file = await AppFilePicker.pickImage();
+      if (file == null) return;
+      setCoupon(file);
+    } catch (e) {
+      SnackbarService.error(e.toString().replaceFirst('Exception: ', ''));
     }
   }
 
