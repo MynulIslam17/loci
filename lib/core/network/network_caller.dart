@@ -8,7 +8,7 @@ import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart';
 import 'package:logger/logger.dart';
 import 'package:loci/core/utils/app_error_messages.dart';
-import 'package:mime/mime.dart';
+import 'package:loci/core/utils/image_upload_preparer.dart';
 import 'network_response.dart';
 
 class NetworkCaller {
@@ -20,12 +20,12 @@ class NetworkCaller {
   NetworkCaller({required this.onUnAuthorize, required this.accessToken});
 
   // ===========================================================
-  // CENTRAL STATUS CODE â†’ ERROR MESSAGE RESOLVER
+  // CENTRAL STATUS CODE → ERROR MESSAGE RESOLVER
   // Controllers never need to touch a status code directly.
   // Prefers detailed field-level "errors" from the server,
   // then the server's own "message" field, then a fallback.
   // Non-JSON bodies (e.g. Cloudflare "error code: 502") still
-  // resolve via status code â€” they never become FormatException.
+  // resolve via status code — they never become FormatException.
   // ===========================================================
   String _resolveErrorMessage(int statusCode, Map<String, dynamic>? decoded) {
     // Field-level validation messages (e.g. "Please provide a valid email
@@ -33,7 +33,7 @@ class NetworkCaller {
     // ("Validation failed"), so prefer them when present. Auth failures (wrong
     // email/password) intentionally don't carry an `errors` map, so this never
     // turns those into an enumeration ("no such email" vs "wrong password")
-    // leak â€” it only ever surfaces genuine per-field input validation problems.
+    // leak — it only ever surfaces genuine per-field input validation problems.
     // Shape: {"errors": {"field": ["msg1", "msg2"]}}
     final fieldErrors = _extractFieldErrors(decoded);
     if (fieldErrors != null) return fieldErrors;
@@ -79,7 +79,7 @@ class NetworkCaller {
   // Call this after every non-success response.
   // ===========================================================
   void _handleAuthErrors(int statusCode, {required bool hadToken}) {
-    // Only redirect when a token was sent but rejected â€” not for logged-out calls.
+    // Only redirect when a token was sent but rejected — not for logged-out calls.
     if (statusCode == 401 && hadToken) {
       onUnAuthorize();
     }
@@ -420,19 +420,7 @@ class NetworkCaller {
 
       if (files != null) {
         for (final entry in files.entries) {
-          final file = entry.value;
-          final fileName = file.path.split('/').last;
-          final mimeType = lookupMimeType(file.path);
-
-          request.files.add(
-            http.MultipartFile(
-              entry.key,
-              file.readAsBytes().asStream(),
-              file.lengthSync(),
-              filename: fileName,
-              contentType: mimeType != null ? MediaType.parse(mimeType) : null,
-            ),
-          );
+          request.files.add(await _buildMultipartFile(entry.key, entry.value));
         }
       }
 
@@ -443,20 +431,7 @@ class NetworkCaller {
           final fileList = entry.value;
 
           for (final file in fileList) {
-            final fileName = file.path.split('/').last;
-            final mimeType = lookupMimeType(file.path);
-
-            request.files.add(
-              http.MultipartFile(
-                key,
-                file.readAsBytes().asStream(),
-                file.lengthSync(),
-                filename: fileName,
-                contentType: mimeType != null
-                    ? MediaType.parse(mimeType)
-                    : null,
-              ),
-            );
+            request.files.add(await _buildMultipartFile(key, file));
           }
         }
       }
@@ -472,7 +447,7 @@ class NetworkCaller {
 
       // Wrap for logging. Force UTF-8: the default Response(String) constructor
       // re-encodes the body as Latin-1, which throws "Contains invalid
-      // characters" on non-Latin scripts (e.g. Bengali) â€” turning a successful
+      // characters" on non-Latin scripts (e.g. Bengali) — turning a successful
       // response into a false failure.
       final logResponse = Response(
         responseBody,
@@ -482,7 +457,9 @@ class NetworkCaller {
       );
       _logResponse(url, logResponse);
 
-      if (streamed.statusCode == 200 || streamed.statusCode == 201) {
+      if (streamed.statusCode == 200 ||
+          streamed.statusCode == 201 ||
+          streamed.statusCode == 204) {
         return NetworkResponse(
           isSuccess: true,
           statusCode: streamed.statusCode,
@@ -510,15 +487,85 @@ class NetworkCaller {
     }
   }
 
+  /// Builds a multipart part from bytes so iOS TestFlight can still upload
+  /// after the original picker path is no longer readable.
+  /// Images are sent as JPEG/PNG; PDFs and docs keep their real type.
+  Future<http.MultipartFile> _buildMultipartFile(String field, File file) async {
+    var bytes = await file.readAsBytes();
+    if (bytes.isEmpty) {
+      throw Exception('Selected file could not be read');
+    }
+
+    if (ImageUploadPreparer.looksLikeImage(bytes, file.path)) {
+      final isJpeg = _isJpeg(bytes);
+      final isPng = _isPng(bytes);
+      if (!isJpeg && !isPng) {
+        final prepared = await ImageUploadPreparer.fromBytes(
+          bytes,
+          sourcePath: file.path,
+        );
+        bytes = await prepared.readAsBytes();
+      }
+      final sendPng = _isPng(bytes) && !_isJpeg(bytes);
+      return http.MultipartFile.fromBytes(
+        field,
+        bytes,
+        filename: sendPng ? 'image.png' : 'image.jpg',
+        contentType: sendPng
+            ? MediaType('image', 'png')
+            : MediaType('image', 'jpeg'),
+      );
+    }
+
+    final originalName = file.path.split(RegExp(r'[/\\]')).last;
+    final fileName = originalName.contains('.') ? originalName : 'file.bin';
+    return http.MultipartFile.fromBytes(
+      field,
+      bytes,
+      filename: fileName,
+      contentType: _contentTypeFor(fileName, bytes),
+    );
+  }
+
+  bool _isJpeg(List<int> bytes) =>
+      bytes.length > 2 && bytes[0] == 0xFF && bytes[1] == 0xD8;
+
+  bool _isPng(List<int> bytes) =>
+      bytes.length > 3 &&
+      bytes[0] == 0x89 &&
+      bytes[1] == 0x50 &&
+      bytes[2] == 0x4E &&
+      bytes[3] == 0x47;
+
+  MediaType _contentTypeFor(String fileName, List<int> bytes) {
+    final lower = fileName.toLowerCase();
+    final isPdf =
+        lower.endsWith('.pdf') ||
+        (bytes.length > 3 &&
+            bytes[0] == 0x25 &&
+            bytes[1] == 0x50 &&
+            bytes[2] == 0x44 &&
+            bytes[3] == 0x46);
+    if (isPdf) return MediaType('application', 'pdf');
+    if (lower.endsWith('.doc')) return MediaType('application', 'msword');
+    if (lower.endsWith('.docx')) {
+      return MediaType(
+        'application',
+        'vnd.openxmlformats-officedocument.wordprocessingml.document',
+      );
+    }
+    return MediaType('application', 'octet-stream');
+  }
+
   // ===========================================================
-  // EXCEPTION â†’ USER-FRIENDLY MESSAGE
+  // EXCEPTION → USER-FRIENDLY MESSAGE
   // Converts dart:io and other common exceptions to readable strings.
   // ===========================================================
   String _networkExceptionMessage(Object e) {
     if (e is TimeoutException) return AppErrorMessages.timeout;
     if (e is SocketException) return AppErrorMessages.noInternet;
     if (e is HttpException) return AppErrorMessages.network;
-    // FormatException used to surface as "Unexpected server response" â€”
+    // FormatException used to surface as "Unexpected server response" —
     // treat it as a transient server/gateway failure instead.
     if (e is FormatException) return AppErrorMessages.serverUnavailable;
     return AppErrorMessages.sanitize(e);
@@ -564,7 +611,7 @@ FIELDS  : $fields
       multiFiles.forEach((key, fileList) {
         _logger.i(" - $key =>");
         for (final file in fileList) {
-          _logger.i("    â€¢ ${file.path.split('/').last}");
+          _logger.i("    • ${file.path.split('/').last}");
         }
       });
     }

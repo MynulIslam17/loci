@@ -1,7 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:loci/core/constants/app_url.dart';
@@ -18,6 +17,7 @@ import 'package:loci/features/explore_activity/presentation/controllers/business
 import 'package:loci/features/explore_activity/domain/services/explore_activity_service.dart';
 import 'package:loci/features/explore_activity/presentation/widgets/create_activity_task_sheet.dart';
 import 'package:loci/features/places/data/models/place_models.dart';
+import 'package:loci/shared/widgets/file_picker.dart';
 
 class CreateActivityController extends GetxController {
   CreateActivityController(this._service);
@@ -201,14 +201,13 @@ class CreateActivityController extends GetxController {
   void setRafflePrize(File file) => rafflePrizeImage.value = file;
 
   Future<void> pickRaffleCoupon() async {
-    final result = await FilePicker.platform.pickFiles(
-      type: FileType.custom,
-      allowedExtensions: ['jpg', 'jpeg', 'png', 'webp'],
-    );
-    if (result == null) return;
-    final path = result.files.single.path;
-    if (path == null) return;
-    setRafflePrize(File(path));
+    try {
+      final file = await AppFilePicker.pickImage();
+      if (file == null) return;
+      setRafflePrize(file);
+    } catch (e) {
+      SnackbarService.error(e.toString().replaceFirst('Exception: ', ''));
+    }
   }
 
   Future<void> pickEventDate(BuildContext context) async {

@@ -1,6 +1,8 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:loci/core/utils/show_snackbar.dart';
+import 'package:loci/shared/widgets/image_picker_helper.dart';
 
 class CustomImagePicker extends StatelessWidget {
   final File? selectedImage;
@@ -57,17 +59,28 @@ class CustomImagePicker extends StatelessWidget {
     );
 
     if (source != null) {
-      final XFile? picked = await ImagePicker().pickImage(source: source);
-      if (picked != null && context.mounted) {
-        onImageSelected(File(picked.path));
+      try {
+        final files = await ImagePickerHelper.pick(
+          multi: false,
+          source: source,
+        );
+        if (files.isNotEmpty && context.mounted) {
+          onImageSelected(files.first);
+        }
+      } catch (e) {
+        SnackbarService.error(e.toString().replaceFirst('Exception: ', ''));
       }
     }
   }
 
   Future<void> _pickImage(ImageSource source, BuildContext context) async {
-    final pickedImage = await ImagePicker().pickImage(source: source);
-    if (pickedImage != null) {
-      onImageSelected(File(pickedImage.path));
+    try {
+      final files = await ImagePickerHelper.pick(multi: false, source: source);
+      if (files.isNotEmpty) {
+        onImageSelected(files.first);
+      }
+    } catch (e) {
+      SnackbarService.error(e.toString().replaceFirst('Exception: ', ''));
     }
     if (context.mounted) Navigator.pop(context);
   }

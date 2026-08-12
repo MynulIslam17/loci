@@ -111,6 +111,16 @@ String? validateEmail(String? value) {
 
 // ==================== PASSWORD VALIDATORS ====================
 
+/// Login-only: require a non-empty password. Strength rules belong on signup /
+/// reset — blocking sign-in for format reasons is poor UX and locks out older
+/// accounts that predate those rules.
+String? validateLoginPassword(String? value) {
+  if (value == null || value.isEmpty) {
+    return "Password is required";
+  }
+  return null;
+}
+
 /// Validates password with default requirements
 /// Min 8 chars, uppercase, lowercase, number (matches backend rules)
 String? validatePassword(String? value) {

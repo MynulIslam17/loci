@@ -52,6 +52,9 @@ class ProfileScreen extends StatelessWidget {
                           child: CustomCachedImage(
                             imageFile: c.profileImage,
                             imageUrl: c.profileImageUrl,
+                            cacheKey: c.profileImageUrl == null
+                                ? null
+                                : '${c.profileImageUrl}-${c.avatarRevision}',
                             height: 110,
                             width: 110,
                             isCircle: true,

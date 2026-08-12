@@ -128,8 +128,12 @@ class _ClamMyBusinessState extends State<ClamMyBusiness> {
   }
 
   Future<void> _pickProof() async {
-    final file = await AppFilePicker.pickSingle();
-    if (file != null) proofFiles.add(file);
+    try {
+      final file = await AppFilePicker.pickSingle();
+      if (file != null) proofFiles.add(file);
+    } catch (e) {
+      SnackbarService.error(e.toString().replaceFirst('Exception: ', ''));
+    }
   }
 
   @override
