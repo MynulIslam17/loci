@@ -56,6 +56,8 @@
 	<string>This app needs photo library access to choose images for your profile and activities, and to scan QR codes from photos.</string>
 	<key>NSPhotoLibraryAddUsageDescription</key>
 	<string>This app needs access to save QR codes and images to your photo library.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>This app uses your location to show map previews and help you pick places for events, routes, and businesses.</string>
 
 	<!-- Opens Apple Maps / HTTPS links from map previews (url_launcher). -->
 	<key>LSApplicationQueriesSchemes</key>
