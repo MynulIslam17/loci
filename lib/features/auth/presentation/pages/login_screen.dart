@@ -225,6 +225,10 @@ class _LoginScreenState extends State<LoginScreen> {
               hintText: "exmple@gmail.com",
               title: "Email",
               textColor: context.colorScheme.onSurface,
+              keyboardType: TextInputType.emailAddress,
+              textInputAction: TextInputAction.next,
+              autofillHints: const [AutofillHints.email],
+              autoValidateMode: AutovalidateMode.onUnfocus,
               titleStyle: AppTextStyle.textXs(
                 color: context.colorScheme.onSurface,
                 weight: FontWeight.w600,
@@ -241,11 +245,16 @@ class _LoginScreenState extends State<LoginScreen> {
               textColor: context.colorScheme.onSurface,
               isPassword: true,
               isObscureText: true,
+              textInputAction: TextInputAction.done,
+              autofillHints: const [AutofillHints.password],
+              autoValidateMode: AutovalidateMode.onUnfocus,
               titleStyle: AppTextStyle.textXs(
                 color: context.colorScheme.onSurface,
                 weight: FontWeight.w600,
               ),
-              validator: validatePassword,
+              // Sign-in only checks that a password was entered; strength rules
+              // are for signup / reset password screens.
+              validator: validateLoginPassword,
             ),
 
             // Remember me & Forgot password
