@@ -16,14 +16,6 @@ class AuthService {
     return _persistAuthResponse(body);
   }
 
-  /// Google Sign-In — response matches [login]; reuse same session handling.
-  Future<({UserModel user, String token})> loginWithGoogle({
-    required String idToken,
-  }) async {
-    final body = await _repository.loginWithGoogle(idToken: idToken);
-    return _persistAuthResponse(body);
-  }
-
   Future<({UserModel user, String token})> _persistAuthResponse(
     Map<String, dynamic> body,
   ) async {

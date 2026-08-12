@@ -29,19 +29,6 @@ class AuthRepository {
     return res.body!;
   }
 
-  /// Same response shape as [login]. Send Google [idToken] only (not accessToken).
-  Future<Map<String, dynamic>> loginWithGoogle({required String idToken}) async {
-    final res = await _network.postRequest(
-      url: AppUrl.googleAuth,
-      isFromLogin: true,
-      body: {'idToken': idToken},
-    );
-    if (!res.isSuccess || res.body == null) {
-      throw Exception(res.errorMessage ?? 'Google login failed');
-    }
-    return res.body!;
-  }
-
   /// Best-effort server logout. Failures are ignored by the caller.
   Future<void> logoutRemote() async {
     final res = await _network.postRequest(url: AppUrl.logout, body: {});
