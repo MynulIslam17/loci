@@ -111,6 +111,7 @@ class _FeedTabState extends State<FeedTab> with AutomaticKeepAliveClientMixin {
       final searchCtrl = _searchCtrl;
       searchCtrl.status.value;
       searchCtrl.businesses.length;
+      searchCtrl.isPaginationLoading.value;
       final activeId = _activeMentionPostId.value;
       final me = _authController.userModelRx.value;
       final avatarRev = _authController.avatarRevision.value;
@@ -154,6 +155,12 @@ class _FeedTabState extends State<FeedTab> with AutomaticKeepAliveClientMixin {
                 isMentionLoading: isActive && searchCtrl.isLoading,
                 mentionSearchDone: isActive && searchCtrl.searchDone,
                 isMentionActive: isActive,
+                mentionHasNextPage: isActive && searchCtrl.hasNextPage,
+                mentionIsPaginationLoading:
+                    isActive && searchCtrl.isPaginationLoading.value,
+                onMentionLoadMore: isActive
+                    ? () => searchCtrl.loadNextPage()
+                    : null,
                 currentUserImage: myAvatar,
                 currentUserId: me?.id,
                 avatarRevision: avatarRev,

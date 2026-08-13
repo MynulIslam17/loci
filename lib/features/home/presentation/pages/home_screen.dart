@@ -237,6 +237,11 @@ class _HomeScreenState extends State<HomeScreen> {
           controller: questionListController.scrollController,
           physics: const AlwaysScrollableScrollPhysics(),
           keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.viewInsetsOf(context).bottom > 0
+                ? MediaQuery.viewInsetsOf(context).bottom + 80
+                : 20,
+          ),
           child: Column(
             children: [
               const SizedBox(height: 16),
@@ -382,6 +387,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 if (activeMentionId != null) {
                   searchCtrl.status.value;
                   searchCtrl.businesses.length;
+                  searchCtrl.isPaginationLoading.value;
                 }
                 // Live session avatar — updates home cards after profile pic change.
                 final me = _authController.userModelRx.value;
@@ -420,6 +426,12 @@ class _HomeScreenState extends State<HomeScreen> {
                       isMentionLoading: isActive && searchCtrl.isLoading,
                       mentionSearchDone: isActive && searchCtrl.searchDone,
                       isMentionActive: isActive,
+                      mentionHasNextPage: isActive && searchCtrl.hasNextPage,
+                      mentionIsPaginationLoading:
+                          isActive && searchCtrl.isPaginationLoading.value,
+                      onMentionLoadMore: isActive
+                          ? () => searchCtrl.loadNextPage()
+                          : null,
                       currentUserImage: myAvatar,
                       currentUserId: me?.id,
                       avatarRevision: avatarRev,

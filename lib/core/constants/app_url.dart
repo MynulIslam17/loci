@@ -151,7 +151,7 @@ static String   addReviews(String businessId)=>"$baseUrl/reviews/$businessId";
   static const String  crateAnnouncement="$baseUrl/community-announcements";
   // communityId, type, search, page, limit are supplied via queryParams.
   static const String searchActivity = "$baseUrl/community-announcements/all-activity";
-  static String searchBusinesses(String search) => "$baseUrl/businesses?search=$search";
+  static String searchBusinesses(String search, {int page = 1, int limit = 10}) => "$baseUrl/businesses?search=$search&page=$page&limit=$limit";
   static String addPollOption(String announcementId) => "$baseUrl/community-announcements/$announcementId/poll-options";
   static String findGoogleBusiness= "$baseUrl/businesses/discover";
 

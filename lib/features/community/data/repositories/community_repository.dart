@@ -273,8 +273,8 @@ class CommunityRepository {
     return res.body!;
   }
 
-  Future<Map<String, dynamic>> searchBusinesses(String query) async {
-    final res = await _network.getRequest(url: AppUrl.searchBusinesses(query));
+  Future<Map<String, dynamic>> searchBusinesses(String query, {int page = 1, int limit = 10}) async {
+    final res = await _network.getRequest(url: AppUrl.searchBusinesses(query, page: page, limit: limit));
     if (!res.isSuccess || res.body is! Map<String, dynamic>) {
       throw Exception(
         res.errorMessage ?? 'Could not search businesses. Please try again.',
