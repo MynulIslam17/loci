@@ -175,9 +175,9 @@ class CommunityService {
     return body['message']?.toString() ?? 'Vote submitted successfully';
   }
 
-  Future<List<BrowseBusinessModel>> searchBusinesses(String query) async {
-    final body = await _repository.searchBusinesses(query);
-    return BrowseBusinessResponseModel.fromJson(body).data;
+  Future<BrowseBusinessResponseModel> searchBusinesses(String query, {int page = 1, int limit = 10}) async {
+    final body = await _repository.searchBusinesses(query, page: page, limit: limit);
+    return BrowseBusinessResponseModel.fromJson(body);
   }
 
   Future<CommentResponse> getAnnouncementComments({

@@ -34,6 +34,11 @@ class PostCardWidget extends StatelessWidget {
   final bool isMentionActive;
   final void Function(String postId, bool focused)? onMentionFocusChanged;
 
+  // Pagination
+  final bool mentionHasNextPage;
+  final bool mentionIsPaginationLoading;
+  final VoidCallback? onMentionLoadMore;
+
   // Used to highlight which poll bar this user voted on, and to live-update
   // "my" post avatars after a profile picture change.
   final String? currentUserId;
@@ -53,6 +58,9 @@ class PostCardWidget extends StatelessWidget {
     this.isMentionLoading = false,
     this.mentionSearchDone = false,
     this.isMentionActive = false,
+    this.mentionHasNextPage = false,
+    this.mentionIsPaginationLoading = false,
+    this.onMentionLoadMore,
     required this.currentUserImage,
     this.currentUserId,
     this.avatarRevision = 0,
@@ -115,10 +123,14 @@ class PostCardWidget extends StatelessWidget {
                 suggestions: isMentionActive ? mentionSuggestions : const [],
                 isLoading: isMentionActive && isMentionLoading,
                 searchDone: isMentionActive && mentionSearchDone,
+                hasNextPage: isMentionActive && mentionHasNextPage,
+                isPaginationLoading:
+                    isMentionActive && mentionIsPaginationLoading,
                 onChanged: onMentionChanged,
                 onBusinessSelected: onMentionBusinessSelected,
                 onSubmit: onMentionSubmit,
                 onFocusChanged: onMentionFocusChanged,
+                onLoadMore: onMentionLoadMore,
               ),
             ],
             const SizedBox(height: 6),
