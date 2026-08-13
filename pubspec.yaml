@@ -77,6 +77,13 @@ dev_dependencies:
   flutter_gen_runner: ^5.12.0
 
 flutter:
+  # image_cropper (TOCropViewController 3.x) and file_picker's
+  # DKImagePickerController (TOCropViewController 2.x) conflict under
+  # SwiftPM. CocoaPods resolves this via file_picker's PhotoGallery
+  # subspec; keep SPM off until those packages align.
+  config:
+    enable-swift-package-manager: false
+
   uses-material-design: true
 
   assets:
