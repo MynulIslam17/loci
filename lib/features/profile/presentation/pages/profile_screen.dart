@@ -10,6 +10,7 @@ import 'package:loci/shared/widgets/custom_button.dart';
 import 'package:loci/shared/widgets/custom_text_field.dart';
 import 'package:loci/shared/widgets/custom_image_container.dart';
 import 'package:loci/shared/widgets/custom_imagepicker.dart';
+import 'package:loci/shared/widgets/image_viewer.dart';
 
 import 'package:loci/features/profile/presentation/controllers/profile_controller.dart';
 
@@ -43,21 +44,32 @@ class ProfileScreen extends StatelessWidget {
                     // ================= PROFILE IMAGE =================
                     Stack(
                       children: [
-                        Container(
-                          padding: const EdgeInsets.all(3),
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            border: Border.all(color: colorScheme.primary),
-                          ),
-                          child: CustomCachedImage(
+                        GestureDetector(
+                          onTap: () => showImageViewer(
+                            context,
                             imageFile: c.profileImage,
                             imageUrl: c.profileImageUrl,
-                            cacheKey: c.profileImageUrl == null
-                                ? null
-                                : '${c.profileImageUrl}-${c.avatarRevision}',
-                            height: 110,
-                            width: 110,
-                            isCircle: true,
+                            heroTag: 'user-profile-avatar',
+                          ),
+                          child: Container(
+                            padding: const EdgeInsets.all(3),
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              border: Border.all(color: colorScheme.primary),
+                            ),
+                            child: Hero(
+                              tag: 'user-profile-avatar',
+                              child: CustomCachedImage(
+                                imageFile: c.profileImage,
+                                imageUrl: c.profileImageUrl,
+                                cacheKey: c.profileImageUrl == null
+                                    ? null
+                                    : '${c.profileImageUrl}-${c.avatarRevision}',
+                                height: 110,
+                                width: 110,
+                                isCircle: true,
+                              ),
+                            ),
                           ),
                         ),
                         Positioned(

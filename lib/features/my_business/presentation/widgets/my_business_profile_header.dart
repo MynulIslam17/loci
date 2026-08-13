@@ -12,6 +12,7 @@ import 'package:loci/features/my_business/presentation/widgets/edit_circle_butto
 import 'package:loci/features/my_business/presentation/widgets/my_business_action_chip.dart';
 import 'package:loci/routes/app_routes.dart';
 import 'package:loci/shared/widgets/custom_image_container.dart';
+import 'package:loci/shared/widgets/image_viewer.dart';
 
 class MyBusinessProfileHeader extends StatelessWidget {
   const MyBusinessProfileHeader({
@@ -38,19 +39,33 @@ class MyBusinessProfileHeader extends StatelessWidget {
         const SizedBox(height: 10),
         Stack(
           children: [
-            Container(
-              padding: const EdgeInsets.all(3),
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                border: Border.all(color: colorScheme.primary),
-              ),
-              child: Obx(
-                () => CustomCachedImage(
-                  imageFile: profileImage.value,
+            GestureDetector(
+              onTap: () {
+                final file = profileImage.value;
+                showImageViewer(
+                  context,
+                  imageFile: file,
                   imageUrl: business.logo,
-                  height: 110,
-                  width: 110,
-                  isCircle: true,
+                  heroTag: 'business-logo-${business.id}',
+                );
+              },
+              child: Container(
+                padding: const EdgeInsets.all(3),
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(color: colorScheme.primary),
+                ),
+                child: Obx(
+                  () => Hero(
+                    tag: 'business-logo-${business.id}',
+                    child: CustomCachedImage(
+                      imageFile: profileImage.value,
+                      imageUrl: business.logo,
+                      height: 110,
+                      width: 110,
+                      isCircle: true,
+                    ),
+                  ),
                 ),
               ),
             ),

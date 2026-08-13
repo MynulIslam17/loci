@@ -5,6 +5,7 @@ import 'package:loci/core/constants/app_text_style.dart';
 import 'package:loci/core/theme/theme_extention.dart';
 import 'package:loci/features/subscription/data/models/my_subscription_model.dart';
 import 'package:loci/features/subscription/presentation/controllers/my_subscription_controller.dart';
+import 'package:loci/features/subscription/presentation/widgets/subscription_shimmer.dart';
 import 'package:loci/routes/app_routes.dart';
 import 'package:loci/shared/widgets/custom_appbar.dart';
 import 'package:loci/shared/widgets/empty_state.dart';
@@ -26,7 +27,7 @@ class MySubscriptionScreen extends StatelessWidget {
       appBar: const CustomAppbar(title: "My Subscription"),
       body: Obx(() {
         if (controller.showInitialShimmer && controller.subscription == null) {
-          return const Center(child: CircularProgressIndicator());
+          return const MySubscriptionShimmer();
         }
 
         if (controller.errorMessage != null) {

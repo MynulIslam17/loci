@@ -20,12 +20,20 @@ class CheckInScanTab extends StatelessWidget {
     return Obx(() {
       switch (controller.cameraPermission.value) {
         case CameraPermissionState.checking:
-          return const Center(child: CircularProgressIndicator());
+          // Brief first-frame only — usually replaced before the user notices.
+          return CameraPermissionView(
+            permanentlyDenied: false,
+            isRequesting: true,
+            onAllow: controller.requestCameraPermission,
+            onOpenSettings: openAppSettings,
+            onEnterManually: () => controller.selectTab(CheckInTab.manual),
+          );
         case CameraPermissionState.denied:
         case CameraPermissionState.permanentlyDenied:
           return CameraPermissionView(
             permanentlyDenied: controller.cameraPermission.value ==
                 CameraPermissionState.permanentlyDenied,
+            isRequesting: controller.isRequestingCamera.value,
             onAllow: controller.requestCameraPermission,
             onOpenSettings: openAppSettings,
             onEnterManually: () => controller.selectTab(CheckInTab.manual),

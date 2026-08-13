@@ -36,6 +36,11 @@ class SubscriptionCheckoutController extends GetxController {
   void onInit() {
     super.onInit();
     fetchMySubscription();
+    // Warm Stripe before the user taps Subscribe — first open on TestFlight
+    // otherwise races init + present and the sheet never appears.
+    if (!kIsWeb && Get.isRegistered<StripeService>()) {
+      Get.find<StripeService>().init();
+    }
   }
 
   void _setProcessing(String? planId) {
@@ -74,20 +79,13 @@ class SubscriptionCheckoutController extends GetxController {
         return;
       }
 
-      // 2b. Downgrade to a cheaper paid plan — deferred to period end by the
-      // backend (a Stripe Subscription Schedule), nothing charged now, so
-      // there's no PaymentSheet to show. The current plan keeps running.
+      // Downgrade deferred to period end — no PaymentSheet.
       if (checkout.scheduled) {
-        // The plan card shows the "Scheduled" state — no toast needed.
         await fetchMySubscription();
         return;
       }
 
-      // 2c. Upgrade applied immediately in place (existing Stripe subscription
-      // updated, not a new one) — if Stripe could already charge the prorated
-      // difference automatically, there's nothing left to confirm here. The
-      // charge already happened silently (no PaymentSheet), so confirm the
-      // outcome with a success toast rather than only flipping the plan card.
+      // Upgrade already charged in place — no PaymentSheet.
       if (checkout.switched && !checkout.canPresentSheet) {
         await fetchMySubscription();
         final String? planName = mySubscription?.planName;
@@ -108,32 +106,15 @@ class SubscriptionCheckoutController extends GetxController {
 
       if (!checkout.canPresentSheet) {
         SnackbarService.error(
-          'Payments are not available right now. Please try again later.',
+          'Could not start checkout. Please try again in a moment.',
         );
         return;
       }
-      if (!await _ensureStripeReady()) {
-        SnackbarService.error(
-          'Payments are not available right now. Please try again later.',
-        );
-        return;
-      }
-
-      await Stripe.instance.initPaymentSheet(
-        paymentSheetParameters: SetupPaymentSheetParameters(
-          merchantDisplayName: 'Loci',
-          customerId: checkout.customerId,
-          customerEphemeralKeySecret: checkout.ephemeralKey,
-          paymentIntentClientSecret: checkout.paymentIntentClientSecret,
-          appearance: Get.find<StripeService>().themedAppearance(),
-        ),
-      );
 
       try {
-        await Stripe.instance.presentPaymentSheet();
+        await Get.find<StripeService>().presentCheckoutSheet(checkout);
       } on StripeException catch (e) {
-        // User dismissing the sheet is not an error — stay silent. Only a real
-        // payment failure warrants a message.
+        // User dismissing the sheet is not an error — stay silent.
         if (e.error.code != FailureCode.Canceled) {
           SnackbarService.error(
             e.error.localizedMessage ??
@@ -144,9 +125,25 @@ class SubscriptionCheckoutController extends GetxController {
       }
 
       // Success reflects itself on the plan card once the backend catches up.
-      await _pollForActive();
+      final activated = await _pollForActive();
+      if (!activated) {
+        SnackbarService.info(
+          'Payment received — your plan should activate shortly.',
+          title: 'Almost there',
+        );
+      }
+    } on StripeException catch (e) {
+      if (e.error.code != FailureCode.Canceled) {
+        SnackbarService.error(
+          e.error.localizedMessage ??
+              'Could not open payment sheet. Please try again.',
+        );
+      }
     } catch (e) {
-      SnackbarService.error('Something went wrong. Please try again.');
+      final message = e.toString().replaceFirst('Exception: ', '').trim();
+      SnackbarService.error(
+        message.isEmpty ? 'Something went wrong. Please try again.' : message,
+      );
     } finally {
       _setProcessing(null);
     }
@@ -207,13 +204,5 @@ class SubscriptionCheckoutController extends GetxController {
     } catch (_) {
       return null;
     }
-  }
-
-  Future<bool> _ensureStripeReady() async {
-    final StripeService service = Get.find<StripeService>();
-    if (!service.isReady) {
-      await service.init();
-    }
-    return service.isReady;
   }
 }

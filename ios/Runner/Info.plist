@@ -68,5 +68,21 @@
 		<string>http</string>
 		<string>maps</string>
 	</array>
+
+	<!-- Stripe PaymentSheet return URL (Link / 3DS / bank redirects on iOS).
+	     Must match Stripe.urlScheme + returnURL used in Dart. -->
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+			<key>CFBundleURLName</key>
+			<string>io.lociapp.stripe</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>loci</string>
+			</array>
+		</dict>
+	</array>
 </dict>
 </plist>

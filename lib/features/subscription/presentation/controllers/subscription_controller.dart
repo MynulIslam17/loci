@@ -9,7 +9,6 @@ import 'package:loci/features/auth/presentation/controllers/auth_controller.dart
 import 'package:loci/features/subscription/data/models/checkout_response_model.dart';
 import 'package:loci/features/subscription/data/models/my_subscription_model.dart';
 import 'package:loci/features/subscription/data/models/plan_response_model.dart';
-import 'package:loci/features/subscription/data/models/subscription_config_model.dart';
 import 'package:loci/features/subscription/domain/services/subscription_service.dart';
 
 /// Handles the Stripe subscription flow described in PAYMENT_FLOW.pdf:
@@ -27,7 +26,6 @@ class SubscriptionController extends GetxController {
   final Rxn<String> _errorMessage = Rxn<String>();
   final Rxn<MySubscriptionModel> _mySubscription = Rxn<MySubscriptionModel>();
   bool _stripeConfigured = false;
-  Future<void>? _stripeInitFuture;
   String? _stripeInitError;
 
   bool get isInitializingStripe => _isInitializingStripe.value;
@@ -49,30 +47,22 @@ class SubscriptionController extends GetxController {
 
   Future<void> initializeStripe() async {
     if (kIsWeb || defaultTargetPlatform == TargetPlatform.windows) return;
-    if (_stripeConfigured) return;
 
     final AuthController auth = Get.find<AuthController>();
     if (!auth.isLoggedIn) return;
 
-    _stripeInitFuture ??= _performStripeInit();
-    await _stripeInitFuture;
-  }
-
-  Future<void> _performStripeInit() async {
     _isInitializingStripe.value = true;
     _stripeInitError = null;
-
     try {
-      final SubscriptionConfigModel config = await _service.getConfig();
-      if (config.publishableKey.isEmpty) {
-        throw Exception('Payment service returned an invalid key');
+      final service = Get.find<StripeService>();
+      await service.init();
+      _stripeConfigured = service.isReady;
+      if (!_stripeConfigured) {
+        _stripeInitError = service.lastError ??
+            'Could not connect to payment service. Check your connection and try again.';
       }
-
-      Stripe.publishableKey = config.publishableKey;
-      await Stripe.instance.applySettings();
-      _stripeConfigured = true;
     } catch (e) {
-      _stripeInitFuture = null;
+      _stripeConfigured = false;
       _stripeInitError = e.toString();
       debugPrint('Stripe init failed: $e');
     } finally {
@@ -131,7 +121,15 @@ class SubscriptionController extends GetxController {
         return;
       }
 
-      await _presentPaymentSheet(checkout);
+      try {
+        await Get.find<StripeService>().presentCheckoutSheet(checkout);
+      } on StripeException catch (e) {
+        if (e.error.code == FailureCode.Canceled) return;
+        SnackbarService.error(
+          e.error.localizedMessage ?? 'Payment failed. Please try another card.',
+        );
+        return;
+      }
 
       final bool activated = await _waitForActive(businessId);
       if (activated) {
@@ -214,20 +212,6 @@ class SubscriptionController extends GetxController {
       SnackbarService.error(e.toString().replaceFirst('Exception: ', ''));
       return null;
     }
-  }
-
-  Future<void> _presentPaymentSheet(CheckoutModel checkout) async {
-    await Stripe.instance.initPaymentSheet(
-      paymentSheetParameters: SetupPaymentSheetParameters(
-        merchantDisplayName: 'Loci',
-        customerId: checkout.customerId!,
-        customerEphemeralKeySecret: checkout.ephemeralKey!,
-        paymentIntentClientSecret: checkout.paymentIntentClientSecret!,
-        appearance: Get.find<StripeService>().themedAppearance(),
-      ),
-    );
-
-    await Stripe.instance.presentPaymentSheet();
   }
 
   Future<bool> _waitForActive(String businessId, {int attempts = 8}) async {

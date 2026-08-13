@@ -44,18 +44,53 @@ class CheckoutModel {
       (paymentIntentClientSecret?.isNotEmpty ?? false);
 
   factory CheckoutModel.fromJson(Map<String, dynamic> json) {
+    // Backend field names have drifted across deploys — accept common aliases
+    // so a successful checkout still opens PaymentSheet on device.
+    final String? ephemeral = _firstNonEmpty(json, const [
+      'ephemeralKey',
+      'ephemeralKeySecret',
+      'customerEphemeralKeySecret',
+      'customer_ephemeral_key_secret',
+    ]);
+    final String? clientSecret = _firstNonEmpty(json, const [
+      'paymentIntentClientSecret',
+      'clientSecret',
+      'payment_intent_client_secret',
+      'setupIntentClientSecret',
+    ]);
+    final String? customer = _firstNonEmpty(json, const [
+      'customerId',
+      'customer_id',
+      'stripeCustomerId',
+    ]);
+
     return CheckoutModel(
-      planId: json['planId'] ?? '',
+      planId: (json['planId'] ?? json['plan_id'] ?? '').toString(),
       isFree: json['free'] == true,
-      publishableKey: json['publishableKey'],
-      customerId: json['customerId'],
-      ephemeralKey: json['ephemeralKey'],
-      paymentIntentClientSecret: json['paymentIntentClientSecret'],
-      subscriptionId: json['subscriptionId'],
+      publishableKey: _firstNonEmpty(json, const [
+        'publishableKey',
+        'publishable_key',
+        'stripePublishableKey',
+      ]),
+      customerId: customer,
+      ephemeralKey: ephemeral,
+      paymentIntentClientSecret: clientSecret,
+      subscriptionId: json['subscriptionId']?.toString() ??
+          json['subscription_id']?.toString(),
       switched: json['switched'] == true,
       scheduled: json['scheduled'] == true,
       pendingPlanName: json['pendingPlanName']?.toString(),
       effectiveDate: json['effectiveDate']?.toString(),
     );
+  }
+
+  static String? _firstNonEmpty(Map<String, dynamic> json, List<String> keys) {
+    for (final key in keys) {
+      final value = json[key];
+      if (value == null) continue;
+      final text = value.toString().trim();
+      if (text.isNotEmpty) return text;
+    }
+    return null;
   }
 }
