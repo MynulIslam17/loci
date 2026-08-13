@@ -3,8 +3,8 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:loci/core/constants/app_text_style.dart';
 import 'package:loci/core/theme/theme_extention.dart';
+import 'package:loci/shared/widgets/app_image_picker.dart';
 import 'package:loci/shared/widgets/custom_image_container.dart';
-import 'package:loci/shared/widgets/custom_imagepicker.dart';
 
 /// Tappable image upload area with an inset frame, preview, and optional labels.
 class FramedImageUploadField extends StatelessWidget {
@@ -20,6 +20,7 @@ class FramedImageUploadField extends StatelessWidget {
     this.emptyHint = 'JPG or PNG',
     this.changeImageLabel = 'Tap to change image',
     this.onPickImage,
+    this.kind = ImageUploadKind.normal,
   });
 
   final File? selectedImage;
@@ -31,8 +32,9 @@ class FramedImageUploadField extends StatelessWidget {
   final String emptyTitle;
   final String emptyHint;
   final String changeImageLabel;
+  final ImageUploadKind kind;
 
-  /// When set, used instead of [CustomImagePicker.pickImageSimple].
+  /// When set, used instead of [AppImagePicker.pickOne].
   final Future<void> Function(BuildContext context)? onPickImage;
 
   @override
@@ -172,9 +174,10 @@ class FramedImageUploadField extends StatelessWidget {
       await onPickImage!(context);
       return;
     }
-    await CustomImagePicker.pickImageSimple(
+    await AppImagePicker.pickOne(
       context: context,
-      onImageSelected: onImageSelected,
+      kind: kind,
+      onSelected: onImageSelected,
     );
   }
 }

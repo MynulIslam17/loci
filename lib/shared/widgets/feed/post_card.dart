@@ -31,9 +31,13 @@ class PostCardWidget extends StatelessWidget {
   final List<BrowseBusinessModel> mentionSuggestions;
   final bool isMentionLoading;
   final bool mentionSearchDone;
+  final bool isMentionActive;
+  final void Function(String postId, bool focused)? onMentionFocusChanged;
 
-  // Used to highlight which poll bar this user voted on
+  // Used to highlight which poll bar this user voted on, and to live-update
+  // "my" post avatars after a profile picture change.
   final String? currentUserId;
+  final int avatarRevision;
 
   const PostCardWidget({
     super.key,
@@ -44,11 +48,14 @@ class PostCardWidget extends StatelessWidget {
     this.onMentionChanged,
     this.onMentionSubmit,
     this.onMentionBusinessSelected,
+    this.onMentionFocusChanged,
     this.mentionSuggestions = const [],
     this.isMentionLoading = false,
     this.mentionSearchDone = false,
+    this.isMentionActive = false,
     required this.currentUserImage,
     this.currentUserId,
+    this.avatarRevision = 0,
   });
 
   bool get _hasPollOptions =>
@@ -58,58 +65,63 @@ class PostCardWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     final vm = viewModel;
     final colors = context.colorScheme;
+    final headerImage = vm.resolvedUserImage(
+      currentUserId: currentUserId,
+      currentUserImage: currentUserImage,
+    );
+    final isMine = currentUserId != null &&
+        currentUserId!.isNotEmpty &&
+        vm.authorId == currentUserId;
+    final headerCacheKey = isMine && headerImage.isNotEmpty
+        ? '$headerImage-$avatarRevision'
+        : null;
 
     return Card(
       color: colors.surfaceContainer,
-      elevation: 1,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      margin: const EdgeInsets.only(bottom: 12),
+      elevation: 0.5,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      margin: const EdgeInsets.only(bottom: 8),
       child: Padding(
-        padding: const EdgeInsets.all(14),
+        padding: const EdgeInsets.fromLTRB(10, 8, 10, 8),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // ── Header ──────────────────────────────────────────────────────
             UserPostHeader(
               fullName: vm.userName,
               date: vm.date,
               category: vm.category,
-              imagePath: vm.userImage,
+              imagePath: headerImage,
+              imageCacheKey: headerCacheKey,
               isModerator: vm.isModerator,
             ),
-            const SizedBox(height: 20),
-
-            // ── Post text ───────────────────────────────────────────────────
+            const SizedBox(height: 8),
             ExpandableText(text: vm.text, trimLines: 2),
-
-            // ── Poll options preview ─────────────────────────────────────────
             if (_hasPollOptions) ...[
-              const SizedBox(height: 20),
+              const SizedBox(height: 8),
               PollPreview(
                 viewModel: vm,
                 currentUserId: currentUserId,
                 onTap: () => onClickPoll?.call(vm.postId),
               ),
             ],
-
-            const SizedBox(height: 20),
-
-            // ── Mention / business input (poll only) ─────────────────────────
-            if (vm.isPoll)
+            if (vm.isPoll) ...[
+              const SizedBox(height: 8),
               PollMentionField(
+                key: ValueKey('mention-${vm.postId}'),
                 postId: vm.postId,
                 currentUserImage: currentUserImage,
-                suggestions: mentionSuggestions,
-                isLoading: isMentionLoading,
-                searchDone: mentionSearchDone,
+                avatarRevision: avatarRevision,
+                isActive: isMentionActive,
+                suggestions: isMentionActive ? mentionSuggestions : const [],
+                isLoading: isMentionActive && isMentionLoading,
+                searchDone: isMentionActive && mentionSearchDone,
                 onChanged: onMentionChanged,
                 onBusinessSelected: onMentionBusinessSelected,
                 onSubmit: onMentionSubmit,
+                onFocusChanged: onMentionFocusChanged,
               ),
-
-            const SizedBox(height: 20),
-
-            // ── Like / comment bar ───────────────────────────────────────────
+            ],
+            const SizedBox(height: 6),
             PostInteractionBar(
               likes: vm.likes,
               comments: vm.comments,

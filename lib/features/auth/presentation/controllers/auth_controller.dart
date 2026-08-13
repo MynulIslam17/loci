@@ -18,6 +18,10 @@ class AuthController extends GetxController {
   final Rxn<String> roleRx = Rxn<String>();
   final Rxn<UserModel> userModelRx = Rxn<UserModel>();
 
+  /// Incremented when the avatar changes so CachedNetworkImage can bust cache
+  /// even if the URL string stays the same.
+  final RxInt avatarRevision = 0.obs;
+
   String? get accessToken => accessTokenRx.value;
   String? get role => roleRx.value;
   UserModel? get userModel => userModelRx.value;
@@ -69,9 +73,16 @@ class AuthController extends GetxController {
   }
 
   Future<void> updateUser(UserModel updatedUser) async {
+    final previousAvatar = userModel?.avatar;
     await _service.updateUser(updatedUser);
     userModelRx.value = updatedUser;
+    if (updatedUser.avatar != previousAvatar) {
+      avatarRevision.value++;
+    }
   }
+
+  /// Bump when the avatar file at the same URL was replaced (cache bust).
+  void bumpAvatarRevision() => avatarRevision.value++;
 
   /// Re-fetches the current user from the backend and updates the session.
   /// Call after actions that can change the role — e.g. claiming a business

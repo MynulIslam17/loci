@@ -173,7 +173,9 @@ class ProfileController extends GetxController {
       if (newAvatar != null && newAvatar.isNotEmpty) {
         await CachedNetworkImage.evictFromCache(newAvatar);
       }
-      _avatarRevision.value++;
+      // Always bump — CDN URL often stays the same after overwrite.
+      _auth.bumpAvatarRevision();
+      _avatarRevision.value = _auth.avatarRevision.value;
       _profileImage.value = null;
       SnackbarService.success('Profile image updated');
     } catch (e) {

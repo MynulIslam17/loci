@@ -7,12 +7,14 @@ class AnnouncementAuthorDisplay {
     required this.avatarUrl,
     required this.isModerator,
     this.businessId,
+    this.authorUserId = '',
   });
 
   final String displayName;
   final String avatarUrl;
   final bool isModerator;
   final String? businessId;
+  final String authorUserId;
 
   factory AnnouncementAuthorDisplay.from(
     AnnouncementModel announcement, {
@@ -27,6 +29,9 @@ class AnnouncementAuthorDisplay {
         avatarUrl: business.logo ?? '',
         businessId: business.id,
         isModerator: true,
+        // Empty on purpose: feed shows the business logo, not the owner's
+        // personal avatar — don't live-swap after a profile pic change.
+        authorUserId: '',
       );
     }
 
@@ -35,6 +40,7 @@ class AnnouncementAuthorDisplay {
       displayName: user?.name ?? '',
       avatarUrl: user?.avatar ?? '',
       isModerator: false,
+      authorUserId: user?.id ?? '',
     );
   }
 }

@@ -59,15 +59,31 @@ class _FeedTabState extends State<FeedTab> with AutomaticKeepAliveClientMixin {
 
   // ── Mention callbacks ────────────────────────────────────────────────────
 
+  void _dismissMentionUi() {
+    FocusManager.instance.primaryFocus?.unfocus();
+    _activeMentionPostId.value = null;
+    _searchCtrl.reset();
+  }
+
   void _onMentionChanged(String postId, String query) {
-    _activeMentionPostId.value = postId;
+    _claimMentionSession(postId, resetIfSwitching: true);
     _searchCtrl.onSearchChanged(query);
   }
 
+  void _onMentionFocusChanged(String postId, bool focused) {
+    if (!focused) return;
+    _claimMentionSession(postId, resetIfSwitching: true);
+  }
+
+  void _claimMentionSession(String postId, {required bool resetIfSwitching}) {
+    final previous = _activeMentionPostId.value;
+    if (resetIfSwitching && previous != null && previous != postId) {
+      _searchCtrl.reset();
+    }
+    _activeMentionPostId.value = postId;
+  }
+
   void _onMentionBusinessSelected(String postId, BrowseBusinessModel business) {
-    // Parent already filled the text field in PostCardWidget.
-    // Here we just clear search state.
-    _activeMentionPostId.value = null;
     _searchCtrl.reset();
   }
 
@@ -77,9 +93,9 @@ class _FeedTabState extends State<FeedTab> with AutomaticKeepAliveClientMixin {
     String text,
     String image,
   ) async {
-    _activeMentionPostId.value = null;
-    _searchCtrl.reset();
+    _dismissMentionUi();
     await widget.onMentionSubmit(postId, text, image);
+    if (mounted) _dismissMentionUi();
   }
   // ── Build ────────────────────────────────────────────────────────────────
 
@@ -96,6 +112,9 @@ class _FeedTabState extends State<FeedTab> with AutomaticKeepAliveClientMixin {
       searchCtrl.status.value;
       searchCtrl.businesses.length;
       final activeId = _activeMentionPostId.value;
+      final me = _authController.userModelRx.value;
+      final avatarRev = _authController.avatarRevision.value;
+      final myAvatar = me?.avatar ?? '';
 
       return Column(
         children: [
@@ -108,23 +127,36 @@ class _FeedTabState extends State<FeedTab> with AutomaticKeepAliveClientMixin {
               final isActive = activeId == announcement.id;
 
               return PostCardWidget(
+                key: ValueKey('feed-post-${announcement.id}'),
                 viewModel: PostCardViewModel.from(
                   announcement,
                   communityOwnerUserId: annCtrl.communityOwnerUserId.value,
                 ),
-                onLikeTap: widget.onLikeTap,
-                onCommentTap: widget.onCommentTap,
-                onClickPoll: (_) => widget.onPollTap(announcement),
+                onLikeTap: (postId) {
+                  _dismissMentionUi();
+                  widget.onLikeTap(postId);
+                },
+                onCommentTap: (postId) {
+                  _dismissMentionUi();
+                  widget.onCommentTap(postId);
+                },
+                onClickPoll: (_) {
+                  _dismissMentionUi();
+                  widget.onPollTap(announcement);
+                },
                 onMentionChanged: _onMentionChanged,
                 onMentionSubmit: _onMentionSubmit,
                 onMentionBusinessSelected: _onMentionBusinessSelected,
-                // Only the active card gets live suggestions
+                onMentionFocusChanged: _onMentionFocusChanged,
                 mentionSuggestions: isActive
-                    ? searchCtrl.businesses.toList()
+                    ? List<BrowseBusinessModel>.from(searchCtrl.businesses)
                     : const [],
                 isMentionLoading: isActive && searchCtrl.isLoading,
                 mentionSearchDone: isActive && searchCtrl.searchDone,
-                currentUserImage: _authController.userModel?.avatar ?? "",
+                isMentionActive: isActive,
+                currentUserImage: myAvatar,
+                currentUserId: me?.id,
+                avatarRevision: avatarRev,
               );
             },
           ),

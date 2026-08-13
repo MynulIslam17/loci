@@ -3,7 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:loci/core/constants/app_text_style.dart';
 import 'package:loci/core/theme/theme_extention.dart';
-import 'package:loci/shared/widgets/custom_imagepicker.dart';
+import 'package:loci/shared/widgets/app_image_picker.dart';
 
 class CreateActivityBannerSection extends StatelessWidget {
   const CreateActivityBannerSection({
@@ -22,7 +22,7 @@ class CreateActivityBannerSection extends StatelessWidget {
     final colorScheme = context.colorScheme;
     return ClipRRect(
       borderRadius: BorderRadius.circular(12),
-      child: CustomImagePicker(
+      child: AppImagePickerField(
         backgroundColor: colorScheme.surface,
         imageUrl: imageUrl,
         selectedImage: bannerImage,

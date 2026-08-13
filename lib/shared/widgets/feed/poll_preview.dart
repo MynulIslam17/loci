@@ -48,7 +48,7 @@ class PollPreview extends StatelessWidget {
                 currentUserId!.isNotEmpty &&
                 opt.voters.any((v) => v.userId == currentUserId);
             return Padding(
-              padding: const EdgeInsets.only(bottom: 10),
+              padding: const EdgeInsets.only(bottom: 4),
               child: PollBar(
                 title: opt.text,
                 percent: percent,
