@@ -60,7 +60,7 @@ class MemberListShimmer extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       sliver: SliverList(
         delegate: SliverChildBuilderDelegate(
-          (_, __) => const MemberCardShimmer(),
+          (_, _) => const MemberCardShimmer(),
           childCount: count,
         ),
       ),

@@ -97,7 +97,7 @@ class _SentMeetingsTabState extends State<SentMeetingsTab>
               final m = controller.meetings[index];
               return MeetingCard(meeting: m);
             },
-            separatorBuilder: (_, __) => const SizedBox(height: 12),
+            separatorBuilder: (_, _) => const SizedBox(height: 12),
           ),
         ),
       );

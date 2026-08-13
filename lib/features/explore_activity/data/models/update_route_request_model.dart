@@ -1,6 +1,6 @@
 import 'dart:io';
 
-import 'package:loci/core/enums/routeType.dart';
+import 'package:loci/core/enums/route_type.dart';
 
 class RouteUpdateRequest {
   final String routeId;

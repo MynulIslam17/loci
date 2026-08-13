@@ -96,7 +96,7 @@ class ReviewCard extends StatelessWidget {
                         Text(
                           time!,
                           style: AppTextStyle.textXs(
-                            color: scheme.onSurfaceVariant.withOpacity(0.7),
+                            color: scheme.onSurfaceVariant.withValues(alpha: 0.7),
                           ),
                         ),
                     ],

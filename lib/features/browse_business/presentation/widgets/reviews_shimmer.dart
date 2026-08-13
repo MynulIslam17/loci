@@ -12,8 +12,8 @@ class ReviewsShimmer extends StatelessWidget {
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
       itemCount: itemCount,
-      separatorBuilder: (_, __) => const SizedBox(height: 10),
-      itemBuilder: (_, __) {
+      separatorBuilder: (_, _) => const SizedBox(height: 10),
+      itemBuilder: (_, _) {
         return Card(
           child: Padding(
             padding: const EdgeInsets.all(12),

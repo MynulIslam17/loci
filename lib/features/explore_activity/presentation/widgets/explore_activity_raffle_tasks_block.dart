@@ -39,7 +39,7 @@ class ExploreActivityRaffleTasksBlock extends StatelessWidget {
             padding: EdgeInsets.zero,
             physics: const NeverScrollableScrollPhysics(),
             itemCount: taskCards.length,
-            separatorBuilder: (_, __) => const SizedBox(height: 8),
+            separatorBuilder: (_, _) => const SizedBox(height: 8),
             itemBuilder: (_, index) => taskCards[index],
           ),
         if (taskCards.isNotEmpty) const SizedBox(height: 12),

@@ -55,7 +55,7 @@ class BrowseBusinessCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(14),
           border: Border.all(
             color: isExpanded
-                ? context.colorScheme.primary.withOpacity(0.5)
+                ? context.colorScheme.primary.withValues(alpha: 0.5)
                 : context.colorScheme.outline,
             width: isExpanded ? 1.5 : 0.8,
           ),
@@ -160,7 +160,7 @@ class BrowseBusinessCard extends StatelessWidget {
                     Divider(
                       height: 1,
                       thickness: 0.6,
-                      color: context.colorScheme.outline.withOpacity(0.2),
+                      color: context.colorScheme.outline.withValues(alpha: 0.2),
                     ),
 
                     _ExpandedBanner(logo: item.logo),

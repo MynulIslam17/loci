@@ -38,7 +38,7 @@ class MyOwnBusiness extends StatelessWidget {
                 borderRadius: BorderRadius.circular(10),
                 border: Border.all(
                   color: hasBusinessName
-                      ? colorScheme.primary.withOpacity(0.4)
+                      ? colorScheme.primary.withValues(alpha: 0.4)
                       : colorScheme.outline,
                 ),
               ),
@@ -49,8 +49,8 @@ class MyOwnBusiness extends StatelessWidget {
                     padding: const EdgeInsets.all(6),
                     decoration: BoxDecoration(
                       color: hasBusinessName
-                          ? colorScheme.primary.withOpacity(0.1)
-                          : colorScheme.onSurface.withOpacity(0.06),
+                          ? colorScheme.primary.withValues(alpha: 0.1)
+                          : colorScheme.onSurface.withValues(alpha: 0.06),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Icon(

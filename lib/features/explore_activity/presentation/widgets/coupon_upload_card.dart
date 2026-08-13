@@ -33,15 +33,15 @@ class CouponUploadCard extends StatelessWidget {
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(16),
             border: Border.all(
-              color: colorScheme.primary.withOpacity(0.3),
+              color: colorScheme.primary.withValues(alpha: 0.3),
               width: 1.5,
             ),
             gradient: LinearGradient(
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
               colors: [
-                colorScheme.primary.withOpacity(0.05),
-                colorScheme.primary.withOpacity(0.12),
+                colorScheme.primary.withValues(alpha: 0.05),
+                colorScheme.primary.withValues(alpha: 0.12),
               ],
             ),
           ),
@@ -52,7 +52,7 @@ class CouponUploadCard extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: colorScheme.primary.withOpacity(0.12),
+                    color: colorScheme.primary.withValues(alpha: 0.12),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Icon(
@@ -118,7 +118,7 @@ class CouponUploadCard extends StatelessWidget {
         color: colorScheme.surfaceContainerHigh,
         boxShadow: [
           BoxShadow(
-            color: colorScheme.shadow.withOpacity(0.06),
+            color: colorScheme.shadow.withValues(alpha: 0.06),
             blurRadius: 12,
             offset: const Offset(0, 4),
           ),
@@ -143,7 +143,7 @@ class CouponUploadCard extends StatelessWidget {
                       Container(
                         padding: const EdgeInsets.all(10),
                         decoration: BoxDecoration(
-                          color: fileColor.withOpacity(0.1),
+                          color: fileColor.withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: Icon(
@@ -180,7 +180,7 @@ class CouponUploadCard extends StatelessWidget {
                                     vertical: 2,
                                   ),
                                   decoration: BoxDecoration(
-                                    color: fileColor.withOpacity(0.1),
+                                    color: fileColor.withValues(alpha: 0.1),
                                     borderRadius: BorderRadius.circular(4),
                                   ),
                                   child: Text(
@@ -210,7 +210,7 @@ class CouponUploadCard extends StatelessWidget {
 
                       if (onDelete != null)
                         Material(
-                          color: Colors.red.withOpacity(0.08),
+                          color: Colors.red.withValues(alpha: 0.08),
                           borderRadius: BorderRadius.circular(10),
                           child: InkWell(
                             borderRadius: BorderRadius.circular(10),

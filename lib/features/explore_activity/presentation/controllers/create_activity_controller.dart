@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:loci/core/constants/app_url.dart';
 import 'package:loci/core/enums/activity_type.dart';
-import 'package:loci/core/enums/routeType.dart';
+import 'package:loci/core/enums/route_type.dart';
 import 'package:loci/core/utils/acitvity_validator.dart';
 import 'package:loci/core/utils/date_parser.dart';
 import 'package:loci/core/utils/time_parser.dart';

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:loci/core/enums/routeType.dart';
+import 'package:loci/core/enums/route_type.dart';
 import 'package:loci/core/theme/theme_extention.dart';
 import 'package:loci/features/explore_activity/presentation/widgets/create_activity_picker_field.dart';
 import 'package:loci/features/explore_activity/presentation/widgets/explore_activity_field_icon.dart';

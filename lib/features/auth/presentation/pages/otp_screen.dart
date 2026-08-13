@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:get/get_core/src/get_main.dart';
-import 'package:get/get_navigation/src/extension_navigation.dart';
 import 'package:loci/features/auth/presentation/controllers/resend_otp_controller.dart';
 import 'package:pinput/pinput.dart';
 import 'package:loci/core/constants/app_text_style.dart';

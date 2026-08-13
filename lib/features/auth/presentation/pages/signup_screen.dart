@@ -133,9 +133,7 @@ class _SignupScreenState extends State<SignupScreen> {
     }
   }
 
-  void _handleTermsAndConditions() {
-    print("Terms and Conditions");
-  }
+  void _handleTermsAndConditions() {}
 
   @override
   Widget build(BuildContext context) {
@@ -200,15 +198,13 @@ class _SignupScreenState extends State<SignupScreen> {
                   Transform(
                     alignment: Alignment.center,
                     transform: Matrix4.identity()
-                      ..translate(-10.0, -10.0)
+                      ..translateByDouble(-10.0, -10.0, 0.0, 1.0)
                       ..rotateZ(-0.20),
                     child: Container(
                       width: 300,
                       height: 260,
                       decoration: BoxDecoration(
-                        color: context.colorScheme.primaryContainer.withOpacity(
-                          0.6,
-                        ),
+                        color: context.colorScheme.primaryContainer.withValues(alpha: 0.6,),
                         borderRadius: BorderRadius.circular(40),
                       ),
                     ),
@@ -216,14 +212,14 @@ class _SignupScreenState extends State<SignupScreen> {
                   Transform(
                     alignment: Alignment.center,
                     transform: Matrix4.identity()
-                      ..translate(-45.0, 15.0)
+                      ..translateByDouble(-45.0, 15.0, 0.0, 1.0)
                       ..rotateZ(-0.15),
                     child: _buildImageCard(Assets.images.onimg5),
                   ),
                   Transform(
                     alignment: Alignment.center,
                     transform: Matrix4.identity()
-                      ..translate(50.0, -10.0)
+                      ..translateByDouble(50.0, -10.0, 0.0, 1.0)
                       ..rotateZ(0.12),
                     child: _buildImageCard(Assets.images.onimg6),
                   ),
@@ -484,7 +480,7 @@ class _SignupScreenState extends State<SignupScreen> {
         borderRadius: BorderRadius.circular(32),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.08),
+            color: Colors.black.withValues(alpha: 0.08),
             blurRadius: 10,
             offset: const Offset(0, 5),
           ),

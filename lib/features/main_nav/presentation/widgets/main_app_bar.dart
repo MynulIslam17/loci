@@ -6,7 +6,7 @@ import 'package:loci/features/auth/presentation/controllers/auth_controller.dart
 import 'package:loci/features/chat/presentation/controllers/chat_list_controller.dart';
 import 'package:loci/features/main_nav/presentation/controllers/nav_controller.dart';
 import 'package:loci/routes/app_routes.dart';
-import 'package:loci/shared/widgets/MySearchDelegate.dart';
+import 'package:loci/shared/widgets/my_search_delegate.dart';
 
 /// Top app bar for the main shell: drawer button, user greeting and the
 /// search / chat / notification actions. Shows a contextual title + back
