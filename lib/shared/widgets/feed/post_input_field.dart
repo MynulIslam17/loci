@@ -199,7 +199,7 @@ class _PostInputFieldState extends State<PostInputField>
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
                         color: trimmedEmpty || overLimit
-                            ? colors.surfaceVariant
+                            ? colors.surfaceContainerHighest
                             : _purple,
                       ),
                       child: isSubmitting
@@ -304,7 +304,7 @@ class _SegmentedToggle extends StatelessWidget {
     final colors = context.colorScheme;
     return Container(
       decoration: BoxDecoration(
-        color: colors.surfaceVariant,
+        color: colors.surfaceContainerHighest,
         borderRadius: BorderRadius.circular(20),
       ),
       child: Row(
@@ -374,7 +374,7 @@ class _CategoryChip extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
         decoration: BoxDecoration(
-          color: colors.surfaceVariant,
+          color: colors.surfaceContainerHighest,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(color: colors.outline.withValues(alpha: 0.4)),
         ),

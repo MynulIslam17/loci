@@ -13,7 +13,7 @@ class BrowseShimmer extends StatelessWidget {
       itemCount: 6,
       physics: const NeverScrollableScrollPhysics(),
       shrinkWrap: true,
-      separatorBuilder: (_, __) => const SizedBox(height: 10),
+      separatorBuilder: (_, _) => const SizedBox(height: 10),
       itemBuilder: (context, index) {
         if (index == 0) {
           return const _ExpandedShimmerCard();

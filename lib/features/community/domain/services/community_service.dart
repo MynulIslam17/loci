@@ -1,6 +1,5 @@
 import 'dart:io';
 
-import 'package:loci/features/browse_business/data/models/browse_business_model.dart';
 import 'package:loci/features/browse_business/data/models/browse_business_response_model.dart';
 import 'package:loci/features/community/data/models/activity_search_response.dart';
 import 'package:loci/features/community/data/models/announcement_model.dart';

@@ -89,8 +89,8 @@ class _ReviewBoxState extends State<ReviewBox> {
                           minRating: 1,
                           itemSize: 20,
                           glow: false,
-                          unratedColor: colors.outline.withOpacity(0.4),
-                          itemBuilder: (_, __) => const Icon(
+                          unratedColor: colors.outline.withValues(alpha: 0.4),
+                          itemBuilder: (_, _) => const Icon(
                             Icons.star_rounded,
                             color: Color(0xFF7F77DD),
                           ),
@@ -115,7 +115,7 @@ class _ReviewBoxState extends State<ReviewBox> {
             ),
 
             const SizedBox(height: 12),
-            Divider(height: 1, color: colors.outline.withOpacity(0.3)),
+            Divider(height: 1, color: colors.outline.withValues(alpha: 0.3)),
             const SizedBox(height: 12),
 
             // ── Text field ────────────────────────────────────────────────
@@ -158,14 +158,14 @@ class _ReviewBoxState extends State<ReviewBox> {
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(10),
                       borderSide: BorderSide(
-                        color: colors.outline.withOpacity(0.3),
+                        color: colors.outline.withValues(alpha: 0.3),
                         width: 0.5,
                       ),
                     ),
                     enabledBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(10),
                       borderSide: BorderSide(
-                        color: colors.outline.withOpacity(0.3),
+                        color: colors.outline.withValues(alpha: 0.3),
                         width: 0.5,
                       ),
                     ),
@@ -199,7 +199,7 @@ class _ReviewBoxState extends State<ReviewBox> {
                           shape: BoxShape.circle,
                           color: canSubmit
                               ? _purple
-                              : colors.outline.withOpacity(0.3),
+                              : colors.outline.withValues(alpha: 0.3),
                         ),
                         child: _isSubmitting.value
                             ? const Padding(

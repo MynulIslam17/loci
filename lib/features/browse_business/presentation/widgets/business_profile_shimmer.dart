@@ -78,7 +78,7 @@ class BusinessProfileShimmer extends StatelessWidget {
               crossAxisSpacing: 8,
               mainAxisSpacing: 8,
             ),
-            itemBuilder: (_, __) {
+            itemBuilder: (_, _) {
               return AppSkeleton.box(
                 height: 100,
                 width: double.infinity,

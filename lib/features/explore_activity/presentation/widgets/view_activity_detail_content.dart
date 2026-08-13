@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:loci/core/constants/app_text_style.dart';
-import 'package:loci/core/enums/routeType.dart';
+import 'package:loci/core/enums/route_type.dart';
 import 'package:loci/core/enums/activity_type.dart';
 import 'package:loci/core/theme/theme_extention.dart';
 import 'package:loci/core/utils/date_parser.dart';

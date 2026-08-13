@@ -79,7 +79,7 @@ class CustomDropdown<T> extends StatelessWidget {
           SizedBox(height: isRequired != null ? 6 : 10),
         ],
         DropdownButtonFormField<T>(
-          value: value,
+          initialValue: value,
           items: items,
           onChanged: onChanged,
           validator: validator,

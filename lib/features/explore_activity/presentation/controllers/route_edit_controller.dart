@@ -2,7 +2,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:loci/core/enums/routeType.dart';
+import 'package:loci/core/enums/route_type.dart';
 import 'package:loci/core/utils/acitvity_validator.dart';
 import 'package:loci/core/utils/show_snackbar.dart';
 import 'package:loci/core/utils/time_parser.dart';
