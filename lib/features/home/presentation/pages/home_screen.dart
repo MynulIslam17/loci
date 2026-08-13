@@ -100,13 +100,35 @@ class _HomeScreenState extends State<HomeScreen> {
 
   // ── Mention callbacks ────────────────────────────────────────────────────
 
+  void _dismissMentionUi() {
+    FocusManager.instance.primaryFocus?.unfocus();
+    _activeMentionPostId.value = null;
+    _searchCtrl.reset();
+  }
+
   void _onMentionChanged(String postId, String query) {
-    _activeMentionPostId.value = postId;
+    _claimMentionSession(postId, resetIfSwitching: true);
     _searchCtrl.onSearchChanged(query);
   }
 
+  void _onMentionFocusChanged(String postId, bool focused) {
+    // Unfocus on the same card must NOT clear results (scroll/tap suggestions).
+    // Focusing a *different* card switches the session and drops old results.
+    if (!focused) return;
+    _claimMentionSession(postId, resetIfSwitching: true);
+  }
+
+  /// Exactly one poll card owns mention search at a time.
+  void _claimMentionSession(String postId, {required bool resetIfSwitching}) {
+    final previous = _activeMentionPostId.value;
+    if (resetIfSwitching && previous != null && previous != postId) {
+      _searchCtrl.reset();
+    }
+    _activeMentionPostId.value = postId;
+  }
+
   void _onMentionBusinessSelected(String postId, BrowseBusinessModel business) {
-    _activeMentionPostId.value = null;
+    // Keep this card active for Send; only clear the shared suggestion list.
     _searchCtrl.reset();
   }
 
@@ -115,8 +137,12 @@ class _HomeScreenState extends State<HomeScreen> {
     String text,
     String image,
   ) async {
-    _activeMentionPostId.value = null;
-    _searchCtrl.reset();
+    // Keep the user on this post after submit (keyboard close + list rebuild
+    // must not reset the home scroll to the top).
+    final sc = questionListController.scrollController;
+    final savedOffset = sc.hasClients ? sc.offset : null;
+
+    _dismissMentionUi();
 
     final newOption = await _addPollOptionCtrl.addPollOption(
       questionId: postId,
@@ -124,24 +150,35 @@ class _HomeScreenState extends State<HomeScreen> {
       imageUrl: image.isNotEmpty ? image : null,
     );
 
+    if (!mounted) return;
+    _dismissMentionUi();
+
     if (newOption != null) {
       questionListController.appendPollOption(postId, newOption);
     } else if (_addPollOptionCtrl.errorMessage.value != null) {
       final message = _addPollOptionCtrl.errorMessage.value!;
-      // Adding an option that already exists isn't a real failure — the input
-      // is already cleared, so silently ignore it (no snackbar). Only surface
-      // genuine errors.
       if (!message.toLowerCase().contains('already')) {
         SnackbarService.error(message);
       }
     } else {
-      // Request succeeded but the response shape was unrecognized —
-      // refresh so the new option still shows up.
       questionListController.fetchQuestions(isRefresh: true);
     }
+
+    void restoreScroll() {
+      if (!mounted || savedOffset == null || !sc.hasClients) return;
+      final max = sc.position.maxScrollExtent;
+      sc.jumpTo(savedOffset.clamp(0.0, max));
+    }
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      restoreScroll();
+      // Keyboard inset finishes collapsing a beat later — restore again.
+      Future<void>.delayed(const Duration(milliseconds: 280), restoreScroll);
+    });
   }
 
   void _showCommentSheet(String questionId) {
+    _dismissMentionUi();
     PostCommentBottomSheet.showForHomeQuestion(
       context,
       questionId: questionId,
@@ -151,6 +188,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _showAllPolls(PostCardViewModel viewModel) {
+    _dismissMentionUi();
     PollBottomSheet.show(
       context,
       viewModel,
@@ -160,10 +198,14 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _onVote(String questionId, String optionId) async {
+    _dismissMentionUi();
     final success = await _voteCtrl.submitVote(
       questionId: questionId,
       optionId: optionId,
     );
+
+    if (!mounted) return;
+    _dismissMentionUi();
 
     if (success) {
       final user = _authController.userModel;
@@ -200,8 +242,13 @@ class _HomeScreenState extends State<HomeScreen> {
         child: SingleChildScrollView(
           controller: questionListController.scrollController,
           physics: const AlwaysScrollableScrollPhysics(),
+          // Suggestion list absorbs its own drags; keep this stable so the
+          // scroll view is not rebuilt (and reset) when mention session ends.
           keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-          padding: EdgeInsets.only(bottom: keyboardInset > 0 ? 24 : 0),
+          // Extra room so mention search results can scroll fully above the IME.
+          padding: EdgeInsets.only(
+            bottom: keyboardInset > 0 ? keyboardInset * 0.35 + 120 : 0,
+          ),
           child: Column(
             children: [
               const SizedBox(height: 16),
@@ -348,6 +395,10 @@ class _HomeScreenState extends State<HomeScreen> {
                   searchCtrl.status.value;
                   searchCtrl.businesses.length;
                 }
+                // Live session avatar — updates home cards after profile pic change.
+                final me = _authController.userModelRx.value;
+                final avatarRev = _authController.avatarRevision.value;
+                final myAvatar = me?.avatar ?? '';
                 return ListView.builder(
                   shrinkWrap: true,
                   physics: const NeverScrollableScrollPhysics(),
@@ -363,20 +414,27 @@ class _HomeScreenState extends State<HomeScreen> {
                     final isActive = activeMentionId == question.id;
                     final viewModel = PostCardViewModel.fromQuestion(question);
                     return PostCardWidget(
+                      key: ValueKey('home-post-${question.id}'),
                       viewModel: viewModel,
-                      onLikeTap: (postId) => _likeCtrl.toggleLike(postId),
+                      onLikeTap: (postId) {
+                        _dismissMentionUi();
+                        _likeCtrl.toggleLike(postId);
+                      },
                       onCommentTap: (postId) => _showCommentSheet(postId),
                       onClickPoll: (_) => _showAllPolls(viewModel),
                       onMentionChanged: _onMentionChanged,
                       onMentionSubmit: _onMentionSubmit,
                       onMentionBusinessSelected: _onMentionBusinessSelected,
+                      onMentionFocusChanged: _onMentionFocusChanged,
                       mentionSuggestions: isActive
-                          ? searchCtrl.businesses
+                          ? List<BrowseBusinessModel>.of(searchCtrl.businesses)
                           : const [],
                       isMentionLoading: isActive && searchCtrl.isLoading,
                       mentionSearchDone: isActive && searchCtrl.searchDone,
-                      currentUserImage: _authController.userModel?.avatar ?? "",
-                      currentUserId: _authController.userModel?.id,
+                      isMentionActive: isActive,
+                      currentUserImage: myAvatar,
+                      currentUserId: me?.id,
+                      avatarRevision: avatarRev,
                     );
                   },
                 );

@@ -33,6 +33,8 @@ class PollBottomSheet extends StatefulWidget {
     final options = viewModel.pollOptions;
     if (options == null || options.isEmpty) return;
 
+    FocusManager.instance.primaryFocus?.unfocus();
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -46,7 +48,7 @@ class PollBottomSheet extends StatefulWidget {
         currentUserId: currentUserId,
         onVote: onVote,
       ),
-    );
+    ).whenComplete(() => FocusManager.instance.primaryFocus?.unfocus());
   }
 
   @override

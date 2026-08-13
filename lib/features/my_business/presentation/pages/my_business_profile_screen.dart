@@ -16,7 +16,7 @@ import 'package:loci/features/my_business/presentation/widgets/profile_bottom_sh
 import 'package:loci/features/subscription/domain/services/subscription_service.dart';
 import 'package:loci/routes/app_routes.dart';
 import 'package:loci/shared/widgets/custom_appbar.dart';
-import 'package:loci/shared/widgets/image_picker_helper.dart';
+import 'package:loci/shared/widgets/app_image_picker.dart';
 import 'package:loci/shared/widgets/qrcode_maker.dart';
 
 class MyBusinessProfile extends StatefulWidget {
@@ -232,6 +232,7 @@ class _MyBusinessProfileState extends State<MyBusinessProfile> {
                 onLogoPick: () => showImagePickerSheet(
                   context: context,
                   allowMultiple: false,
+                  kind: ImageUploadKind.profile,
                   onPicked: (file) {
                     if (file.isEmpty) return;
                     _profileImage.value = file.first;

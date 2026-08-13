@@ -9,7 +9,7 @@ import 'package:loci/shared/widgets/app_skeleton.dart';
 import 'package:loci/shared/widgets/custom_button.dart';
 import 'package:loci/shared/widgets/custom_text_field.dart';
 import 'package:loci/shared/widgets/custom_image_container.dart';
-import 'package:loci/shared/widgets/custom_imagepicker.dart';
+import 'package:loci/shared/widgets/app_image_picker.dart';
 import 'package:loci/shared/widgets/image_viewer.dart';
 
 import 'package:loci/features/profile/presentation/controllers/profile_controller.dart';
@@ -76,9 +76,10 @@ class ProfileScreen extends StatelessWidget {
                           right: 0,
                           top: 0,
                           child: _editButton(
-                            onTap: () => CustomImagePicker.pickImageSimple(
+                            onTap: () => AppImagePicker.pickOne(
                               context: context,
-                              onImageSelected: c.updateImage,
+                              kind: ImageUploadKind.profile,
+                              onSelected: c.updateImage,
                             ),
                           ),
                         ),

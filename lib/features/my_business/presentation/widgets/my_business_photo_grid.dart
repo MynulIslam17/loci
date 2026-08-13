@@ -6,7 +6,7 @@ import 'package:loci/core/theme/app_colors.dart';
 import 'package:loci/features/my_business/presentation/widgets/edit_circle_button.dart';
 import 'package:loci/shared/widgets/confirm_dialog.dart';
 import 'package:loci/shared/widgets/custom_image_container.dart';
-import 'package:loci/shared/widgets/image_picker_helper.dart';
+import 'package:loci/shared/widgets/app_image_picker.dart';
 import 'package:loci/shared/widgets/image_viewer.dart';
 
 class MyBusinessPhotoGrid extends StatelessWidget {

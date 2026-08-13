@@ -40,6 +40,7 @@ class PostPollOption {
 
 class PostCardViewModel {
   final String postId;
+  final String authorId;
   final String userName;
   final String userImage;
   final String date;
@@ -56,6 +57,7 @@ class PostCardViewModel {
 
   const PostCardViewModel({
     required this.postId,
+    this.authorId = '',
     required this.userName,
     required this.userImage,
     required this.date,
@@ -71,6 +73,21 @@ class PostCardViewModel {
     this.pollOptions,
   });
 
+  /// Avatar to show on the card. Prefer the live session avatar for "my" posts
+  /// so a profile-pic change updates the feed without a pull-to-refresh.
+  String resolvedUserImage({
+    String? currentUserId,
+    String? currentUserImage,
+  }) {
+    if (currentUserId != null &&
+        currentUserId.isNotEmpty &&
+        authorId == currentUserId &&
+        currentUserImage != null &&
+        currentUserImage.isNotEmpty) {
+      return currentUserImage;
+    }
+    return userImage;
+  }
   /// Options to show in the collapsed card preview (the full set lives behind
   /// "See all").
   ///
@@ -118,6 +135,7 @@ class PostCardViewModel {
     );
     return PostCardViewModel(
       postId: ann.id,
+      authorId: author.authorUserId,
       userName: author.displayName,
       userImage: author.avatarUrl,
       date: formatDateTime(ann.createdAt),
@@ -156,6 +174,7 @@ class PostCardViewModel {
   factory PostCardViewModel.fromQuestion(QuestionModel q) {
     return PostCardViewModel(
       postId: q.id,
+      authorId: q.author.id,
       userName: q.author.name,
       userImage: q.author.avatar,
       date: formatDateTime(q.createdAt),

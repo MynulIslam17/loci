@@ -10,6 +10,7 @@ class UserPostHeader extends StatelessWidget {
   final String category;
   final String imagePath;
   final bool isModerator;
+  final String? imageCacheKey;
 
   const UserPostHeader({
     super.key,
@@ -18,6 +19,7 @@ class UserPostHeader extends StatelessWidget {
     required this.category,
     required this.imagePath,
     this.isModerator = false,
+    this.imageCacheKey,
   });
 
   @override
@@ -28,11 +30,12 @@ class UserPostHeader extends StatelessWidget {
       children: [
         CustomCachedImage(
           imageUrl: imagePath,
-          width: 40,
-          height: 40,
+          cacheKey: imageCacheKey,
+          width: 34,
+          height: 34,
           isCircle: true,
         ),
-        const SizedBox(width: 12),
+        const SizedBox(width: 10),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
