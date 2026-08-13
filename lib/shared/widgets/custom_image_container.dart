@@ -53,7 +53,7 @@ class CustomCachedImage extends StatelessWidget {
           height: height,
           width: width,
           fit: fit,
-          errorBuilder: (_, __, ___) => _buildFallback(),
+          errorBuilder: (_, _, _) => _buildFallback(),
         ),
       );
     }
@@ -78,8 +78,8 @@ class CustomCachedImage extends StatelessWidget {
           height: height,
           width: width,
           fit: fit,
-          placeholder: (_, __) => _buildPlaceholder(),
-          errorWidget: (_, __, ___) => _buildFallback(),
+          placeholder: (_, _) => _buildPlaceholder(),
+          errorWidget: (_, _, _) => _buildFallback(),
         ),
       );
     }
@@ -92,7 +92,7 @@ class CustomCachedImage extends StatelessWidget {
         height: height,
         width: width,
         fit: fit,
-        errorBuilder: (_, __, ___) => _buildFallback(),
+        errorBuilder: (_, _, _) => _buildFallback(),
       ),
     );
   }

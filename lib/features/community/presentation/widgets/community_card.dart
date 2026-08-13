@@ -89,8 +89,8 @@ class CommunityCard extends StatelessWidget {
                           margin: const EdgeInsets.only(bottom: 4),
                           decoration: BoxDecoration(
                             color: role == CommunityRole.owner
-                                ? Colors.orange.withOpacity(0.1)
-                                : colorScheme.primary.withOpacity(0.1),
+                                ? Colors.orange.withValues(alpha: 0.1)
+                                : colorScheme.primary.withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: Text(

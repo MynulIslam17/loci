@@ -37,7 +37,10 @@ definitions:
         xcode-project use-profiles
 
     # Reads latest App Store / TestFlight version + build from ASC, then
-    # exports FLUTTER_BUILD_NAME / FLUTTER_BUILD_NUMBER for later steps.
+    # exports APP_BUILD_NAME / APP_BUILD_NUMBER for later steps.
+    # Do not use FLUTTER_BUILD_NAME / FLUTTER_BUILD_NUMBER as env vars:
+    # Flutter now injects those as dart-defines and rejects them in the
+    # environment ("used by the framework and cannot be set").
     # Reuses an open version; bumps patch if the latest version is closed.
     - &set_next_version_from_asc
       name: Set next version from App Store Connect
@@ -244,8 +247,8 @@ definitions:
         )
 
         with cm_env.open("a", encoding="utf-8") as env_file:
-            env_file.write(f"FLUTTER_BUILD_NAME={next_version}\n")
-            env_file.write(f"FLUTTER_BUILD_NUMBER={next_build}\n")
+            env_file.write(f"APP_BUILD_NAME={next_version}\n")
+            env_file.write(f"APP_BUILD_NUMBER={next_build}\n")
             env_file.write(f"APP_STORE_APPLE_ID={app_id}\n")
 
         print(f"Latest version seen: {latest_version}")
@@ -314,17 +317,17 @@ workflows:
       - name: Build Android App Bundle
         script: |
           set -e
-          echo "Building AAB with $FLUTTER_BUILD_NAME+$FLUTTER_BUILD_NUMBER"
+          echo "Building AAB with $APP_BUILD_NAME+$APP_BUILD_NUMBER"
           flutter build appbundle --release \
-            --build-name="$FLUTTER_BUILD_NAME" \
-            --build-number="$FLUTTER_BUILD_NUMBER"
+            --build-name="$APP_BUILD_NAME" \
+            --build-number="$APP_BUILD_NUMBER"
       - name: Build iOS IPA
         script: |
           set -e
-          echo "Building IPA with $FLUTTER_BUILD_NAME+$FLUTTER_BUILD_NUMBER"
+          echo "Building IPA with $APP_BUILD_NAME+$APP_BUILD_NUMBER"
           flutter build ipa --release \
-            --build-name="$FLUTTER_BUILD_NAME" \
-            --build-number="$FLUTTER_BUILD_NUMBER" \
+            --build-name="$APP_BUILD_NAME" \
+            --build-number="$APP_BUILD_NUMBER" \
             --export-options-plist=/Users/builder/export_options.plist
     artifacts:
       - build/app/outputs/bundle/release/*.aab

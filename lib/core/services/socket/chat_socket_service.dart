@@ -297,11 +297,11 @@ class ChatSocketService extends GetxService {
     String? tempId,
   }) {
     _emit(ChatSocketEvent.sendMessage, {
-      if (conversationId != null) 'conversationId': conversationId,
-      if (recipientId != null) 'recipientId': recipientId,
+      'conversationId': ?conversationId,
+      'recipientId': ?recipientId,
       'content': content,
-      if (replyTo != null) 'replyTo': replyTo,
-      if (tempId != null) 'tempId': tempId,
+      'replyTo': ?replyTo,
+      'tempId': ?tempId,
     });
   }
 

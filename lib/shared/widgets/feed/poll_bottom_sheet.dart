@@ -120,7 +120,7 @@ class _PollBottomSheetState extends State<PollBottomSheet> {
                   shrinkWrap: true,
                   physics: const ClampingScrollPhysics(),
                   itemCount: widget.options.length,
-                  separatorBuilder: (_, __) => const SizedBox(height: 10),
+                  separatorBuilder: (_, _) => const SizedBox(height: 10),
                   itemBuilder: (_, index) {
                     final opt = widget.options[index];
                     final isSelected = selectedId == opt.id;
@@ -139,7 +139,7 @@ class _PollBottomSheetState extends State<PollBottomSheet> {
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(12),
                           color: isSelected
-                              ? context.colorScheme.primary.withOpacity(0.08)
+                              ? context.colorScheme.primary.withValues(alpha: 0.08)
                               : Colors.transparent,
                           border: Border.all(
                             color: isSelected

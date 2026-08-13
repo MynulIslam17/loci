@@ -16,7 +16,7 @@ class EventRepository {
     final queryParams = <String, dynamic>{
       'page': page,
       'limit': limit,
-      if (businessId != null) 'businessId': businessId,
+      'businessId': ?businessId,
       if (search != null && search.trim().isNotEmpty) 'search': search.trim(),
     };
 

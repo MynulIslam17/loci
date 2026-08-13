@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:get/get_core/src/get_main.dart';
-import 'package:get/get_navigation/src/extension_navigation.dart';
 import 'package:loci/core/utils/show_snackbar.dart';
 import 'package:loci/core/utils/validators.dart';
 import 'package:loci/features/auth/presentation/controllers/pass_reset_controller.dart';
