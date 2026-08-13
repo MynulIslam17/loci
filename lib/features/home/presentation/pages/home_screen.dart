@@ -223,12 +223,6 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Scaffold clears viewInsets for the body; read the raw inset so we can
-    // leave scroll room to lift the post composer above the keyboard.
-    final keyboardInset = MediaQueryData.fromView(
-      View.of(context),
-    ).viewInsets.bottom;
-
     return Scaffold(
       backgroundColor: context.colorScheme.surface,
       resizeToAvoidBottomInset: true,
@@ -242,13 +236,7 @@ class _HomeScreenState extends State<HomeScreen> {
         child: SingleChildScrollView(
           controller: questionListController.scrollController,
           physics: const AlwaysScrollableScrollPhysics(),
-          // Suggestion list absorbs its own drags; keep this stable so the
-          // scroll view is not rebuilt (and reset) when mention session ends.
           keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-          // Extra room so mention search results can scroll fully above the IME.
-          padding: EdgeInsets.only(
-            bottom: keyboardInset > 0 ? keyboardInset * 0.35 + 120 : 0,
-          ),
           child: Column(
             children: [
               const SizedBox(height: 16),
@@ -439,9 +427,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   },
                 );
               }),
-              // Extra scroll extent so [PostInputField] can move fully above
-              // the keyboard when poll/post tools expand.
-              SizedBox(height: keyboardInset > 0 ? keyboardInset + 48 : 20),
+              const SizedBox(height: 20),
             ],
           ),
         ),
