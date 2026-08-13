@@ -30,7 +30,7 @@ class PollBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final activeColor = progressColor ?? AppColors.primaryG500;
-    final barColor = isVoted ? activeColor : activeColor.withOpacity(0.5);
+    final barColor = isVoted ? activeColor : activeColor.withValues(alpha: 0.5);
 
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -144,7 +144,7 @@ class VoterStack extends StatelessWidget {
                 height: size,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: context.colorScheme.surfaceVariant,
+                  color: context.colorScheme.surfaceContainerHighest,
                   border: Border.all(color: Colors.white, width: 1.5),
                 ),
                 child: Center(

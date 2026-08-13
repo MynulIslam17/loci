@@ -19,7 +19,7 @@ Future<void> showDeleteDialog({
         child: FadeTransition(opacity: animation, child: child),
       );
     },
-    pageBuilder: (context, _, __) {
+    pageBuilder: (context, _, _) {
       return Center(
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 32),
@@ -31,15 +31,15 @@ Future<void> showDeleteDialog({
                 filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
                 child: Container(
                   decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.surface.withOpacity(0.95),
+                    color: Theme.of(context).colorScheme.surface.withValues(alpha: 0.95),
                     borderRadius: BorderRadius.circular(24),
                     border: Border.all(
-                      color: Colors.white.withOpacity(0.15),
+                      color: Colors.white.withValues(alpha: 0.15),
                       width: 1,
                     ),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.2),
+                        color: Colors.black.withValues(alpha: 0.2),
                         blurRadius: 40,
                         offset: const Offset(0, 20),
                       ),
@@ -55,7 +55,7 @@ Future<void> showDeleteDialog({
                           width: 64,
                           height: 64,
                           decoration: BoxDecoration(
-                            color: Colors.red.withOpacity(0.1),
+                            color: Colors.red.withValues(alpha: 0.1),
                             shape: BoxShape.circle,
                           ),
                           child: const Icon(
@@ -100,7 +100,7 @@ Future<void> showDeleteDialog({
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(12),
                                     side: BorderSide(
-                                      color: Theme.of(context).colorScheme.outline.withOpacity(0.3),
+                                      color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.3),
                                     ),
                                   ),
                                 ),

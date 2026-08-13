@@ -17,8 +17,8 @@ class ConnectionScreenShimmer extends StatelessWidget {
           padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
           sliver: SliverList.separated(
             itemCount: 6,
-            separatorBuilder: (_, __) => const SizedBox(height: 12),
-            itemBuilder: (_, __) => const ConnectionCardShimmer(),
+            separatorBuilder: (_, _) => const SizedBox(height: 12),
+            itemBuilder: (_, _) => const ConnectionCardShimmer(),
           ),
         ),
       ],

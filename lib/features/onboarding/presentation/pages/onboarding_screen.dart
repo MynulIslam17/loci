@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:get/get.dart';
-import 'package:get/get_core/src/get_main.dart';
 import 'package:loci/core/constants/app_text_style.dart';
 import 'package:loci/core/theme/theme_extention.dart';
 import 'package:loci/routes/app_routes.dart';
@@ -117,7 +116,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                               width: 300,
                               height: 300,
                               decoration: BoxDecoration(
-                                color: context.colorScheme.primaryContainer.withOpacity(0.4),
+                                color: context.colorScheme.primaryContainer.withValues(alpha: 0.4),
                                 borderRadius: BorderRadius.circular(48),
                               ),
                             ),
@@ -128,7 +127,12 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                             alignment: Alignment.center,
                             transform: Matrix4.identity()
                               ..setEntry(3, 2, 0.001)
-                              ..translate(-20.0 - (delta * 12), -10.0, 0.0)
+                              ..translateByDouble(
+                                -20.0 - (delta * 12),
+                                -10.0,
+                                0.0,
+                                1.0,
+                              )
                               ..rotateZ(-0.22 - (delta * 0.08))
                               ..rotateY(-0.1),
                             child: ClipRRect(
@@ -147,14 +151,19 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                             alignment: Alignment.center,
                             transform: Matrix4.identity()
                               ..setEntry(3, 2, 0.001)
-                              ..translate(35.0 + (delta * 12), 50.0 + (delta * 8), 0.0)
+                              ..translateByDouble(
+                                35.0 + (delta * 12),
+                                50.0 + (delta * 8),
+                                0.0,
+                                1.0,
+                              )
                               ..rotateZ(0.08 + (delta * 0.05)),
                             child: Container(
                               decoration: BoxDecoration(
                                 borderRadius: BorderRadius.circular(28),
                                 boxShadow: [
                                   BoxShadow(
-                                    color: Colors.black.withOpacity(0.4),
+                                    color: Colors.black.withValues(alpha: 0.4),
                                     blurRadius: 30,
                                     offset: const Offset(12, 12),
                                   )

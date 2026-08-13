@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../enums/activity_type.dart';
-import '../enums/routeType.dart';
+import '../enums/route_type.dart';
 import 'show_snackbar.dart';
 
 class ActivityValidator {

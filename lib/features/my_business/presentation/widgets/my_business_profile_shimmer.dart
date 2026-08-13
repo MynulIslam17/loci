@@ -108,7 +108,7 @@ class MyBusinessProfileShimmer extends StatelessWidget {
               childAspectRatio: 1.3,
             ),
             itemCount: 4,
-            itemBuilder: (_, __) => AppSkeleton.box(
+            itemBuilder: (_, _) => AppSkeleton.box(
               height: double.infinity,
               width: double.infinity,
               radius: 8,

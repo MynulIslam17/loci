@@ -14,7 +14,7 @@ class AppSkeleton {
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
       itemCount: itemCount,
-      itemBuilder: (_, __) => Card(
+      itemBuilder: (_, _) => Card(
         elevation: 1,
         color: colorScheme.surfaceContainerHigh,
         margin: const EdgeInsets.only(bottom: 8),
@@ -137,7 +137,7 @@ class _SkeletonBoxState extends State<SkeletonBox>
 
     return AnimatedBuilder(
       animation: _controller,
-      builder: (_, __) {
+      builder: (_, _) {
         return Container(
           width: widget.width,
           height: widget.height,

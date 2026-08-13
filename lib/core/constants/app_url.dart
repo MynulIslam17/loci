@@ -62,7 +62,7 @@ abstract class AppUrl {
   static  String updateBusinessProfile(String businessId)=>"$baseUrl/businesses/$businessId";
   static const String browseBusinesses = "$baseUrl/businesses";
   static const String addBusinessToSaveList = "$baseUrl/users/me/saved-businesses";
-  static  String removeSavedBusiness(String businessId) => "$baseUrl/users/me/saved-businesses/${businessId}";
+  static  String removeSavedBusiness(String businessId) => "$baseUrl/users/me/saved-businesses/$businessId";
 
   ///-------ads
   static const String submitAd = "$baseUrl/admin/ads/submit";
@@ -93,7 +93,7 @@ abstract class AppUrl {
   static const String sendReferral="$baseUrl/referrals";
   static const String sentReferral="$baseUrl/referrals/sent";
   static const String receiveReferral="$baseUrl/referrals/received";
-  static  String acceptReferral(String referralId)=>"$baseUrl/referrals/${referralId}/respond";
+  static  String acceptReferral(String referralId)=>"$baseUrl/referrals/$referralId/respond";
 
 
   //--meeting
@@ -127,7 +127,7 @@ abstract class AppUrl {
 
   //----reviews
 static String  otherBusinessReviews(String businessId)=>"$baseUrl/reviews/business/$businessId";
-static String   myBusinessReviews(String businessId)=>"$baseUrl/businesses/${businessId}/reviews";
+static String   myBusinessReviews(String businessId)=>"$baseUrl/businesses/$businessId/reviews";
 static String   addReviews(String businessId)=>"$baseUrl/reviews/$businessId";
 
 //---community
@@ -162,9 +162,9 @@ static String   addReviews(String businessId)=>"$baseUrl/reviews/$businessId";
 
   static const String  postQuestionHome="$baseUrl/questions";
   static const String  questionList="$baseUrl/questions";
-  static  String   addHomePollQuestionAdd(String questionId)=>"$baseUrl/questions/${questionId}/poll-options";
-  static  String   homeVoteOnPollOption(String questionId)=>"$baseUrl/questions/${questionId}/vote";
-  static  String   homeFeedPostLike(String questionId)=>"$baseUrl/questions/${questionId}/upvote";
+  static  String   addHomePollQuestionAdd(String questionId)=>"$baseUrl/questions/$questionId/poll-options";
+  static  String   homeVoteOnPollOption(String questionId)=>"$baseUrl/questions/$questionId/vote";
+  static  String   homeFeedPostLike(String questionId)=>"$baseUrl/questions/$questionId/upvote";
   static  String   questionDetails(String questionId)=>"$baseUrl/questions/$questionId";
   static  String   questionAnswers(String questionId)=>"$baseUrl/questions/$questionId/answer";
   // Paginated answers/comments list: GET /questions/{id}/answers?page=&limit=

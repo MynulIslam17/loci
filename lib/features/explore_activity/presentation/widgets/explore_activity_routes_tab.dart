@@ -131,7 +131,7 @@ class _ExploreActivityRoutesTabState extends State<ExploreActivityRoutesTab>
           },
         );
       },
-      separatorBuilder: (_, __) => const SizedBox(height: 10),
+      separatorBuilder: (_, _) => const SizedBox(height: 10),
     );
   }
 }

@@ -301,7 +301,7 @@ class _CreateActivityTaskSheetContentState
                         ScrollViewKeyboardDismissBehavior.onDrag,
                     itemCount: visible.length +
                         (taskController.isPaginationLoading.value ? 1 : 0),
-                    separatorBuilder: (_, __) => const SizedBox(height: 10),
+                    separatorBuilder: (_, _) => const SizedBox(height: 10),
                     itemBuilder: (context, index) {
                       if (index >= visible.length) {
                         return const Padding(
