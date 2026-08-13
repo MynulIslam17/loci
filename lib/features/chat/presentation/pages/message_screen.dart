@@ -206,7 +206,10 @@ class _MessageScreenState extends State<MessageScreen> {
       body: Column(
         children: [
           Expanded(
-            child: Obx(() {
+            child: GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
+              child: Obx(() {
               final ctrl = controller;
               if (ctrl.isLoading.value && ctrl.messages.isEmpty) {
                 return const Center(child: CircularProgressIndicator());
@@ -218,6 +221,8 @@ class _MessageScreenState extends State<MessageScreen> {
                     builder: (context, constraints) {
                       return SingleChildScrollView(
                         physics: const AlwaysScrollableScrollPhysics(),
+                        keyboardDismissBehavior:
+                            ScrollViewKeyboardDismissBehavior.onDrag,
                         child: ConstrainedBox(
                           constraints: BoxConstraints(
                             minHeight: constraints.maxHeight,
@@ -252,6 +257,8 @@ class _MessageScreenState extends State<MessageScreen> {
               return ListView.builder(
                 controller: _scroll,
                 reverse: true,
+                keyboardDismissBehavior:
+                    ScrollViewKeyboardDismissBehavior.onDrag,
                 padding: const EdgeInsets.symmetric(
                   horizontal: 16,
                   vertical: 20,
@@ -298,6 +305,7 @@ class _MessageScreenState extends State<MessageScreen> {
                 },
               );
             }),
+            ),
           ),
           _buildInput(context),
         ],
@@ -308,6 +316,7 @@ class _MessageScreenState extends State<MessageScreen> {
   static const List<String> _quickEmojis = ['👍', '❤️', '😂', '😮', '😢', '🙏'];
 
   void _showMessageActions(ChatMessageModel msg) {
+    FocusManager.instance.primaryFocus?.unfocus();
     final colorScheme = context.colorScheme;
     final isMe = controller.isMine(msg);
     final deleted = msg.isDeleted;
@@ -601,6 +610,8 @@ class _MessageBubble extends StatelessWidget {
                       // Room for the reaction chip overlapping the corner.
                       padding: EdgeInsets.only(bottom: hasReactions ? 10 : 0),
                       child: GestureDetector(
+                        onTap: () =>
+                            FocusManager.instance.primaryFocus?.unfocus(),
                         onLongPress: onLongPress,
                         onDoubleTap: onDoubleTap,
                         child: Container(

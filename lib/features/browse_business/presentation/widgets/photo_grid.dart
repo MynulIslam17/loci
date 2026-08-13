@@ -1,8 +1,8 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 import 'package:loci/core/theme/theme_extention.dart';
 import 'package:loci/shared/widgets/custom_image_container.dart';
+import 'package:loci/shared/widgets/image_viewer.dart';
 
 class PhotosGrid extends StatelessWidget {
   final List<String> photos;
@@ -20,11 +20,22 @@ class PhotosGrid extends StatelessWidget {
         crossAxisSpacing: 10,
       ),
       itemBuilder: (context, index) {
+        final url = photos[index];
         return Card(
           color: context.colorScheme.surfaceContainerHigh,
           child: Padding(
             padding: const EdgeInsets.all(8),
-            child: CustomCachedImage(imageUrl: photos[index]),
+            child: GestureDetector(
+              onTap: () => showImageViewer(
+                context,
+                imageUrl: url,
+                heroTag: 'browse-photo-$url',
+              ),
+              child: Hero(
+                tag: 'browse-photo-$url',
+                child: CustomCachedImage(imageUrl: url),
+              ),
+            ),
           ),
         );
       },

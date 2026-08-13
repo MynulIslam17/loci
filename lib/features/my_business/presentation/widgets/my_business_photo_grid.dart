@@ -7,6 +7,7 @@ import 'package:loci/features/my_business/presentation/widgets/edit_circle_butto
 import 'package:loci/shared/widgets/confirm_dialog.dart';
 import 'package:loci/shared/widgets/custom_image_container.dart';
 import 'package:loci/shared/widgets/image_picker_helper.dart';
+import 'package:loci/shared/widgets/image_viewer.dart';
 
 class MyBusinessPhotoGrid extends StatelessWidget {
   const MyBusinessPhotoGrid({
@@ -76,10 +77,20 @@ class MyBusinessPhotoGrid extends StatelessWidget {
             final url = apiPhotos[index];
             return Stack(
               children: [
-                CustomCachedImage(
-                  imageUrl: url,
-                  width: double.infinity,
-                  height: double.infinity,
+                GestureDetector(
+                  onTap: () => showImageViewer(
+                    context,
+                    imageUrl: url,
+                    heroTag: 'business-photo-$url',
+                  ),
+                  child: Hero(
+                    tag: 'business-photo-$url',
+                    child: CustomCachedImage(
+                      imageUrl: url,
+                      width: double.infinity,
+                      height: double.infinity,
+                    ),
+                  ),
                 ),
                 Positioned(
                   right: 5,
@@ -100,12 +111,23 @@ class MyBusinessPhotoGrid extends StatelessWidget {
           }
 
           final localIndex = index - apiPhotos.length;
+          final localFile = localPhotos[localIndex];
           return Stack(
             children: [
-              CustomCachedImage(
-                imageFile: localPhotos[localIndex],
-                width: double.infinity,
-                height: double.infinity,
+              GestureDetector(
+                onTap: () => showImageViewer(
+                  context,
+                  imageFile: localFile,
+                  heroTag: 'business-local-photo-$localIndex',
+                ),
+                child: Hero(
+                  tag: 'business-local-photo-$localIndex',
+                  child: CustomCachedImage(
+                    imageFile: localFile,
+                    width: double.infinity,
+                    height: double.infinity,
+                  ),
+                ),
               ),
               Positioned(
                 right: 5,

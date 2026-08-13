@@ -30,6 +30,9 @@ class CheckInController extends GetxController with WidgetsBindingObserver {
   // ── Reactive State ────────────────────────────────────────────────────────
   final activeTab = CheckInTab.scan.obs;
   final cameraPermission = CameraPermissionState.checking.obs;
+  /// True while the OS permission dialog is showing — keep the explainer UI
+  /// visible underneath (no full-screen spinner).
+  final isRequestingCamera = false.obs;
   final isProcessing = false.obs;
   final isManualLoading = false.obs;
   final torchOn = false.obs;
@@ -65,7 +68,7 @@ class CheckInController extends GetxController with WidgetsBindingObserver {
     _type = args?['type']?.toString() ?? 'event';
     _openedFromEntityId = args?['entityId']?.toString();
 
-    requestCameraPermission();
+    _bootstrapCameraPermission();
   }
 
   @override
@@ -86,9 +89,36 @@ class CheckInController extends GetxController with WidgetsBindingObserver {
   }
 
   // ── Permission Management ─────────────────────────────────────────────────
+  /// First open: read status, show the modern explainer (not a spinner) while
+  /// the OS dialog is up, then apply the result.
+  Future<void> _bootstrapCameraPermission() async {
+    final status = await Permission.camera.status;
+    if (status.isGranted || status.isLimited) {
+      _applyPermission(status);
+      return;
+    }
+    if (status.isPermanentlyDenied || status.isRestricted) {
+      cameraPermission.value = CameraPermissionState.permanentlyDenied;
+      return;
+    }
+
+    // Not determined / denied — keep the explainer visible under the prompt.
+    cameraPermission.value = CameraPermissionState.denied;
+    await requestCameraPermission();
+  }
+
   Future<void> requestCameraPermission() async {
-    cameraPermission.value = CameraPermissionState.checking;
-    _applyPermission(await Permission.camera.request());
+    if (isRequestingCamera.value) return;
+    isRequestingCamera.value = true;
+    // Never flip to `checking` here — that was the spinner behind the dialog.
+    if (cameraPermission.value == CameraPermissionState.checking) {
+      cameraPermission.value = CameraPermissionState.denied;
+    }
+    try {
+      _applyPermission(await Permission.camera.request());
+    } finally {
+      isRequestingCamera.value = false;
+    }
   }
 
   Future<void> refreshCameraPermission() async {
