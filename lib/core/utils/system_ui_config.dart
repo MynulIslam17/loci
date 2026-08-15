@@ -18,11 +18,14 @@ class SystemUiConfig {
   }
 
   static Widget wrapApp(BuildContext context, Widget? child) {
+    final isIOS = Theme.of(context).platform == TargetPlatform.iOS;
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: _overlayStyle,
       child: SafeArea(
         top: false,
-        bottom: true,
+        // Skip the bottom inset on iOS so the native glass tab bar can sit
+        // in the home-indicator region (Android keeps the existing inset).
+        bottom: !isIOS,
         child: OfflineIndicatorBanner(
           child: child ?? const SizedBox.shrink(),
         ),
