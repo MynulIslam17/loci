@@ -85,7 +85,7 @@ class HiveStorageService {
     return service;
   }
 
-  /// Recursively casts any dynamic Maps from Hive to Map<String, dynamic>.
+  /// Recursively casts any dynamic Maps from Hive to `Map<String, dynamic>`.
   static dynamic _deepCast(dynamic value) {
     if (value is Map) {
       return value.map((k, v) => MapEntry(k.toString(), _deepCast(v)));

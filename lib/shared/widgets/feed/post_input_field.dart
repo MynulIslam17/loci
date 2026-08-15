@@ -225,7 +225,7 @@ class _PostInputFieldState extends State<PostInputField>
                 opacity: _fadeAnim,
                 child: SizeTransition(
                   sizeFactor: _fadeAnim,
-                  axisAlignment: -1,
+                  axisAlignment: -1, // ignore: deprecated_member_use
                   child: Padding(
                     padding: const EdgeInsets.only(top: 12),
                     child: Column(

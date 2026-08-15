@@ -94,12 +94,10 @@ class NetworkDashboardController extends GetxController {
       _fetch.endFirstPage();
 
       if (_storage != null) {
-        if (model.data.counts != null) {
-          _storage.saveScreenData(
-            'network_counts_cache',
-            model.data.counts!.toJson(),
-          );
-        }
+        _storage.saveScreenData(
+          'network_counts_cache',
+          model.data.counts.toJson(),
+        );
         _storage.saveFeedList(
           'network_checkins_cache',
           _checkins.map((c) => c.toJson()).toList(),

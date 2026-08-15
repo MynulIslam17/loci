@@ -202,13 +202,13 @@ class _ChatListScreenState extends State<ChatListScreen> {
       clipBehavior: Clip.antiAlias,
       margin: const EdgeInsets.symmetric(vertical: 6),
       color: isPending
-          ? colorScheme.surfaceContainerHighest.withOpacity(0.8)
+          ? colorScheme.surfaceContainerHighest.withValues(alpha: 0.8)
           : colorScheme.surfaceContainer,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
         side: isPending
             ? BorderSide(
-                color: const Color(0xFFF59E0B).withOpacity(0.4),
+                color: const Color(0xFFF59E0B).withValues(alpha: 0.4),
                 width: 1,
               )
             : BorderSide.none,
@@ -268,7 +268,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFF59E0B).withOpacity(0.16),
+                  color: const Color(0xFFF59E0B).withValues(alpha: 0.16),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Row(
