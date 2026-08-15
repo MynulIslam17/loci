@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
+import 'package:loci/core/services/connectivity_service.dart';
+import 'package:loci/core/storage/hive_storage_service.dart';
 import 'package:loci/core/theme/app_theme.dart';
 import 'package:loci/core/utils/system_ui_config.dart';
 import 'package:loci/core/di/bindings/app_bindings.dart';
@@ -10,6 +12,9 @@ import 'package:loci/routes/app_pages.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await GetStorage.init();
+  final hiveStorage = await HiveStorageService.init();
+  Get.put<HiveStorageService>(hiveStorage, permanent: true);
+  Get.put<ConnectivityService>(ConnectivityService(), permanent: true);
   await SystemUiConfig.init();
   runApp(Loci());
 }

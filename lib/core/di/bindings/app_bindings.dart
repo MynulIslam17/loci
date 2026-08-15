@@ -1,8 +1,10 @@
 import 'package:get/get.dart';
 import 'package:loci/core/network/network_caller.dart';
 import 'package:loci/core/network/network_setup.dart';
+import 'package:loci/core/services/connectivity_service.dart';
 import 'package:loci/core/services/socket/chat_socket_service.dart';
 import 'package:loci/core/services/stripe_service.dart';
+import 'package:loci/core/storage/hive_storage_service.dart';
 import 'package:loci/core/storage/local_storage_service.dart';
 import 'package:loci/core/utils/show_snackbar.dart';
 import 'package:loci/features/subscription/presentation/widgets/upgrade_required_sheet.dart';
@@ -63,8 +65,14 @@ class AppBindings extends Bindings {
     // plan, credit limits…) open the upgrade paywall instead of a snackbar.
     SnackbarService.errorInterceptor = UpgradeRequiredSheet.maybeIntercept;
 
-    // Storage
+    // Storage & Connectivity
     Get.put<LocalStorageService>(LocalStorageService(), permanent: true);
+    if (HiveStorageService.isInitialized) {
+      Get.put<HiveStorageService>(HiveStorageService.instance, permanent: true);
+    }
+    if (!Get.isRegistered<ConnectivityService>()) {
+      Get.put<ConnectivityService>(ConnectivityService(), permanent: true);
+    }
 
     // Network (token callback is lazy — safe before AuthController exists)
     Get.put<NetworkCaller>(setUpNetworkClient(), permanent: true);

@@ -66,6 +66,18 @@ class ConversationModel {
       unreadCount: (json['unreadCount'] ?? 0) as int,
     );
   }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'participants': participants.map((p) => p.toJson()).toList(),
+      if (otherParticipant != null)
+        'otherParticipant': otherParticipant!.toJson(),
+      if (lastMessage != null) 'lastMessage': lastMessage!.toJson(),
+      if (lastActivityAt != null) 'lastActivityAt': lastActivityAt,
+      'unreadCount': unreadCount,
+    };
+  }
 }
 
 class ChatParticipant {
@@ -79,5 +91,12 @@ class ChatParticipant {
       user: ChatUserModel.fromJson(json['user']),
       lastRead: json['lastRead']?.toString(),
     );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'user': user.toJson(),
+      if (lastRead != null) 'lastRead': lastRead,
+    };
   }
 }

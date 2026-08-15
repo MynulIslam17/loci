@@ -1,10 +1,12 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 import 'package:logger/logger.dart';
 import 'package:socket_io_client/socket_io_client.dart' as io;
 
 import '../../constants/app_url.dart';
+import 'package:loci/core/storage/hive_storage_service.dart';
 import 'package:loci/features/chat/data/models/chat_message_model.dart';
 import 'package:loci/features/auth/presentation/controllers/auth_controller.dart';
 
@@ -165,6 +167,7 @@ class ChatSocketService extends GetxService {
     s.onConnect((_) {
       _logger.i('ChatSocket ✔ connected (id: ${s.id})');
       _connectionCtrl.add(true);
+      flushGlobalOutbox();
     });
     s.onDisconnect((reason) {
       _logger.w('ChatSocket ✖ disconnected: $reason');
@@ -175,7 +178,10 @@ class ChatSocketService extends GetxService {
     s.onReconnectAttempt(
       (attempt) => _logger.d('ChatSocket ↻ reconnect attempt $attempt'),
     );
-    s.onReconnect((_) => _logger.i('ChatSocket ↻ reconnected'));
+    s.onReconnect((_) {
+      _logger.i('ChatSocket ↻ reconnected');
+      flushGlobalOutbox();
+    });
 
     _onEvent(ChatSocketEvent.messageReceived, (data) {
       final msg = _extractMessage(data);
@@ -186,7 +192,11 @@ class ChatSocketService extends GetxService {
       final map = _asMap(data);
       final msg = _extractMessage(data);
       if (msg != null) {
-        _ackCtrl.add(MessageAck(tempId: map['tempId']?.toString(), message: msg));
+        final tempId = map['tempId']?.toString();
+        if (tempId != null) {
+          _globalFlushingTempIds.remove(tempId);
+        }
+        _ackCtrl.add(MessageAck(tempId: tempId, message: msg));
       }
     });
 
@@ -296,6 +306,9 @@ class ChatSocketService extends GetxService {
     String? replyTo,
     String? tempId,
   }) {
+    if (tempId != null && tempId.isNotEmpty) {
+      _globalFlushingTempIds.add(tempId);
+    }
     _emit(ChatSocketEvent.sendMessage, {
       'conversationId': ?conversationId,
       'recipientId': ?recipientId,
@@ -325,6 +338,56 @@ class ChatSocketService extends GetxService {
 
   void unreact(String messageId) =>
       _emit(ChatSocketEvent.unreactMessage, {'messageId': messageId});
+
+  @visibleForTesting
+  void emitAckForTest(MessageAck ack) {
+    if (ack.tempId != null) {
+      _globalFlushingTempIds.remove(ack.tempId);
+    }
+    _ackCtrl.add(ack);
+  }
+
+  // ── Global Outbox Flush ───────────────────────────────────────────────────
+  final Set<String> _globalFlushingTempIds = {};
+
+  /// Scans Hive for any pending offline outbox messages across all conversations
+  /// and automatically flushes them immediately when connection is established,
+  /// regardless of which screen the user is currently viewing.
+  void flushGlobalOutbox() {
+    if (!isConnected) return;
+    try {
+      final storage = Get.isRegistered<HiveStorageService>()
+          ? Get.find<HiveStorageService>()
+          : (HiveStorageService.isInitialized
+              ? HiveStorageService.instance
+              : null);
+      if (storage == null) return;
+
+      final allPending = storage.getAllPendingMessages();
+      for (final entry in allPending.entries) {
+        final convId = entry.key;
+        final msgs = entry.value;
+        for (final m in msgs) {
+          if (m.content != null &&
+              m.content!.isNotEmpty &&
+              !_globalFlushingTempIds.contains(m.id)) {
+            _globalFlushingTempIds.add(m.id);
+            sendMessage(
+              conversationId: convId.isNotEmpty ? convId : null,
+              content: m.content!,
+              tempId: m.id,
+            );
+          }
+        }
+      }
+    } catch (_) {}
+  }
+
+  void unlockTempId(String? tempId) {
+    if (tempId != null && tempId.isNotEmpty) {
+      _globalFlushingTempIds.remove(tempId);
+    }
+  }
 
   // ── Parsing helpers ──────────────────────────────────────────────────────────
   Map<String, dynamic> _asMap(dynamic data) =>

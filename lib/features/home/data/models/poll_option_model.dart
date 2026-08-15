@@ -25,8 +25,9 @@ class PollOptionModel {
         image: json['image'] as String?,
         voteCount: json['voteCount'] as int? ?? 0,
         percentage: json['percentage'] as int? ?? 0,
-        voters: (json['voters'] as List<dynamic>? ?? [])
-            .map((e) => VoterModel.fromJson(e as Map<String, dynamic>))
+        voters: (json['voters'] is List ? (json['voters'] as List) : [])
+            .whereType<Map>()
+            .map((e) => VoterModel.fromJson(Map<String, dynamic>.from(e)))
             .toList(),
       );
 

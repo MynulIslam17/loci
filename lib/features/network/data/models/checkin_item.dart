@@ -26,6 +26,15 @@ class CheckInModel {
     );
   }
 
+  Map<String, dynamic> toJson() => {
+    '_id': id,
+    'entityType': entityType,
+    'entityId': entityId,
+    'scannedAt': scannedAt,
+    'leadData': leadData.toJson(),
+    'entityName': entityName,
+  };
+
   // ================= SIMPLE TIME AGO =================
   String get timeAgo {
     if (scannedAt.isEmpty) return '';
@@ -61,4 +70,10 @@ class LeadData {
       avatar: json['avatar'] ?? '',
     );
   }
+
+  Map<String, dynamic> toJson() => {
+    'name': name,
+    'email': email,
+    'avatar': avatar,
+  };
 }

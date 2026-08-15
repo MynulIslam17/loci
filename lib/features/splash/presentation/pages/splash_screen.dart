@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:loci/core/services/connectivity_service.dart';
 import 'package:loci/core/theme/theme_extention.dart';
 import 'package:loci/features/auth/presentation/controllers/auth_controller.dart';
 import 'package:loci/gen/assets.gen.dart';
@@ -30,6 +31,10 @@ class _SplashScreenState extends State<SplashScreen> {
     ]);
 
     if (!mounted) return;
+
+    if (Get.isRegistered<ConnectivityService>()) {
+      Get.find<ConnectivityService>().isAppReady.value = true;
+    }
 
     //--- if login then go to bottom nav else go to onboarding
 

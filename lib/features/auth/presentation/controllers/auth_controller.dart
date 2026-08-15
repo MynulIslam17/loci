@@ -4,6 +4,7 @@ import 'package:loci/features/auth/data/models/user_model.dart';
 import 'package:loci/features/auth/domain/services/auth_service.dart';
 import 'package:loci/core/services/socket/chat_socket_service.dart';
 import 'package:loci/core/services/stripe_service.dart';
+import 'package:loci/core/storage/hive_storage_service.dart';
 import 'package:loci/routes/app_routes.dart';
 
 /// Session / auth shell controller. UI listens via Obx.
@@ -115,9 +116,12 @@ class AuthController extends GetxController {
     // 1. Best-effort server logout before clearing local session.
     await _service.logoutRemote();
 
-    // 2. Gracefully close realtime + clear the persisted session.
+    // 2. Gracefully close realtime + clear the persisted session and local chat/nav storage.
     if (Get.isRegistered<ChatSocketService>()) {
       Get.find<ChatSocketService>().disconnect();
+    }
+    if (Get.isRegistered<HiveStorageService>()) {
+      await Get.find<HiveStorageService>().wipeOnLogout();
     }
     await _service.clearSession();
 

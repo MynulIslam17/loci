@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:loci/shared/widgets/offline_indicator_banner.dart';
 
 /// Keeps app content above the system status and navigation bars.
 class SystemUiConfig {
@@ -22,7 +23,9 @@ class SystemUiConfig {
       child: SafeArea(
         top: false,
         bottom: true,
-        child: child ?? const SizedBox.shrink(),
+        child: OfflineIndicatorBanner(
+          child: child ?? const SizedBox.shrink(),
+        ),
       ),
     );
   }

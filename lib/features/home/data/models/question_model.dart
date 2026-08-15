@@ -45,10 +45,11 @@ class QuestionModel {
   factory QuestionModel.fromJson(Map<String, dynamic> json) => QuestionModel(
     id: (json['_id'] ?? json['id'] ?? '').toString(),
     author: AuthorModel.fromJson(
-      (json['author'] as Map<String, dynamic>?) ?? const {},
+      json['author'] is Map
+          ? Map<String, dynamic>.from(json['author'] as Map)
+          : const {},
     ),
     type: QuestionType.fromString(json['type'] as String?),
-    // category is nullable on the backend (default null) — never hard-cast it.
     category: (json['category'] as String?) ?? '',
     content: (json['content'] ?? json['question'] ?? '').toString(),
     totalVotes: json['totalVotes'] as int? ?? 0,
@@ -58,12 +59,14 @@ class QuestionModel {
     commentCount:
         json['answerCount'] as int? ??
         json['commentCount'] as int? ??
-        (json['answers'] as List<dynamic>? ?? []).length,
-    options: (json['options'] as List<dynamic>? ?? [])
-        .map((e) => PollOptionModel.fromJson(e as Map<String, dynamic>))
+        (json['answers'] is List ? (json['answers'] as List).length : 0),
+    options: (json['options'] is List ? (json['options'] as List) : [])
+        .whereType<Map>()
+        .map((e) => PollOptionModel.fromJson(Map<String, dynamic>.from(e)))
         .toList(),
-    answers: (json['answers'] as List<dynamic>? ?? [])
-        .map((e) => AnswerModel.fromJson(e as Map<String, dynamic>))
+    answers: (json['answers'] is List ? (json['answers'] as List) : [])
+        .whereType<Map>()
+        .map((e) => AnswerModel.fromJson(Map<String, dynamic>.from(e)))
         .toList(),
     communityId: json['communityId'] as String?,
     createdAt: json['createdAt'] as String? ?? '',

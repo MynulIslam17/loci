@@ -210,42 +210,36 @@ class _MessageScreenState extends State<MessageScreen> {
               behavior: HitTestBehavior.opaque,
               onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
               child: Obx(() {
-              final ctrl = controller;
-              if (ctrl.isLoading.value && ctrl.messages.isEmpty) {
-                return const Center(child: CircularProgressIndicator());
-              }
-              if (ctrl.errorMessage.value != null && ctrl.messages.isEmpty) {
-                return RefreshIndicator(
-                  onRefresh: ctrl.loadMessages,
-                  child: LayoutBuilder(
-                    builder: (context, constraints) {
-                      return SingleChildScrollView(
-                        physics: const AlwaysScrollableScrollPhysics(),
-                        keyboardDismissBehavior:
-                            ScrollViewKeyboardDismissBehavior.onDrag,
-                        child: ConstrainedBox(
-                          constraints: BoxConstraints(
-                            minHeight: constraints.maxHeight,
+                final ctrl = controller;
+                if (ctrl.isLoading.value && ctrl.messages.isEmpty) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+                if (ctrl.messages.isEmpty) {
+                  return RefreshIndicator(
+                    onRefresh: ctrl.loadMessages,
+                    child: LayoutBuilder(
+                      builder: (context, constraints) {
+                        return SingleChildScrollView(
+                          physics: const AlwaysScrollableScrollPhysics(),
+                          keyboardDismissBehavior:
+                              ScrollViewKeyboardDismissBehavior.onDrag,
+                          child: ConstrainedBox(
+                            constraints: BoxConstraints(
+                              minHeight: constraints.maxHeight,
+                            ),
+                            child: const EmptyState(
+                              icon: Icons.chat_bubble_outline,
+                              title: 'No messages yet',
+                              subtitle: 'Say hello to start the conversation',
+                            ),
                           ),
-                          child: ErrorStateWidget(
-                            message: ctrl.errorMessage.value!,
-                            onRetry: ctrl.loadMessages,
-                          ),
-                        ),
-                      );
-                    },
-                  ),
-                );
-              }
-              if (ctrl.messages.isEmpty) {
-                return const EmptyState(
-                  icon: Icons.chat_bubble_outline,
-                  title: 'No messages yet',
-                  subtitle: 'Say hello to start the conversation',
-                );
-              }
+                        );
+                      },
+                    ),
+                  );
+                }
 
-              _jumpToBottomIfNeeded(ctrl.messages.length);
+                _jumpToBottomIfNeeded(ctrl.messages.length);
 
               final count = ctrl.messages.length;
               final showTopLoader = ctrl.isLoadingMore.value;

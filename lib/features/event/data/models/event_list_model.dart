@@ -92,6 +92,27 @@ class EventModel {
     );
   }
 
+  Map<String, dynamic> toJson() {
+    return {
+      '_id': id,
+      'coverImage': coverImage,
+      'title': title,
+      'description': description,
+      'date': date,
+      'eventTime': eventTime,
+      'location': location,
+      'activityType': activityType,
+      'isPublic': isPublic,
+      'goingCount': goingCount,
+      'maxParticipants': maxAttendees,
+      'organizerBusiness': {
+        'name': organizerName,
+        'logo': organizerAvatar,
+      },
+      'myRsvpStatus': myRsvpStatus.name,
+    };
+  }
+
   // for update the model
   EventModel copyWith({
     String? id,

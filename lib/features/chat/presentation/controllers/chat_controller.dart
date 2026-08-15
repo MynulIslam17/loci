@@ -1,7 +1,9 @@
 import 'dart:async';
 
 import 'package:get/get.dart';
+import 'package:loci/core/services/connectivity_service.dart';
 import 'package:loci/core/services/socket/chat_socket_service.dart';
+import 'package:loci/core/storage/hive_storage_service.dart';
 import 'package:loci/core/utils/app_error_messages.dart';
 import 'package:loci/core/utils/show_snackbar.dart';
 import 'package:loci/features/auth/presentation/controllers/auth_controller.dart';
@@ -15,6 +17,7 @@ import 'package:loci/features/chat/presentation/controllers/chat_list_controller
 /// messages, edits, deletes, read receipts, the other user typing).
 class ChatController extends GetxController {
   final ChatService _service;
+  final HiveStorageService _storage;
   final ChatSocketService _socket = Get.find<ChatSocketService>();
 
   /// Existing conversation id, or null when the chat is being started fresh
@@ -28,7 +31,13 @@ class ChatController extends GetxController {
     required this.conversationId,
     required this.recipientId,
     required this.other,
-  });
+    HiveStorageService? storage,
+  }) : _storage = storage ??
+            (Get.isRegistered<HiveStorageService>()
+                ? Get.find<HiveStorageService>()
+                : (HiveStorageService.isInitialized
+                    ? HiveStorageService.instance
+                    : throw Exception('HiveStorageService not registered')));
 
   final RxBool isLoading = false.obs;
   final RxBool isLoadingMore = false.obs;
@@ -52,18 +61,82 @@ class ChatController extends GetxController {
   bool _typingSent = false;
   int _tempCounter = 0;
 
-  bool isMine(ChatMessageModel m) => m.sender.id == _myId;
+  bool isMine(ChatMessageModel m) {
+    if (_myId.isNotEmpty && m.sender.id == _myId) return true;
+    if (m.sender.id == 'me') return true;
+    return false;
+  }
+
+  final Set<String> _flushingTempIds = {};
+
+  bool _isRecent(String? t1, String? t2) {
+    if (t1 == null || t2 == null) return true;
+    try {
+      final d1 = DateTime.parse(t1).toUtc();
+      final d2 = DateTime.parse(t2).toUtc();
+      return (d1.difference(d2).inSeconds).abs() < 120;
+    } catch (_) {
+      return true;
+    }
+  }
+
+  void _deduplicateMessages() {
+    final seenIds = <String>{};
+    final unique = <ChatMessageModel>[];
+
+    for (final m in messages) {
+      if (m.id.isNotEmpty && !seenIds.add(m.id)) {
+        continue;
+      }
+      unique.add(m);
+    }
+
+    if (unique.length != messages.length) {
+      messages.assignAll(unique);
+    }
+  }
 
   @override
   void onInit() {
     super.onInit();
     _bindSocket();
+    final outboxKey = conversationId ?? recipientId ?? '';
     if (conversationId != null) {
+      // Synchronously read local cache on frame 0 for instant UI rendering.
+      final cached = _storage.getCachedMessages(conversationId!);
+      final pending = _storage.getPendingMessages(outboxKey);
+
+      // Merge cached messages with any in-flight pending outbox messages
+      final cachedIds = cached.map((m) => m.id).toSet();
+      final allInitial = [
+        ...cached,
+        ...pending.where((p) => !cachedIds.contains(p.id)),
+      ];
+
+      if (allInitial.isNotEmpty) {
+        messages.assignAll(allInitial);
+        _deduplicateMessages();
+        isLoading.value = false;
+      } else {
+        // First-time fallback for brand new or uncached chat
+        isLoading.value = true;
+      }
+
       _socket.joinConversation(conversationId!);
-      loadMessages();
+      // Trigger background sync
+      loadMessages(silent: allInitial.isNotEmpty);
       _markRead();
     } else {
+      final pending = _storage.getPendingMessages(outboxKey);
+      if (pending.isNotEmpty) {
+        messages.assignAll(pending);
+        _deduplicateMessages();
+      }
       isLoading.value = false;
+    }
+
+    if (_socket.isConnected) {
+      _flushPendingMessages();
     }
   }
 
@@ -80,34 +153,93 @@ class ChatController extends GetxController {
     _subs.add(_socket.onConnectionChanged.listen(_onConnectionChanged));
   }
 
-  /// Room membership does not survive a reconnect (guide §7): re-join the
-  /// open thread and refetch its tail to close any gap from the outage.
+  /// Room membership does not survive a reconnect: re-join the
+  /// open thread, refetch tail, and automatically flush offline outbox messages.
   bool _connectionDropped = false;
   void _onConnectionChanged(bool connected) {
     if (!connected) {
       _connectionDropped = true;
       return;
     }
-    if (!_connectionDropped || conversationId == null) return;
-    _connectionDropped = false;
-    _socket.joinConversation(conversationId!);
-    loadMessages(silent: true);
-    _markRead();
+    if (_connectionDropped || connected) {
+      _connectionDropped = false;
+      if (conversationId != null) {
+        _socket.joinConversation(conversationId!);
+        loadMessages(silent: true);
+        _markRead();
+      }
+      _flushPendingMessages();
+    }
   }
 
-  /// [silent] refetches without flipping the loading state — used to resync
-  /// after a rejected optimistic action or a reconnect gap.
+  /// Uses global flusher so socket is never double-emitted.
+  void _flushPendingMessages() {
+    _socket.flushGlobalOutbox();
+  }
+
+  /// [silent] refetches in background without showing a loading spinner — used
+  /// when cached messages are already displayed or on reconnect.
   Future<void> loadMessages({bool silent = false}) async {
     if (conversationId == null) return;
+
+    // Fast Offline Guard: short-circuit immediately if offline
+    if (ConnectivityService.isCurrentOffline) {
+      isLoading.value = false;
+      return;
+    }
+
     if (!silent) isLoading.value = true;
     errorMessage.value = null;
     try {
       final page = await _service.getMessages(conversationId!);
       _nextCursor = page.nextCursor;
       hasMore.value = page.hasMore;
-      messages.assignAll(page.messages);
+
+      final outboxKey = conversationId ?? recipientId ?? '';
+      final persistentPending = _storage.getPendingMessages(outboxKey);
+      final persistentPendingIds = persistentPending.map((m) => m.id).toSet();
+
+      // Only preserve in-flight sending messages that:
+      // 1) Are in the persistent outbox
+      // 2) Have not yet been reconciled with a server message
+      final matchedServerIndices = <int>{};
+      final activePending = messages.where((m) {
+        if (m.status != 'sending') return false;
+        if (!persistentPendingIds.contains(m.id)) return false;
+
+        // If server already returned this ID directly
+        if (page.messages.any((s) => s.id == m.id)) return false;
+
+        // If server returned a recent message sent by me with matching content, reconcile 1-to-1
+        for (var i = 0; i < page.messages.length; i++) {
+          if (matchedServerIndices.contains(i)) continue;
+          final serverMsg = page.messages[i];
+          if ((isMine(serverMsg) || _myId.isEmpty || serverMsg.sender.id == m.sender.id) &&
+              serverMsg.content != null &&
+              m.content != null &&
+              serverMsg.content == m.content &&
+              _isRecent(serverMsg.createdAt, m.createdAt)) {
+            matchedServerIndices.add(i);
+            _flushingTempIds.remove(m.id);
+            _storage.removePendingMessage(outboxKey, m.id);
+            return false;
+          }
+        }
+
+        return true;
+      }).toList();
+
+      final fetchedIds = page.messages.map((m) => m.id).toSet();
+      final merged = [
+        ...page.messages,
+        ...activePending.where((m) => !fetchedIds.contains(m.id)),
+      ];
+
+      messages.assignAll(merged);
+      _deduplicateMessages();
+      _storage.saveMessages(conversationId!, messages.toList());
     } catch (e) {
-      if (silent) return;
+      if (silent || messages.isNotEmpty) return;
       errorMessage.value = AppErrorMessages.sanitize(e);
     } finally {
       isLoading.value = false;
@@ -118,6 +250,9 @@ class ChatController extends GetxController {
   Future<void> loadOlderMessages() async {
     if (conversationId == null) return;
     if (!hasMore.value || isLoadingMore.value || isLoading.value) return;
+
+    // Fast Offline Guard: do not paginate when offline
+    if (ConnectivityService.isCurrentOffline) return;
 
     isLoadingMore.value = true;
     try {
@@ -132,6 +267,8 @@ class ChatController extends GetxController {
         0,
         page.messages.where((m) => !known.contains(m.id)),
       );
+      _deduplicateMessages();
+      _storage.saveMessages(conversationId!, messages.toList());
     } catch (e) {
       SnackbarService.error(AppErrorMessages.sanitize(e));
     } finally {
@@ -146,30 +283,74 @@ class ChatController extends GetxController {
     final tempId =
         'temp_${DateTime.now().millisecondsSinceEpoch}_${_tempCounter++}';
 
-    messages.add(
-      ChatMessageModel(
-        id: tempId,
-        conversationId: conversationId ?? '',
-        sender: ChatUserModel(id: _myId, name: 'me'),
-        content: content,
-        status: 'sending',
-        createdAt: DateTime.now().toIso8601String(),
+    final pending = ChatMessageModel(
+      id: tempId,
+      conversationId: conversationId ?? '',
+      sender: ChatUserModel(
+        id: _myId.isNotEmpty ? _myId : 'me',
+        name: 'me',
       ),
+      content: content,
+      status: 'sending',
+      createdAt: DateTime.now().toIso8601String(),
     );
 
+    messages.add(pending);
+    _deduplicateMessages();
+
+    final outboxKey = conversationId ?? recipientId ?? '';
+
+    // Persist optimistic message in room history & persistent outbox
+    if (conversationId != null) {
+      _storage.saveMessages(conversationId!, messages.toList());
+      if (Get.isRegistered<ChatListController>()) {
+        Get.find<ChatListController>().bumpWithMessage(pending);
+      }
+    }
+    _storage.addPendingMessage(outboxKey, pending);
+
     _stopTyping();
-    _socket.sendMessage(
-      conversationId: conversationId,
-      recipientId: conversationId == null ? recipientId : null,
-      content: content,
-      tempId: tempId,
-    );
+    if (_socket.isConnected) {
+      _flushingTempIds.add(tempId);
+      _socket.sendMessage(
+        conversationId: conversationId,
+        recipientId: conversationId == null ? recipientId : null,
+        content: content,
+        tempId: tempId,
+      );
+    }
   }
 
   void _onAck(MessageAck ack) {
-    if (ack.tempId == null) return;
-    final idx = messages.indexWhere((m) => m.id == ack.tempId);
-    if (idx == -1) return;
+    if (ack.tempId != null) {
+      _flushingTempIds.remove(ack.tempId);
+      _socket.unlockTempId(ack.tempId);
+    }
+    final outboxKey = conversationId ?? recipientId ?? '';
+    if (ack.tempId != null) {
+      _storage.removePendingMessage(outboxKey, ack.tempId!);
+    }
+
+    var tempIdx = ack.tempId != null
+        ? messages.indexWhere((m) => m.id == ack.tempId)
+        : -1;
+
+    final existingServerIdx =
+        messages.indexWhere((m) => m.id == ack.message.id);
+
+    if (existingServerIdx != -1 && tempIdx != -1 && existingServerIdx != tempIdx) {
+      // Both server message (from loadMessages) and temp message exist!
+      // Remove temp bubble so only 1 copy remains.
+      messages.removeAt(tempIdx);
+    } else if (tempIdx != -1) {
+      messages[tempIdx] = ack.message;
+    } else if (existingServerIdx != -1) {
+      messages[existingServerIdx] = ack.message;
+    } else {
+      messages.add(ack.message);
+    }
+
+    _deduplicateMessages();
 
     if (conversationId == null && ack.message.conversationId.isNotEmpty) {
       conversationId = ack.message.conversationId;
@@ -181,15 +362,25 @@ class ChatController extends GetxController {
       Get.find<ChatListController>().bumpWithMessage(ack.message);
     }
 
-    messages[idx] = ack.message;
+    if (conversationId != null) {
+      _storage.appendOrUpdateMessage(
+        conversationId!,
+        ack.message,
+        tempId: ack.tempId,
+      );
+    }
   }
 
   void _onMessage(ChatMessageModel msg) {
     if (msg.conversationId != conversationId) return;
-    if (msg.sender.id == _myId) return;
+    if (isMine(msg)) return;
     if (messages.any((m) => m.id == msg.id)) return;
 
     messages.add(msg);
+    _deduplicateMessages();
+    if (conversationId != null) {
+      _storage.saveMessages(conversationId!, messages.toList());
+    }
     _markRead();
   }
 
@@ -198,6 +389,9 @@ class ChatController extends GetxController {
     final idx = messages.indexWhere((m) => m.id == msg.id);
     if (idx != -1) {
       messages[idx] = msg;
+      if (conversationId != null) {
+        _storage.saveMessages(conversationId!, messages.toList());
+      }
     }
   }
 
@@ -213,17 +407,25 @@ class ChatController extends GetxController {
     } else {
       messages.removeAt(idx);
     }
+    if (conversationId != null) {
+      _storage.saveMessages(conversationId!, messages.toList());
+    }
   }
 
   /// The other participant read the conversation — flip my ticks to read.
   void _onReadReceipt(MessagesRead e) {
     if (e.conversationId != conversationId) return;
     if (e.userId == _myId) return;
+    var changed = false;
     for (var i = 0; i < messages.length; i++) {
       final m = messages[i];
       if (isMine(m) && m.status != 'read' && m.status != 'sending') {
         messages[i] = m.copyWith(status: 'read');
+        changed = true;
       }
+    }
+    if (changed && conversationId != null) {
+      _storage.saveMessages(conversationId!, messages.toList());
     }
   }
 
@@ -231,11 +433,16 @@ class ChatController extends GetxController {
   void _onDelivered(MessageDelivered e) {
     if (e.conversationId != conversationId) return;
     if (e.userId == _myId) return;
+    var changed = false;
     for (var i = 0; i < messages.length; i++) {
       final m = messages[i];
       if (isMine(m) && m.status == 'sent') {
         messages[i] = m.copyWith(status: 'delivered');
+        changed = true;
       }
+    }
+    if (changed && conversationId != null) {
+      _storage.saveMessages(conversationId!, messages.toList());
     }
   }
 
@@ -243,6 +450,9 @@ class ChatController extends GetxController {
     final idx = messages.indexWhere((m) => m.id == e.messageId);
     if (idx == -1) return;
     messages[idx] = messages[idx].copyWith(reactions: e.reactions);
+    if (conversationId != null) {
+      _storage.saveMessages(conversationId!, messages.toList());
+    }
   }
 
   void _onSocketError(String message) {
@@ -263,6 +473,9 @@ class ChatController extends GetxController {
     final idx = messages.indexWhere((m) => m.id == msg.id);
     if (idx != -1) {
       messages[idx] = messages[idx].copyWith(content: content, isEdited: true);
+      if (conversationId != null) {
+        _storage.saveMessages(conversationId!, messages.toList());
+      }
     }
     _socket.editMessage(msg.id, content);
   }
@@ -274,12 +487,18 @@ class ChatController extends GetxController {
     final idx = messages.indexWhere((m) => m.id == msg.id);
     if (idx == -1) return;
     messages[idx] = messages[idx].copyWith(isDeleted: true, clearContent: true);
+    if (conversationId != null) {
+      _storage.saveMessages(conversationId!, messages.toList());
+    }
     _socket.deleteMessage(msg.id, forEveryone: true);
   }
 
   /// Hide the message for this user only (realtime socket event).
   void deleteForMe(ChatMessageModel msg) {
     messages.removeWhere((m) => m.id == msg.id);
+    if (conversationId != null) {
+      _storage.saveMessages(conversationId!, messages.toList());
+    }
     _socket.deleteMessage(msg.id, forEveryone: false);
   }
 
@@ -301,6 +520,9 @@ class ChatController extends GetxController {
           ? others
           : [...others, ChatReaction(userId: _myId, emoji: emoji)],
     );
+    if (conversationId != null) {
+      _storage.saveMessages(conversationId!, messages.toList());
+    }
 
     if (mine == emoji) {
       _socket.unreact(msg.id);

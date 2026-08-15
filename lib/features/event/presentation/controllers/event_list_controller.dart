@@ -2,22 +2,30 @@ import 'dart:async';
 
 import 'package:get/get.dart';
 import 'package:loci/core/enums/rsvp_status.dart';
+import 'package:loci/core/services/connectivity_service.dart';
+import 'package:loci/core/storage/hive_storage_service.dart';
 import 'package:loci/core/utils/paginated_list_fetch_state.dart';
 import 'package:loci/features/event/data/models/event_list_model.dart';
 import 'package:loci/features/event/domain/services/event_service.dart';
 
 class EventListController extends GetxController {
-  EventListController(this._service);
+  EventListController(this._service, [HiveStorageService? storage])
+      : _storage = storage ??
+            (Get.isRegistered<HiveStorageService>()
+                ? Get.find<HiveStorageService>()
+                : null);
 
   final EventService _service;
+  final HiveStorageService? _storage;
   final PaginatedListFetchState _fetch = PaginatedListFetchState();
+  StreamSubscription<void>? _reconnectSub;
 
   final Rxn<String> _errorMessage = Rxn<String>();
   final RxList<EventModel> _eventList = <EventModel>[].obs;
 
   int _currentPage = 1;
   bool _hasNextPage = true;
-  final int _limit = 6;
+  final int _limit = 20;
 
   String _searchQuery = '';
   Timer? _searchDebounce;
@@ -32,6 +40,30 @@ class EventListController extends GetxController {
   List<EventModel> get eventList => _eventList;
   bool get hasMore => _hasNextPage;
   String get searchQuery => _searchQuery;
+
+  @override
+  void onInit() {
+    super.onInit();
+
+    // Frame-0 instant load from Hive cache
+    if (_storage != null && _searchQuery.isEmpty) {
+      final cached = _storage.getFeedList('event_list_feed');
+      if (cached.isNotEmpty) {
+        _eventList.assignAll(
+          cached
+              .map((e) => EventModel.fromJson(Map<String, dynamic>.from(e)))
+              .toList(),
+        );
+        _fetch.endFirstPage(markFetched: true);
+      }
+    }
+
+    if (Get.isRegistered<ConnectivityService>()) {
+      _reconnectSub = Get.find<ConnectivityService>().onReconnect.listen((_) {
+        fetchEvents(isRefresh: true);
+      });
+    }
+  }
 
   void onSearchChanged(String query) {
     _searchQuery = query;
@@ -49,6 +81,7 @@ class EventListController extends GetxController {
 
   @override
   void onClose() {
+    _reconnectSub?.cancel();
     _searchDebounce?.cancel();
     super.onClose();
   }
@@ -61,6 +94,12 @@ class EventListController extends GetxController {
     if (isRefresh || isSearch) {
       _currentPage = 1;
       _hasNextPage = true;
+    }
+
+    // Fast Offline Guard: short-circuit immediately if offline
+    if (ConnectivityService.isCurrentOffline && !isSearch) {
+      _fetch.endFirstPage(markFetched: true);
+      return;
     }
 
     if (isSearch) {
@@ -82,9 +121,21 @@ class EventListController extends GetxController {
       _eventList.assignAll(model.events);
       _hasNextPage = model.meta.hasNextPage;
       _fetch.endFirstPage();
+
+      if (_currentPage == 1 &&
+          _searchQuery.isEmpty &&
+          _storage != null &&
+          model.events.isNotEmpty) {
+        _storage.saveFeedList(
+          'event_list_feed',
+          model.events.map((e) => e.toJson()).toList(),
+        );
+      }
     } catch (e) {
-      _errorMessage.value = e.toString().replaceFirst('Exception: ', '');
-      _fetch.endFirstPage(markFetched: hasFetched);
+      if (_eventList.isEmpty) {
+        _errorMessage.value = e.toString().replaceFirst('Exception: ', '');
+      }
+      _fetch.endFirstPage(markFetched: hasFetched || _eventList.isNotEmpty);
     }
   }
 
@@ -95,6 +146,9 @@ class EventListController extends GetxController {
         isRefreshing) {
       return;
     }
+
+    // Fast Offline Guard: do not paginate when offline
+    if (ConnectivityService.isCurrentOffline) return;
 
     _fetch.beginLoadMore();
     _currentPage++;
