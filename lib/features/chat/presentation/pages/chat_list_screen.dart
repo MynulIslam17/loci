@@ -195,12 +195,24 @@ class _ChatListScreenState extends State<ChatListScreen> {
     final isOnline = ctrl.isUserActive(other);
     final isTyping = ctrl.isTyping(conv.id);
 
+    final isPending = conv.lastMessage?.status == 'sending';
+
     return Card(
-      elevation: 0.5,
+      elevation: isPending ? 1 : 0.5,
       clipBehavior: Clip.antiAlias,
       margin: const EdgeInsets.symmetric(vertical: 6),
-      color: colorScheme.surfaceContainer,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      color: isPending
+          ? colorScheme.surfaceContainerHighest.withOpacity(0.8)
+          : colorScheme.surfaceContainer,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: isPending
+            ? BorderSide(
+                color: const Color(0xFFF59E0B).withOpacity(0.4),
+                width: 1,
+              )
+            : BorderSide.none,
+      ),
       child: ListTile(
         contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         leading: ChatAvatar(
@@ -213,7 +225,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
           other?.name ?? 'Unknown',
           style: AppTextStyle.textMd(
             color: colorScheme.onSurface,
-            weight: unread > 0 ? FontWeight.w700 : FontWeight.w600,
+            weight: unread > 0 || isPending ? FontWeight.w700 : FontWeight.w600,
           ),
         ),
         subtitle: Row(
@@ -234,10 +246,12 @@ class _ChatListScreenState extends State<ChatListScreen> {
                         weight: FontWeight.w600,
                       ).copyWith(fontStyle: FontStyle.italic)
                     : AppTextStyle.textSm(
-                        color: unread > 0
-                            ? colorScheme.onSurface
-                            : colorScheme.onSurfaceVariant,
-                        weight: unread > 0
+                        color: isPending
+                            ? const Color(0xFFD97706)
+                            : (unread > 0
+                                ? colorScheme.onSurface
+                                : colorScheme.onSurfaceVariant),
+                        weight: unread > 0 || isPending
                             ? FontWeight.w600
                             : FontWeight.w400,
                       ),
@@ -250,16 +264,42 @@ class _ChatListScreenState extends State<ChatListScreen> {
           crossAxisAlignment: CrossAxisAlignment.end,
           mainAxisSize: MainAxisSize.min,
           children: [
-            // WhatsApp-style: the timestamp turns primary when unread.
-            Text(
-              _timeLabel(conv.lastActivityAt),
-              style: AppTextStyle.textXs(
-                color: unread > 0
-                    ? colorScheme.primary
-                    : colorScheme.onSurfaceVariant,
-                weight: unread > 0 ? FontWeight.w600 : FontWeight.w400,
+            if (isPending)
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF59E0B).withOpacity(0.16),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(
+                      Icons.access_time_rounded,
+                      size: 11,
+                      color: Color(0xFFD97706),
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      'Sending',
+                      style: AppTextStyle.textXs(
+                        color: const Color(0xFFD97706),
+                        weight: FontWeight.w700,
+                      ),
+                    ),
+                  ],
+                ),
+              )
+            else
+              Text(
+                _timeLabel(conv.lastActivityAt),
+                style: AppTextStyle.textXs(
+                  color: unread > 0
+                      ? colorScheme.primary
+                      : colorScheme.onSurfaceVariant,
+                  weight: unread > 0 ? FontWeight.w600 : FontWeight.w400,
+                ),
               ),
-            ),
             const SizedBox(height: 6),
             if (unread > 0)
               Container(
@@ -278,7 +318,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
                   ),
                 ),
               )
-            else
+            else if (!isPending)
               // Keeps row heights identical whether or not a badge shows.
               const SizedBox(height: 20),
           ],
@@ -337,11 +377,22 @@ class _ChatListScreenState extends State<ChatListScreen> {
 
   bool _lastMessageIsMine(ConversationModel conv) {
     final lm = conv.lastMessage;
-    return lm != null && !lm.isDeleted && lm.sender.id == _myId;
+    if (lm == null || lm.isDeleted) return false;
+    if (lm.status == 'sending') return true;
+    if (_myId.isNotEmpty && lm.sender.id == _myId) return true;
+    if (lm.sender.id == 'me') return true;
+    return false;
   }
 
-  /// ✓ sent, ✓✓ delivered, blue ✓✓ read — same flow as the message bubbles.
+  /// 🕒 sending, ✓ sent, ✓✓ delivered, blue ✓✓ read.
   Widget _statusTick(String status, ColorScheme colorScheme) {
+    if (status == 'sending') {
+      return const Icon(
+        Icons.access_time_rounded,
+        size: 13,
+        color: Color(0xFFD97706),
+      );
+    }
     if (status == 'read') {
       return const Icon(Icons.done_all, size: 15, color: Color(0xFF34B7F1));
     }

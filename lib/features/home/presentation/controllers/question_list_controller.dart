@@ -1,5 +1,8 @@
+import 'dart:async';
 import 'package:flutter/cupertino.dart';
 import 'package:get/get.dart';
+import 'package:loci/core/services/connectivity_service.dart';
+import 'package:loci/core/storage/hive_storage_service.dart';
 import 'package:loci/core/utils/paginated_list_fetch_state.dart';
 import 'package:loci/shared/models/pagination_model.dart';
 import 'package:loci/features/home/data/models/poll_option_model.dart';
@@ -8,9 +11,15 @@ import 'package:loci/features/home/data/models/voter_model.dart';
 import 'package:loci/features/home/domain/services/home_service.dart';
 
 class QuestionListController extends GetxController {
-  QuestionListController(this._service);
+  QuestionListController(this._service, [HiveStorageService? storage])
+      : _storage = storage ??
+            (Get.isRegistered<HiveStorageService>()
+                ? Get.find<HiveStorageService>()
+                : null);
 
   final HomeService _service;
+  final HiveStorageService? _storage;
+  StreamSubscription<void>? _reconnectSub;
 
   final Map<String, QuestionModel> _questionMap = {};
   final List<String> _questionIds = [];
@@ -23,14 +32,14 @@ class QuestionListController extends GetxController {
   final _meta = Rxn<PaginationMeta>();
   int _currentPage = 1;
 
+  final ScrollController scrollController = ScrollController();
+
+  RxBool get isLoading => _fetch.initialLoading;
+  RxBool get isPaginationLoading => _fetch.loadingMore;
   bool get isInitialLoading => _fetch.initialLoading.value;
   bool get isRefreshing => _fetch.refreshing.value;
   bool get showInitialShimmer => _fetch.showInitialShimmer;
   bool get hasFetched => _fetch.hasFetched.value;
-  RxBool get isLoading => _fetch.initialLoading;
-  RxBool get isPaginationLoading => _fetch.loadingMore;
-
-  final ScrollController scrollController = ScrollController();
 
   bool get hasMore => _meta.value?.hasNextPage ?? false;
 
@@ -40,6 +49,25 @@ class QuestionListController extends GetxController {
   void onInit() {
     super.onInit();
     scrollController.addListener(_onScroll);
+
+    // Frame-0 instant load from Hive cache
+    if (_storage != null) {
+      final cached = _storage.getFeedList('home_feed_questions');
+      if (cached.isNotEmpty) {
+        final models = cached
+            .map((e) => QuestionModel.fromJson(Map<String, dynamic>.from(e)))
+            .toList();
+        _append(models);
+        _syncQuestions();
+        _fetch.endFirstPage(markFetched: true);
+      }
+    }
+
+    if (Get.isRegistered<ConnectivityService>()) {
+      _reconnectSub = Get.find<ConnectivityService>().onReconnect.listen((_) {
+        fetchQuestions(isRefresh: true);
+      });
+    }
   }
 
   void _onScroll() {
@@ -51,6 +79,7 @@ class QuestionListController extends GetxController {
 
   @override
   void onClose() {
+    _reconnectSub?.cancel();
     scrollController.removeListener(_onScroll);
     scrollController.dispose();
     super.onClose();
@@ -68,6 +97,12 @@ class QuestionListController extends GetxController {
   Future<void> fetchQuestions({bool isRefresh = false}) async {
     if (isInitialLoading || isRefreshing) return;
 
+    // Fast Offline Guard: short-circuit immediately if offline
+    if (ConnectivityService.isCurrentOffline) {
+      _fetch.endFirstPage(markFetched: true);
+      return;
+    }
+
     if (isRefresh) {
       _currentPage = 1;
     }
@@ -76,8 +111,8 @@ class QuestionListController extends GetxController {
     errorMessage.value = null;
 
     try {
-      final result = await _service.getQuestions(page: _currentPage, limit: 4);
-      if (isRefresh) {
+      final result = await _service.getQuestions(page: _currentPage, limit: 20);
+      if (isRefresh || _currentPage == 1) {
         _questionIds.clear();
         _questionMap.clear();
       }
@@ -85,9 +120,18 @@ class QuestionListController extends GetxController {
       _meta.value = result.meta;
       _syncQuestions();
       _fetch.endFirstPage();
+
+      if (_currentPage == 1 && _storage != null && result.data.isNotEmpty) {
+        _storage.saveFeedList(
+          'home_feed_questions',
+          result.data.map((q) => q.toJson()).toList(),
+        );
+      }
     } catch (e) {
-      errorMessage.value = e.toString().replaceFirst('Exception: ', '');
-      _fetch.endFirstPage(markFetched: hasFetched);
+      if (questions.isEmpty) {
+        errorMessage.value = e.toString().replaceFirst('Exception: ', '');
+      }
+      _fetch.endFirstPage(markFetched: hasFetched || questions.isNotEmpty);
     }
   }
 
@@ -96,11 +140,14 @@ class QuestionListController extends GetxController {
       return;
     }
 
+    // Fast Offline Guard: do not attempt pagination when offline
+    if (ConnectivityService.isCurrentOffline) return;
+
     try {
       _fetch.beginLoadMore();
       _currentPage++;
 
-      final result = await _service.getQuestions(page: _currentPage, limit: 10);
+      final result = await _service.getQuestions(page: _currentPage, limit: 20);
       _append(result.data);
       _meta.value = result.meta;
       _syncQuestions();

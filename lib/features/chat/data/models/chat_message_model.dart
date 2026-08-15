@@ -134,6 +134,27 @@ class ChatMessageModel {
       },
     );
   }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'conversationId': conversationId,
+      'sender': sender.toJson(),
+      if (content != null) 'content': content,
+      'attachments': attachments.map((e) => e.toJson()).toList(),
+      'reactions': reactions.map((e) => e.toJson()).toList(),
+      'isEdited': isEdited,
+      'isDeleted': isDeleted,
+      'status': status,
+      if (createdAt != null) 'createdAt': createdAt,
+      if (editedAt != null) 'editedAt': editedAt,
+      if (unsendableUntil != null) 'unsendableUntil': unsendableUntil,
+      if (editableUntil != null) 'editableUntil': editableUntil,
+      if (canUnsendFlag != null) 'canUnsend': canUnsendFlag,
+      if (canEditFlag != null) 'canEdit': canEditFlag,
+      if (replyTo != null) 'replyTo': replyTo!.toJson(),
+    };
+  }
 }
 
 /// Minimal quoted-message preview attached to replies.
@@ -148,6 +169,13 @@ class ChatReplyPreview {
       id: (json['id'] ?? json['_id'] ?? '').toString(),
       content: json['content']?.toString(),
     );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      if (content != null) 'content': content,
+    };
   }
 }
 
@@ -164,6 +192,14 @@ class ChatAttachment {
       type: json['type'] ?? 'file',
       originalName: json['originalName'],
     );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'url': url,
+      'type': type,
+      if (originalName != null) 'originalName': originalName,
+    };
   }
 }
 
@@ -182,5 +218,12 @@ class ChatReaction {
           : (user ?? '').toString(),
       emoji: json['emoji'] ?? '',
     );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'user': userId,
+      'emoji': emoji,
+    };
   }
 }

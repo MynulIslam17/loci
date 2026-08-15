@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:loci/core/constants/app_text_style.dart';
+import 'package:loci/core/services/connectivity_service.dart';
 import 'package:loci/core/utils/app_error_messages.dart';
 
 import '../theme/app_colors.dart';
@@ -166,6 +167,19 @@ class SnackbarService {
   }
 
   static void error(String message, {String? title, VoidCallback? onRetry}) {
+    // If the device is offline, the persistent floating pill already communicates offline status.
+    // Suppress redundant error snackbars.
+    if (ConnectivityService.isCurrentOffline) {
+      final lower = message.toLowerCase();
+      if (lower.contains('internet') ||
+          lower.contains('network') ||
+          lower.contains('socketexception') ||
+          lower.contains('connection') ||
+          lower.contains('went wrong')) {
+        return;
+      }
+    }
+
     final friendly = AppErrorMessages.sanitize(message);
 
     if (errorInterceptor?.call(friendly) ?? false) return;

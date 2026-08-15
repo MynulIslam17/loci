@@ -21,7 +21,7 @@ class MainAppBar extends StatelessWidget implements PreferredSizeWidget {
 
   String _firstName(String? fullName) {
     if (fullName == null || fullName.trim().isEmpty) return 'there';
-    return fullName.trim().split(' ').first;
+    return fullName.trim().split(RegExp(r'\s+')).first;
   }
 
   @override
@@ -43,6 +43,7 @@ class MainAppBar extends StatelessWidget implements PreferredSizeWidget {
         surfaceTintColor: Colors.transparent,
         scrolledUnderElevation: 3,
         toolbarHeight: _toolbarHeight,
+        titleSpacing: isDrawerOpen ? null : 4,
         leading: isDrawerOpen
             ? IconButton(
                 onPressed: navController.closeDrawer,
@@ -54,24 +55,44 @@ class MainAppBar extends StatelessWidget implements PreferredSizeWidget {
                   icon: const Icon(Icons.menu_rounded),
                 ),
               ),
-        title: Text(
-          isDrawerOpen && drawerTitle.isNotEmpty
-              ? drawerTitle
-              : "Hello ${_firstName(authController.userModel?.name)} !",
-          style: AppTextStyle.textLg(
-            color: context.colorScheme.onSurface,
-            weight: FontWeight.w600,
-          ),
-        ),
+        title: isDrawerOpen && drawerTitle.isNotEmpty
+            ? Text(
+                drawerTitle,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: AppTextStyle.textLg(
+                  color: context.colorScheme.onSurface,
+                  weight: FontWeight.w600,
+                ),
+              )
+            : FittedBox(
+                fit: BoxFit.scaleDown,
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  "Hello ${_firstName(authController.userModel?.name)} !",
+                  maxLines: 1,
+                  softWrap: false,
+                  style: AppTextStyle.textLg(
+                    color: context.colorScheme.onSurface,
+                    weight: FontWeight.w600,
+                  ),
+                ),
+              ),
         actions: isDrawerOpen
             ? null
             : [
                 IconButton(
+                  visualDensity: VisualDensity.compact,
+                  constraints: const BoxConstraints(minWidth: 38, minHeight: 38),
+                  padding: const EdgeInsets.symmetric(horizontal: 4),
                   onPressed: () =>
                       showSearch(context: context, delegate: MySearchDelegate()),
                   icon: const Icon(Icons.search_rounded),
                 ),
                 IconButton(
+                  visualDensity: VisualDensity.compact,
+                  constraints: const BoxConstraints(minWidth: 38, minHeight: 38),
+                  padding: const EdgeInsets.symmetric(horizontal: 4),
                   onPressed: () => Get.toNamed(AppRoutes.chatList),
                   icon: Badge.count(
                     count: chatListController.totalUnread,
@@ -80,10 +101,13 @@ class MainAppBar extends StatelessWidget implements PreferredSizeWidget {
                   ),
                 ),
                 IconButton(
+                  visualDensity: VisualDensity.compact,
+                  constraints: const BoxConstraints(minWidth: 38, minHeight: 38),
+                  padding: const EdgeInsets.symmetric(horizontal: 4),
                   onPressed: () => Get.toNamed(AppRoutes.notification),
                   icon: const Icon(Icons.notifications_outlined),
                 ),
-                const SizedBox(width: 4),
+                const SizedBox(width: 6),
               ],
       );
     });

@@ -19,4 +19,11 @@ class DashboardCounts {
       totalCheckIns: json['totalCheckIns'] ?? 0,
     );
   }
+
+  Map<String, dynamic> toJson() => {
+    'connections': connections,
+    'upcomingMeetings': upcomingMeetings,
+    'referralsSent': referralsSent,
+    'totalCheckIns': totalCheckIns,
+  };
 }

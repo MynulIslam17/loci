@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
 import 'package:loci/core/constants/app_text_style.dart';
+import 'package:loci/core/services/connectivity_service.dart';
 import 'package:loci/core/enums/category_enum.dart';
 import 'package:loci/core/theme/theme_extention.dart';
 import 'package:loci/core/utils/show_snackbar.dart';
@@ -362,6 +363,11 @@ class _HomeScreenState extends State<HomeScreen> {
 
                 if (controller.showInitialShimmer) {
                   return const HomeShimmer();
+                }
+                if (controller.questions.isEmpty && ConnectivityService.isCurrentOffline) {
+                  return ErrorStateWidget.noInternet(
+                    onRetry: () => controller.fetchQuestions(isRefresh: true),
+                  );
                 }
                 if (controller.errorMessage.value != null &&
                     controller.questions.isEmpty) {

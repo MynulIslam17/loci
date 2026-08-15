@@ -32,4 +32,14 @@ class ChatUserModel {
       online: map['online'] is bool ? map['online'] as bool : null,
     );
   }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'name': name,
+      if (avatar != null) 'avatar': avatar,
+      if (lastSeen != null) 'lastSeen': lastSeen,
+      if (online != null) 'online': online,
+    };
+  }
 }

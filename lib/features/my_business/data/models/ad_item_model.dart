@@ -28,4 +28,14 @@ class AdItemModel {
       isFallback: json['isFallback'] == true,
     );
   }
+
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'title': title,
+    'businessName': businessName,
+    'location': location,
+    'imageUrl': imageUrl,
+    'linkUrl': linkUrl,
+    'isFallback': isFallback,
+  };
 }
