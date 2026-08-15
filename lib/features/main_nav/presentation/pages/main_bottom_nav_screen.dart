@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import 'package:loci/core/theme/theme_extention.dart';
 import 'package:loci/features/main_nav/presentation/controllers/nav_controller.dart';
 import 'package:loci/features/main_nav/presentation/widgets/app_navigation_drawer.dart';
+import 'package:loci/features/main_nav/presentation/widgets/ios_glass_bottom_nav_bar.dart';
 import 'package:loci/features/main_nav/presentation/widgets/main_app_bar.dart';
 import 'package:loci/features/main_nav/presentation/widgets/main_bottom_nav_bar.dart';
 
@@ -44,10 +45,13 @@ class _MainBottomNavState extends State<MainBottomNav> {
     // Free vertical space for composers (home/community post field) so the
     // keyboard does not trap the expanded poll/post toolbar under the nav bar.
     final keyboardOpen = MediaQuery.viewInsetsOf(context).bottom > 0;
+    final isIOS = Theme.of(context).platform == TargetPlatform.iOS;
 
     return Scaffold(
       backgroundColor: context.colorScheme.surface,
       resizeToAvoidBottomInset: true,
+      // iOS glass bar is overlaid so tab content can show through it.
+      extendBody: isIOS,
 
       /// Left drawer menu
       drawer: const AppNavigationDrawer(),
@@ -56,11 +60,56 @@ class _MainBottomNavState extends State<MainBottomNav> {
       appBar: const MainAppBar(),
 
       /// Main screen body
-      body: _buildBody(context),
+      body: isIOS
+          ? _buildIosBody(context, keyboardOpen: keyboardOpen)
+          : _buildBody(context),
 
-      /// Bottom navigation bar — hide while typing so the composer can sit
-      /// above the keyboard.
-      bottomNavigationBar: keyboardOpen ? null : const MainBottomNavBar(),
+      /// Android keeps the existing Material bar. iOS overlays the native
+      /// glass tab bar on the body instead so content can bleed through.
+      bottomNavigationBar: (!isIOS && !keyboardOpen)
+          ? const MainBottomNavBar()
+          : null,
+    );
+  }
+
+  /// Native glass tab bar sits on top of the tabs (sample pattern) so the
+  /// Liquid Glass can sample the screen behind it.
+  Widget _buildIosBody(BuildContext context, {required bool keyboardOpen}) {
+    return Stack(
+      children: [
+        Positioned.fill(
+          child: _withIosTabInset(
+            context,
+            keyboardOpen: keyboardOpen,
+            child: _buildBody(context),
+          ),
+        ),
+        if (!keyboardOpen)
+          const Align(
+            alignment: Alignment.bottomCenter,
+            child: IosGlassBottomNavBar(),
+          ),
+      ],
+    );
+  }
+
+  /// Lets lists / SafeArea keep last items above the glass bar without
+  /// covering the pixels the bar needs to blur.
+  Widget _withIosTabInset(
+    BuildContext context, {
+    required bool keyboardOpen,
+    required Widget child,
+  }) {
+    if (keyboardOpen) return child;
+    final mq = MediaQuery.of(context);
+    return MediaQuery(
+      data: mq.copyWith(
+        padding: mq.padding.copyWith(bottom: IosGlassBottomNavBar.height),
+        viewPadding: mq.viewPadding.copyWith(
+          bottom: IosGlassBottomNavBar.height,
+        ),
+      ),
+      child: child,
     );
   }
 

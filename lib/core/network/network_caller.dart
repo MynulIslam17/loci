@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart';
 import 'package:http/http.dart' as http;
 import 'package:logger/logger.dart';
+import 'package:loci/core/services/connectivity_service.dart';
 import 'package:loci/core/utils/app_error_messages.dart';
 import 'package:loci/core/utils/image_upload_preparer.dart';
 import 'network_response.dart';
@@ -17,6 +18,21 @@ class NetworkCaller {
   final String Function() accessToken;
 
   NetworkCaller({required this.onUnAuthorize, required this.accessToken});
+
+  /// Instagram / Facebook rule: if we already know the radio is down, do not
+  /// open a socket. Likes still flip in the UI then revert from this failure;
+  /// comments and other writes fail immediately instead of hanging ~30s.
+  static const int offlineStatusCode = 0;
+
+  NetworkResponse? _offlineResponse() {
+    if (!ConnectivityService.isCurrentOffline) return null;
+    _logger.d('Skipped request — device is offline');
+    return NetworkResponse(
+      isSuccess: false,
+      statusCode: offlineStatusCode,
+      errorMessage: AppErrorMessages.noInternet,
+    );
+  }
 
   // ===========================================================
   // CENTRAL STATUS CODE → ERROR MESSAGE RESOLVER
@@ -91,6 +107,8 @@ class NetworkCaller {
     required String url,
     Map<String, dynamic>? queryParams,
   }) async {
+    final offline = _offlineResponse();
+    if (offline != null) return offline;
     try {
       Uri uri = Uri.parse(url);
 
@@ -148,6 +166,9 @@ class NetworkCaller {
 
   /// GET whose successful body is plain text (e.g. CSV export).
   Future<String> getTextBody({required String url}) async {
+    if (ConnectivityService.isCurrentOffline) {
+      throw Exception(AppErrorMessages.noInternet);
+    }
     try {
       final uri = Uri.parse(url);
       final token = accessToken();
@@ -186,6 +207,8 @@ class NetworkCaller {
     bool isFromLogin = false,
     String? overrideToken,
   }) async {
+    final offline = _offlineResponse();
+    if (offline != null) return offline;
     try {
       final uri = Uri.parse(url);
       final token = overrideToken ?? accessToken();
@@ -241,6 +264,8 @@ class NetworkCaller {
     Map<String, dynamic>? body,
     bool isFromLogin = false,
   }) async {
+    final offline = _offlineResponse();
+    if (offline != null) return offline;
     try {
       final uri = Uri.parse(url);
       final token = accessToken();
@@ -295,6 +320,8 @@ class NetworkCaller {
     Map<String, dynamic>? body,
     bool isFromLogin = false,
   }) async {
+    final offline = _offlineResponse();
+    if (offline != null) return offline;
     try {
       final uri = Uri.parse(url);
       final token = accessToken();
@@ -349,6 +376,8 @@ class NetworkCaller {
     Map<String, dynamic>? body,
     bool isFromLogin = false,
   }) async {
+    final offline = _offlineResponse();
+    if (offline != null) return offline;
     try {
       final uri = Uri.parse(url);
       final token = accessToken();
@@ -407,6 +436,8 @@ class NetworkCaller {
     Map<String, List<File>>? multiFiles, // for multiple files with the same key
     bool isFromLogin = false,
   }) async {
+    final offline = _offlineResponse();
+    if (offline != null) return offline;
     try {
       final uri = Uri.parse(url);
       final token = accessToken();
