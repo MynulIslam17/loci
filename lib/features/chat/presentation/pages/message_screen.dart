@@ -12,7 +12,6 @@ import 'package:loci/features/chat/presentation/controllers/chat_controller.dart
 import 'package:loci/features/chat/presentation/controllers/chat_list_controller.dart';
 import 'package:loci/features/chat/presentation/widgets/chat_avatar.dart';
 import 'package:loci/shared/widgets/empty_state.dart';
-import 'package:loci/shared/widgets/error_state.dart';
 
 class MessageScreen extends StatefulWidget {
   const MessageScreen({super.key});

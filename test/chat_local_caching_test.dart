@@ -674,7 +674,7 @@ void main() {
       // 1. User sends message offline
       controller.sendMessage('Offline message test');
       expect(controller.messages.length, 1);
-      final tempId = controller.messages.first.id;
+      expect(controller.messages.first.id, isNotEmpty);
 
       // 2. Server has the message in DB with real server ID
       fakeService.messagesToReturn = [
