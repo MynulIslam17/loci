@@ -10,6 +10,7 @@ import 'package:loci/features/chat/presentation/widgets/chat_avatar.dart';
 import 'package:loci/features/chat/presentation/widgets/chat_list_shimmer.dart';
 import 'package:loci/features/chat/presentation/widgets/new_chat_sheet.dart';
 import 'package:loci/shared/widgets/adaptive_refresh.dart';
+import 'package:loci/shared/widgets/confirm_dialog.dart';
 import 'package:loci/shared/widgets/custom_appbar.dart';
 import 'package:loci/routes/app_routes.dart';
 import 'package:loci/shared/widgets/custom_text_field.dart';
@@ -342,38 +343,22 @@ class _ChatListScreenState extends State<ChatListScreen> {
     );
   }
 
-  void _confirmDelete(
+  Future<void> _confirmDelete(
     BuildContext context,
     ChatListController ctrl,
     ConversationModel conv,
     String? otherName,
-  ) {
-    showDialog(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: const Text('Delete conversation?'),
-        content: Text(
+  ) async {
+    final confirmed = await showConfirmDialog(
+      context,
+      title: 'Delete conversation?',
+      message:
           'This hides the chat with ${otherName ?? 'this user'} for you. '
           'A new message will start the conversation again.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(dialogContext),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () {
-              Navigator.pop(dialogContext);
-              ctrl.deleteConversation(conv.id);
-            },
-            child: Text(
-              'Delete',
-              style: TextStyle(color: Theme.of(context).colorScheme.error),
-            ),
-          ),
-        ],
-      ),
+      confirmText: 'Delete',
+      isDestructive: true,
     );
+    if (confirmed) ctrl.deleteConversation(conv.id);
   }
 
   bool _lastMessageIsMine(ConversationModel conv) {

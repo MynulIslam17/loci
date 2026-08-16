@@ -13,6 +13,7 @@ import 'package:loci/features/recent_activity/presentation/widgets/question_acti
 import 'package:loci/features/recent_activity/presentation/widgets/recent_activity_shimmer.dart';
 import 'package:loci/features/recent_activity/presentation/widgets/review_activity_card.dart';
 import 'package:loci/shared/widgets/adaptive_refresh.dart';
+import 'package:loci/shared/widgets/confirm_dialog.dart';
 import 'package:loci/shared/widgets/custom_appbar.dart';
 import 'package:loci/shared/widgets/custom_text_field.dart';
 import 'package:loci/shared/widgets/empty_state.dart';
@@ -217,24 +218,13 @@ class _RecentActivityState extends State<RecentActivity>
                   lastVisited: visitedLabel,
                   isDeleting: _removeCtrl.isLoading(item.id),
                   onDelete: () async {
-                    final confirmed = await showDialog<bool>(
-                      context: context,
-                      builder: (ctx) => AlertDialog(
-                        title: const Text('Remove business?'),
-                        content: Text(
+                    final confirmed = await showConfirmDialog(
+                      context,
+                      title: 'Remove business?',
+                      message:
                           'Remove "${item.businessName}" from your saved list?',
-                        ),
-                        actions: [
-                          TextButton(
-                            onPressed: () => Navigator.pop(ctx, false),
-                            child: const Text('Cancel'),
-                          ),
-                          TextButton(
-                            onPressed: () => Navigator.pop(ctx, true),
-                            child: const Text('Remove'),
-                          ),
-                        ],
-                      ),
+                      confirmText: 'Remove',
+                      isDestructive: true,
                     );
                     if (confirmed != true) return;
 

@@ -57,6 +57,48 @@ Future<bool> showConfirmDialog(
   return result ?? false;
 }
 
+/// Single-action alert. iOS uses [CupertinoAlertDialog]; Android uses Material.
+Future<void> showInfoDialog(
+  BuildContext context, {
+  required String title,
+  required String message,
+  String buttonText = 'OK',
+}) {
+  if (context.isCupertino) {
+    return showCupertinoDialog<void>(
+      context: context,
+      builder: (dialogContext) => CupertinoAlertDialog(
+        title: Text(title),
+        content: Padding(
+          padding: const EdgeInsets.only(top: 8),
+          child: Text(message),
+        ),
+        actions: [
+          CupertinoDialogAction(
+            isDefaultAction: true,
+            onPressed: () => Navigator.pop(dialogContext),
+            child: Text(buttonText),
+          ),
+        ],
+      ),
+    );
+  }
+
+  return showDialog<void>(
+    context: context,
+    builder: (dialogContext) => AlertDialog(
+      title: Text(title),
+      content: Text(message),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(dialogContext),
+          child: Text(buttonText),
+        ),
+      ],
+    ),
+  );
+}
+
 class _ConfirmDialog extends StatelessWidget {
   const _ConfirmDialog({
     required this.title,

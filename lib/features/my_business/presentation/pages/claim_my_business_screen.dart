@@ -9,6 +9,7 @@ import 'package:loci/core/utils/show_snackbar.dart';
 import 'package:loci/features/my_business/data/models/business_claim_request_model.dart';
 import 'package:loci/features/my_business/data/models/create_business_request_model.dart';
 import 'package:loci/features/my_business/presentation/controllers/business_claim_controller.dart';
+import 'package:loci/shared/widgets/confirm_dialog.dart';
 import 'package:loci/shared/widgets/custom_button.dart';
 import 'package:loci/shared/widgets/custom_dropdown.dart';
 import 'package:loci/shared/widgets/custom_image_container.dart';
@@ -317,39 +318,20 @@ class _ClamMyBusinessState extends State<ClamMyBusiness> {
         ),
         const SizedBox(width: 4),
         GestureDetector(
-          onTap: () => _showInfoDialog(scheme, brandColor),
+          onTap: _showInfoDialog,
           child: Icon(Icons.help_outline, size: 16, color: brandColor),
         ),
       ],
     );
   }
 
-  void _showInfoDialog(ColorScheme scheme, Color brandColor) {
-    showDialog(
-      context: context,
-      builder: (_) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: Row(
-          children: [
-            Icon(Icons.info_outline, color: brandColor, size: 20),
-            const SizedBox(width: 8),
-            Text(
-              'Proof of Ownership',
-              style: AppTextStyle.textSm(weight: FontWeight.w600),
-            ),
-          ],
-        ),
-        content: Text(
+  void _showInfoDialog() {
+    showInfoDialog(
+      context,
+      title: 'Proof of Ownership',
+      message:
           'Upload business license, utility bill, or other ownership documents.',
-          style: AppTextStyle.textXs(color: scheme.onSurfaceVariant),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Got it'),
-          ),
-        ],
-      ),
+      buttonText: 'Got it',
     );
   }
 
