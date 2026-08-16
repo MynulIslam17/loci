@@ -43,7 +43,6 @@ class BusinessRafflesListController extends GetxController with ExploreTabListCa
     _searchQuery = trimmed;
     _currentPage = 1;
     hasMore.value = true;
-    clearTabCache();
     await fetchRaffles(businessId: businessId, forceRefresh: true);
   }
 
@@ -132,6 +131,7 @@ class BusinessRafflesListController extends GetxController with ExploreTabListCa
         businessId,
         errorMessage: errorMessage.value,
         search: _searchQuery,
+        hasItems: raffleList.isNotEmpty,
       );
 
   bool showEmptyState(String businessId) {

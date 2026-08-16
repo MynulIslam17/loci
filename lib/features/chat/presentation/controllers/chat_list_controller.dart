@@ -83,18 +83,37 @@ class ChatListController extends GetxController {
   void _loadFromLocalCache() {
     final cached = _storage.getCachedConversations();
     if (cached.isNotEmpty) {
-      final decorated = cached.map((c) {
-        final pending = _storage.getPendingMessages(c.id);
-        if (pending.isNotEmpty) {
-          return c.copyWith(lastMessage: pending.last);
-        }
-        return c;
-      }).toList();
-
-      conversations.assignAll(decorated);
+      conversations.assignAll(_decorateWithPending(cached));
       _seedPresence(cached);
       _fetch.endFirstPage(markFetched: true);
     }
+  }
+
+  /// Conversation-list preview is the last queued outbox text while offline,
+  /// even if REST still has the older server lastMessage.
+  List<ConversationModel> _decorateWithPending(List<ConversationModel> items) {
+    final decorated = items.map((c) {
+      final pending = _storage.getPendingMessages(c.id);
+      if (pending.isEmpty) return c;
+      final last = pending.last;
+      return c.copyWith(
+        lastMessage: last,
+        lastActivityAt: last.createdAt ?? c.lastActivityAt,
+      );
+    }).toList();
+
+    decorated.sort((a, b) {
+      final ta = DateTime.tryParse(
+            a.lastActivityAt ?? a.lastMessage?.createdAt ?? '',
+          ) ??
+          DateTime.fromMillisecondsSinceEpoch(0);
+      final tb = DateTime.tryParse(
+            b.lastActivityAt ?? b.lastMessage?.createdAt ?? '',
+          ) ??
+          DateTime.fromMillisecondsSinceEpoch(0);
+      return tb.compareTo(ta);
+    });
+    return decorated;
   }
 
   void _bindSocket() {
@@ -109,9 +128,22 @@ class ChatListController extends GetxController {
   }
 
   void onAckReceived(MessageAck ack) {
+    final convId = ack.message.conversationId;
     if (ack.tempId != null) {
-      _storage.removePendingMessage(ack.message.conversationId, ack.tempId!);
+      _storage.removePendingMessage(convId, ack.tempId!);
     }
+
+    final remaining = convId.isEmpty
+        ? const <ChatMessageModel>[]
+        : _storage.getPendingMessages(convId);
+
+    if (remaining.isNotEmpty) {
+      // Mid-queue ack: keep the list preview on the last queued text.
+      _storage.appendOrUpdateMessage(convId, ack.message, tempId: ack.tempId);
+      _onIncomingMessage(remaining.last);
+      return;
+    }
+
     _onIncomingMessage(ack.message);
   }
 
@@ -133,7 +165,7 @@ class ChatListController extends GetxController {
       );
       _page = 1;
       hasMore.value = result.hasNextPage;
-      conversations.assignAll(result.conversations);
+      conversations.assignAll(_decorateWithPending(result.conversations));
       _storage.saveConversations(result.conversations);
       _seedPresence(result.conversations);
       _fetch.endFirstPage();
@@ -164,6 +196,7 @@ class ChatListController extends GetxController {
       conversations.addAll(
         result.conversations.where((c) => !known.contains(c.id)),
       );
+      conversations.assignAll(_decorateWithPending(conversations.toList()));
       _storage.saveConversations(conversations.toList());
       _seedPresence(result.conversations);
     } catch (e) {
@@ -236,9 +269,11 @@ class ChatListController extends GetxController {
 
     final existing = conversations[idx];
     final fromMe = msg.sender.id == _myId;
+    final pending = _storage.getPendingMessages(msg.conversationId);
+    final preview = pending.isNotEmpty ? pending.last : msg;
     final updated = existing.copyWith(
-      lastMessage: msg,
-      lastActivityAt: msg.createdAt ?? existing.lastActivityAt,
+      lastMessage: preview,
+      lastActivityAt: preview.createdAt ?? msg.createdAt ?? existing.lastActivityAt,
       unreadCount: fromMe ? existing.unreadCount : existing.unreadCount + 1,
     );
 

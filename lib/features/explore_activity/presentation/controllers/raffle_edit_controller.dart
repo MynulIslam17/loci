@@ -13,7 +13,7 @@ import 'package:loci/features/explore_activity/domain/services/explore_activity_
 import 'package:loci/features/explore_activity/presentation/controllers/business_raffle_details_controller.dart';
 import 'package:loci/features/explore_activity/presentation/controllers/explore_activity_edit_form.dart';
 import 'package:loci/features/explore_activity/presentation/widgets/create_activity_task_sheet.dart';
-import 'package:loci/shared/widgets/file_picker.dart';
+import 'package:loci/shared/widgets/app_image_picker.dart';
 
 class RaffleEditController extends GetxController {
   RaffleEditController(this._service);
@@ -324,14 +324,12 @@ class RaffleEditController extends GetxController {
     }
   }
 
-  Future<void> pickCouponFile() async {
-    try {
-      final file = await AppFilePicker.pickImage();
-      if (file == null) return;
-      setCoupon(file);
-    } catch (e) {
-      SnackbarService.error(e.toString().replaceFirst('Exception: ', ''));
-    }
+  Future<void> pickCouponFile(BuildContext context) async {
+    await AppImagePicker.pickOne(
+      context: context,
+      kind: ImageUploadKind.normal,
+      onSelected: setCoupon,
+    );
   }
 
   void openAddTaskSheet(BuildContext context) {

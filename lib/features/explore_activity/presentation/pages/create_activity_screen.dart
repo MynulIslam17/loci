@@ -90,7 +90,7 @@ class CreateActivityScreen extends GetView<CreateActivityController> {
                     rafflePrizeImage: controller.rafflePrizeImage.value,
                     tasks: controller.tasks.toList(),
                     onPickRange: () => controller.pickRaffleRange(context),
-                    onPickCoupon: controller.pickRaffleCoupon,
+                    onPickCoupon: () => controller.pickRaffleCoupon(context),
                     onClearCoupon: controller.clearRafflePrize,
                     onAddRequirement: () =>
                         controller.openAddTaskSheet(context),

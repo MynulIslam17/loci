@@ -32,6 +32,7 @@ class RouteListController extends GetxController {
   String get searchQuery => _searchQuery;
 
   void onSearchChanged(String query) {
+    if (query == _searchQuery) return;
     _searchQuery = query;
     _searchDebounce?.cancel();
     _searchDebounce = Timer(const Duration(milliseconds: 400), () {
@@ -62,9 +63,7 @@ class RouteListController extends GetxController {
     }
 
     if (isSearch) {
-      _fetch.initialLoading.value = true;
-      _fetch.refreshing.value = false;
-      _fetch.hasFetched.value = false;
+      _fetch.beginFirstPage(isRefresh: _routeList.isNotEmpty);
     } else {
       _fetch.beginFirstPage(isRefresh: isRefresh);
     }

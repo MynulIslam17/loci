@@ -21,12 +21,21 @@ class AppFilePicker {
   }) async {
     final result = await FilePicker.platform.pickFiles(
       type: type,
+      withData: Platform.isIOS,
       allowedExtensions: type == FileType.custom
           ? (allowedExtensions ?? defaultExtensions)
           : null,
     );
 
-    final path = result?.files.single.path;
+    final picked = result?.files.single;
+    if (picked == null) return null;
+    if (picked.bytes != null && picked.bytes!.isNotEmpty) {
+      return ImageUploadPreparer.fromBytes(
+        picked.bytes!,
+        sourcePath: picked.name,
+      );
+    }
+    final path = picked.path;
     if (path == null) return null;
     return ImageUploadPreparer.fromAnyPickedFile(File(path));
   }

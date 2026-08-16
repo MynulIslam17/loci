@@ -22,6 +22,7 @@ class _ActiveRafflesPageState extends State<ActiveRafflesPage> {
   final raffleListController = Get.find<RaffleListController>();
   final ScrollController _scrollController = ScrollController();
   final TextEditingController _searchController = TextEditingController();
+  final FocusNode _searchFocus = FocusNode();
 
   @override
   void initState() {
@@ -42,6 +43,7 @@ class _ActiveRafflesPageState extends State<ActiveRafflesPage> {
   @override
   void dispose() {
     _scrollController.dispose();
+    _searchFocus.dispose();
     _searchController.dispose();
     raffleListController.clearSearch();
     super.dispose();
@@ -53,7 +55,44 @@ class _ActiveRafflesPageState extends State<ActiveRafflesPage> {
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16.0),
-      child: RefreshIndicator(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const SizedBox(height: 16),
+          CustomTextField(
+            controller: _searchController,
+            focusNode: _searchFocus,
+            hintText: "Search Raffle",
+            borderColor: colorScheme.outline,
+            fontSize: 14,
+            textColor: colorScheme.onSurface,
+            hintTextColor: colorScheme.onSurfaceVariant,
+            onChanged: raffleListController.onSearchChanged,
+            showClearButton: true,
+            onClear: () {
+              _searchController.clear();
+              raffleListController.clearSearch();
+            },
+            suffixIcon: Icon(
+              Icons.search,
+              color: colorScheme.onSurfaceVariant,
+            ),
+          ),
+          const SizedBox(height: 24),
+          Text(
+            "Active Raffles",
+            style: AppTextStyle.textXl(weight: FontWeight.w600),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            "Check in to locations to enter and win prizes",
+            style: AppTextStyle.textSm(
+              color: colorScheme.onSurfaceVariant,
+            ),
+          ),
+          const SizedBox(height: 20),
+          Expanded(
+            child: RefreshIndicator(
         onRefresh: () async {
           if (!raffleListController.isInitialLoading &&
               !raffleListController.isRefreshing) {
@@ -71,50 +110,12 @@ class _ActiveRafflesPageState extends State<ActiveRafflesPage> {
 
           return CustomScrollView(
             controller: _scrollController,
-            keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
             physics: const AlwaysScrollableScrollPhysics(),
             slivers: [
-              SliverToBoxAdapter(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const SizedBox(height: 16),
-                    CustomTextField(
-                      controller: _searchController,
-                      hintText: "Search Raffle",
-                      borderColor: colorScheme.outline,
-                      fontSize: 14,
-                      textColor: colorScheme.onSurface,
-                      hintTextColor: colorScheme.onSurfaceVariant,
-                      onChanged: controller.onSearchChanged,
-                      showClearButton: true,
-                      onClear: () {
-                        _searchController.clear();
-                        FocusScope.of(context).unfocus();
-                        controller.clearSearch();
-                      },
-                      suffixIcon: Icon(
-                        Icons.search,
-                        color: colorScheme.onSurfaceVariant,
-                      ),
-                    ),
-                    const SizedBox(height: 24),
-                    Text(
-                      "Active Raffles",
-                      style: AppTextStyle.textXl(weight: FontWeight.w600),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      "Check in to locations to enter and win prizes",
-                      style: AppTextStyle.textSm(
-                        color: colorScheme.onSurfaceVariant,
-                      ),
-                    ),
-                    const SizedBox(height: 20),
-                  ],
+              if (controller.isRefreshing)
+                const SliverToBoxAdapter(
+                  child: LinearProgressIndicator(minHeight: 2),
                 ),
-              ),
-
               if (isInitialLoading)
                 SliverList(
                   delegate: SliverChildBuilderDelegate(
@@ -186,6 +187,9 @@ class _ActiveRafflesPageState extends State<ActiveRafflesPage> {
             ],
           );
         }),
+          ),
+          ),
+        ],
       ),
     );
   }

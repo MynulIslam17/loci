@@ -855,6 +855,139 @@ void main() {
 
       controller.onClose();
     });
+
+    test('fetchConversations keeps last queued outbox text as list preview', () async {
+      hiveService.saveConversations([
+        ConversationModel(
+          id: 'conv_queue',
+          otherParticipant: ChatUserModel(id: 'u2', name: 'Bob'),
+          lastMessage: ChatMessageModel(
+            id: 'old_server',
+            conversationId: 'conv_queue',
+            sender: ChatUserModel(id: 'u2', name: 'Bob'),
+            content: 'Old server preview',
+            createdAt: '2026-08-15T10:00:00.000Z',
+          ),
+          lastActivityAt: '2026-08-15T10:00:00.000Z',
+        ),
+      ]);
+      hiveService.addPendingMessage(
+        'conv_queue',
+        ChatMessageModel(
+          id: 'temp_q1',
+          conversationId: 'conv_queue',
+          sender: ChatUserModel(id: 'my_user_id', name: 'Me'),
+          content: 'Queued first',
+          status: 'sending',
+          createdAt: '2026-08-15T10:01:00.000Z',
+        ),
+      );
+      hiveService.addPendingMessage(
+        'conv_queue',
+        ChatMessageModel(
+          id: 'temp_q2',
+          conversationId: 'conv_queue',
+          sender: ChatUserModel(id: 'my_user_id', name: 'Me'),
+          content: 'Queued last should show',
+          status: 'sending',
+          createdAt: '2026-08-15T10:02:00.000Z',
+        ),
+      );
+
+      fakeService.conversationsToReturn = [
+        ConversationModel(
+          id: 'conv_queue',
+          otherParticipant: ChatUserModel(id: 'u2', name: 'Bob'),
+          lastMessage: ChatMessageModel(
+            id: 'old_server',
+            conversationId: 'conv_queue',
+            sender: ChatUserModel(id: 'u2', name: 'Bob'),
+            content: 'Old server preview',
+            createdAt: '2026-08-15T10:00:00.000Z',
+          ),
+          lastActivityAt: '2026-08-15T10:00:00.000Z',
+        ),
+      ];
+
+      final controller = ChatListController(fakeService, hiveService);
+      controller.onInit();
+
+      expect(
+        controller.conversations.first.lastMessage?.content,
+        'Queued last should show',
+      );
+
+      await Future.delayed(const Duration(milliseconds: 50));
+
+      expect(
+        controller.conversations.first.lastMessage?.content,
+        'Queued last should show',
+      );
+      expect(controller.conversations.first.lastMessage?.status, 'sending');
+
+      controller.onClose();
+    });
+
+    test('mid-queue ACK keeps last queued text as conversation preview', () {
+      final controller = ChatListController(fakeService, hiveService);
+      hiveService.addPendingMessage(
+        'conv_mid',
+        ChatMessageModel(
+          id: 'temp_a',
+          conversationId: 'conv_mid',
+          sender: ChatUserModel(id: 'my_user_id', name: 'Me'),
+          content: 'First queued',
+          status: 'sending',
+          createdAt: '2026-08-15T10:01:00.000Z',
+        ),
+      );
+      hiveService.addPendingMessage(
+        'conv_mid',
+        ChatMessageModel(
+          id: 'temp_b',
+          conversationId: 'conv_mid',
+          sender: ChatUserModel(id: 'my_user_id', name: 'Me'),
+          content: 'Last queued',
+          status: 'sending',
+          createdAt: '2026-08-15T10:02:00.000Z',
+        ),
+      );
+
+      controller.conversations.assignAll([
+        ConversationModel(
+          id: 'conv_mid',
+          otherParticipant: ChatUserModel(id: 'u2', name: 'Bob'),
+          lastMessage: ChatMessageModel(
+            id: 'temp_b',
+            conversationId: 'conv_mid',
+            sender: ChatUserModel(id: 'my_user_id', name: 'Me'),
+            content: 'Last queued',
+            status: 'sending',
+          ),
+          unreadCount: 0,
+        ),
+      ]);
+
+      controller.onAckReceived(
+        MessageAck(
+          tempId: 'temp_a',
+          message: ChatMessageModel(
+            id: 'server_a',
+            conversationId: 'conv_mid',
+            sender: ChatUserModel(id: 'my_user_id', name: 'Me'),
+            content: 'First queued',
+            status: 'sent',
+          ),
+        ),
+      );
+
+      expect(controller.conversations.first.lastMessage?.content, 'Last queued');
+      expect(controller.conversations.first.lastMessage?.status, 'sending');
+      expect(hiveService.getPendingMessages('conv_mid').length, 1);
+      expect(hiveService.getPendingMessages('conv_mid').first.id, 'temp_b');
+
+      controller.onClose();
+    });
   });
 
   group('Requirement 5: True Offline-First Architecture (Fast Offline Guard)', () {

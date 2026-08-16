@@ -17,7 +17,7 @@ import 'package:loci/features/explore_activity/presentation/controllers/business
 import 'package:loci/features/explore_activity/domain/services/explore_activity_service.dart';
 import 'package:loci/features/explore_activity/presentation/widgets/create_activity_task_sheet.dart';
 import 'package:loci/features/places/data/models/place_models.dart';
-import 'package:loci/shared/widgets/file_picker.dart';
+import 'package:loci/shared/widgets/app_image_picker.dart';
 
 class CreateActivityController extends GetxController {
   CreateActivityController(this._service);
@@ -200,14 +200,12 @@ class CreateActivityController extends GetxController {
 
   void setRafflePrize(File file) => rafflePrizeImage.value = file;
 
-  Future<void> pickRaffleCoupon() async {
-    try {
-      final file = await AppFilePicker.pickImage();
-      if (file == null) return;
-      setRafflePrize(file);
-    } catch (e) {
-      SnackbarService.error(e.toString().replaceFirst('Exception: ', ''));
-    }
+  Future<void> pickRaffleCoupon(BuildContext context) async {
+    await AppImagePicker.pickOne(
+      context: context,
+      kind: ImageUploadKind.normal,
+      onSelected: setRafflePrize,
+    );
   }
 
   Future<void> pickEventDate(BuildContext context) async {

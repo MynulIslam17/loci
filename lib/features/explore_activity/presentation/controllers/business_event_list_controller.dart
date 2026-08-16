@@ -43,7 +43,6 @@ class BusinessEventListController extends GetxController with ExploreTabListCach
     _searchQuery = trimmed;
     _currentPage = 1;
     hasMore.value = true;
-    clearTabCache();
     await fetchEvents(businessId: businessId, forceRefresh: true);
   }
 
@@ -126,6 +125,7 @@ class BusinessEventListController extends GetxController with ExploreTabListCach
         businessId,
         errorMessage: errorMessage.value,
         search: _searchQuery,
+        hasItems: eventList.isNotEmpty,
       );
 
   bool showEmptyState(String businessId) {
