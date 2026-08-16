@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:loci/core/utils/date_parser.dart';
+import 'package:loci/shared/widgets/adaptive_pickers.dart';
 import 'package:loci/core/utils/acitvity_validator.dart';
 import 'package:loci/core/utils/show_snackbar.dart';
 import 'package:loci/core/utils/time_parser.dart';
@@ -180,7 +181,7 @@ class EventEditController extends GetxController {
         ? existing
         : firstDate;
 
-    final pickedDate = await showDatePicker(
+    final pickedDate = await showAdaptiveDatePicker(
       context: context,
       firstDate: firstDate,
       initialDate: initialDate,
@@ -194,7 +195,7 @@ class EventEditController extends GetxController {
   }
 
   Future<void> pickTime(BuildContext context) async {
-    final pickedTime = await showTimePicker(
+    final pickedTime = await showAdaptiveTimePicker(
       context: context,
       initialTime: selectedTime.value ?? TimeOfDay.now(),
     );

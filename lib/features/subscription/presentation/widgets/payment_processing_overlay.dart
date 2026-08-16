@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:loci/core/constants/app_text_style.dart';
 import 'package:loci/core/theme/theme_extention.dart';
+import 'package:loci/shared/widgets/adaptive_progress.dart';
 
 class PaymentProcessingOverlay extends StatelessWidget {
   final String message;
@@ -21,7 +22,7 @@ class PaymentProcessingOverlay extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              CircularProgressIndicator(color: colorScheme.primary),
+              AdaptiveProgress(color: colorScheme.primary),
               const SizedBox(height: 16),
               Text(
                 message,

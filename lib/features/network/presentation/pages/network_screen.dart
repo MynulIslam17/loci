@@ -7,6 +7,7 @@ import 'package:loci/features/network/data/models/checkin_item.dart';
 import 'package:loci/features/network/presentation/controllers/network_dashboard_controller.dart';
 import 'package:loci/features/network/presentation/widgets/network_detail_row.dart';
 import 'package:loci/routes/app_routes.dart';
+import 'package:loci/shared/widgets/adaptive_refresh.dart';
 import 'package:loci/shared/widgets/app_skeleton.dart';
 import 'package:loci/shared/widgets/custom_button.dart';
 import 'package:loci/shared/widgets/custom_image_container.dart';
@@ -41,7 +42,7 @@ class _NetworkScreenState extends State<NetworkScreen> {
         final showShimmer = _controller.showInitialShimmer;
         final checkIns = _controller.checkins;
 
-        return RefreshIndicator(
+        return AdaptiveRefresh(
           onRefresh: _controller.refreshDashboard,
           child: SingleChildScrollView(
             padding: const EdgeInsets.symmetric(horizontal: 16),

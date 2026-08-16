@@ -5,6 +5,7 @@ import 'package:get/get.dart';
 import 'package:loci/core/enums/route_type.dart';
 import 'package:loci/core/utils/acitvity_validator.dart';
 import 'package:loci/core/utils/show_snackbar.dart';
+import 'package:loci/shared/widgets/adaptive_pickers.dart';
 import 'package:loci/core/utils/time_parser.dart';
 import 'package:loci/features/explore_activity/data/models/update_route_request_model.dart';
 import 'package:loci/features/explore_activity/domain/services/explore_activity_service.dart';
@@ -160,13 +161,9 @@ class RouteEditController extends GetxController {
   }
 
   Future<void> pickTime(BuildContext context) async {
-    final picked = await showTimePicker(
+    final picked = await showAdaptiveTimePicker(
       context: context,
       initialTime: selectedTime.value ?? TimeOfDay.now(),
-      builder: (context, child) => MediaQuery(
-        data: MediaQuery.of(context).copyWith(alwaysUse24HourFormat: false),
-        child: child!,
-      ),
     );
 
     if (picked == null) return;

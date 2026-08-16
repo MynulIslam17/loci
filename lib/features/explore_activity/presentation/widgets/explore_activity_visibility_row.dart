@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:loci/core/constants/app_text_style.dart';
 import 'package:loci/core/theme/theme_extention.dart';
+import 'package:loci/shared/widgets/adaptive_switch.dart';
 
 class ExploreActivityVisibilityRow extends StatelessWidget {
   const ExploreActivityVisibilityRow({
@@ -50,10 +51,9 @@ class ExploreActivityVisibilityRow extends StatelessWidget {
               ],
             ),
           ),
-          Switch(
+          AdaptiveSwitch(
             value: isPublic,
-            activeThumbColor: colorScheme.onPrimary,
-            activeTrackColor: colorScheme.primary,
+            activeColor: colorScheme.primary,
             onChanged: onChanged,
           ),
         ],

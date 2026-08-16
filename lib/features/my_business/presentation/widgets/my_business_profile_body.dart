@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:loci/core/constants/app_text_style.dart';
 import 'package:loci/core/theme/theme_extention.dart';
+import 'package:loci/shared/widgets/adaptive_refresh.dart';
 import 'package:loci/features/my_business/data/models/business_profile_model.dart';
 import 'package:loci/features/my_business/presentation/controllers/my_business_profile_controller.dart';
 import 'package:loci/features/my_business/presentation/controllers/business_review_controller.dart';
@@ -55,7 +56,7 @@ class MyBusinessProfileBody extends StatelessWidget {
     final colorScheme = context.colorScheme;
     final profileController = Get.find<MyBusinessProfileController>();
 
-    return RefreshIndicator(
+    return AdaptiveRefresh(
       onRefresh: onRefresh,
       child: SingleChildScrollView(
         physics: const AlwaysScrollableScrollPhysics(),

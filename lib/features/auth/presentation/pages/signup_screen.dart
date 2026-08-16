@@ -9,6 +9,7 @@ import 'package:loci/core/utils/show_snackbar.dart';
 import 'package:loci/core/utils/validators.dart';
 import 'package:loci/gen/assets.gen.dart';
 import 'package:loci/features/auth/presentation/controllers/signup_controller.dart';
+import 'package:loci/shared/widgets/adaptive_pickers.dart';
 import 'package:loci/shared/widgets/custom_button.dart';
 import 'package:loci/shared/widgets/custom_rich_text.dart';
 import 'package:loci/shared/widgets/custom_text_field.dart';
@@ -75,7 +76,7 @@ class _SignupScreenState extends State<SignupScreen> {
     // Drop any open keyboard before showing the date picker.
     FocusScope.of(context).unfocus();
 
-    DateTime? pickedDate = await showDatePicker(
+    DateTime? pickedDate = await showAdaptiveDatePicker(
       context: context,
       initialDate: DateTime.now(),
       firstDate: DateTime(1900),

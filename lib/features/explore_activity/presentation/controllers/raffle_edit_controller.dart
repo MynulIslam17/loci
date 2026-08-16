@@ -13,6 +13,7 @@ import 'package:loci/features/explore_activity/domain/services/explore_activity_
 import 'package:loci/features/explore_activity/presentation/controllers/business_raffle_details_controller.dart';
 import 'package:loci/features/explore_activity/presentation/controllers/explore_activity_edit_form.dart';
 import 'package:loci/features/explore_activity/presentation/widgets/create_activity_task_sheet.dart';
+import 'package:loci/shared/widgets/adaptive_pickers.dart';
 import 'package:loci/shared/widgets/app_image_picker.dart';
 
 class RaffleEditController extends GetxController {
@@ -311,7 +312,7 @@ class RaffleEditController extends GetxController {
         endDate.value != null &&
         !startDate.value!.isBefore(firstDate);
 
-    final picked = await showDateRangePicker(
+    final picked = await showAdaptiveDateRangePicker(
       context: context,
       firstDate: firstDate,
       lastDate: DateTime(2100),

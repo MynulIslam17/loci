@@ -9,6 +9,7 @@ import 'package:loci/core/utils/show_snackbar.dart';
 import 'package:loci/features/event/presentation/controllers/event_list_controller.dart';
 import 'package:loci/features/event/presentation/controllers/rsvp_controller.dart';
 import 'package:loci/routes/app_routes.dart';
+import 'package:loci/shared/widgets/adaptive_refresh.dart';
 import 'package:loci/shared/widgets/custom_text_field.dart';
 import 'package:loci/shared/widgets/error_state.dart';
 import 'package:loci/shared/widgets/pagination_loading.dart';
@@ -132,7 +133,7 @@ class _EventScreenState extends State<EventScreen> {
             controller.eventList.isEmpty &&
             !showShimmer;
 
-        return RefreshIndicator.adaptive(
+        return AdaptiveRefresh(
           color: colors.primary,
           onRefresh: () => controller.fetchEvents(isRefresh: true),
           child: CustomScrollView(

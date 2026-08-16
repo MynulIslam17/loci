@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:loci/core/theme/theme_extention.dart';
+import 'package:loci/shared/widgets/adaptive_progress.dart';
 
 
 
@@ -76,9 +77,10 @@ class CustomButton extends StatelessWidget {
     return const SizedBox(
       height: 24,
       width: 24,
-      child: CircularProgressIndicator(
+      child: AdaptiveProgress(
         color: Colors.white,
         strokeWidth: 2.5,
+        radius: 10,
       ),
     );
   }

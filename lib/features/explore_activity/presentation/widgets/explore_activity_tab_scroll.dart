@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:loci/shared/widgets/adaptive_refresh.dart';
 
 /// Nested scroll + refresh wrapper shared by explore-activity tabs.
 class ExploreActivityTabScroll extends StatelessWidget {
@@ -35,7 +36,7 @@ class ExploreActivityTabScroll extends StatelessWidget {
             }
             return false;
           },
-          child: RefreshIndicator(
+          child: AdaptiveRefresh(
             onRefresh: onRefresh,
             child: CustomScrollView(
               physics: const AlwaysScrollableScrollPhysics(

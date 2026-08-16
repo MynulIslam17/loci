@@ -4,6 +4,7 @@ import 'package:loci/core/enums/action_type.dart';
 
 import 'package:loci/features/network/presentation/controllers/received_referrals_controller.dart';
 import 'package:loci/features/network/presentation/controllers/respond_referral_controller.dart';
+import 'package:loci/shared/widgets/adaptive_refresh.dart';
 import 'package:loci/shared/widgets/empty_state.dart';
 import 'package:loci/shared/widgets/error_state.dart';
 import 'package:loci/shared/widgets/pagination_loading.dart';
@@ -33,7 +34,7 @@ class _ReceivedReferralsTabState extends State<ReceivedReferralsTab>
       }
 
       if (controller.errorMessage != null && controller.referrals.isEmpty) {
-        return RefreshIndicator(
+        return AdaptiveRefresh(
           onRefresh: () => controller.fetchReceivedReferrals(isRefresh: true),
           child: LayoutBuilder(
             builder: (context, constraints) => SingleChildScrollView(
@@ -53,7 +54,7 @@ class _ReceivedReferralsTabState extends State<ReceivedReferralsTab>
       if (controller.referrals.isEmpty) {
         final hasSearch = controller.searchTerm.trim().isNotEmpty;
 
-        return RefreshIndicator(
+        return AdaptiveRefresh(
           onRefresh: () => controller.fetchReceivedReferrals(isRefresh: true),
           child: LayoutBuilder(
             builder: (context, constraints) => SingleChildScrollView(
@@ -79,7 +80,7 @@ class _ReceivedReferralsTabState extends State<ReceivedReferralsTab>
         );
       }
 
-      return RefreshIndicator(
+      return AdaptiveRefresh(
         onRefresh: () => controller.fetchReceivedReferrals(isRefresh: true),
         child: NotificationListener<ScrollNotification>(
           onNotification: (n) {

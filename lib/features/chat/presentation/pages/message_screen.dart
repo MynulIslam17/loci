@@ -11,6 +11,7 @@ import 'package:loci/features/chat/domain/services/chat_service.dart';
 import 'package:loci/features/chat/presentation/controllers/chat_controller.dart';
 import 'package:loci/features/chat/presentation/controllers/chat_list_controller.dart';
 import 'package:loci/features/chat/presentation/widgets/chat_avatar.dart';
+import 'package:loci/shared/widgets/adaptive_refresh.dart';
 import 'package:loci/shared/widgets/empty_state.dart';
 
 class MessageScreen extends StatefulWidget {
@@ -214,7 +215,7 @@ class _MessageScreenState extends State<MessageScreen> {
                   return const Center(child: CircularProgressIndicator());
                 }
                 if (ctrl.messages.isEmpty) {
-                  return RefreshIndicator(
+                  return AdaptiveRefresh(
                     onRefresh: ctrl.loadMessages,
                     child: LayoutBuilder(
                       builder: (context, constraints) {

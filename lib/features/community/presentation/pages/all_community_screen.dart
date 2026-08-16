@@ -9,6 +9,7 @@ import 'package:loci/features/community/presentation/controllers/join_community_
 import 'package:loci/features/community/presentation/widgets/community_card.dart';
 import 'package:loci/features/community/presentation/widgets/community_search_bar.dart';
 import 'package:loci/features/community/presentation/widgets/community_shimmer.dart';
+import 'package:loci/shared/widgets/adaptive_refresh.dart';
 import 'package:loci/shared/widgets/custom_appbar.dart';
 import 'package:loci/shared/widgets/empty_state.dart';
 import 'package:loci/shared/widgets/error_state.dart';
@@ -75,7 +76,7 @@ class _AllCommunityScreenState extends State<AllCommunityScreen> {
           );
         }
 
-        return RefreshIndicator(
+        return AdaptiveRefresh(
           onRefresh: _listController.refreshCommunities,
           color: colorScheme.primary,
           child: SingleChildScrollView(

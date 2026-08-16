@@ -1,10 +1,10 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:loci/core/constants/app_text_style.dart';
 import 'package:loci/core/theme/theme_extention.dart';
 import 'package:loci/features/auth/presentation/controllers/auth_controller.dart';
+import 'package:loci/shared/widgets/adaptive_switch.dart';
 import 'package:loci/shared/widgets/custom_appbar.dart';
 import 'package:loci/routes/app_routes.dart';
 
@@ -161,9 +161,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ),
             ),
             trailing: item.hasToggle
-                ? CupertinoSwitch(
+                ? AdaptiveSwitch(
                     value: enabled,
-                    activeTrackColor: colorScheme.primary,
+                    activeColor: colorScheme.primary,
                     onChanged: (bool newValue) {
                       _onToggleChanged(item.title, newValue);
                     },

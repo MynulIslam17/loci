@@ -5,6 +5,7 @@ import 'package:loci/features/subscription/presentation/controllers/plans_contro
 import 'package:loci/features/subscription/presentation/widgets/billing_toggle_header.dart';
 import 'package:loci/features/subscription/presentation/widgets/plans_section.dart';
 import 'package:loci/features/subscription/presentation/widgets/subscription_header.dart';
+import 'package:loci/shared/widgets/adaptive_refresh.dart';
 import 'package:loci/shared/widgets/custom_appbar.dart';
 
 class SubscriptionScreen extends StatelessWidget {
@@ -18,7 +19,7 @@ class SubscriptionScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: colorScheme.surface,
       appBar: const CustomAppbar(title: "Subscription Plan"),
-      body: RefreshIndicator(
+      body: AdaptiveRefresh(
         onRefresh: controller.refreshPlans,
         // A single CustomScrollView so the banner scrolls away above the plan
         // list while the billing toggle stays pinned. Reactivity is scoped to

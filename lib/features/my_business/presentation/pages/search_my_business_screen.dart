@@ -10,6 +10,7 @@ import 'package:loci/features/my_business/presentation/controllers/find_google_b
 import 'package:loci/features/my_business/presentation/widgets/business_search_result_widget.dart';
 import 'package:loci/features/my_business/presentation/widgets/expandable_business_card.dart';
 import 'package:loci/features/my_business/presentation/widgets/manual_add_business_card.dart';
+import 'package:loci/shared/widgets/adaptive_refresh.dart';
 import 'package:loci/shared/widgets/custom_dropdown.dart';
 import 'package:loci/shared/widgets/custom_text_field.dart';
 import 'package:loci/routes/app_routes.dart';
@@ -162,7 +163,7 @@ class _SearchMyBusinessState extends State<SearchMyBusiness> {
         // wouldn't rebuild until another observable changed (e.g. a refresh).
         final currentExpandedIndex = expandedIndex.value;
 
-        return RefreshIndicator(
+        return AdaptiveRefresh(
           onRefresh: () => myBusinessController.getMyBusinesses(
             category: selectedCategory.value?.label,
             isRefresh: true,

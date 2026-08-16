@@ -6,6 +6,7 @@ import 'package:loci/features/network/data/models/connection_item.dart';
 import 'package:loci/features/network/presentation/controllers/connections_controller.dart';
 import 'package:loci/features/network/presentation/widgets/connections/connection_card.dart';
 import 'package:loci/features/network/presentation/widgets/connections/connection_shimmer.dart';
+import 'package:loci/shared/widgets/adaptive_refresh.dart';
 import 'package:loci/shared/widgets/custom_text_field.dart';
 import 'package:loci/shared/widgets/empty_state.dart';
 import 'package:loci/shared/widgets/error_state.dart';
@@ -50,7 +51,7 @@ class _ConnectionScreenState extends State<ConnectionScreen> {
       ),
       body: Obx(() {
         if (_controller.showInitialShimmer) {
-          return RefreshIndicator(
+          return AdaptiveRefresh(
             onRefresh: _onRefresh,
             child: const ConnectionScreenShimmer(),
           );
@@ -62,7 +63,7 @@ class _ConnectionScreenState extends State<ConnectionScreen> {
             _controller.searchQuery.trim().isNotEmpty &&
             filtered.isEmpty;
 
-        return RefreshIndicator(
+        return AdaptiveRefresh(
           onRefresh: _onRefresh,
           child: CustomScrollView(
             keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
