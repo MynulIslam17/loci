@@ -6,6 +6,7 @@ import 'package:loci/core/utils/show_snackbar.dart';
 import 'package:loci/features/community/presentation/controllers/community_member_controller.dart';
 import 'package:loci/features/community/presentation/widgets/add_community_member_sheet.dart';
 import 'package:loci/features/community/presentation/widgets/community_search_bar.dart';
+import 'package:loci/shared/widgets/adaptive_refresh.dart';
 import 'package:loci/shared/widgets/empty_state.dart';
 import 'package:loci/features/community/presentation/widgets/member_card.dart';
 import 'package:loci/features/community/presentation/widgets/member_list_header.dart';
@@ -90,7 +91,7 @@ class _CommunityMemberScreenState extends State<CommunityMemberScreen> {
     return Scaffold(
       backgroundColor: colors.surface,
       appBar: CustomAppbar(title: 'Community Members'),
-      body: RefreshIndicator(
+      body: AdaptiveRefresh(
         onRefresh: memberController.refreshMembers,
         color: colors.primary,
         child: Obx(() {

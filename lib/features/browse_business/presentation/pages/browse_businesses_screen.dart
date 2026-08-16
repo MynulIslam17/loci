@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:loci/core/enums/category_enum.dart';
 import 'package:loci/features/browse_business/presentation/controllers/browse_business_controller.dart';
+import 'package:loci/shared/widgets/adaptive_refresh.dart';
 import 'package:loci/shared/widgets/custom_appbar.dart';
 import 'package:loci/features/browse_business/presentation/widgets/browse_business_list_body.dart';
 
@@ -63,7 +64,7 @@ class _BrowseBusinessesState extends State<BrowseBusinesses> {
 
     return Scaffold(
       appBar: const CustomAppbar(title: 'Browse business'),
-      body: RefreshIndicator(
+      body: AdaptiveRefresh(
         onRefresh: browseBusinessController.refreshData,
         child: SingleChildScrollView(
           controller: _scrollController,

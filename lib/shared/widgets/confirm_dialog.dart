@@ -1,9 +1,12 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:loci/core/constants/app_text_style.dart';
 import 'package:loci/core/theme/theme_extention.dart';
 
 /// App-styled confirm/cancel dialog. Returns `true` only when the user taps
 /// the confirm action.
+///
+/// iOS uses [CupertinoAlertDialog]; Android uses the Material card dialog.
 Future<bool> showConfirmDialog(
   BuildContext context, {
   required String title,
@@ -13,17 +16,43 @@ Future<bool> showConfirmDialog(
   IconData icon = Icons.help_outline_rounded,
   bool isDestructive = false,
 }) async {
-  final result = await showDialog<bool>(
-    context: context,
-    builder: (dialogContext) => _ConfirmDialog(
-      title: title,
-      message: message,
-      confirmText: confirmText,
-      cancelText: cancelText,
-      icon: icon,
-      isDestructive: isDestructive,
-    ),
-  );
+  final bool? result;
+  if (context.isCupertino) {
+    result = await showCupertinoDialog<bool>(
+      context: context,
+      builder: (dialogContext) => CupertinoAlertDialog(
+        title: Text(title),
+        content: Padding(
+          padding: const EdgeInsets.only(top: 8),
+          child: Text(message),
+        ),
+        actions: [
+          CupertinoDialogAction(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: Text(cancelText),
+          ),
+          CupertinoDialogAction(
+            isDestructiveAction: isDestructive,
+            isDefaultAction: !isDestructive,
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: Text(confirmText),
+          ),
+        ],
+      ),
+    );
+  } else {
+    result = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => _ConfirmDialog(
+        title: title,
+        message: message,
+        confirmText: confirmText,
+        cancelText: cancelText,
+        icon: icon,
+        isDestructive: isDestructive,
+      ),
+    );
+  }
 
   return result ?? false;
 }
@@ -59,7 +88,6 @@ class _ConfirmDialog extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // --- Icon badge ---
             Container(
               width: 56,
               height: 56,
@@ -71,8 +99,6 @@ class _ConfirmDialog extends StatelessWidget {
               child: Icon(icon, color: accent, size: 28),
             ),
             const SizedBox(height: 16),
-
-            // --- Title ---
             Text(
               title,
               textAlign: TextAlign.center,
@@ -82,16 +108,12 @@ class _ConfirmDialog extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 8),
-
-            // --- Message ---
             Text(
               message,
               textAlign: TextAlign.center,
               style: AppTextStyle.textSm(color: scheme.onSurfaceVariant),
             ),
             const SizedBox(height: 24),
-
-            // --- Actions ---
             Row(
               children: [
                 Expanded(

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import 'package:loci/features/network/presentation/controllers/sent_referrals_controller.dart';
+import 'package:loci/shared/widgets/adaptive_refresh.dart';
 import 'package:loci/shared/widgets/empty_state.dart';
 import 'package:loci/shared/widgets/error_state.dart';
 import 'package:loci/shared/widgets/pagination_loading.dart';
@@ -31,7 +32,7 @@ class _SentReferralsTabState extends State<SentReferralsTab>
       }
 
       if (controller.errorMessage != null && controller.referrals.isEmpty) {
-        return RefreshIndicator(
+        return AdaptiveRefresh(
           onRefresh: () => controller.fetchSentReferrals(isRefresh: true),
           child: LayoutBuilder(
             builder: (context, constraints) => SingleChildScrollView(
@@ -51,7 +52,7 @@ class _SentReferralsTabState extends State<SentReferralsTab>
       if (controller.referrals.isEmpty) {
         final hasSearch = controller.searchTerm.trim().isNotEmpty;
 
-        return RefreshIndicator(
+        return AdaptiveRefresh(
           onRefresh: () => controller.fetchSentReferrals(isRefresh: true),
           child: LayoutBuilder(
             builder: (context, constraints) => SingleChildScrollView(
@@ -77,7 +78,7 @@ class _SentReferralsTabState extends State<SentReferralsTab>
         );
       }
 
-      return RefreshIndicator(
+      return AdaptiveRefresh(
         onRefresh: () => controller.fetchSentReferrals(isRefresh: true),
         child: NotificationListener<ScrollNotification>(
           onNotification: (n) {

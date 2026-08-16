@@ -5,6 +5,7 @@ import 'package:loci/features/community/presentation/controllers/announcement_co
 import 'package:loci/features/community/presentation/widgets/community_tab_empty_state.dart';
 import 'package:loci/features/community/presentation/widgets/community_tab_shimmers.dart';
 import 'package:loci/features/community/presentation/widgets/community_ui_constants.dart';
+import 'package:loci/shared/widgets/adaptive_refresh.dart';
 import 'package:loci/shared/widgets/error_state.dart';
 import 'package:loci/shared/widgets/pagination_loading.dart';
 
@@ -154,7 +155,7 @@ class _TabScrollContent extends StatelessWidget {
   }
 
   Widget _buildScrollView(BuildContext context) {
-    return RefreshIndicator(
+    return AdaptiveRefresh(
       onRefresh: onRefresh,
       child: NotificationListener<ScrollNotification>(
         onNotification: (notification) {

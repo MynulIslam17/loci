@@ -8,6 +8,7 @@ import 'package:loci/features/raffles/presentation/controllers/raffle_list_contr
 import 'package:loci/features/raffles/presentation/widgets/raffle_card.dart';
 import 'package:loci/features/raffles/presentation/widgets/raffle_card_skeleton.dart';
 import 'package:loci/routes/app_routes.dart';
+import 'package:loci/shared/widgets/adaptive_refresh.dart';
 import 'package:loci/shared/widgets/custom_text_field.dart';
 import 'package:loci/shared/widgets/error_state.dart';
 import 'package:loci/shared/widgets/pagination_loading.dart';
@@ -95,7 +96,7 @@ class _ActiveRafflesPageState extends State<ActiveRafflesPage> {
           ),
         ),
       ),
-      body: RefreshIndicator.adaptive(
+      body: AdaptiveRefresh(
         color: colorScheme.primary,
         onRefresh: () async {
           if (!raffleListController.isInitialLoading &&

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:loci/shared/widgets/adaptive_progress.dart';
 
 class PaginationLoader extends StatelessWidget {
   final double size;
@@ -24,9 +25,10 @@ class PaginationLoader extends StatelessWidget {
         child: SizedBox(
           height: size,
           width: size,
-          child: CircularProgressIndicator(
+          child: AdaptiveProgress(
             strokeWidth: strokeWidth,
             color: themeColor,
+            radius: size / 2,
           ),
         ),
       ),

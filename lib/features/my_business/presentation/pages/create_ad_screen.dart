@@ -5,6 +5,7 @@ import 'package:loci/core/theme/theme_extention.dart';
 import 'package:loci/core/utils/show_snackbar.dart';
 import 'package:loci/features/my_business/presentation/controllers/create_ad_controller.dart';
 import 'package:loci/features/my_business/presentation/widgets/create_ad_form.dart';
+import 'package:loci/shared/widgets/adaptive_pickers.dart';
 import 'package:loci/shared/widgets/custom_appbar.dart';
 import 'package:loci/shared/widgets/custom_button.dart';
 
@@ -19,7 +20,7 @@ class _CreateAdState extends State<CreateAd> {
   final CreateAdController _controller = Get.find<CreateAdController>();
 
   Future<void> _pickDate({required bool isStart}) async {
-    final picked = await showDatePicker(
+    final picked = await showAdaptiveDatePicker(
       context: context,
       initialDate: _controller.initialDateForPicker(isStart: isStart),
       firstDate: _controller.firstDateForPicker(isStart: isStart),
@@ -30,7 +31,7 @@ class _CreateAdState extends State<CreateAd> {
   }
 
   Future<void> _pickTime({required bool isStart}) async {
-    final picked = await showTimePicker(
+    final picked = await showAdaptiveTimePicker(
       context: context,
       initialTime: _controller.initialTimeForPicker(isStart: isStart),
     );

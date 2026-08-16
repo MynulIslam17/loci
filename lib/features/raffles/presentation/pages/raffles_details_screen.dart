@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:loci/core/constants/app_text_style.dart';
 import 'package:loci/core/theme/theme_extention.dart';
+import 'package:loci/shared/widgets/adaptive_refresh.dart';
 import 'package:loci/core/utils/date_parser.dart';
 import 'package:loci/features/explore_activity/presentation/widgets/explore_activity_detail_hero.dart';
 import 'package:loci/features/explore_activity/presentation/widgets/explore_activity_detail_scroll.dart';
@@ -115,7 +116,7 @@ class _RafflesDetailsScreenState extends State<RafflesDetailsScreen> {
           return const Center(child: Text('No raffle found'));
         }
 
-        return RefreshIndicator(
+        return AdaptiveRefresh(
           onRefresh: () => _controller.refreshRaffleDetails(_activeRaffleId),
           child: _RaffleDetailsBody(
             details: details,

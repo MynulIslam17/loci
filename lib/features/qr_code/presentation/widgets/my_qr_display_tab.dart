@@ -6,6 +6,7 @@ import 'package:loci/features/auth/presentation/controllers/auth_controller.dart
 import 'package:loci/features/chat/presentation/widgets/chat_avatar.dart';
 import 'package:loci/features/qr_code/presentation/controllers/my_qr_code_controller.dart';
 import 'package:loci/features/qr_code/presentation/widgets/my_qr_code_shimmer.dart';
+import 'package:loci/shared/widgets/adaptive_refresh.dart';
 import 'package:loci/shared/widgets/custom_button.dart';
 import 'package:loci/shared/widgets/empty_state.dart';
 import 'package:loci/shared/widgets/error_state.dart';
@@ -21,7 +22,7 @@ class MyQrDisplayTab extends StatelessWidget {
     final colorScheme = context.colorScheme;
     final auth = Get.find<AuthController>();
 
-    return RefreshIndicator(
+    return AdaptiveRefresh(
       onRefresh: controller.refreshMyQr,
       child: LayoutBuilder(
         builder: (context, constraints) {

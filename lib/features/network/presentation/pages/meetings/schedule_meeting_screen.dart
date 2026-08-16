@@ -6,6 +6,7 @@ import 'package:loci/core/utils/date_parser.dart';
 import 'package:loci/core/utils/show_snackbar.dart';
 import 'package:loci/core/utils/validators.dart';
 import 'package:loci/features/network/presentation/controllers/schedule_meeting_controller.dart';
+import 'package:loci/shared/widgets/adaptive_pickers.dart';
 import 'package:loci/shared/widgets/custom_button.dart';
 import 'package:loci/shared/widgets/custom_text_field.dart';
 
@@ -47,7 +48,7 @@ class _ScheduleMeetingScreenState extends State<ScheduleMeetingScreen> {
   }
 
   Future<void> _showCalendar() async {
-    final picked = await showDatePicker(
+    final picked = await showAdaptiveDatePicker(
       context: context,
       initialDate: _controller.selectedDate ?? DateTime.now(),
       firstDate: DateTime.now(),
@@ -61,7 +62,7 @@ class _ScheduleMeetingScreenState extends State<ScheduleMeetingScreen> {
   }
 
   Future<void> _showTime() async {
-    final picked = await showTimePicker(
+    final picked = await showAdaptiveTimePicker(
       context: context,
       initialTime: _controller.selectedTime ?? TimeOfDay.now(),
     );

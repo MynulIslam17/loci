@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:loci/features/notification/presentation/controllers/notification_controller.dart';
 import 'package:loci/features/notification/presentation/widgets/notification_card.dart';
+import 'package:loci/shared/widgets/adaptive_refresh.dart';
 import 'package:loci/shared/widgets/app_skeleton.dart';
 import 'package:loci/shared/widgets/custom_appbar.dart';
 import 'package:loci/shared/widgets/empty_state.dart';
@@ -42,7 +43,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
         }
 
         if (ctrl.errorMessage != null && ctrl.notifications.isEmpty) {
-          return RefreshIndicator(
+          return AdaptiveRefresh(
             onRefresh: () => ctrl.fetchNotifications(refresh: true),
             child: LayoutBuilder(
               builder: (context, constraints) {
@@ -64,7 +65,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
         }
 
         if (ctrl.notifications.isEmpty) {
-          return RefreshIndicator(
+          return AdaptiveRefresh(
             onRefresh: () => ctrl.fetchNotifications(refresh: true),
             child: LayoutBuilder(
               builder: (context, constraints) {
@@ -84,7 +85,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
           );
         }
 
-        return RefreshIndicator(
+        return AdaptiveRefresh(
           onRefresh: () => ctrl.fetchNotifications(refresh: true),
           child: ListView.builder(
             controller: _controller.scrollController,

@@ -5,6 +5,7 @@ import 'package:loci/core/constants/app_text_style.dart';
 import 'package:loci/core/theme/theme_extention.dart';
 import 'package:loci/core/theme/app_colors.dart';
 import 'package:loci/core/utils/validators.dart';
+import 'package:loci/shared/widgets/adaptive_refresh.dart';
 import 'package:loci/shared/widgets/app_skeleton.dart';
 import 'package:loci/shared/widgets/custom_button.dart';
 import 'package:loci/shared/widgets/custom_text_field.dart';
@@ -28,7 +29,7 @@ class ProfileScreen extends StatelessWidget {
         children: [
           Obx(() {
             final c = _controller;
-            return RefreshIndicator(
+            return AdaptiveRefresh(
               onRefresh: _controller.silentFetchProfile,
               child: SingleChildScrollView(
                 physics: const AlwaysScrollableScrollPhysics(),

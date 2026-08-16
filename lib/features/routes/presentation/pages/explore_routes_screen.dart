@@ -6,6 +6,7 @@ import 'package:loci/core/constants/app_text_style.dart';
 import 'package:loci/core/theme/theme_extention.dart';
 import 'package:loci/features/routes/presentation/controllers/route_list_controller.dart';
 import 'package:loci/routes/app_routes.dart';
+import 'package:loci/shared/widgets/adaptive_refresh.dart';
 import 'package:loci/shared/widgets/custom_text_field.dart';
 import 'package:loci/shared/widgets/error_state.dart';
 import 'package:loci/shared/widgets/pagination_loading.dart';
@@ -105,7 +106,7 @@ class _ExploreRoutesPageState extends State<ExploreRoutesPage> {
           ),
         ),
       ),
-      body: RefreshIndicator.adaptive(
+      body: AdaptiveRefresh(
         color: colorScheme.primary,
         onRefresh: () => routeController.fetchRoutes(isRefresh: true),
         child: Obx(() {

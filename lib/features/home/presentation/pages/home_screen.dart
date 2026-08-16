@@ -6,6 +6,7 @@ import 'package:loci/core/services/connectivity_service.dart';
 import 'package:loci/core/enums/category_enum.dart';
 import 'package:loci/core/theme/theme_extention.dart';
 import 'package:loci/core/utils/show_snackbar.dart';
+import 'package:loci/shared/widgets/adaptive_refresh.dart';
 import 'package:loci/features/browse_business/data/models/browse_business_model.dart';
 import 'package:loci/features/home/data/models/carousel_data.dart';
 import 'package:loci/features/community/domain/services/community_service.dart';
@@ -227,7 +228,7 @@ class _HomeScreenState extends State<HomeScreen> {
     return Scaffold(
       backgroundColor: context.colorScheme.surface,
       resizeToAvoidBottomInset: true,
-      body: RefreshIndicator(
+      body: AdaptiveRefresh(
         onRefresh: () async {
           await Future.wait([
             questionListController.fetchQuestions(isRefresh: true),

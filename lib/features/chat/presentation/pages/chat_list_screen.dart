@@ -9,6 +9,7 @@ import 'package:loci/features/chat/presentation/controllers/chat_list_controller
 import 'package:loci/features/chat/presentation/widgets/chat_avatar.dart';
 import 'package:loci/features/chat/presentation/widgets/chat_list_shimmer.dart';
 import 'package:loci/features/chat/presentation/widgets/new_chat_sheet.dart';
+import 'package:loci/shared/widgets/adaptive_refresh.dart';
 import 'package:loci/shared/widgets/custom_appbar.dart';
 import 'package:loci/routes/app_routes.dart';
 import 'package:loci/shared/widgets/custom_text_field.dart';
@@ -85,7 +86,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
                 }
                 if (ctrl.errorMessage.value != null &&
                     ctrl.conversations.isEmpty) {
-                  return RefreshIndicator(
+                  return AdaptiveRefresh(
                     onRefresh: () => ctrl.fetchConversations(isRefresh: true),
                     child: LayoutBuilder(
                       builder: (context, constraints) {
@@ -108,7 +109,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
 
                 final items = _filter(ctrl.conversations.toList(), query);
                 if (items.isEmpty) {
-                  return RefreshIndicator(
+                  return AdaptiveRefresh(
                     onRefresh: () => ctrl.fetchConversations(isRefresh: true),
                     child: LayoutBuilder(
                       builder: (context, constraints) {
@@ -132,7 +133,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
                 }
 
                 final showBottomLoader = ctrl.isLoadingMore;
-                return RefreshIndicator(
+                return AdaptiveRefresh(
                   onRefresh: () => ctrl.fetchConversations(isRefresh: true),
                   child: NotificationListener<ScrollNotification>(
                     onNotification: (notification) {

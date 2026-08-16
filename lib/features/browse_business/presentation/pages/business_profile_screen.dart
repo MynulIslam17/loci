@@ -13,6 +13,7 @@ import 'package:loci/features/browse_business/presentation/widgets/business_prof
 import 'package:loci/features/browse_business/presentation/widgets/business_rating.dart';
 import 'package:loci/features/browse_business/presentation/widgets/photo_grid.dart';
 import 'package:loci/features/browse_business/presentation/widgets/review_box.dart';
+import 'package:loci/shared/widgets/adaptive_refresh.dart';
 import 'package:loci/shared/widgets/custom_appbar.dart';
 import 'package:loci/shared/widgets/empty_state.dart';
 import 'package:loci/shared/widgets/error_state.dart';
@@ -74,7 +75,7 @@ class _BusinessProfileScreenState extends State<BusinessProfileScreen> {
     return Scaffold(
       backgroundColor: Theme.of(context).colorScheme.surface,
       appBar: const CustomAppbar(title: 'Business Profile'),
-      body: RefreshIndicator(
+      body: AdaptiveRefresh(
         onRefresh: _refresh,
         child: Obx(() {
           if (profileController.showInitialShimmer) {

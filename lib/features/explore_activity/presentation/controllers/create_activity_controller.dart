@@ -17,6 +17,7 @@ import 'package:loci/features/explore_activity/presentation/controllers/business
 import 'package:loci/features/explore_activity/domain/services/explore_activity_service.dart';
 import 'package:loci/features/explore_activity/presentation/widgets/create_activity_task_sheet.dart';
 import 'package:loci/features/places/data/models/place_models.dart';
+import 'package:loci/shared/widgets/adaptive_pickers.dart';
 import 'package:loci/shared/widgets/app_image_picker.dart';
 
 class CreateActivityController extends GetxController {
@@ -209,7 +210,7 @@ class CreateActivityController extends GetxController {
   }
 
   Future<void> pickEventDate(BuildContext context) async {
-    final picked = await showDatePicker(
+    final picked = await showAdaptiveDatePicker(
       context: context,
       firstDate: DateTime.now(),
       initialDate: DateTime.now(),
@@ -221,7 +222,7 @@ class CreateActivityController extends GetxController {
   }
 
   Future<void> pickRaffleRange(BuildContext context) async {
-    final picked = await showDateRangePicker(
+    final picked = await showAdaptiveDateRangePicker(
       context: context,
       firstDate: DateTime.now(),
       lastDate: DateTime(2049),
@@ -234,15 +235,9 @@ class CreateActivityController extends GetxController {
   }
 
   Future<void> pickTime(BuildContext context) async {
-    final picked = await showTimePicker(
+    final picked = await showAdaptiveTimePicker(
       context: context,
       initialTime: TimeOfDay.now(),
-      builder: (context, child) {
-        return MediaQuery(
-          data: MediaQuery.of(context).copyWith(alwaysUse24HourFormat: false),
-          child: child!,
-        );
-      },
     );
     if (picked == null) return;
 

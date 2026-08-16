@@ -6,6 +6,7 @@ import 'package:loci/core/theme/theme_extention.dart';
 import 'package:loci/core/utils/time_parser.dart';
 import 'package:loci/features/my_business/presentation/controllers/business_review_controller.dart';
 import 'package:loci/features/my_business/presentation/widgets/all_reviews_shimmer.dart';
+import 'package:loci/shared/widgets/adaptive_refresh.dart';
 import 'package:loci/shared/widgets/review_card.dart';
 import 'package:loci/shared/widgets/custom_appbar.dart';
 import 'package:loci/shared/widgets/empty_state.dart';
@@ -60,7 +61,7 @@ class _MyBusinessAllReviewsScreenState
         }
 
         // ── List ───────────────────────────────────────────────────────
-        return RefreshIndicator(
+        return AdaptiveRefresh(
           onRefresh: () => ctrl.fetchReviews(_businessId, isRefresh: true),
           child: ListView.builder(
             physics: AlwaysScrollableScrollPhysics(),

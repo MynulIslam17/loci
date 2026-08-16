@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import 'package:loci/core/utils/date_parser.dart';
 import 'package:loci/features/network/presentation/controllers/incoming_meetings_controller.dart';
 import 'package:loci/features/network/presentation/controllers/respond_meeting_controller.dart';
+import 'package:loci/shared/widgets/adaptive_refresh.dart';
 import 'package:loci/shared/widgets/empty_state.dart';
 import 'package:loci/shared/widgets/error_state.dart';
 import 'package:loci/features/network/presentation/widgets/meetings/meeting_invitation_card.dart';
@@ -37,7 +38,7 @@ class _ReceivedMeetingsTabState extends State<ReceivedMeetingsTab>
       }
 
       if (controller.errorMessage != null && controller.meetings.isEmpty) {
-        return RefreshIndicator(
+        return AdaptiveRefresh(
           onRefresh: () => controller.fetchIncomingMeetings(isRefresh: true),
           child: LayoutBuilder(
             builder: (context, constraints) => SingleChildScrollView(
@@ -55,7 +56,7 @@ class _ReceivedMeetingsTabState extends State<ReceivedMeetingsTab>
       }
 
       if (controller.meetings.isEmpty) {
-        return RefreshIndicator(
+        return AdaptiveRefresh(
           onRefresh: () => controller.fetchIncomingMeetings(isRefresh: true),
           child: LayoutBuilder(
             builder: (context, constraints) => SingleChildScrollView(
@@ -74,7 +75,7 @@ class _ReceivedMeetingsTabState extends State<ReceivedMeetingsTab>
         );
       }
 
-      return RefreshIndicator(
+      return AdaptiveRefresh(
         onRefresh: () => controller.fetchIncomingMeetings(isRefresh: true),
         child: NotificationListener<ScrollNotification>(
           onNotification: (n) {

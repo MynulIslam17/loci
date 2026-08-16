@@ -12,6 +12,7 @@ import 'package:loci/features/recent_activity/presentation/widgets/business_acti
 import 'package:loci/features/recent_activity/presentation/widgets/question_activity_card.dart';
 import 'package:loci/features/recent_activity/presentation/widgets/recent_activity_shimmer.dart';
 import 'package:loci/features/recent_activity/presentation/widgets/review_activity_card.dart';
+import 'package:loci/shared/widgets/adaptive_refresh.dart';
 import 'package:loci/shared/widgets/custom_appbar.dart';
 import 'package:loci/shared/widgets/custom_text_field.dart';
 import 'package:loci/shared/widgets/empty_state.dart';
@@ -304,7 +305,7 @@ class _RecentActivityTabState extends State<_RecentActivityTab>
       }
 
       if (count == 0 && hasFetched) {
-        return RefreshIndicator(
+        return AdaptiveRefresh(
           onRefresh: () => _ctrl.reload(type),
           child: ListView(
             physics: const AlwaysScrollableScrollPhysics(),
@@ -324,7 +325,7 @@ class _RecentActivityTabState extends State<_RecentActivityTab>
           }
           return false;
         },
-        child: RefreshIndicator(
+        child: AdaptiveRefresh(
           onRefresh: () => _ctrl.reload(type),
           child: ListView.builder(
             key: PageStorageKey<String>('recent_activity_${type.name}'),

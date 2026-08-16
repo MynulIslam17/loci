@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:loci/shared/widgets/offline_indicator_banner.dart';
@@ -18,8 +19,9 @@ class SystemUiConfig {
   }
 
   static Widget wrapApp(BuildContext context, Widget? child) {
-    final isIOS = Theme.of(context).platform == TargetPlatform.iOS;
-    return AnnotatedRegion<SystemUiOverlayStyle>(
+    final theme = Theme.of(context);
+    final isIOS = theme.platform == TargetPlatform.iOS;
+    final content = AnnotatedRegion<SystemUiOverlayStyle>(
       value: _overlayStyle,
       child: SafeArea(
         top: false,
@@ -30,6 +32,18 @@ class SystemUiConfig {
           child: child ?? const SizedBox.shrink(),
         ),
       ),
+    );
+
+    if (!isIOS) return content;
+
+    return CupertinoTheme(
+      data: CupertinoThemeData(
+        brightness: theme.brightness,
+        primaryColor: theme.colorScheme.primary,
+        scaffoldBackgroundColor: theme.colorScheme.surface,
+        barBackgroundColor: theme.appBarTheme.backgroundColor,
+      ),
+      child: content,
     );
   }
 }
