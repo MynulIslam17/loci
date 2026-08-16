@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math';
 
 import 'package:get/get.dart';
 import 'package:loci/core/services/connectivity_service.dart';
@@ -59,6 +60,7 @@ class ChatController extends GetxController {
   final List<StreamSubscription> _subs = [];
   Timer? _typingDebounce;
   bool _typingSent = false;
+  static final _rng = Random.secure();
   int _tempCounter = 0;
 
   bool isMine(ChatMessageModel m) {
@@ -325,8 +327,10 @@ class ChatController extends GetxController {
     final content = text.trim();
     if (content.isEmpty) return;
 
+    final now = DateTime.now();
     final tempId =
-        'temp_${DateTime.now().millisecondsSinceEpoch}_${_tempCounter++}';
+        'temp_${now.millisecondsSinceEpoch}_${_tempCounter++}_'
+        '${_rng.nextInt(0xFFFFFF).toRadixString(16).padLeft(6, '0')}';
 
     final pending = ChatMessageModel(
       id: tempId,
@@ -357,7 +361,6 @@ class ChatController extends GetxController {
 
     _stopTyping();
     final canSendLive = _socket.isConnected &&
-        !ConnectivityService.isCurrentOffline &&
         !_socket.isFlushing;
     if (canSendLive) {
       _flushingTempIds.add(tempId);

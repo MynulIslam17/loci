@@ -107,6 +107,20 @@ class ChatSocketService extends GetxService {
   /// retrying after dispose and double every log/event).
   String? _socketToken;
 
+  StreamSubscription<void>? _connectivitySub;
+
+  @override
+  void onInit() {
+    super.onInit();
+    if (Get.isRegistered<ConnectivityService>()) {
+      _connectivitySub =
+          Get.find<ConnectivityService>().onReconnect.listen((_) {
+        // Network came back — make sure the socket is alive and flush.
+        connect();
+      });
+    }
+  }
+
   // ── Connection lifecycle ────────────────────────────────────────────────────
   void connect() {
     final token = Get.find<AuthController>().accessToken ?? '';
@@ -421,7 +435,6 @@ class ChatSocketService extends GetxService {
   Future<void> flushGlobalOutbox() async {
     if (_flushInProgress) return;
     if (!isConnected) return;
-    if (ConnectivityService.isCurrentOffline) return;
 
     _flushInProgress = true;
     try {
@@ -429,7 +442,7 @@ class ChatSocketService extends GetxService {
       if (storage == null) return;
 
       final skipIds = <String>{};
-      while (isConnected && !ConnectivityService.isCurrentOffline) {
+      while (isConnected) {
         final next = _nextQueuedMessage(storage, skipIds: skipIds);
         if (next == null) break;
 
@@ -519,6 +532,7 @@ class ChatSocketService extends GetxService {
 
   @override
   void onClose() {
+    _connectivitySub?.cancel();
     disconnect();
     _messageCtrl.close();
     _ackCtrl.close();
