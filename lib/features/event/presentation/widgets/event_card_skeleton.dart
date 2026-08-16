@@ -7,50 +7,94 @@ class EventCardSkeleton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      elevation: 5,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      color: context.colorScheme.surfaceContainerHigh,
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const SkeletonBox(width: double.infinity, height: 200, radius: 10),
-            const SizedBox(height: 16),
-            AppSkeleton.box(width: 220, height: 18),
-            const SizedBox(height: 10),
-            AppSkeleton.box(width: double.infinity, height: 10),
-            const SizedBox(height: 6),
-            AppSkeleton.box(width: 260, height: 10),
-            const SizedBox(height: 16),
-            const _IconRowSkeleton(),
-            const SizedBox(height: 8),
-            const _IconRowSkeleton(),
-            const SizedBox(height: 8),
-            const _IconRowSkeleton(),
-            const SizedBox(height: 20),
-            const SkeletonBox(width: double.infinity, height: 48, radius: 12),
-            const SizedBox(height: 12),
-            Center(child: AppSkeleton.box(width: 120, height: 10)),
-          ],
+    final colors = context.colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return Container(
+      decoration: BoxDecoration(
+        color: colors.surfaceContainerHigh,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: colors.outline.withValues(alpha: isDark ? 0.3 : 0.15),
+          width: 1,
         ),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // 1. Compact Hero Image Placeholder
+          Stack(
+            children: const [
+              SkeletonBox(width: double.infinity, height: 135, radius: 0),
+              Positioned(
+                top: 10,
+                left: 10,
+                child: SkeletonBox(width: 38, height: 42, radius: 10),
+              ),
+              Positioned(
+                top: 10,
+                right: 10,
+                child: SkeletonBox(width: 52, height: 20, radius: 16),
+              ),
+            ],
+          ),
+
+          // 2. Content Body Skeleton
+          Padding(
+            padding: const EdgeInsets.fromLTRB(14, 10, 14, 12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Organizer Row
+                Row(
+                  children: const [
+                    SkeletonBox(width: 18, height: 18, radius: 9),
+                    SizedBox(width: 6),
+                    SkeletonBox(width: 100, height: 10, radius: 4),
+                  ],
+                ),
+                const SizedBox(height: 6),
+
+                // Title
+                const SkeletonBox(width: 220, height: 16, radius: 4),
+                const SizedBox(height: 4),
+
+                // Description line
+                const SkeletonBox(width: double.infinity, height: 10, radius: 4),
+                const SizedBox(height: 8),
+
+                // Info Rows
+                Row(
+                  children: const [
+                    SkeletonBox(width: 14, height: 14, radius: 3),
+                    SizedBox(width: 6),
+                    SkeletonBox(width: 140, height: 10, radius: 4),
+                  ],
+                ),
+                const SizedBox(height: 4),
+                Row(
+                  children: const [
+                    SkeletonBox(width: 14, height: 14, radius: 3),
+                    SizedBox(width: 6),
+                    SkeletonBox(width: 160, height: 10, radius: 4),
+                  ],
+                ),
+                const SizedBox(height: 6),
+
+                // Capacity / Progress
+                const SkeletonBox(width: double.infinity, height: 4, radius: 2),
+                const SizedBox(height: 10),
+
+                // Action Button Skeleton
+                const SkeletonBox(width: double.infinity, height: 40, radius: 10),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
 }
 
-class _IconRowSkeleton extends StatelessWidget {
-  const _IconRowSkeleton();
 
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: const [
-        SkeletonBox(width: 18, height: 18, radius: 4),
-        SizedBox(width: 8),
-        Expanded(child: SkeletonBox(width: double.infinity, height: 10)),
-      ],
-    );
-  }
-}

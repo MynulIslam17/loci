@@ -29,6 +29,7 @@ class EventListController extends GetxController {
 
   String _searchQuery = '';
   Timer? _searchDebounce;
+  final RxBool isSearching = false.obs;
 
   bool get isInitialLoading => _fetch.initialLoading.value;
   bool get isRefreshing => _fetch.refreshing.value;
@@ -104,9 +105,7 @@ class EventListController extends GetxController {
     }
 
     if (isSearch) {
-      // Keep existing rows visible so the search field is not rebuilt into
-      // a shimmer (which unfocuses the keyboard on iOS).
-      _fetch.beginFirstPage(isRefresh: _eventList.isNotEmpty);
+      isSearching.value = true;
     } else {
       _fetch.beginFirstPage(isRefresh: isRefresh);
     }
@@ -137,6 +136,8 @@ class EventListController extends GetxController {
         _errorMessage.value = e.toString().replaceFirst('Exception: ', '');
       }
       _fetch.endFirstPage(markFetched: hasFetched || _eventList.isNotEmpty);
+    } finally {
+      if (isSearch) isSearching.value = false;
     }
   }
 
