@@ -66,6 +66,7 @@ class EventListController extends GetxController {
   }
 
   void onSearchChanged(String query) {
+    if (query == _searchQuery) return;
     _searchQuery = query;
     _searchDebounce?.cancel();
     _searchDebounce = Timer(const Duration(milliseconds: 400), () {
@@ -103,9 +104,9 @@ class EventListController extends GetxController {
     }
 
     if (isSearch) {
-      _fetch.initialLoading.value = true;
-      _fetch.refreshing.value = false;
-      _fetch.hasFetched.value = false;
+      // Keep existing rows visible so the search field is not rebuilt into
+      // a shimmer (which unfocuses the keyboard on iOS).
+      _fetch.beginFirstPage(isRefresh: _eventList.isNotEmpty);
     } else {
       _fetch.beginFirstPage(isRefresh: isRefresh);
     }

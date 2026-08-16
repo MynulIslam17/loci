@@ -70,13 +70,13 @@ class ChatController extends GetxController {
   final Set<String> _flushingTempIds = {};
 
   bool _isRecent(String? t1, String? t2) {
-    if (t1 == null || t2 == null) return true;
+    if (t1 == null || t2 == null) return false;
     try {
       final d1 = DateTime.parse(t1).toUtc();
       final d2 = DateTime.parse(t2).toUtc();
       return (d1.difference(d2).inSeconds).abs() < 120;
     } catch (_) {
-      return true;
+      return false;
     }
   }
 
@@ -136,7 +136,7 @@ class ChatController extends GetxController {
     }
 
     if (_socket.isConnected) {
-      _flushPendingMessages();
+      unawaited(_socket.flushGlobalOutbox());
     }
   }
 
@@ -154,27 +154,31 @@ class ChatController extends GetxController {
   }
 
   /// Room membership does not survive a reconnect: re-join the
-  /// open thread, refetch tail, and automatically flush offline outbox messages.
+  /// open thread, flush the outbox in order, then refetch the tail.
   bool _connectionDropped = false;
   void _onConnectionChanged(bool connected) {
     if (!connected) {
       _connectionDropped = true;
       return;
     }
-    if (_connectionDropped || connected) {
-      _connectionDropped = false;
-      if (conversationId != null) {
-        _socket.joinConversation(conversationId!);
-        loadMessages(silent: true);
-        _markRead();
-      }
-      _flushPendingMessages();
+    final shouldResync = _connectionDropped;
+    _connectionDropped = false;
+    if (conversationId != null) {
+      _socket.joinConversation(conversationId!);
+    }
+    if (shouldResync) {
+      unawaited(_resyncAfterReconnect());
+    } else {
+      unawaited(_socket.flushGlobalOutbox());
     }
   }
 
-  /// Uses global flusher so socket is never double-emitted.
-  void _flushPendingMessages() {
-    _socket.flushGlobalOutbox();
+  Future<void> _resyncAfterReconnect() async {
+    await _socket.flushGlobalOutbox();
+    if (conversationId != null) {
+      await loadMessages(silent: true);
+      _markRead();
+    }
   }
 
   /// [silent] refetches in background without showing a loading spinner — used
@@ -196,44 +200,61 @@ class ChatController extends GetxController {
       hasMore.value = page.hasMore;
 
       final outboxKey = conversationId ?? recipientId ?? '';
-      final persistentPending = _storage.getPendingMessages(outboxKey);
-      final persistentPendingIds = persistentPending.map((m) => m.id).toSet();
+      final pending = _storage.getPendingMessages(outboxKey);
+      final server = List<ChatMessageModel>.from(page.messages);
+      final usedServer = <int>{};
 
-      // Only preserve in-flight sending messages that:
-      // 1) Are in the persistent outbox
-      // 2) Have not yet been reconciled with a server message
-      final matchedServerIndices = <int>{};
-      final activePending = messages.where((m) {
-        if (m.status != 'sending') return false;
-        if (!persistentPendingIds.contains(m.id)) return false;
-
-        // If server already returned this ID directly
-        if (page.messages.any((s) => s.id == m.id)) return false;
-
-        // If server returned a recent message sent by me with matching content, reconcile 1-to-1
-        for (var i = 0; i < page.messages.length; i++) {
-          if (matchedServerIndices.contains(i)) continue;
-          final serverMsg = page.messages[i];
-          if ((isMine(serverMsg) || _myId.isEmpty || serverMsg.sender.id == m.sender.id) &&
+      for (final p in pending) {
+        var matchIdx = -1;
+        for (var i = 0; i < server.length; i++) {
+          if (usedServer.contains(i)) continue;
+          final serverMsg = server[i];
+          if (serverMsg.id == p.id) {
+            matchIdx = i;
+            break;
+          }
+          final mineOnServer =
+              isMine(serverMsg) || _myId.isEmpty || serverMsg.sender.id == p.sender.id;
+          if (mineOnServer &&
               serverMsg.content != null &&
-              m.content != null &&
-              serverMsg.content == m.content &&
-              _isRecent(serverMsg.createdAt, m.createdAt)) {
-            matchedServerIndices.add(i);
-            _flushingTempIds.remove(m.id);
-            _storage.removePendingMessage(outboxKey, m.id);
-            return false;
+              p.content != null &&
+              serverMsg.content == p.content &&
+              _isRecent(serverMsg.createdAt, p.createdAt)) {
+            matchIdx = i;
+            break;
           }
         }
+        if (matchIdx != -1) {
+          usedServer.add(matchIdx);
+          _flushingTempIds.remove(p.id);
+          _socket.unlockTempId(p.id);
+          _storage.removePendingMessage(outboxKey, p.id);
+        }
+      }
 
-        return true;
+      final stillPending = _storage.getPendingMessages(outboxKey);
+      final serverIds = server.map((m) => m.id).toSet();
+      final pendingIds = stillPending.map((m) => m.id).toSet();
+
+      // Keep recently-acked bubbles the REST snapshot has not caught yet.
+      final localKeep = messages.where((m) {
+        if (m.id.startsWith('temp_')) return false;
+        if (serverIds.contains(m.id) || pendingIds.contains(m.id)) return false;
+        return isMine(m);
       }).toList();
 
-      final fetchedIds = page.messages.map((m) => m.id).toSet();
       final merged = [
-        ...page.messages,
-        ...activePending.where((m) => !fetchedIds.contains(m.id)),
+        ...server,
+        ...localKeep,
+        ...stillPending.where((m) => !serverIds.contains(m.id)),
       ];
+      merged.sort((a, b) {
+        final ta = DateTime.tryParse(a.createdAt ?? '') ??
+            DateTime.fromMillisecondsSinceEpoch(0);
+        final tb = DateTime.tryParse(b.createdAt ?? '') ??
+            DateTime.fromMillisecondsSinceEpoch(0);
+        return ta.compareTo(tb);
+      });
 
       messages.assignAll(merged);
       _deduplicateMessages();
@@ -299,18 +320,22 @@ class ChatController extends GetxController {
     _deduplicateMessages();
 
     final outboxKey = conversationId ?? recipientId ?? '';
+    _storage.addPendingMessage(outboxKey, pending);
 
-    // Persist optimistic message in room history & persistent outbox
+    // Persist optimistic message in room history & bump the list preview
+    // after the outbox write so the list can read pending.last.
     if (conversationId != null) {
       _storage.saveMessages(conversationId!, messages.toList());
       if (Get.isRegistered<ChatListController>()) {
         Get.find<ChatListController>().bumpWithMessage(pending);
       }
     }
-    _storage.addPendingMessage(outboxKey, pending);
 
     _stopTyping();
-    if (_socket.isConnected) {
+    final canSendLive = _socket.isConnected &&
+        !ConnectivityService.isCurrentOffline &&
+        !_socket.isFlushing;
+    if (canSendLive) {
       _flushingTempIds.add(tempId);
       _socket.sendMessage(
         conversationId: conversationId,

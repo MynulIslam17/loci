@@ -5,26 +5,17 @@ import 'package:loci/routes/app_routes.dart';
 import 'package:get/get.dart';
 import 'package:loci/features/explore_activity/presentation/utils/explore_activity_search_focus.dart';
 import 'package:loci/shared/widgets/custom_button.dart';
-import 'package:loci/shared/widgets/custom_text_field.dart';
 
 class ExploreActivityHeader extends StatelessWidget {
   const ExploreActivityHeader({
     super.key,
     required this.businessId,
     required this.businessName,
-    required this.searchController,
-    required this.searchFocusNode,
-    required this.searchHint,
-    required this.onSearchChanged,
     required this.searchFocus,
   });
 
   final String businessId;
   final String businessName;
-  final TextEditingController searchController;
-  final FocusNode searchFocusNode;
-  final String searchHint;
-  final ValueChanged<String> onSearchChanged;
   final ExploreActivitySearchFocus searchFocus;
 
   @override
@@ -36,21 +27,6 @@ class ExploreActivityHeader extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          CustomTextField(
-            controller: searchController,
-            focusNode: searchFocusNode,
-            onChanged: onSearchChanged,
-            showClearButton: true,
-            borderColor: colorScheme.outline,
-            hintText: searchHint,
-            hintTextColor: colorScheme.onSurfaceVariant,
-            textColor: colorScheme.onSurface,
-            suffixIcon: Icon(
-              Icons.search,
-              color: colorScheme.onSurfaceVariant,
-            ),
-          ),
-          const SizedBox(height: 12),
           CustomButton(
             backgroundColor: colorScheme.primary,
             onPressed: () {

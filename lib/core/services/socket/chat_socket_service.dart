@@ -6,6 +6,7 @@ import 'package:logger/logger.dart';
 import 'package:socket_io_client/socket_io_client.dart' as io;
 
 import '../../constants/app_url.dart';
+import 'package:loci/core/services/connectivity_service.dart';
 import 'package:loci/core/storage/hive_storage_service.dart';
 import 'package:loci/features/chat/data/models/chat_message_model.dart';
 import 'package:loci/features/auth/presentation/controllers/auth_controller.dart';
@@ -69,6 +70,9 @@ class ChatSocketService extends GetxService {
   io.Socket? _socket;
 
   bool get isConnected => _socket?.connected ?? false;
+
+  /// True while the Hive outbox is being sent in order.
+  bool get isFlushing => _flushInProgress;
 
   // ── Broadcast streams controllers listen to ────────────────────────────────
   final _messageCtrl = StreamController<ChatMessageModel>.broadcast();
@@ -167,7 +171,7 @@ class ChatSocketService extends GetxService {
     s.onConnect((_) {
       _logger.i('ChatSocket ✔ connected (id: ${s.id})');
       _connectionCtrl.add(true);
-      flushGlobalOutbox();
+      unawaited(flushGlobalOutbox());
     });
     s.onDisconnect((reason) {
       _logger.w('ChatSocket ✖ disconnected: $reason');
@@ -180,7 +184,7 @@ class ChatSocketService extends GetxService {
     );
     s.onReconnect((_) {
       _logger.i('ChatSocket ↻ reconnected');
-      flushGlobalOutbox();
+      unawaited(flushGlobalOutbox());
     });
 
     _onEvent(ChatSocketEvent.messageReceived, (data) {
@@ -193,9 +197,7 @@ class ChatSocketService extends GetxService {
       final msg = _extractMessage(data);
       if (msg != null) {
         final tempId = map['tempId']?.toString();
-        if (tempId != null) {
-          _globalFlushingTempIds.remove(tempId);
-        }
+        _completeAckWait(tempId);
         _ackCtrl.add(MessageAck(tempId: tempId, message: msg));
       }
     });
@@ -299,6 +301,9 @@ class ChatSocketService extends GetxService {
   /// Send a text message. Pass [conversationId] for an existing chat, or
   /// [recipientId] to start a new one. [tempId] correlates the optimistic
   /// bubble with the server ack.
+  ///
+  /// Never emits while disconnected — Hive outbox is the queue. Emitting
+  /// through socket.io's offline buffer AND flushing Hive caused duplicates.
   void sendMessage({
     String? conversationId,
     String? recipientId,
@@ -306,8 +311,16 @@ class ChatSocketService extends GetxService {
     String? replyTo,
     String? tempId,
   }) {
+    if (!isConnected) {
+      _logger.w(
+        'ChatSocket ⇏ send_message skipped — not connected '
+        '(Hive outbox owns the queue).',
+      );
+      return;
+    }
     if (tempId != null && tempId.isNotEmpty) {
       _globalFlushingTempIds.add(tempId);
+      _ackWaiters.putIfAbsent(tempId, Completer<void>.new);
     }
     _emit(ChatSocketEvent.sendMessage, {
       'conversationId': ?conversationId,
@@ -341,20 +354,33 @@ class ChatSocketService extends GetxService {
 
   @visibleForTesting
   void emitAckForTest(MessageAck ack) {
-    if (ack.tempId != null) {
-      _globalFlushingTempIds.remove(ack.tempId);
-    }
+    _completeAckWait(ack.tempId);
     _ackCtrl.add(ack);
   }
 
   // ── Global Outbox Flush ───────────────────────────────────────────────────
   final Set<String> _globalFlushingTempIds = {};
+  final Map<String, Completer<void>> _ackWaiters = {};
+  bool _flushInProgress = false;
 
-  /// Scans Hive for any pending offline outbox messages across all conversations
-  /// and automatically flushes them immediately when connection is established,
-  /// regardless of which screen the user is currently viewing.
-  void flushGlobalOutbox() {
+  void _completeAckWait(String? tempId) {
+    if (tempId == null || tempId.isEmpty) return;
+    _globalFlushingTempIds.remove(tempId);
+    final waiter = _ackWaiters.remove(tempId);
+    if (waiter != null && !waiter.isCompleted) {
+      waiter.complete();
+    }
+  }
+
+  /// Scans Hive for pending outbox messages and sends them **in order**,
+  /// waiting for each ack before the next emit. One flusher at a time so
+  /// connect + reconnect + open-thread cannot double-send.
+  Future<void> flushGlobalOutbox() async {
+    if (_flushInProgress) return;
     if (!isConnected) return;
+    if (ConnectivityService.isCurrentOffline) return;
+
+    _flushInProgress = true;
     try {
       final storage = Get.isRegistered<HiveStorageService>()
           ? Get.find<HiveStorageService>()
@@ -363,30 +389,64 @@ class ChatSocketService extends GetxService {
               : null);
       if (storage == null) return;
 
-      final allPending = storage.getAllPendingMessages();
-      for (final entry in allPending.entries) {
-        final convId = entry.key;
-        final msgs = entry.value;
-        for (final m in msgs) {
-          if (m.content != null &&
-              m.content!.isNotEmpty &&
-              !_globalFlushingTempIds.contains(m.id)) {
-            _globalFlushingTempIds.add(m.id);
-            sendMessage(
-              conversationId: convId.isNotEmpty ? convId : null,
-              content: m.content!,
-              tempId: m.id,
-            );
-          }
-        }
+      while (isConnected && !ConnectivityService.isCurrentOffline) {
+        final next = _nextQueuedMessage(storage);
+        if (next == null) break;
+
+        final convId = next.$1;
+        final m = next.$2;
+
+        final inFlight = _globalFlushingTempIds.contains(m.id) &&
+            _ackWaiters.containsKey(m.id);
+        final ok = inFlight
+            ? await _waitForAck(m.id)
+            : await _emitQueuedAndWait(convId, m);
+        if (!ok) return;
       }
-    } catch (_) {}
+    } catch (_) {
+    } finally {
+      _flushInProgress = false;
+    }
+  }
+
+  (String, ChatMessageModel)? _nextQueuedMessage(HiveStorageService storage) {
+    for (final entry in storage.getAllPendingMessages().entries) {
+      for (final m in entry.value) {
+        if (m.content == null || m.content!.isEmpty) continue;
+        return (entry.key, m);
+      }
+    }
+    return null;
+  }
+
+  Future<bool> _emitQueuedAndWait(String convId, ChatMessageModel m) async {
+    if (!isConnected) return false;
+    sendMessage(
+      conversationId: convId.isNotEmpty ? convId : null,
+      content: m.content!,
+      tempId: m.id,
+    );
+    if (!_ackWaiters.containsKey(m.id)) return false;
+    return _waitForAck(m.id);
+  }
+
+  /// Returns false when the ack timed out so the rest of the queue stays
+  /// ordered and retries on the next reconnect.
+  Future<bool> _waitForAck(String tempId) async {
+    final waiter = _ackWaiters[tempId];
+    if (waiter == null) return true;
+    try {
+      await waiter.future.timeout(const Duration(seconds: 15));
+      return true;
+    } on TimeoutException {
+      _logger.w('ChatSocket: ack timeout for $tempId — pausing outbox flush');
+      _completeAckWait(tempId);
+      return false;
+    }
   }
 
   void unlockTempId(String? tempId) {
-    if (tempId != null && tempId.isNotEmpty) {
-      _globalFlushingTempIds.remove(tempId);
-    }
+    _completeAckWait(tempId);
   }
 
   // ── Parsing helpers ──────────────────────────────────────────────────────────

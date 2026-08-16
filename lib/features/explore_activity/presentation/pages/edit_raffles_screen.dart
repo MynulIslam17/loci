@@ -83,7 +83,7 @@ class EditRafflesScreen extends StatelessWidget {
                       tasks: const [],
                       showEntryRequirements: false,
                       onPickRange: () => controller.pickDateRange(context),
-                      onPickCoupon: controller.pickCouponFile,
+                      onPickCoupon: () => controller.pickCouponFile(context),
                       onClearCoupon: controller.removeCouponFile,
                       onAddRequirement: () {},
                       onRemoveTask: (_) {},

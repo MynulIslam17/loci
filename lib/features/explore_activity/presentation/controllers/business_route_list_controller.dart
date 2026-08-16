@@ -43,7 +43,6 @@ class BusinessRouteListController extends GetxController with ExploreTabListCach
     _searchQuery = trimmed;
     _currentPage = 1;
     hasMore.value = true;
-    clearTabCache();
     await fetchRoutes(businessId: businessId, forceRefresh: true);
   }
 
@@ -133,6 +132,7 @@ class BusinessRouteListController extends GetxController with ExploreTabListCach
         businessId,
         errorMessage: errorMessage.value,
         search: _searchQuery,
+        hasItems: routeList.isNotEmpty,
       );
 
   bool showEmptyState(String businessId) {

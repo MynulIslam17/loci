@@ -12,6 +12,7 @@ import 'package:loci/features/explore_activity/presentation/widgets/explore_acti
 import 'package:loci/features/explore_activity/presentation/widgets/explore_activity_raffles_tab.dart';
 import 'package:loci/features/explore_activity/presentation/widgets/explore_activity_routes_tab.dart';
 import 'package:loci/shared/widgets/custom_appbar.dart';
+import 'package:loci/shared/widgets/custom_text_field.dart';
 
 class ExploreActivityScreen extends StatefulWidget {
   const ExploreActivityScreen({super.key});
@@ -116,16 +117,36 @@ class _ExploreActivityScreenState extends State<ExploreActivityScreen>
     return Scaffold(
       backgroundColor: colorScheme.surface,
       appBar: const CustomAppbar(title: 'Explore Activities'),
-      body: NestedScrollView(
+      body: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(12, 12, 12, 0),
+            child: CustomTextField(
+              controller: _searchController,
+              focusNode: _searchFocusNode,
+              onChanged: _onSearchChanged,
+              showClearButton: true,
+              onClear: () {
+                _searchController.clear();
+                _applySearchToTab(_tabController.index, '');
+              },
+              borderColor: colorScheme.outline,
+              hintText: _searchHint,
+              hintTextColor: colorScheme.onSurfaceVariant,
+              textColor: colorScheme.onSurface,
+              suffixIcon: Icon(
+                Icons.search,
+                color: colorScheme.onSurfaceVariant,
+              ),
+            ),
+          ),
+          Expanded(
+            child: NestedScrollView(
         headerSliverBuilder: (context, innerBoxIsScrolled) => [
           SliverToBoxAdapter(
             child: ExploreActivityHeader(
               businessId: businessId,
               businessName: businessName,
-              searchController: _searchController,
-              searchFocusNode: _searchFocusNode,
-              searchHint: _searchHint,
-              onSearchChanged: _onSearchChanged,
               searchFocus: _searchFocus,
             ),
           ),
@@ -169,6 +190,9 @@ class _ExploreActivityScreenState extends State<ExploreActivityScreen>
             ),
           ],
         ),
+      ),
+          ),
+        ],
       ),
     );
   }

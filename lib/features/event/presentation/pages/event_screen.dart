@@ -28,6 +28,7 @@ class _EventScreenState extends State<EventScreen> {
   //---scroll controller for pagination loader
   final ScrollController _scrollController = ScrollController();
   final TextEditingController _searchController = TextEditingController();
+  final FocusNode _searchFocus = FocusNode();
 
   @override
   void initState() {
@@ -47,6 +48,7 @@ class _EventScreenState extends State<EventScreen> {
   @override
   void dispose() {
     _scrollController.dispose();
+    _searchFocus.dispose();
     _searchController.dispose();
     eventController.clearSearch();
     super.dispose();
@@ -79,68 +81,65 @@ class _EventScreenState extends State<EventScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.colorScheme;
     return Scaffold(
       body: Padding(
         padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 12),
-        child: Obx(() {
-          final controller = eventController;
-          final hasSearch = controller.searchQuery.trim().isNotEmpty;
-          final isInitialLoading = controller.showInitialShimmer;
-          final hasFatalError =
-              controller.errorMessage != null &&
-              controller.eventList.isEmpty &&
-              !isInitialLoading;
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            CustomTextField(
+              controller: _searchController,
+              focusNode: _searchFocus,
+              borderColor: colors.outline,
+              hintText: "Search Event",
+              hintTextColor: colors.onSurfaceVariant,
+              textColor: colors.onSurface,
+              onChanged: eventController.onSearchChanged,
+              showClearButton: true,
+              onClear: () {
+                _searchController.clear();
+                eventController.clearSearch();
+              },
+              suffixIcon: Icon(
+                Icons.search,
+                color: colors.onSurfaceVariant,
+              ),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              "Upcoming Events",
+              style: AppTextStyle.textXl(
+                color: colors.onSurface,
+                weight: FontWeight.w700,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              "RSVP to the events which you interested",
+              style: AppTextStyle.textSm(color: colors.onSurface),
+            ),
+            const SizedBox(height: 16),
+            Expanded(
+              child: Obx(() {
+                final controller = eventController;
+                final hasSearch = controller.searchQuery.trim().isNotEmpty;
+                final isInitialLoading = controller.showInitialShimmer;
+                final hasFatalError =
+                    controller.errorMessage != null &&
+                    controller.eventList.isEmpty &&
+                    !isInitialLoading;
 
-          return RefreshIndicator(
-            onRefresh: () => controller.fetchEvents(isRefresh: true),
-            child: CustomScrollView(
-              controller: _scrollController,
-              keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-              slivers: [
-                // Search + Header
-                SliverToBoxAdapter(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      CustomTextField(
-                        controller: _searchController,
-                        borderColor: context.colorScheme.outline,
-                        hintText: "Search Event",
-                        hintTextColor: context.colorScheme.onSurfaceVariant,
-                        textColor: context.colorScheme.onSurface,
-                        onChanged: controller.onSearchChanged,
-                        showClearButton: true,
-                        onClear: () {
-                          _searchController.clear();
-                          FocusScope.of(context).unfocus();
-                          controller.clearSearch();
-                        },
-                        suffixIcon: Icon(
-                          Icons.search,
-                          color: context.colorScheme.onSurfaceVariant,
+                return RefreshIndicator(
+                  onRefresh: () => controller.fetchEvents(isRefresh: true),
+                  child: CustomScrollView(
+                    controller: _scrollController,
+                    slivers: [
+                      if (controller.isRefreshing)
+                        const SliverToBoxAdapter(
+                          child: LinearProgressIndicator(minHeight: 2),
                         ),
-                      ),
-                      const SizedBox(height: 16),
-                      Text(
-                        "Upcoming Events",
-                        style: AppTextStyle.textXl(
-                          color: context.colorScheme.onSurface,
-                          weight: FontWeight.w700,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        "RSVP to the events which you interested",
-                        style: AppTextStyle.textSm(
-                          color: context.colorScheme.onSurface,
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                    ],
-                  ),
-                ),
-
-                if (isInitialLoading)
+                      if (isInitialLoading)
                   SliverList(
                     delegate: SliverChildBuilderDelegate(
                       (_, _) => const Padding(
@@ -229,10 +228,13 @@ class _EventScreenState extends State<EventScreen> {
                           (controller.isPaginationLoading ? 1 : 0),
                     ),
                   ),
-              ],
+                    ],
+                  ),
+                );
+              }),
             ),
-          );
-        }),
+          ],
+        ),
       ),
     );
   }

@@ -29,11 +29,15 @@ mixin ExploreTabListCache on GetxController {
   }
 
   /// True while the first successful load for [businessId] has not completed.
+  /// Never true when [hasItems] is set — search must not replace a visible
+  /// list with shimmer (that rebuild unfocuses the search field on iOS).
   bool showExploreInitialLoader(
     String businessId, {
     String? errorMessage,
     String search = '',
+    bool hasItems = false,
   }) {
+    if (hasItems) return false;
     return !isCachedFor(businessId, search: search) && errorMessage == null;
   }
 
