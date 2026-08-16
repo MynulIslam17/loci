@@ -8,49 +8,75 @@ class RaffleCardSkeleton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colorScheme = context.colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    return Card(
-      margin: const EdgeInsets.only(bottom: 20),
-      color: colorScheme.surfaceContainerHigh,
+    return Container(
+      margin: const EdgeInsets.only(bottom: 14),
+      decoration: BoxDecoration(
+        color: colorScheme.surfaceContainerHigh,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: colorScheme.outline.withValues(alpha: isDark ? 0.3 : 0.15),
+          width: 1,
+        ),
+      ),
       clipBehavior: Clip.antiAlias,
-      elevation: 2,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const SkeletonBox(width: double.infinity, height: 180, radius: 0),
+          // 1. Compact Hero Image Placeholder
+          Stack(
+            children: const [
+              SkeletonBox(width: double.infinity, height: 135, radius: 0),
+              Positioned(
+                top: 10,
+                left: 10,
+                child: SkeletonBox(width: 60, height: 22, radius: 12),
+              ),
+              Positioned(
+                top: 10,
+                right: 10,
+                child: SkeletonBox(width: 70, height: 22, radius: 16),
+              ),
+            ],
+          ),
+
+          // 2. Content Body Skeleton
           Padding(
-            padding: const EdgeInsets.all(16.0),
+            padding: const EdgeInsets.fromLTRB(14, 10, 14, 12),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                AppSkeleton.box(width: 200, height: 16),
-                const SizedBox(height: 10),
-                AppSkeleton.box(width: double.infinity, height: 10),
-                const SizedBox(height: 6),
-                AppSkeleton.box(width: 240, height: 10),
-                const SizedBox(height: 16),
-                const SkeletonBox(
-                  width: double.infinity,
-                  height: 44,
-                  radius: 12,
-                ),
-                const SizedBox(height: 16),
+                // Organizer Row
                 Row(
                   children: const [
-                    SkeletonBox(width: 14, height: 14, radius: 4),
+                    SkeletonBox(width: 18, height: 18, radius: 9),
                     SizedBox(width: 6),
-                    SkeletonBox(width: 160, height: 10),
+                    SkeletonBox(width: 100, height: 10, radius: 4),
                   ],
                 ),
-                const SizedBox(height: 16),
-                const SkeletonBox(
-                  width: double.infinity,
-                  height: 48,
-                  radius: 12,
+                const SizedBox(height: 6),
+
+                // Title
+                const SkeletonBox(width: 220, height: 16, radius: 4),
+                const SizedBox(height: 4),
+
+                // Description
+                const SkeletonBox(width: double.infinity, height: 10, radius: 4),
+                const SizedBox(height: 8),
+
+                // Date Row
+                Row(
+                  children: const [
+                    SkeletonBox(width: 14, height: 14, radius: 3),
+                    SizedBox(width: 6),
+                    SkeletonBox(width: 140, height: 10, radius: 4),
+                  ],
                 ),
-                const SizedBox(height: 12),
-                Center(child: AppSkeleton.box(width: 120, height: 10)),
+                const SizedBox(height: 10),
+
+                // Button Skeleton
+                const SkeletonBox(width: double.infinity, height: 40, radius: 10),
               ],
             ),
           ),
@@ -59,3 +85,4 @@ class RaffleCardSkeleton extends StatelessWidget {
     );
   }
 }
+

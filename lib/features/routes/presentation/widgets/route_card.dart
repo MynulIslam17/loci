@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:loci/core/theme/theme_extention.dart';
 import 'package:loci/core/constants/app_text_style.dart';
+import 'package:loci/features/event/presentation/widgets/event_card.dart';
+import 'package:loci/shared/widgets/custom_button.dart';
 import 'package:loci/shared/widgets/custom_image_container.dart';
 
 class RouteCard extends StatelessWidget {
@@ -26,131 +28,174 @@ class RouteCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colorScheme = context.colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    return GestureDetector(
-      onTap: onTap,
-      child: Card(
+    return Container(
+      decoration: BoxDecoration(
         color: colorScheme.surfaceContainerHigh,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: colorScheme.outline.withValues(alpha: isDark ? 0.3 : 0.18),
+          width: 1,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: isDark ? 0.28 : 0.06),
+            blurRadius: 14,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(20),
         clipBehavior: Clip.antiAlias,
-        elevation: 2,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            CustomCachedImage(
-              imageUrl: imageUrl,
-              height: 180,
-              width: double.infinity,
-              customBorderRadius: BorderRadius.vertical(
-                top: Radius.circular(12),
-              ),
-            ),
-
-            // Content Section
-            Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+        child: InkWell(
+          onTap: onTap,
+          splashColor: colorScheme.primary.withValues(alpha: 0.08),
+          highlightColor: colorScheme.primary.withValues(alpha: 0.04),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // ── 1. Compact Hero Image with Overlaid Badges ──────────────────
+              Stack(
                 children: [
-                  Row(
+                  CustomCachedImage(
+                    imageUrl: imageUrl,
+                    height: 135,
+                    width: double.infinity,
+                    fit: BoxFit.cover,
+                    borderRadius: 0,
+                  ),
+                  // Subtle bottom gradient for image readability
+                  Positioned.fill(
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [
+                            Colors.black.withValues(alpha: 0.2),
+                            Colors.transparent,
+                            Colors.black.withValues(alpha: 0.35),
+                          ],
+                          stops: const [0.0, 0.5, 1.0],
+                        ),
+                      ),
+                    ),
+                  ),
+
+                  // Top-Left Availability Badge
+                  if (availabilityType.isNotEmpty)
+                    Positioned(
+                      top: 10,
+                      left: 10,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.black.withValues(alpha: 0.72),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: Colors.white.withValues(alpha: 0.18),
+                            width: 0.8,
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.explore_outlined,
+                              size: 12,
+                              color: colorScheme.primary,
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              availabilityType,
+                              style: const TextStyle(
+                                fontSize: 10,
+                                fontWeight: FontWeight.w700,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+
+              // ── 2. Content Body ──────────────────────────────────────────────
+              Padding(
+                padding: const EdgeInsets.fromLTRB(14, 10, 14, 12),
+                child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Expanded(
-                      child: Text(
-                        title,
-                        maxLines: 2,
+                    // Route Title
+                    Text(
+                      title,
+                      style: AppTextStyle.textMd(
+                        color: colorScheme.onSurface,
+                        weight: FontWeight.w700,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+
+                    if (description.isNotEmpty) ...[
+                      const SizedBox(height: 3),
+                      Text(
+                        description,
+                        maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: AppTextStyle.textMd(
-                          color: colorScheme.onSurface,
-                          weight: FontWeight.w600,
+                        style: AppTextStyle.textXs(
+                          color: colorScheme.onSurfaceVariant,
                         ),
+                      ),
+                    ],
+
+                    const SizedBox(height: 8),
+
+                    // Info Rows (Location & Opening Time)
+                    if (location.isNotEmpty) ...[
+                      IconTextRow(
+                        icon: Icons.location_on_outlined,
+                        text: location,
+                        iconColor: colorScheme.primary,
+                      ),
+                      const SizedBox(height: 4),
+                    ],
+                    if (openingTime.isNotEmpty) ...[
+                      IconTextRow(
+                        icon: Icons.access_time_rounded,
+                        text: openingTime,
+                        iconColor: colorScheme.primary,
+                      ),
+                      const SizedBox(height: 10),
+                    ],
+
+                    // Action Button
+                    SizedBox(
+                      width: double.infinity,
+                      height: 40,
+                      child: CustomButton(
+                        backgroundColor: colorScheme.primary,
+                        textColor: colorScheme.onPrimary,
+                        text: "Explore Route",
+                        textStyle: AppTextStyle.textSm(weight: FontWeight.w600),
+                        onPressed: onTap,
                       ),
                     ),
                   ],
                 ),
-                  const SizedBox(height: 8),
-                  Text(
-                    description,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: AppTextStyle.textXs(
-                      color: colorScheme.onSurfaceVariant,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-
-                  _buildInfoItem(
-                    context,
-                    Icons.location_on_outlined,
-                    location,
-                    maxLines: 2,
-                  ),
-                  const SizedBox(height: 8),
-                  Wrap(
-                    spacing: 16,
-                    runSpacing: 8,
-                    children: [
-                      _buildInfoChip(
-                        context,
-                        Icons.access_time,
-                        openingTime,
-                      ),
-                      _buildInfoChip(
-                        context,
-                        Icons.explore_outlined,
-                        availabilityType,
-                      ),
-                    ],
-                  ),
-                ],
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
   }
-
-  Widget _buildInfoItem(
-    BuildContext context,
-    IconData icon,
-    String label, {
-    int maxLines = 1,
-  }) {
-    final colorScheme = context.colorScheme;
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Icon(icon, size: 14, color: colorScheme.primary),
-        const SizedBox(width: 6),
-        Expanded(
-          child: Text(
-            label,
-            maxLines: maxLines,
-            overflow: TextOverflow.ellipsis,
-            style: AppTextStyle.textXs(color: colorScheme.onSurfaceVariant),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildInfoChip(BuildContext context, IconData icon, String label) {
-    final colorScheme = context.colorScheme;
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Icon(icon, size: 14, color: colorScheme.primary),
-        const SizedBox(width: 4),
-        ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 140),
-          child: Text(
-            label,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: AppTextStyle.textXs(color: colorScheme.onSurfaceVariant),
-          ),
-        ),
-      ],
-    );
-  }
 }
+

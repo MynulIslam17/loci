@@ -654,11 +654,101 @@ void main() {
       expect(controller.messages.first.content, 'Hello Hive optimistically!');
       expect(controller.messages.first.status, 'sending');
 
+      // Sending rows stay in the outbox, not room history — otherwise a
+      // leave/re-open shows a clock bubble next to the acked copy.
       final cached = hiveService.getCachedMessages('conv_send');
-      expect(cached.length, 1);
-      expect(cached.first.content, 'Hello Hive optimistically!');
+      expect(cached, isEmpty);
+      final pending = hiveService.getPendingMessages('conv_send');
+      expect(pending.length, 1);
+      expect(pending.first.content, 'Hello Hive optimistically!');
+      expect(pending.first.status, 'sending');
 
       controller.onClose();
+    });
+
+    test('reopening a thread after ack does not show a leftover sending bubble', () {
+      final now = DateTime.now().toIso8601String();
+      hiveService.saveMessages('conv_reopen', [
+        ChatMessageModel(
+          id: 'server_kop',
+          conversationId: 'conv_reopen',
+          sender: ChatUserModel(id: 'my_user_id', name: 'Me'),
+          content: 'kop',
+          status: 'sent',
+          createdAt: now,
+        ),
+      ]);
+      hiveService.addPendingMessage(
+        'conv_reopen',
+        ChatMessageModel(
+          id: 'temp_stale_kop',
+          conversationId: 'conv_reopen',
+          sender: ChatUserModel(id: 'my_user_id', name: 'Me'),
+          content: 'kop',
+          status: 'sending',
+          createdAt: now,
+        ),
+      );
+
+      final socket = Get.find<ChatSocketService>();
+      socket.emitAckForTest(
+        MessageAck(
+          tempId: 'temp_stale_kop',
+          message: ChatMessageModel(
+            id: 'server_kop',
+            conversationId: 'conv_reopen',
+            sender: ChatUserModel(id: 'my_user_id', name: 'Me'),
+            content: 'kop',
+            status: 'sent',
+            createdAt: now,
+          ),
+        ),
+      );
+
+      final reopened = ChatController(
+        fakeService,
+        conversationId: 'conv_reopen',
+        recipientId: null,
+        other: ChatUserModel(id: 'u2', name: 'Bob'),
+        storage: hiveService,
+      );
+      reopened.onInit();
+
+      expect(reopened.messages.where((m) => m.content == 'kop').length, 1);
+      expect(reopened.messages.single.status, 'sent');
+      expect(hiveService.getPendingMessages('conv_reopen'), isEmpty);
+
+      reopened.onClose();
+    });
+
+    test('ack after leaving the thread still clears the outbox', () {
+      hiveService.addPendingMessage(
+        'conv_left',
+        ChatMessageModel(
+          id: 'temp_left',
+          conversationId: 'conv_left',
+          sender: ChatUserModel(id: 'my_user_id', name: 'Me'),
+          content: 'zbbzbz',
+          status: 'sending',
+          createdAt: DateTime.now().toIso8601String(),
+        ),
+      );
+
+      Get.find<ChatSocketService>().emitAckForTest(
+        MessageAck(
+          tempId: 'temp_left',
+          message: ChatMessageModel(
+            id: 'server_left',
+            conversationId: 'conv_left',
+            sender: ChatUserModel(id: 'my_user_id', name: 'Me'),
+            content: 'zbbzbz',
+            status: 'sent',
+          ),
+        ),
+      );
+
+      expect(hiveService.getPendingMessages('conv_left'), isEmpty);
+      expect(hiveService.getCachedMessages('conv_left').single.id, 'server_left');
     });
 
     test('reconnection with loadMessages and _onAck does NOT duplicate message', () async {

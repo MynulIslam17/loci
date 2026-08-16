@@ -1,21 +1,16 @@
 import 'dart:io' show Platform;
-import 'dart:typed_data';
 
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
-import 'package:http/http.dart' as http;
 import 'package:loci/core/constants/app_text_style.dart';
 import 'package:loci/core/theme/theme_extention.dart';
-import 'package:loci/features/auth/presentation/controllers/auth_controller.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-/// Loads a static map preview.
+/// Loads a static map preview and opens Apple/Google Maps on tap.
 ///
-/// Backend `mapImage` URLs are **signed** (`sig` + `exp` in the query). They
-/// must be fetched without an Authorization header — iOS NSURLSession forwards
-/// Bearer tokens across redirects, which makes S3/CloudFront reject the image
-/// (Android OkHttp typically does not, so this looked iOS-only).
-class AuthenticatedMapImage extends StatefulWidget {
+/// Uses the `mapImage` URL from the backend as-is. Signed URLs (`sig` + `exp`)
+/// are loaded without a Bearer token.
+class AuthenticatedMapImage extends StatelessWidget {
   const AuthenticatedMapImage({
     super.key,
     required this.imageUrl,
@@ -41,93 +36,17 @@ class AuthenticatedMapImage extends StatefulWidget {
   final double? longitude;
   final String? locationLabel;
 
-  @override
-  State<AuthenticatedMapImage> createState() => _AuthenticatedMapImageState();
-}
-
-class _AuthenticatedMapImageState extends State<AuthenticatedMapImage> {
-  Future<Uint8List?>? _future;
-  String? _requestedUrl;
-
   bool get _hasCoordinates =>
-      widget.latitude != null &&
-      widget.longitude != null &&
-      (widget.latitude != 0.0 || widget.longitude != 0.0);
-
-  @override
-  void initState() {
-    super.initState();
-    _requestedUrl = widget.imageUrl?.trim();
-    _future = _fetchImage(_requestedUrl);
-  }
-
-  @override
-  void didUpdateWidget(covariant AuthenticatedMapImage oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    final url = widget.imageUrl?.trim();
-    if (url != _requestedUrl) {
-      _requestedUrl = url;
-      _future = _fetchImage(url);
-    }
-  }
-
-  bool _isSignedUrl(Uri uri) {
-    return uri.queryParameters.containsKey('sig') ||
-        uri.path.contains('/map');
-  }
-
-  Future<Uint8List?> _fetchImage(String? rawUrl) async {
-    final url = rawUrl?.trim();
-    if (url == null || url.isEmpty) return null;
-
-    final uri = Uri.parse(url);
-    final signed = _isSignedUrl(uri);
-
-    String token = '';
-    if (Get.isRegistered<AuthController>()) {
-      token = Get.find<AuthController>().accessToken ?? '';
-    }
-
-    Future<http.Response> get({required bool withAuth}) {
-      return http
-          .get(
-            uri,
-            headers: {
-              'Accept': 'image/png,image/jpeg,image/*,*/*',
-              if (withAuth && token.isNotEmpty)
-                'Authorization': 'Bearer $token',
-            },
-          )
-          .timeout(const Duration(seconds: 20));
-    }
-
-    // Signed map URLs prove access via `sig` — never send a Bearer token.
-    var response = await get(withAuth: !signed && token.isNotEmpty);
-
-    if (!signed &&
-        token.isNotEmpty &&
-        (response.statusCode == 401 || response.statusCode == 403)) {
-      response = await get(withAuth: false);
-    }
-
-    if (response.statusCode == 200 && response.bodyBytes.isNotEmpty) {
-      return response.bodyBytes;
-    }
-    throw Exception('map_image_${response.statusCode}');
-  }
-
-  void _retry() {
-    setState(() {
-      _future = _fetchImage(_requestedUrl);
-    });
-  }
+      latitude != null &&
+      longitude != null &&
+      (latitude != 0.0 || longitude != 0.0);
 
   Future<void> _openInMaps() async {
     if (!_hasCoordinates) return;
 
-    final lat = widget.latitude!;
-    final lng = widget.longitude!;
-    final label = Uri.encodeComponent(widget.locationLabel ?? 'Location');
+    final lat = latitude!;
+    final lng = longitude!;
+    final label = Uri.encodeComponent(locationLabel ?? 'Location');
 
     final mapUri = Platform.isIOS
         ? Uri.parse('https://maps.apple.com/?ll=$lat,$lng&q=$label')
@@ -152,81 +71,50 @@ class _AuthenticatedMapImageState extends State<AuthenticatedMapImage> {
   @override
   Widget build(BuildContext context) {
     final colors = context.colorScheme;
-    final effectiveWidth = widget.width ?? double.infinity;
-    final url = widget.imageUrl?.trim();
+    final effectiveWidth = width ?? double.infinity;
+    final url = imageUrl?.trim();
 
     Widget content;
     if (url == null || url.isEmpty) {
-      content = _MapPlaceholder(
-        icon: widget.fallbackIcon,
-        label: 'Map unavailable',
+      content = _MapFallbackCard(
+        icon: fallbackIcon,
+        title: locationLabel?.trim().isNotEmpty == true
+            ? locationLabel!
+            : (_hasCoordinates ? 'View location' : 'Map unavailable'),
+        subtitle: _hasCoordinates ? 'Open in Maps' : null,
         colors: colors,
       );
     } else {
-      content = FutureBuilder<Uint8List?>(
-        future: _future,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return ColoredBox(color: colors.surfaceContainerHighest);
-          }
-
-          if (snapshot.hasError || snapshot.data == null) {
-            return _MapPlaceholder(
-              icon: widget.fallbackIcon,
-              label: 'Couldn\'t load map',
-              colors: colors,
-              onRetry: widget.showRetry ? _retry : null,
-            );
-          }
-
+      content = CachedNetworkImage(
+        imageUrl: url,
+        height: height,
+        width: effectiveWidth,
+        fit: fit,
+        fadeInDuration: const Duration(milliseconds: 180),
+        placeholder: (_, _) => ColoredBox(color: colors.surfaceContainerHighest),
+        errorWidget: (_, _, _) => _MapFallbackCard(
+          icon: fallbackIcon,
+          title: locationLabel?.trim().isNotEmpty == true
+              ? locationLabel!
+              : (_hasCoordinates ? 'View location' : 'Couldn\'t load map'),
+          subtitle: _hasCoordinates ? 'Open in Maps' : null,
+          colors: colors,
+        ),
+        imageBuilder: (context, imageProvider) {
           return Stack(
             fit: StackFit.expand,
             children: [
-              Image.memory(
-                snapshot.data!,
-                height: widget.height,
+              Image(
+                image: imageProvider,
+                height: height,
                 width: effectiveWidth,
-                fit: widget.fit,
-                gaplessPlayback: true,
-                errorBuilder: (context, error, stackTrace) => _MapPlaceholder(
-                  icon: widget.fallbackIcon,
-                  label: 'Couldn\'t load map',
-                  colors: colors,
-                  onRetry: widget.showRetry ? _retry : null,
-                ),
+                fit: fit,
               ),
               if (_hasCoordinates)
-                Positioned(
+                const Positioned(
                   right: 8,
                   bottom: 8,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 4,
-                    ),
-                    decoration: BoxDecoration(
-                      color: Colors.black.withValues(alpha: 0.6),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Icon(
-                          Icons.open_in_new,
-                          size: 12,
-                          color: Colors.white,
-                        ),
-                        const SizedBox(width: 4),
-                        Text(
-                          'Open in Maps',
-                          style: AppTextStyle.textXs(
-                            color: Colors.white,
-                            weight: FontWeight.w500,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
+                  child: _OpenInMapsChip(),
                 ),
             ],
           );
@@ -234,10 +122,17 @@ class _AuthenticatedMapImageState extends State<AuthenticatedMapImage> {
       );
     }
 
-    Widget result = ClipRRect(
-      borderRadius: BorderRadius.circular(widget.borderRadius),
+    Widget result = Card(
+      elevation: 0,
+      margin: EdgeInsets.zero,
+      clipBehavior: Clip.antiAlias,
+      color: colors.surfaceContainerHigh,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(borderRadius),
+        side: BorderSide(color: colors.outlineVariant),
+      ),
       child: SizedBox(
-        height: widget.height,
+        height: height,
         width: effectiveWidth,
         child: content,
       ),
@@ -254,47 +149,101 @@ class _AuthenticatedMapImageState extends State<AuthenticatedMapImage> {
   }
 }
 
-class _MapPlaceholder extends StatelessWidget {
-  const _MapPlaceholder({
-    required this.icon,
-    required this.label,
-    required this.colors,
-    this.onRetry,
-  });
-
-  final IconData icon;
-  final String label;
-  final ColorScheme colors;
-  final VoidCallback? onRetry;
+class _OpenInMapsChip extends StatelessWidget {
+  const _OpenInMapsChip();
 
   @override
   Widget build(BuildContext context) {
-    return ColoredBox(
-      color: colors.surfaceContainerHighest,
-      child: Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, size: 28, color: colors.onSurfaceVariant),
-            const SizedBox(height: 6),
-            Text(
-              label,
-              style: AppTextStyle.textXs(color: colors.onSurfaceVariant),
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: Colors.black.withValues(alpha: 0.6),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(Icons.open_in_new, size: 12, color: Colors.white),
+          const SizedBox(width: 4),
+          Text(
+            'Open in Maps',
+            style: AppTextStyle.textXs(
+              color: Colors.white,
+              weight: FontWeight.w500,
             ),
-            if (onRetry != null) ...[
-              const SizedBox(height: 4),
-              GestureDetector(
-                onTap: onRetry,
-                child: Text(
-                  'Retry',
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _MapFallbackCard extends StatelessWidget {
+  const _MapFallbackCard({
+    required this.icon,
+    required this.title,
+    required this.colors,
+    this.subtitle,
+  });
+
+  final IconData icon;
+  final String title;
+  final String? subtitle;
+  final ColorScheme colors;
+
+  @override
+  Widget build(BuildContext context) {
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            colors.primary.withValues(alpha: 0.08),
+            colors.surfaceContainerHighest,
+            colors.primary.withValues(alpha: 0.04),
+          ],
+        ),
+      ),
+      child: Center(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  color: colors.surface,
+                  shape: BoxShape.circle,
+                  border: Border.all(color: colors.outlineVariant),
+                ),
+                child: Icon(icon, size: 22, color: colors.primary),
+              ),
+              const SizedBox(height: 10),
+              Text(
+                title,
+                textAlign: TextAlign.center,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: AppTextStyle.textSm(
+                  color: colors.onSurface,
+                  weight: FontWeight.w600,
+                ),
+              ),
+              if (subtitle != null) ...[
+                const SizedBox(height: 6),
+                Text(
+                  subtitle!,
                   style: AppTextStyle.textXs(
                     color: colors.primary,
                     weight: FontWeight.w600,
                   ),
                 ),
-              ),
+              ],
             ],
-          ],
+          ),
         ),
       ),
     );

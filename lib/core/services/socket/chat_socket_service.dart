@@ -175,6 +175,9 @@ class ChatSocketService extends GetxService {
     });
     s.onDisconnect((reason) {
       _logger.w('ChatSocket ✖ disconnected: $reason');
+      // Allow a later reconnect flush to retry unacked rows. Acked ids stay
+      // so a stale outbox row cannot be sent a second time.
+      _emittedTempIds.clear();
       _connectionCtrl.add(false);
     });
     s.onConnectError((e) => _logger.e('ChatSocket ✖ connect error: $e'));
@@ -196,9 +199,7 @@ class ChatSocketService extends GetxService {
       final map = _asMap(data);
       final msg = _extractMessage(data);
       if (msg != null) {
-        final tempId = map['tempId']?.toString();
-        _completeAckWait(tempId);
-        _ackCtrl.add(MessageAck(tempId: tempId, message: msg));
+        _handleAck(map['tempId']?.toString(), msg);
       }
     });
 
@@ -319,6 +320,11 @@ class ChatSocketService extends GetxService {
       return;
     }
     if (tempId != null && tempId.isNotEmpty) {
+      if (_ackedTempIds.contains(tempId) || _emittedTempIds.contains(tempId)) {
+        _logger.w('ChatSocket ⇏ send_message skipped — $tempId already sent.');
+        return;
+      }
+      _emittedTempIds.add(tempId);
       _globalFlushingTempIds.add(tempId);
       _ackWaiters.putIfAbsent(tempId, Completer<void>.new);
     }
@@ -354,14 +360,51 @@ class ChatSocketService extends GetxService {
 
   @visibleForTesting
   void emitAckForTest(MessageAck ack) {
-    _completeAckWait(ack.tempId);
-    _ackCtrl.add(ack);
+    _handleAck(ack.tempId, ack.message);
   }
 
   // ── Global Outbox Flush ───────────────────────────────────────────────────
   final Set<String> _globalFlushingTempIds = {};
+  final Set<String> _emittedTempIds = {};
+  final Set<String> _ackedTempIds = {};
   final Map<String, Completer<void>> _ackWaiters = {};
   bool _flushInProgress = false;
+
+  bool wasAcked(String? tempId) =>
+      tempId != null && tempId.isNotEmpty && _ackedTempIds.contains(tempId);
+
+  void _handleAck(String? tempId, ChatMessageModel message) {
+    if (tempId != null && tempId.isNotEmpty) {
+      _ackedTempIds.add(tempId);
+    }
+    _completeAckWait(tempId);
+    _applyAckToStorage(tempId, message);
+    _ackCtrl.add(MessageAck(tempId: tempId, message: message));
+  }
+
+  void _applyAckToStorage(String? tempId, ChatMessageModel message) {
+    final storage = _storageOrNull();
+    if (storage == null) return;
+    if (tempId != null && tempId.isNotEmpty) {
+      storage.removePendingByTempId(tempId);
+    }
+    if (message.conversationId.isNotEmpty) {
+      storage.appendOrUpdateMessage(
+        message.conversationId,
+        message,
+        tempId: tempId,
+      );
+    }
+  }
+
+  HiveStorageService? _storageOrNull() {
+    if (Get.isRegistered<HiveStorageService>()) {
+      return Get.find<HiveStorageService>();
+    }
+    return HiveStorageService.isInitialized
+        ? HiveStorageService.instance
+        : null;
+  }
 
   void _completeAckWait(String? tempId) {
     if (tempId == null || tempId.isEmpty) return;
@@ -382,25 +425,35 @@ class ChatSocketService extends GetxService {
 
     _flushInProgress = true;
     try {
-      final storage = Get.isRegistered<HiveStorageService>()
-          ? Get.find<HiveStorageService>()
-          : (HiveStorageService.isInitialized
-              ? HiveStorageService.instance
-              : null);
+      final storage = _storageOrNull();
       if (storage == null) return;
 
+      final skipIds = <String>{};
       while (isConnected && !ConnectivityService.isCurrentOffline) {
-        final next = _nextQueuedMessage(storage);
+        final next = _nextQueuedMessage(storage, skipIds: skipIds);
         if (next == null) break;
 
         final convId = next.$1;
         final m = next.$2;
 
-        final inFlight = _globalFlushingTempIds.contains(m.id) &&
-            _ackWaiters.containsKey(m.id);
-        final ok = inFlight
-            ? await _waitForAck(m.id)
-            : await _emitQueuedAndWait(convId, m);
+        if (_ackedTempIds.contains(m.id)) {
+          storage.removePendingByTempId(m.id);
+          continue;
+        }
+
+        // Already handed to the socket this session — wait, never emit twice.
+        if (_emittedTempIds.contains(m.id) ||
+            _globalFlushingTempIds.contains(m.id)) {
+          if (_ackWaiters.containsKey(m.id)) {
+            final ok = await _waitForAck(m.id);
+            if (!ok) return;
+            continue;
+          }
+          skipIds.add(m.id);
+          continue;
+        }
+
+        final ok = await _emitQueuedAndWait(convId, m);
         if (!ok) return;
       }
     } catch (_) {
@@ -409,10 +462,14 @@ class ChatSocketService extends GetxService {
     }
   }
 
-  (String, ChatMessageModel)? _nextQueuedMessage(HiveStorageService storage) {
+  (String, ChatMessageModel)? _nextQueuedMessage(
+    HiveStorageService storage, {
+    Set<String> skipIds = const {},
+  }) {
     for (final entry in storage.getAllPendingMessages().entries) {
       for (final m in entry.value) {
         if (m.content == null || m.content!.isEmpty) continue;
+        if (skipIds.contains(m.id)) continue;
         return (entry.key, m);
       }
     }

@@ -130,7 +130,7 @@ class ChatListController extends GetxController {
   void onAckReceived(MessageAck ack) {
     final convId = ack.message.conversationId;
     if (ack.tempId != null) {
-      _storage.removePendingMessage(convId, ack.tempId!);
+      _storage.removePendingByTempId(ack.tempId!);
     }
 
     final remaining = convId.isEmpty
@@ -139,12 +139,11 @@ class ChatListController extends GetxController {
 
     if (remaining.isNotEmpty) {
       // Mid-queue ack: keep the list preview on the last queued text.
-      _storage.appendOrUpdateMessage(convId, ack.message, tempId: ack.tempId);
-      _onIncomingMessage(remaining.last);
+      _updateListPreview(remaining.last);
       return;
     }
 
-    _onIncomingMessage(ack.message);
+    _onIncomingMessage(ack.message, tempId: ack.tempId);
   }
 
   Future<void> fetchConversations({bool isRefresh = false}) async {
@@ -257,8 +256,23 @@ class ChatListController extends GetxController {
   /// (via the send ack, since the server doesn't echo them as new_message).
   void bumpWithMessage(ChatMessageModel msg) => _onIncomingMessage(msg);
 
-  void _onIncomingMessage(ChatMessageModel msg) {
-    _storage.appendOrUpdateMessage(msg.conversationId, msg);
+  void _updateListPreview(ChatMessageModel msg) {
+    final idx = conversations.indexWhere((c) => c.id == msg.conversationId);
+    if (idx == -1) return;
+    final existing = conversations[idx];
+    conversations.removeAt(idx);
+    conversations.insert(
+      0,
+      existing.copyWith(
+        lastMessage: msg,
+        lastActivityAt: msg.createdAt ?? existing.lastActivityAt,
+      ),
+    );
+    _storage.saveConversations(conversations.toList());
+  }
+
+  void _onIncomingMessage(ChatMessageModel msg, {String? tempId}) {
+    _storage.appendOrUpdateMessage(msg.conversationId, msg, tempId: tempId);
 
     final idx = conversations.indexWhere((c) => c.id == msg.conversationId);
 

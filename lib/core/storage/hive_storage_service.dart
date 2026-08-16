@@ -135,6 +135,10 @@ class HiveStorageService {
     } catch (_) {}
   }
 
+  /// Optimistic outbox rows live in [getPendingMessages], not room history.
+  static bool isOptimistic(ChatMessageModel m) =>
+      m.id.startsWith('temp_') || m.status == 'sending';
+
   /// Synchronously loads cached messages for [conversationId] on frame 0.
   List<ChatMessageModel> getCachedMessages(String conversationId) {
     if (conversationId.isEmpty) return [];
@@ -145,6 +149,7 @@ class HiveStorageService {
             .whereType<Map>()
             .map((e) =>
                 ChatMessageModel.fromJson(deepCastMap(e)))
+            .where((m) => !isOptimistic(m))
             .toList();
       }
     } catch (_) {}
@@ -155,9 +160,10 @@ class HiveStorageService {
   void saveMessages(String conversationId, List<ChatMessageModel> messages) {
     if (conversationId.isEmpty) return;
     try {
-      final trimmed = messages.length > maxMessagesPerChat
-          ? messages.sublist(messages.length - maxMessagesPerChat)
-          : messages;
+      final confirmed = messages.where((m) => !isOptimistic(m)).toList();
+      final trimmed = confirmed.length > maxMessagesPerChat
+          ? confirmed.sublist(confirmed.length - maxMessagesPerChat)
+          : confirmed;
       final list = trimmed.map((m) => m.toJson()).toList();
       _chatBox.put('$_messagesPrefix$conversationId', list);
 
@@ -187,7 +193,7 @@ class HiveStorageService {
 
       if (idx != -1) {
         cached[idx] = message;
-      } else {
+      } else if (!isOptimistic(message)) {
         cached.add(message);
       }
       saveMessages(conversationId, cached);
@@ -293,6 +299,15 @@ class HiveStorageService {
     final list = getPendingMessages(conversationId);
     list.removeWhere((m) => m.id == tempId);
     savePendingMessages(conversationId, list);
+  }
+
+  /// Drops [tempId] from every conversation outbox. Acks can arrive after the
+  /// thread is closed, and the row may be keyed by recipient id or room id.
+  void removePendingByTempId(String tempId) {
+    if (tempId.isEmpty) return;
+    for (final id in _getKnownPendingConversationIds().toList()) {
+      removePendingMessage(id, tempId);
+    }
   }
 
   // ═════════════════════════════════════════════════════════════════════════════

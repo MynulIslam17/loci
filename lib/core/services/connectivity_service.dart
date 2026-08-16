@@ -67,13 +67,15 @@ class ConnectivityService extends GetxService {
       }
     } else {
       if (isOffline.value) {
-        // Transition from offline -> online
+        // Transition from offline -> online.
+        // Flag reconnect first so the banner can turn green in the same
+        // frame instead of collapsing, then sliding back in.
+        justReconnected.value = true;
         isOnline.value = true;
         isOffline.value = false;
-        justReconnected.value = true;
 
         _reconnectTimer?.cancel();
-        _reconnectTimer = Timer(const Duration(seconds: 3), () {
+        _reconnectTimer = Timer(const Duration(milliseconds: 1400), () {
           justReconnected.value = false;
         });
 
