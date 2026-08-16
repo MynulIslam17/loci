@@ -88,6 +88,10 @@ class ChatController extends GetxController {
       if (m.id.isNotEmpty && !seenIds.add(m.id)) {
         continue;
       }
+      // Ack already landed (maybe after we left the thread) — drop the clock bubble.
+      if (HiveStorageService.isOptimistic(m) && _socket.wasAcked(m.id)) {
+        continue;
+      }
       unique.add(m);
     }
 
@@ -104,7 +108,11 @@ class ChatController extends GetxController {
     if (conversationId != null) {
       // Synchronously read local cache on frame 0 for instant UI rendering.
       final cached = _storage.getCachedMessages(conversationId!);
-      final pending = _storage.getPendingMessages(outboxKey);
+      _dropAckedOutbox(outboxKey);
+      final pending = _storage
+          .getPendingMessages(outboxKey)
+          .where((p) => !_socket.wasAcked(p.id))
+          .toList();
 
       // Merge cached messages with any in-flight pending outbox messages
       final cachedIds = cached.map((m) => m.id).toSet();
@@ -127,7 +135,11 @@ class ChatController extends GetxController {
       loadMessages(silent: allInitial.isNotEmpty);
       _markRead();
     } else {
-      final pending = _storage.getPendingMessages(outboxKey);
+      _dropAckedOutbox(outboxKey);
+      final pending = _storage
+          .getPendingMessages(outboxKey)
+          .where((p) => !_socket.wasAcked(p.id))
+          .toList();
       if (pending.isNotEmpty) {
         messages.assignAll(pending);
         _deduplicateMessages();
@@ -181,6 +193,14 @@ class ChatController extends GetxController {
     }
   }
 
+  void _dropAckedOutbox(String outboxKey) {
+    for (final p in _storage.getPendingMessages(outboxKey)) {
+      if (_socket.wasAcked(p.id)) {
+        _storage.removePendingByTempId(p.id);
+      }
+    }
+  }
+
   /// [silent] refetches in background without showing a loading spinner — used
   /// when cached messages are already displayed or on reconnect.
   Future<void> loadMessages({bool silent = false}) async {
@@ -200,7 +220,11 @@ class ChatController extends GetxController {
       hasMore.value = page.hasMore;
 
       final outboxKey = conversationId ?? recipientId ?? '';
-      final pending = _storage.getPendingMessages(outboxKey);
+      _dropAckedOutbox(outboxKey);
+      final pending = _storage
+          .getPendingMessages(outboxKey)
+          .where((p) => !_socket.wasAcked(p.id))
+          .toList();
       final server = List<ChatMessageModel>.from(page.messages);
       final usedServer = <int>{};
 
@@ -350,10 +374,7 @@ class ChatController extends GetxController {
     if (ack.tempId != null) {
       _flushingTempIds.remove(ack.tempId);
       _socket.unlockTempId(ack.tempId);
-    }
-    final outboxKey = conversationId ?? recipientId ?? '';
-    if (ack.tempId != null) {
-      _storage.removePendingMessage(outboxKey, ack.tempId!);
+      _storage.removePendingByTempId(ack.tempId!);
     }
 
     var tempIdx = ack.tempId != null

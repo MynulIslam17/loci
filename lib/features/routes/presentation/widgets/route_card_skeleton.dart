@@ -8,39 +8,69 @@ class RouteCardSkeleton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colorScheme = context.colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    return Card(
-      color: colorScheme.surfaceContainerHigh,
+    return Container(
+      decoration: BoxDecoration(
+        color: colorScheme.surfaceContainerHigh,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: colorScheme.outline.withValues(alpha: isDark ? 0.3 : 0.15),
+          width: 1,
+        ),
+      ),
       clipBehavior: Clip.antiAlias,
-      elevation: 2,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const SkeletonBox(width: double.infinity, height: 180, radius: 0),
+          // 1. Compact Hero Image Placeholder
+          Stack(
+            children: const [
+              SkeletonBox(width: double.infinity, height: 135, radius: 0),
+              Positioned(
+                top: 10,
+                left: 10,
+                child: SkeletonBox(width: 60, height: 22, radius: 12),
+              ),
+            ],
+          ),
+
+          // 2. Content Body Skeleton
           Padding(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.fromLTRB(14, 10, 14, 12),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                AppSkeleton.box(width: 200, height: 14, radius: 4),
-                const SizedBox(height: 6),
-                AppSkeleton.box(width: 160, height: 14, radius: 4),
+                // Title
+                const SkeletonBox(width: 220, height: 16, radius: 4),
+                const SizedBox(height: 4),
+
+                // Description
+                const SkeletonBox(width: double.infinity, height: 10, radius: 4),
                 const SizedBox(height: 8),
-                AppSkeleton.box(width: double.infinity, height: 10, radius: 4),
-                const SizedBox(height: 6),
-                AppSkeleton.box(width: 220, height: 10, radius: 4),
-                const SizedBox(height: 12),
-                const _LocationRowSkeleton(),
-                const SizedBox(height: 8),
-                Wrap(
-                  spacing: 16,
-                  runSpacing: 8,
+
+                // Location Row
+                Row(
                   children: const [
-                    _InfoChipSkeleton(width: 100),
-                    _InfoChipSkeleton(width: 110),
+                    SkeletonBox(width: 14, height: 14, radius: 3),
+                    SizedBox(width: 6),
+                    SkeletonBox(width: 150, height: 10, radius: 4),
                   ],
                 ),
+                const SizedBox(height: 4),
+
+                // Opening Time Row
+                Row(
+                  children: const [
+                    SkeletonBox(width: 14, height: 14, radius: 3),
+                    SizedBox(width: 6),
+                    SkeletonBox(width: 110, height: 10, radius: 4),
+                  ],
+                ),
+                const SizedBox(height: 10),
+
+                // Action Button Skeleton
+                const SkeletonBox(width: double.infinity, height: 40, radius: 10),
               ],
             ),
           ),
@@ -50,45 +80,3 @@ class RouteCardSkeleton extends StatelessWidget {
   }
 }
 
-class _LocationRowSkeleton extends StatelessWidget {
-  const _LocationRowSkeleton();
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const SkeletonBox(width: 14, height: 14, radius: 4),
-        const SizedBox(width: 6),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              AppSkeleton.box(width: double.infinity, height: 10, radius: 4),
-              const SizedBox(height: 4),
-              AppSkeleton.box(width: 180, height: 10, radius: 4),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _InfoChipSkeleton extends StatelessWidget {
-  const _InfoChipSkeleton({required this.width});
-
-  final double width;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        const SkeletonBox(width: 14, height: 14, radius: 4),
-        const SizedBox(width: 4),
-        SkeletonBox(width: width, height: 10, radius: 4),
-      ],
-    );
-  }
-}

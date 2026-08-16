@@ -40,14 +40,15 @@ class EventDetailsModel {
 
   factory EventDetailsModel.fromJson(Map<String, dynamic> json) {
     final data = json['data'] ?? json;
-    final coordinates = data['mapCoordinates'] ?? {};
+    final rawCoords = data['mapCoordinates'];
+    final coordinates = rawCoords is Map ? rawCoords : const <String, dynamic>{};
 
     return EventDetailsModel(
       // pass data instead of json
       eventModel: EventModel.fromJson(data),
 
-      lat: (coordinates['lat'] ?? 0).toDouble(),
-      lng: (coordinates['lng'] ?? 0).toDouble(),
+      lat: _coord(coordinates['lat']),
+      lng: _coord(coordinates['lng']),
 
       rsvpCount:
           int.tryParse(data['rsvpCount'].toString()) ??
@@ -97,6 +98,11 @@ class EventDetailsModel {
       mapUrl: mapUrl ?? this.mapUrl,
       mapImage: mapImage ?? this.mapImage,
     );
+  }
+
+  static double _coord(dynamic value) {
+    if (value is num) return value.toDouble();
+    return double.tryParse(value?.toString() ?? '') ?? 0;
   }
 }
 

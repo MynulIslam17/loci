@@ -21,6 +21,7 @@ class RaffleListController extends GetxController {
 
   String _searchQuery = '';
   Timer? _searchDebounce;
+  final RxBool isSearching = false.obs;
 
   bool get isInitialLoading => _fetch.initialLoading.value;
   bool get isRefreshing => _fetch.refreshing.value;
@@ -64,7 +65,7 @@ class RaffleListController extends GetxController {
     }
 
     if (isSearch) {
-      _fetch.beginFirstPage(isRefresh: _raffleList.isNotEmpty);
+      isSearching.value = true;
     } else {
       _fetch.beginFirstPage(isRefresh: isRefresh);
     }
@@ -85,6 +86,8 @@ class RaffleListController extends GetxController {
       _errorMessage.value = e.toString().replaceFirst('Exception: ', '');
       SnackbarService.error(_errorMessage.value!);
       _fetch.endFirstPage(markFetched: hasFetched);
+    } finally {
+      if (isSearch) isSearching.value = false;
     }
   }
 
