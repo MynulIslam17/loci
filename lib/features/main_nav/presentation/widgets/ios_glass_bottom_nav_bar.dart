@@ -15,6 +15,14 @@ class IosGlassBottomNavBar extends StatelessWidget {
   /// Includes the home-indicator region, matching the native tab bar sample.
   static const double height = 85;
 
+  /// Bottom inset for sheets and pinned buttons so they stay above the
+  /// overlaid glass bar. Android only returns the current MediaQuery padding.
+  static double overlayBottomInset(BuildContext context) {
+    final mediaBottom = MediaQuery.paddingOf(context).bottom;
+    if (Theme.of(context).platform != TargetPlatform.iOS) return mediaBottom;
+    return mediaBottom > height ? mediaBottom : height;
+  }
+
   static const List<CNTabBarItem> _items = [
     CNTabBarItem(label: 'Home', icon: CNSymbol('house.fill')),
     CNTabBarItem(label: 'Browse', icon: CNSymbol('magnifyingglass')),

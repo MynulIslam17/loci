@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:loci/core/constants/app_text_style.dart';
 import 'package:loci/core/theme/app_colors.dart';
 import 'package:loci/core/theme/theme_extention.dart';
+import 'package:loci/features/main_nav/presentation/widgets/ios_glass_bottom_nav_bar.dart';
 import 'package:loci/shared/models/post_card_view_model.dart';
 import 'package:loci/shared/widgets/feed/poll_bar.dart';
 import 'package:loci/shared/widgets/business_avatar.dart';
@@ -76,10 +77,11 @@ class _PollBottomSheetState extends State<PollBottomSheet> {
   @override
   Widget build(BuildContext context) {
     final maxHeight = MediaQuery.of(context).size.height * 0.85;
+    final bottomPad = 20 + IosGlassBottomNavBar.overlayBottomInset(context);
     return ConstrainedBox(
       constraints: BoxConstraints(maxHeight: maxHeight),
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(20, 20, 20, 32),
+        padding: EdgeInsets.fromLTRB(20, 20, 20, bottomPad),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
