@@ -70,6 +70,7 @@ class ChatController extends GetxController {
   }
 
   final Set<String> _flushingTempIds = {};
+  final Map<String, Timer> _liveSendTimers = {};
 
   bool _isRecent(String? t1, String? t2) {
     if (t1 == null || t2 == null) return false;
@@ -97,9 +98,15 @@ class ChatController extends GetxController {
       unique.add(m);
     }
 
-    if (unique.length != messages.length) {
-      messages.assignAll(unique);
-    }
+    unique.sort((a, b) {
+      final ta = DateTime.tryParse(a.createdAt ?? '') ??
+          DateTime.fromMillisecondsSinceEpoch(0);
+      final tb = DateTime.tryParse(b.createdAt ?? '') ??
+          DateTime.fromMillisecondsSinceEpoch(0);
+      return ta.compareTo(tb);
+    });
+
+    messages.assignAll(unique);
   }
 
   @override
@@ -327,7 +334,7 @@ class ChatController extends GetxController {
     final content = text.trim();
     if (content.isEmpty) return;
 
-    final now = DateTime.now();
+    final now = DateTime.now().toUtc();
     final tempId =
         'temp_${now.millisecondsSinceEpoch}_${_tempCounter++}_'
         '${_rng.nextInt(0xFFFFFF).toRadixString(16).padLeft(6, '0')}';
@@ -341,7 +348,7 @@ class ChatController extends GetxController {
       ),
       content: content,
       status: 'sending',
-      createdAt: DateTime.now().toIso8601String(),
+      createdAt: now.toIso8601String(),
     );
 
     messages.add(pending);
@@ -364,6 +371,10 @@ class ChatController extends GetxController {
         !_socket.isFlushing;
     if (canSendLive) {
       _flushingTempIds.add(tempId);
+      _liveSendTimers[tempId]?.cancel();
+      _liveSendTimers[tempId] = Timer(const Duration(seconds: 15), () {
+        _handleSendTimeout(tempId);
+      });
       _socket.sendMessage(
         conversationId: conversationId,
         recipientId: conversationId == null ? recipientId : null,
@@ -373,10 +384,64 @@ class ChatController extends GetxController {
     }
   }
 
+  void _handleSendTimeout(String tempId) {
+    _liveSendTimers.remove(tempId);
+    _flushingTempIds.remove(tempId);
+    _socket.clearEmittedTempId(tempId);
+    final idx = messages.indexWhere((m) => m.id == tempId);
+    if (idx != -1 && messages[idx].status == 'sending') {
+      messages[idx] = messages[idx].copyWith(status: 'failed');
+      final outboxKey = conversationId ?? recipientId ?? '';
+      _storage.addPendingMessage(outboxKey, messages[idx]);
+      if (conversationId != null) {
+        _storage.saveMessages(conversationId!, messages.toList());
+      }
+    }
+  }
+
+  /// Retries sending a failed message with the same tempId.
+  void retryMessage(ChatMessageModel msg) {
+    final idx = messages.indexWhere((m) => m.id == msg.id);
+    if (idx == -1) return;
+
+    final updated = msg.copyWith(
+      status: 'sending',
+    );
+    messages[idx] = updated;
+    _deduplicateMessages();
+
+    final outboxKey = conversationId ?? recipientId ?? '';
+    _storage.addPendingMessage(outboxKey, updated);
+    if (conversationId != null) {
+      _storage.saveMessages(conversationId!, messages.toList());
+    }
+
+    _socket.clearEmittedTempId(msg.id);
+    _liveSendTimers[msg.id]?.cancel();
+
+    final canSendLive = _socket.isConnected && !_socket.isFlushing;
+    if (canSendLive) {
+      _flushingTempIds.add(msg.id);
+      _liveSendTimers[msg.id] = Timer(const Duration(seconds: 15), () {
+        _handleSendTimeout(msg.id);
+      });
+      _socket.sendMessage(
+        conversationId: conversationId,
+        recipientId: conversationId == null ? recipientId : null,
+        content: msg.content ?? '',
+        tempId: msg.id,
+      );
+    } else if (_socket.isConnected) {
+      unawaited(_socket.flushGlobalOutbox());
+    }
+  }
+
   void _onAck(MessageAck ack) {
     if (ack.tempId != null) {
+      _liveSendTimers[ack.tempId]?.cancel();
+      _liveSendTimers.remove(ack.tempId);
       _flushingTempIds.remove(ack.tempId);
-      _socket.unlockTempId(ack.tempId);
+      _socket.clearEmittedTempId(ack.tempId);
       _storage.removePendingByTempId(ack.tempId!);
     }
 
@@ -626,6 +691,10 @@ class ChatController extends GetxController {
   @override
   void onClose() {
     _stopTyping();
+    for (final t in _liveSendTimers.values) {
+      t.cancel();
+    }
+    _liveSendTimers.clear();
     if (conversationId != null) _socket.leaveConversation(conversationId!);
     for (final s in _subs) {
       s.cancel();

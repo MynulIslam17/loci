@@ -27,9 +27,13 @@ class BusinessRouteListController extends GetxController with ExploreTabListCach
     required String businessId,
     required String search,
   }) async {
-    _syncSearchContext(businessId: businessId, search: search.trim());
+    final isNewSearch = _syncSearchContext(businessId: businessId, search: search.trim());
     if (isCachedFor(businessId, search: _searchQuery)) return;
-    await fetchRoutes(businessId: businessId, forceRefresh: _searchQuery.isNotEmpty);
+    await fetchRoutes(
+      businessId: businessId,
+      forceRefresh: _searchQuery.isNotEmpty,
+      isSearch: isNewSearch,
+    );
   }
 
   Future<void> applySearch({
@@ -43,12 +47,14 @@ class BusinessRouteListController extends GetxController with ExploreTabListCach
     _searchQuery = trimmed;
     _currentPage = 1;
     hasMore.value = true;
-    await fetchRoutes(businessId: businessId, forceRefresh: true);
+    clearTabCache();
+    await fetchRoutes(businessId: businessId, forceRefresh: true, isSearch: true);
   }
 
   Future<void> fetchRoutes({
     required String businessId,
     bool forceRefresh = false,
+    bool isSearch = false,
   }) async {
     if (!forceRefresh && isCachedFor(businessId, search: _searchQuery)) return;
     if (isLoading.value && !forceRefresh) return;
@@ -73,6 +79,7 @@ class BusinessRouteListController extends GetxController with ExploreTabListCach
       businessId: businessId,
       errorMessage: errorMessage.value,
       search: _searchQuery,
+      isSearch: isSearch || (!isCachedFor(businessId, search: _searchQuery) && _searchQuery.isNotEmpty),
     );
     errorMessage.value = null;
 
@@ -130,9 +137,9 @@ class BusinessRouteListController extends GetxController with ExploreTabListCach
 
   bool showInitialLoader(String businessId) => showExploreInitialLoader(
         businessId,
+        isLoading: isLoading.value,
         errorMessage: errorMessage.value,
         search: _searchQuery,
-        hasItems: routeList.isNotEmpty,
       );
 
   bool showEmptyState(String businessId) {
@@ -157,19 +164,23 @@ class BusinessRouteListController extends GetxController with ExploreTabListCach
     clearTabCache();
   }
 
-  void _syncSearchContext({required String businessId, required String search}) {
+  bool _syncSearchContext({required String businessId, required String search}) {
+    var changed = false;
     if (businessChanged(businessId)) {
       _currentPage = 1;
       hasMore.value = true;
       routeList.clear();
       _searchQuery = '';
       clearTabCache();
+      changed = true;
     }
     if (_searchQuery != search) {
       _searchQuery = search;
       _currentPage = 1;
       hasMore.value = true;
       clearTabCache();
+      changed = true;
     }
+    return changed;
   }
 }

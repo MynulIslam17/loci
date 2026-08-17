@@ -75,10 +75,13 @@ class _ExploreActivityRafflesTabState extends State<ExploreActivityRafflesTab>
     }
 
     if (_controller.showEmptyState(widget.businessId)) {
-      return const ExploreActivityEmptySliver(
-        icon: Icons.card_giftcard_outlined,
-        title: 'No raffles yet',
-        subtitle: 'Create a raffle to see it here',
+      final isSearching = _controller.searchQuery.isNotEmpty;
+      return ExploreActivityEmptySliver(
+        icon: isSearching ? Icons.search_off_outlined : Icons.card_giftcard_outlined,
+        title: isSearching ? 'No matching raffles' : 'No raffles yet',
+        subtitle: isSearching
+            ? 'Try searching with a different keyword'
+            : 'Create a raffle to see it here',
       );
     }
 

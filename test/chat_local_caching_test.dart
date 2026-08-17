@@ -1281,5 +1281,62 @@ void main() {
 
       chatController.onClose();
     });
+
+    test('ChatController: Failed message retry resets status to sending and updates outbox', () async {
+      final fakeChatService = FakeChatService();
+      final hiveService = createTestHiveService();
+      final socket = ChatSocketService();
+      Get.put<ChatSocketService>(socket);
+
+      final authController = AuthController(FakeAuthService());
+      authController.userModelRx.value = UserModel(
+        id: 'my_id',
+        name: 'Me',
+        email: 'me@test.com',
+        role: 'user',
+        status: 'active',
+        createdAt: '2026-01-01T00:00:00.000Z',
+      );
+      Get.put<AuthController>(authController);
+
+      final chatController = ChatController(
+        fakeChatService,
+        conversationId: 'conv_retry_test',
+        recipientId: null,
+        other: ChatUserModel(id: 'other_id', name: 'Bob'),
+        storage: hiveService,
+      );
+
+      chatController.onInit();
+      chatController.sendMessage('test message');
+      expect(chatController.messages.length, 1);
+      final tempId = chatController.messages[0].id;
+      expect(chatController.messages[0].status, 'sending');
+
+      // Simulate failure timeout
+      chatController.messages[0] = chatController.messages[0].copyWith(status: 'failed');
+      expect(chatController.messages[0].status, 'failed');
+
+      // Trigger retryMessage
+      chatController.retryMessage(chatController.messages[0]);
+      expect(chatController.messages[0].status, 'sending');
+      expect(chatController.messages[0].id, tempId);
+
+      // Now receive ACK
+      final ackMessage = ChatMessageModel(
+        id: 'server_msg_ack',
+        conversationId: 'conv_retry_test',
+        sender: ChatUserModel(id: 'my_id', name: 'Me'),
+        content: 'test message',
+        status: 'sent',
+      );
+      socket.emitAckForTest(MessageAck(tempId: tempId, message: ackMessage));
+      await Future.delayed(Duration.zero);
+
+      expect(chatController.messages[0].status, 'sent');
+      expect(chatController.messages[0].id, 'server_msg_ack');
+
+      chatController.onClose();
+    });
   });
 }

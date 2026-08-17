@@ -27,9 +27,13 @@ class BusinessEventListController extends GetxController with ExploreTabListCach
     required String businessId,
     required String search,
   }) async {
-    _syncSearchContext(businessId: businessId, search: search.trim());
+    final isNewSearch = _syncSearchContext(businessId: businessId, search: search.trim());
     if (isCachedFor(businessId, search: _searchQuery)) return;
-    await fetchEvents(businessId: businessId, forceRefresh: _searchQuery.isNotEmpty);
+    await fetchEvents(
+      businessId: businessId,
+      forceRefresh: _searchQuery.isNotEmpty,
+      isSearch: isNewSearch,
+    );
   }
 
   Future<void> applySearch({
@@ -43,12 +47,14 @@ class BusinessEventListController extends GetxController with ExploreTabListCach
     _searchQuery = trimmed;
     _currentPage = 1;
     hasMore.value = true;
-    await fetchEvents(businessId: businessId, forceRefresh: true);
+    clearTabCache();
+    await fetchEvents(businessId: businessId, forceRefresh: true, isSearch: true);
   }
 
   Future<void> fetchEvents({
     required String businessId,
     bool forceRefresh = false,
+    bool isSearch = false,
   }) async {
     if (!forceRefresh && isCachedFor(businessId, search: _searchQuery)) return;
     if (isLoading.value && !forceRefresh) return;
@@ -73,6 +79,7 @@ class BusinessEventListController extends GetxController with ExploreTabListCach
       businessId: businessId,
       errorMessage: errorMessage.value,
       search: _searchQuery,
+      isSearch: isSearch || (!isCachedFor(businessId, search: _searchQuery) && _searchQuery.isNotEmpty),
     );
     errorMessage.value = null;
 
@@ -123,9 +130,9 @@ class BusinessEventListController extends GetxController with ExploreTabListCach
 
   bool showInitialLoader(String businessId) => showExploreInitialLoader(
         businessId,
+        isLoading: isLoading.value,
         errorMessage: errorMessage.value,
         search: _searchQuery,
-        hasItems: eventList.isNotEmpty,
       );
 
   bool showEmptyState(String businessId) {
@@ -150,19 +157,23 @@ class BusinessEventListController extends GetxController with ExploreTabListCach
     clearTabCache();
   }
 
-  void _syncSearchContext({required String businessId, required String search}) {
+  bool _syncSearchContext({required String businessId, required String search}) {
+    var changed = false;
     if (businessChanged(businessId)) {
       _currentPage = 1;
       hasMore.value = true;
       eventList.clear();
       _searchQuery = '';
       clearTabCache();
+      changed = true;
     }
     if (_searchQuery != search) {
       _searchQuery = search;
       _currentPage = 1;
       hasMore.value = true;
       clearTabCache();
+      changed = true;
     }
+    return changed;
   }
 }
