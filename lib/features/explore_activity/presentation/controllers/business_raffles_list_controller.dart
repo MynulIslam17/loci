@@ -27,9 +27,13 @@ class BusinessRafflesListController extends GetxController with ExploreTabListCa
     required String businessId,
     required String search,
   }) async {
-    _syncSearchContext(businessId: businessId, search: search.trim());
+    final isNewSearch = _syncSearchContext(businessId: businessId, search: search.trim());
     if (isCachedFor(businessId, search: _searchQuery)) return;
-    await fetchRaffles(businessId: businessId, forceRefresh: _searchQuery.isNotEmpty);
+    await fetchRaffles(
+      businessId: businessId,
+      forceRefresh: _searchQuery.isNotEmpty,
+      isSearch: isNewSearch,
+    );
   }
 
   Future<void> applySearch({
@@ -43,12 +47,14 @@ class BusinessRafflesListController extends GetxController with ExploreTabListCa
     _searchQuery = trimmed;
     _currentPage = 1;
     hasMore.value = true;
-    await fetchRaffles(businessId: businessId, forceRefresh: true);
+    clearTabCache();
+    await fetchRaffles(businessId: businessId, forceRefresh: true, isSearch: true);
   }
 
   Future<void> fetchRaffles({
     required String businessId,
     bool forceRefresh = false,
+    bool isSearch = false,
   }) async {
     if (!forceRefresh && isCachedFor(businessId, search: _searchQuery)) return;
     if (isLoading.value && !forceRefresh) return;
@@ -73,6 +79,7 @@ class BusinessRafflesListController extends GetxController with ExploreTabListCa
       businessId: businessId,
       errorMessage: errorMessage.value,
       search: _searchQuery,
+      isSearch: isSearch || (!isCachedFor(businessId, search: _searchQuery) && _searchQuery.isNotEmpty),
     );
     errorMessage.value = null;
 
@@ -129,9 +136,9 @@ class BusinessRafflesListController extends GetxController with ExploreTabListCa
 
   bool showInitialLoader(String businessId) => showExploreInitialLoader(
         businessId,
+        isLoading: isLoading.value,
         errorMessage: errorMessage.value,
         search: _searchQuery,
-        hasItems: raffleList.isNotEmpty,
       );
 
   bool showEmptyState(String businessId) {
@@ -156,19 +163,23 @@ class BusinessRafflesListController extends GetxController with ExploreTabListCa
     clearTabCache();
   }
 
-  void _syncSearchContext({required String businessId, required String search}) {
+  bool _syncSearchContext({required String businessId, required String search}) {
+    var changed = false;
     if (businessChanged(businessId)) {
       _currentPage = 1;
       hasMore.value = true;
       raffleList.clear();
       _searchQuery = '';
       clearTabCache();
+      changed = true;
     }
     if (_searchQuery != search) {
       _searchQuery = search;
       _currentPage = 1;
       hasMore.value = true;
       clearTabCache();
+      changed = true;
     }
+    return changed;
   }
 }

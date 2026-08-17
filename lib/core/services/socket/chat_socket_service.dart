@@ -515,8 +515,15 @@ class ChatSocketService extends GetxService {
     }
   }
 
-  void unlockTempId(String? tempId) {
+  void clearEmittedTempId(String? tempId) {
+    if (tempId == null || tempId.isEmpty) return;
+    _emittedTempIds.remove(tempId);
+    _globalFlushingTempIds.remove(tempId);
     _completeAckWait(tempId);
+  }
+
+  void unlockTempId(String? tempId) {
+    clearEmittedTempId(tempId);
   }
 
   // ── Parsing helpers ──────────────────────────────────────────────────────────
@@ -527,6 +534,11 @@ class ChatSocketService extends GetxService {
     final map = _asMap(data);
     final raw = map['message'];
     if (raw is Map) return ChatMessageModel.fromJson(Map<String, dynamic>.from(raw));
+    if (map.containsKey('id') || map.containsKey('_id') || map.containsKey('sender')) {
+      try {
+        return ChatMessageModel.fromJson(map);
+      } catch (_) {}
+    }
     return null;
   }
 

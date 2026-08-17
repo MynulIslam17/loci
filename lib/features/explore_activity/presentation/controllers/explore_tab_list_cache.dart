@@ -28,17 +28,16 @@ mixin ExploreTabListCache on GetxController {
     _cachedSearchQuery.value = null;
   }
 
-  /// True while the first successful load for [businessId] has not completed.
-  /// Never true when [hasItems] is set — search must not replace a visible
-  /// list with shimmer (that rebuild unfocuses the search field on iOS).
+  /// True while initial load or search query load has not completed.
   bool showExploreInitialLoader(
     String businessId, {
+    required bool isLoading,
     String? errorMessage,
     String search = '',
-    bool hasItems = false,
   }) {
-    if (hasItems) return false;
-    return !isCachedFor(businessId, search: search) && errorMessage == null;
+    if (isRefreshing.value) return false;
+    return (isLoading || !isCachedFor(businessId, search: search)) &&
+        errorMessage == null;
   }
 
   /// True when load finished successfully and the list is empty.
@@ -56,23 +55,17 @@ mixin ExploreTabListCache on GetxController {
         errorMessage == null;
   }
 
-  /// Sets [isLoading] / [isRefreshing] so pull-to-refresh keeps the list visible.
+  /// Sets [isLoading] / [isRefreshing] so pull-to-refresh keeps the list visible,
+  /// while initial load or search query displays the shimmer.
   void beginExploreFetch({
     required RxBool isLoading,
     required bool forceRefresh,
     required String businessId,
     String? errorMessage,
     String search = '',
+    bool isSearch = false,
   }) {
-    final initial = showExploreInitialLoader(
-      businessId,
-      errorMessage: errorMessage,
-      search: search,
-    );
-    if (initial) {
-      isLoading.value = true;
-      isRefreshing.value = false;
-    } else if (forceRefresh) {
+    if (forceRefresh && !isSearch && isCachedFor(businessId, search: search)) {
       isRefreshing.value = true;
       isLoading.value = false;
     } else {
@@ -86,3 +79,4 @@ mixin ExploreTabListCache on GetxController {
     isRefreshing.value = false;
   }
 }
+

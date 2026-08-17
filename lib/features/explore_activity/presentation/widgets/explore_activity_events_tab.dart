@@ -72,10 +72,13 @@ class _ExploreActivityEventsTabState extends State<ExploreActivityEventsTab>
     }
 
     if (_controller.showEmptyState(widget.businessId)) {
-      return const ExploreActivityEmptySliver(
-        icon: Icons.event_outlined,
-        title: 'No events yet',
-        subtitle: 'Create an event to see it here',
+      final isSearching = _controller.searchQuery.isNotEmpty;
+      return ExploreActivityEmptySliver(
+        icon: isSearching ? Icons.search_off_outlined : Icons.event_outlined,
+        title: isSearching ? 'No matching events' : 'No events yet',
+        subtitle: isSearching
+            ? 'Try searching with a different keyword'
+            : 'Create an event to see it here',
       );
     }
 

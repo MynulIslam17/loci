@@ -72,10 +72,13 @@ class _ExploreActivityRoutesTabState extends State<ExploreActivityRoutesTab>
     }
 
     if (_controller.showEmptyState(widget.businessId)) {
-      return const ExploreActivityEmptySliver(
-        icon: Icons.route_outlined,
-        title: 'No routes yet',
-        subtitle: 'Create a route to see it here',
+      final isSearching = _controller.searchQuery.isNotEmpty;
+      return ExploreActivityEmptySliver(
+        icon: isSearching ? Icons.search_off_outlined : Icons.route_outlined,
+        title: isSearching ? 'No matching routes' : 'No routes yet',
+        subtitle: isSearching
+            ? 'Try searching with a different keyword'
+            : 'Create a route to see it here',
       );
     }
 

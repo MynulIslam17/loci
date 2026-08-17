@@ -11,6 +11,7 @@ import 'package:loci/features/chat/domain/services/chat_service.dart';
 import 'package:loci/features/chat/presentation/controllers/chat_controller.dart';
 import 'package:loci/features/chat/presentation/controllers/chat_list_controller.dart';
 import 'package:loci/features/chat/presentation/widgets/chat_avatar.dart';
+import 'package:loci/features/chat/presentation/widgets/chat_message_shimmer.dart';
 import 'package:loci/shared/widgets/adaptive_refresh.dart';
 import 'package:loci/shared/widgets/empty_state.dart';
 
@@ -212,7 +213,7 @@ class _MessageScreenState extends State<MessageScreen> {
               child: Obx(() {
                 final ctrl = controller;
                 if (ctrl.isLoading.value && ctrl.messages.isEmpty) {
-                  return const Center(child: CircularProgressIndicator());
+                  return const ChatMessageShimmer();
                 }
                 if (ctrl.messages.isEmpty) {
                   return AdaptiveRefresh(
@@ -279,7 +280,8 @@ class _MessageScreenState extends State<MessageScreen> {
                     );
                   }
                   final msg = ctrl.messages[count - 1 - msgIndex];
-                  final actionable = !msg.isDeleted && msg.status != 'sending';
+                  final actionable =
+                      !msg.isDeleted && msg.status != 'sending' && msg.status != 'failed';
                   return _MessageBubble(
                     message: msg,
                     isMe: ctrl.isMine(msg),
@@ -287,6 +289,7 @@ class _MessageScreenState extends State<MessageScreen> {
                     otherName: _other.name,
                     myReaction: msg.myReaction(ctrl.myId),
                     onLongPress: () => _showMessageActions(msg),
+                    onRetry: () => ctrl.retryMessage(msg),
                     onDoubleTap: actionable
                         ? () => ctrl.toggleReaction(msg, '❤️')
                         : null,
@@ -315,6 +318,7 @@ class _MessageScreenState extends State<MessageScreen> {
     final isMe = controller.isMine(msg);
     final deleted = msg.isDeleted;
     final sending = msg.status == 'sending';
+    final failed = msg.status == 'failed';
     if (sending) return;
 
     showModalBottomSheet(
@@ -330,7 +334,19 @@ class _MessageScreenState extends State<MessageScreen> {
             mainAxisSize: MainAxisSize.min,
             children: [
               const SizedBox(height: 12),
-              if (!deleted)
+              if (isMe && failed)
+                ListTile(
+                  leading: Icon(
+                    Icons.refresh,
+                    color: colorScheme.primary,
+                  ),
+                  title: const Text('Retry sending'),
+                  onTap: () {
+                    Navigator.pop(sheetContext);
+                    controller.retryMessage(msg);
+                  },
+                ),
+              if (!deleted && !failed)
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: _quickEmojis.map((emoji) {
@@ -357,8 +373,8 @@ class _MessageScreenState extends State<MessageScreen> {
                     );
                   }).toList(),
                 ),
-              if (!deleted) const SizedBox(height: 8),
-              if (isMe && !deleted && msg.canEdit)
+              if (!deleted && !failed) const SizedBox(height: 8),
+              if (isMe && !deleted && !failed && msg.canEdit)
                 ListTile(
                   leading: Icon(
                     Icons.edit_outlined,
@@ -557,6 +573,7 @@ class _MessageBubble extends StatelessWidget {
   final String otherName;
   final String? myReaction;
   final VoidCallback onLongPress;
+  final VoidCallback? onRetry;
   final VoidCallback? onDoubleTap;
   final ValueChanged<String>? onToggleReaction;
 
@@ -567,6 +584,7 @@ class _MessageBubble extends StatelessWidget {
     required this.otherName,
     required this.myReaction,
     required this.onLongPress,
+    this.onRetry,
     required this.onDoubleTap,
     required this.onToggleReaction,
   });
@@ -615,7 +633,9 @@ class _MessageBubble extends StatelessWidget {
                     ),
                     decoration: BoxDecoration(
                       color: isMe
-                          ? colorScheme.primary
+                          ? (message.status == 'failed'
+                              ? colorScheme.primary.withValues(alpha: 0.8)
+                              : colorScheme.primary)
                           : colorScheme.onSurface.withValues(alpha: 0.08),
                       borderRadius: BorderRadius.only(
                         topLeft: const Radius.circular(16),
@@ -710,7 +730,11 @@ class _MessageBubble extends StatelessWidget {
                   ],
                 ),
                 const SizedBox(height: 2),
-                _MetaRow(message: message, isMe: isMe),
+                _MetaRow(
+                  message: message,
+                  isMe: isMe,
+                  onRetry: onRetry,
+                ),
               ],
             ),
           ),
@@ -796,12 +820,18 @@ class _ReactionChips extends StatelessWidget {
 class _MetaRow extends StatelessWidget {
   final ChatMessageModel message;
   final bool isMe;
-  const _MetaRow({required this.message, required this.isMe});
+  final VoidCallback? onRetry;
+  const _MetaRow({
+    required this.message,
+    required this.isMe,
+    this.onRetry,
+  });
 
   @override
   Widget build(BuildContext context) {
     final colorScheme = context.colorScheme;
     final time = _time(message.createdAt);
+    final isFailed = message.status == 'failed';
 
     return Row(
       mainAxisSize: MainAxisSize.min,
@@ -817,9 +847,37 @@ class _MetaRow extends StatelessWidget {
         ],
         Text(
           time,
-          style: AppTextStyle.textXs(color: colorScheme.onSurfaceVariant),
+          style: AppTextStyle.textXs(
+            color: isFailed ? colorScheme.error : colorScheme.onSurfaceVariant,
+          ),
         ),
-        if (isMe) ...[const SizedBox(width: 4), _statusIcon(colorScheme)],
+        if (isMe) ...[
+          const SizedBox(width: 4),
+          if (isFailed && onRetry != null)
+            GestureDetector(
+              onTap: onRetry,
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    Icons.error_outline,
+                    size: 13,
+                    color: colorScheme.error,
+                  ),
+                  const SizedBox(width: 2),
+                  Text(
+                    'Retry',
+                    style: AppTextStyle.textXs(
+                      color: colorScheme.error,
+                      weight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
+            )
+          else
+            _statusIcon(colorScheme),
+        ],
       ],
     );
   }
@@ -827,8 +885,15 @@ class _MetaRow extends StatelessWidget {
   /// WhatsApp read-receipt blue.
   static const Color _readBlue = Color(0xFF34B7F1);
 
-  /// WhatsApp flow: clock while sending, ✓ sent, ✓✓ delivered, blue ✓✓ read.
+  /// WhatsApp flow: clock while sending, ! failed, ✓ sent, ✓✓ delivered, blue ✓✓ read.
   Widget _statusIcon(ColorScheme colorScheme) {
+    if (message.status == 'failed') {
+      return Icon(
+        Icons.error_outline,
+        size: 14,
+        color: colorScheme.error,
+      );
+    }
     if (message.status == 'sending') {
       return Icon(
         Icons.access_time,

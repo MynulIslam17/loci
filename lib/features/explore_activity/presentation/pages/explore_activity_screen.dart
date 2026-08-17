@@ -53,6 +53,7 @@ class _ExploreActivityScreenState extends State<ExploreActivityScreen>
 
     _tabController.addListener(() {
       if (_tabController.indexIsChanging) return;
+      _searchDebounce?.cancel();
       setState(() {});
       _loadTab(_tabController.index);
     });
@@ -127,6 +128,7 @@ class _ExploreActivityScreenState extends State<ExploreActivityScreen>
               onChanged: _onSearchChanged,
               showClearButton: true,
               onClear: () {
+                _searchDebounce?.cancel();
                 _searchController.clear();
                 _applySearchToTab(_tabController.index, '');
               },

@@ -50,7 +50,7 @@ class _NetworkScreenState extends State<NetworkScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const SizedBox(height: 12),
+                const SizedBox(height: 8),
                 Text(
                   'Networking Dashboard',
                   style: AppTextStyle.textXl(
@@ -58,7 +58,7 @@ class _NetworkScreenState extends State<NetworkScreen> {
                     weight: FontWeight.w700,
                   ),
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: 2),
                 Text(
                   'Overview of your network activity',
                   style: AppTextStyle.textSm(
@@ -66,19 +66,17 @@ class _NetworkScreenState extends State<NetworkScreen> {
                     weight: FontWeight.w500,
                   ),
                 ),
-                const SizedBox(height: 16),
-                if (showShimmer) ...[
-                  AppSkeleton.grid(context: context),
-                  const SizedBox(height: 24),
-                  AppSkeleton.list(context: context),
-                ] else ...[
+                const SizedBox(height: 12),
+                if (showShimmer)
+                  _buildDashboardShimmer(context)
+                else ...[
                   if (counts != null) _buildStats(context, counts),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 14),
                   _buildQuickActions(context),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 14),
                   _buildRecentCheckIns(context, checkIns),
                 ],
-                const SizedBox(height: 24),
+                const SizedBox(height: 16),
               ],
             ),
           ),
@@ -87,14 +85,130 @@ class _NetworkScreenState extends State<NetworkScreen> {
     );
   }
 
+  Widget _buildDashboardShimmer(BuildContext context) {
+    final colors = context.colorScheme;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // 1. Stats Grid Shimmer (2x2 cards)
+        GridView.count(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          crossAxisCount: 2,
+          crossAxisSpacing: 8,
+          mainAxisSpacing: 8,
+          childAspectRatio: 2.1,
+          children: List.generate(
+            4,
+            (_) => Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+              decoration: BoxDecoration(
+                color: colors.surfaceContainerHigh,
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(
+                  color: colors.outlineVariant.withValues(alpha: 0.4),
+                ),
+              ),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      AppSkeleton.box(width: 20, height: 20, radius: 4),
+                      const SizedBox(width: 8),
+                      AppSkeleton.box(width: 32, height: 18, radius: 4),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  AppSkeleton.box(width: 76, height: 10, radius: 3),
+                ],
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(height: 14),
+
+        // 2. Quick Actions Shimmer
+        AppSkeleton.box(width: 100, height: 14, radius: 4),
+        const SizedBox(height: 8),
+        AppSkeleton.box(width: double.infinity, height: 42, radius: 10),
+        const SizedBox(height: 8),
+        Row(
+          children: [
+            Expanded(child: AppSkeleton.box(height: 38, radius: 10)),
+            const SizedBox(width: 8),
+            Expanded(child: AppSkeleton.box(height: 38, radius: 10)),
+            const SizedBox(width: 8),
+            Expanded(child: AppSkeleton.box(height: 38, radius: 10)),
+          ],
+        ),
+        const SizedBox(height: 14),
+
+        // 3. Recent Check-Ins Shimmer
+        AppSkeleton.box(width: 120, height: 14, radius: 4),
+        const SizedBox(height: 8),
+        ListView.separated(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          itemCount: 2,
+          separatorBuilder: (context, index) => const SizedBox(height: 8),
+          itemBuilder: (context, index) => Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: colors.surfaceContainerHigh,
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(
+                color: colors.outlineVariant.withValues(alpha: 0.4),
+              ),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    AppSkeleton.box(width: 64, height: 18, radius: 6),
+                    const Spacer(),
+                    AppSkeleton.box(width: 48, height: 10, radius: 4),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    AppSkeleton.box(width: 36, height: 36, radius: 18),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          AppSkeleton.box(width: 120, height: 12, radius: 4),
+                          const SizedBox(height: 4),
+                          AppSkeleton.box(width: 150, height: 10, radius: 4),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                AppSkeleton.box(width: double.infinity, height: 28, radius: 8),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
   Widget _buildStats(BuildContext context, DashboardCounts counts) {
     return GridView.count(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
       crossAxisCount: 2,
-      crossAxisSpacing: 12,
-      mainAxisSpacing: 12,
-      childAspectRatio: 1.55,
+      crossAxisSpacing: 8,
+      mainAxisSpacing: 8,
+      childAspectRatio: 2.1,
       children: [
         _statCard(context, 'Total Contacts', '${counts.connections}',
             Icons.people_outline, AppRoutes.connection),
@@ -119,13 +233,14 @@ class _NetworkScreenState extends State<NetworkScreen> {
 
     return Material(
       color: colors.surfaceContainerHigh,
-      borderRadius: BorderRadius.circular(12),
+      borderRadius: BorderRadius.circular(10),
       child: InkWell(
         onTap: () => Get.toNamed(route),
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(10),
         child: Ink(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(10),
             border: Border.all(
               color: colors.outlineVariant.withValues(alpha: 0.4),
             ),
@@ -136,21 +251,23 @@ class _NetworkScreenState extends State<NetworkScreen> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(icon, color: colors.primary, size: 22),
-                  const SizedBox(width: 10),
+                  Icon(icon, color: colors.primary, size: 20),
+                  const SizedBox(width: 8),
                   Text(
                     value,
-                    style: AppTextStyle.textXl(
+                    style: AppTextStyle.textLg(
                       color: colors.onSurface,
                       weight: FontWeight.w700,
                     ),
                   ),
                 ],
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 2),
               Text(
                 label,
                 textAlign: TextAlign.center,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
                 style: AppTextStyle.textXs(
                   color: colors.onSurfaceVariant,
                   weight: FontWeight.w500,
@@ -176,13 +293,13 @@ class _NetworkScreenState extends State<NetworkScreen> {
             weight: FontWeight.w600,
           ),
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 8),
         ElevatedButton.icon(
           onPressed: () => Get.toNamed(AppRoutes.checkIn),
-          icon: Icon(Icons.qr_code_scanner_rounded, color: colors.onPrimary),
+          icon: Icon(Icons.qr_code_scanner_rounded, color: colors.onPrimary, size: 20),
           label: Text(
             'Check In',
-            style: AppTextStyle.textMd(
+            style: AppTextStyle.textSm(
               weight: FontWeight.w600,
               color: colors.onPrimary,
             ),
@@ -190,20 +307,20 @@ class _NetworkScreenState extends State<NetworkScreen> {
           style: ElevatedButton.styleFrom(
             backgroundColor: colors.primary,
             foregroundColor: colors.onPrimary,
-            minimumSize: const Size(double.infinity, 50),
+            minimumSize: const Size(double.infinity, 42),
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(10),
             ),
             elevation: 0,
           ),
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 8),
         Row(
           children: [
             _actionButton(context, 'Referral', AppRoutes.referral),
-            const SizedBox(width: 10),
+            const SizedBox(width: 8),
             _actionButton(context, 'Connection', AppRoutes.connection),
-            const SizedBox(width: 10),
+            const SizedBox(width: 8),
             _actionButton(context, 'Meeting', AppRoutes.meeting),
           ],
         ),
@@ -218,10 +335,10 @@ class _NetworkScreenState extends State<NetworkScreen> {
       child: OutlinedButton(
         onPressed: () => Get.toNamed(route),
         style: OutlinedButton.styleFrom(
-          padding: const EdgeInsets.symmetric(vertical: 12),
+          padding: const EdgeInsets.symmetric(vertical: 9),
           side: BorderSide(color: colors.outlineVariant.withValues(alpha: 0.6)),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(10),
           ),
         ),
         child: Text(
@@ -251,7 +368,7 @@ class _NetworkScreenState extends State<NetworkScreen> {
             weight: FontWeight.w600,
           ),
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 8),
         if (checkIns.isEmpty)
           EmptyState(
             icon: Icons.qr_code_scanner_outlined,
@@ -260,7 +377,7 @@ class _NetworkScreenState extends State<NetworkScreen> {
                 'Scan a QR code at an event or route to record your first check-in',
             action: CustomButton(
               onPressed: () => Get.toNamed(AppRoutes.checkIn),
-              height: 42,
+              height: 40,
               child: Text(
                 'Check In Now',
                 style: AppTextStyle.textSm(
@@ -275,7 +392,7 @@ class _NetworkScreenState extends State<NetworkScreen> {
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
             itemCount: checkIns.length,
-            separatorBuilder: (context, index) => const SizedBox(height: 10),
+            separatorBuilder: (context, index) => const SizedBox(height: 8),
             itemBuilder: (context, index) {
               return _CheckInCard(checkIn: checkIns[index]);
             },
@@ -333,15 +450,15 @@ class _CheckInCard extends StatelessWidget {
         : 'Unknown contact';
 
     return Container(
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
         color: colors.surfaceContainerHigh,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(10),
         border: Border.all(color: colors.outlineVariant.withValues(alpha: 0.4)),
         boxShadow: [
           BoxShadow(
             color: colors.shadow.withValues(alpha: 0.04),
-            blurRadius: 8,
+            blurRadius: 6,
             offset: const Offset(0, 2),
           ),
         ],
@@ -363,17 +480,17 @@ class _CheckInCard extends StatelessWidget {
                 ),
             ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 8),
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               CustomCachedImage(
                 isCircle: true,
-                width: 40,
-                height: 40,
+                width: 36,
+                height: 36,
                 imageUrl: checkIn.leadData.avatar,
               ),
-              const SizedBox(width: 10),
+              const SizedBox(width: 8),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -387,7 +504,7 @@ class _CheckInCard extends StatelessWidget {
                       ),
                     ),
                     if (checkIn.leadData.email.isNotEmpty) ...[
-                      const SizedBox(height: 4),
+                      const SizedBox(height: 2),
                       NetworkDetailRow(
                         icon: Icons.mail_outline,
                         text: checkIn.leadData.email,
@@ -398,10 +515,10 @@ class _CheckInCard extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 8),
           Container(
             width: double.infinity,
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
             decoration: BoxDecoration(
               color: colors.surfaceContainer,
               borderRadius: BorderRadius.circular(8),
@@ -412,7 +529,7 @@ class _CheckInCard extends StatelessWidget {
             child: Row(
               children: [
                 Icon(type.icon, size: 14, color: type.fg),
-                const SizedBox(width: 8),
+                const SizedBox(width: 6),
                 Expanded(
                   child: Text(
                     _entityLabel,
@@ -433,7 +550,7 @@ class _CheckInCard extends StatelessWidget {
 
   Widget _typeBadge(({String label, IconData icon, Color bg, Color fg}) type) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
       decoration: BoxDecoration(
         color: type.bg,
         borderRadius: BorderRadius.circular(6),
