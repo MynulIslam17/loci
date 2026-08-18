@@ -12,6 +12,8 @@ import 'package:loci/features/explore_activity/presentation/controllers/route_ed
 import 'package:loci/features/explore_activity/presentation/controllers/raffle_edit_controller.dart';
 import 'package:loci/features/explore_activity/presentation/controllers/view_activity_controller.dart';
 import 'package:loci/features/explore_activity/presentation/controllers/task_controller.dart';
+import 'package:loci/features/explore_activity/presentation/controllers/total_checkin_controller.dart';
+import 'package:loci/features/explore_activity/presentation/controllers/total_rsvp_controller.dart';
 
 class ExploreActivityBinding extends Bindings {
   @override
@@ -34,6 +36,9 @@ class ExploreActivityBinding extends Bindings {
     Get.lazyPut(() => RouteEditController(service), fenix: true);
     Get.lazyPut(() => RaffleEditController(service), fenix: true);
     Get.lazyPut(() => ViewActivityController(), fenix: true);
+
+    Get.lazyPut(() => TotalRsvpController(service), fenix: true);
+    Get.lazyPut(() => TotalCheckinController(service), fenix: true);
   }
 }
 

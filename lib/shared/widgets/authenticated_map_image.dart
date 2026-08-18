@@ -46,22 +46,22 @@ class AuthenticatedMapImage extends StatelessWidget {
 
     final lat = latitude!;
     final lng = longitude!;
-    final label = Uri.encodeComponent(locationLabel ?? 'Location');
 
+    // Directions URL from user's current location to target event/route coordinates:
+    // - iOS: Apple Maps with destination address (daddr) and driving mode (dirflg=d)
+    // - Android & Web: Google Maps directions API with destination and driving travelmode
     final mapUri = Platform.isIOS
-        ? Uri.parse('https://maps.apple.com/?ll=$lat,$lng&q=$label')
-        : Platform.isAndroid
-            ? Uri.parse('geo:$lat,$lng?q=$lat,$lng($label)')
-            : Uri.parse(
-                'https://www.google.com/maps/search/?api=1&query=$lat,$lng',
-              );
+        ? Uri.parse('https://maps.apple.com/?daddr=$lat,$lng&dirflg=d')
+        : Uri.parse(
+            'https://www.google.com/maps/dir/?api=1&destination=$lat,$lng&travelmode=driving',
+          );
 
     if (await canLaunchUrl(mapUri)) {
       await launchUrl(mapUri, mode: LaunchMode.externalApplication);
     } else {
       await launchUrl(
         Uri.parse(
-          'https://www.google.com/maps/search/?api=1&query=$lat,$lng',
+          'https://www.google.com/maps/dir/?api=1&destination=$lat,$lng&travelmode=driving',
         ),
         mode: LaunchMode.externalApplication,
       );
@@ -81,7 +81,7 @@ class AuthenticatedMapImage extends StatelessWidget {
         title: locationLabel?.trim().isNotEmpty == true
             ? locationLabel!
             : (_hasCoordinates ? 'View location' : 'Map unavailable'),
-        subtitle: _hasCoordinates ? 'Open in Maps' : null,
+        subtitle: _hasCoordinates ? 'Get directions' : null,
         colors: colors,
       );
     } else {
@@ -97,7 +97,7 @@ class AuthenticatedMapImage extends StatelessWidget {
           title: locationLabel?.trim().isNotEmpty == true
               ? locationLabel!
               : (_hasCoordinates ? 'View location' : 'Couldn\'t load map'),
-          subtitle: _hasCoordinates ? 'Open in Maps' : null,
+          subtitle: _hasCoordinates ? 'Get directions' : null,
           colors: colors,
         ),
         imageBuilder: (context, imageProvider) {
@@ -163,10 +163,10 @@ class _OpenInMapsChip extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(Icons.open_in_new, size: 12, color: Colors.white),
+          const Icon(Icons.directions, size: 13, color: Colors.white),
           const SizedBox(width: 4),
           Text(
-            'Open in Maps',
+            'Directions',
             style: AppTextStyle.textXs(
               color: Colors.white,
               weight: FontWeight.w500,

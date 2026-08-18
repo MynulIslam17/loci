@@ -1,6 +1,9 @@
 import 'package:get/get.dart';
+import 'package:loci/core/utils/app_error_messages.dart';
+import 'package:loci/core/utils/show_snackbar.dart';
 import 'package:loci/features/raffles/data/models/raffle_detail_model.dart';
 import 'package:loci/features/raffles/domain/services/raffles_service.dart';
+import 'package:loci/features/raffles/presentation/controllers/raffle_list_controller.dart';
 
 class RaffleDetailsController extends GetxController {
   RaffleDetailsController(this._service);
@@ -8,10 +11,12 @@ class RaffleDetailsController extends GetxController {
   final RafflesService _service;
 
   final RxBool _isLoading = false.obs;
+  final RxBool _isJoining = false.obs;
   final Rxn<String> _errorMessage = Rxn<String>();
   final Rxn<RaffleDetailsModel> _raffleDetails = Rxn<RaffleDetailsModel>();
 
   bool get isLoading => _isLoading.value;
+  bool get isJoining => _isJoining.value;
   String? get errorMessage => _errorMessage.value;
   RaffleDetailsModel? get raffleDetails => _raffleDetails.value;
 
@@ -29,7 +34,7 @@ class RaffleDetailsController extends GetxController {
     try {
       _raffleDetails.value = await _service.getRaffleDetails(raffleId);
     } catch (e) {
-      _errorMessage.value = e.toString().replaceFirst('Exception: ', '');
+      _errorMessage.value = AppErrorMessages.sanitize(e);
     } finally {
       if (!silent) _isLoading.value = false;
     }
@@ -40,24 +45,61 @@ class RaffleDetailsController extends GetxController {
     await fetchRaffleDetails(raffleId, silent: true);
   }
 
-  /// Toggle participation locally
-  void updateParticipation(bool isParticipating) {
-    final current = _raffleDetails.value;
-    if (current == null) return;
+  /// Join / Participate in the raffle via POST /raffles/:id/participate
+  Future<bool> joinRaffle(String raffleId) async {
+    if (_isJoining.value) return false;
+    _isJoining.value = true;
 
-    int updatedCount = current.participantCount;
+    try {
+      final updated = await _service.participateInRaffle(raffleId);
+      final prev = _raffleDetails.value;
 
-    if (isParticipating) {
-      updatedCount += 1;
-    } else {
-      updatedCount -= 1;
-      if (updatedCount < 0) updatedCount = 0;
+      List<RaffleTaskModel> mergedTasks = updated.tasks;
+      if (prev != null) {
+        mergedTasks = updated.tasks.map((newT) {
+          final oldT = prev.tasks.firstWhereOrNull(
+            (t) =>
+                (t.activity?.id.isNotEmpty ?? false) &&
+                (t.activity?.id == newT.activity?.id || t.order == newT.order),
+          );
+          if (oldT != null && (newT.activity?.title.isEmpty ?? true)) {
+            return newT.copyWith(
+              routeActivity: oldT.routeActivity,
+              eventActivity: oldT.eventActivity,
+            );
+          }
+          return newT;
+        }).toList();
+      }
+
+      final merged = updated.copyWith(
+        isParticipating: true,
+        tasks: mergedTasks,
+        sponsor: (updated.sponsor.name.isEmpty && prev != null)
+            ? prev.sponsor
+            : updated.sponsor,
+      );
+      _raffleDetails.value = merged;
+
+      // Update the item in the active raffles list
+      if (Get.isRegistered<RaffleListController>()) {
+        Get.find<RaffleListController>().markRaffleEntered(raffleId);
+      }
+
+      if (merged.voucherCode != null && merged.voucherCode!.isNotEmpty) {
+        SnackbarService.success(
+          'You have entered the raffle! Voucher code issued.',
+        );
+      } else {
+        SnackbarService.success('You have successfully entered the raffle!');
+      }
+      return true;
+    } catch (e) {
+      SnackbarService.error(AppErrorMessages.sanitize(e));
+      return false;
+    } finally {
+      _isJoining.value = false;
     }
-
-    _raffleDetails.value = current.copyWith(
-      isParticipating: isParticipating,
-      participantCount: updatedCount,
-    );
   }
 
   /// Mark task completed locally
@@ -77,7 +119,7 @@ class RaffleDetailsController extends GetxController {
     }
   }
 
-  /// Marks the task linked to [activityId] as completed (no API call).
+  /// Marks the task linked to [activityId] as completed.
   void markTaskCompletedByActivityId(String activityId) {
     if (activityId.isEmpty) return;
     final current = _raffleDetails.value;

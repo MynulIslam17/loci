@@ -114,7 +114,10 @@ class _EventDetailContent extends StatelessWidget {
                   onTap: () {
                     Get.toNamed(
                       AppRoutes.viewTotalRSVP,
-                      arguments: {'title': 'Total RSVP'},
+                      arguments: {
+                        'title': 'Total RSVP',
+                        'eventId': eventDetails.eventModel.id,
+                      },
                     );
                   },
                 ),
@@ -128,7 +131,11 @@ class _EventDetailContent extends StatelessWidget {
                   onTap: () {
                     Get.toNamed(
                       AppRoutes.viewTotalCheckIn,
-                      arguments: {'title': 'Total Check-In'},
+                      arguments: {
+                        'title': 'Total Check-In',
+                        'eventId': eventDetails.eventModel.id,
+                        'type': 'event',
+                      },
                     );
                   },
                 ),
@@ -252,7 +259,16 @@ class _RouteDetailContent extends StatelessWidget {
             icon: Icons.person_outline,
             count: '${routeDetails.checkInCount}',
             label: 'Check-ins',
-            onTap: () {},
+            onTap: () {
+              Get.toNamed(
+                AppRoutes.viewTotalCheckIn,
+                arguments: {
+                  'title': 'Total Check-In',
+                  'routeId': routeDetails.routeModel.routeId,
+                  'type': 'route',
+                },
+              );
+            },
           ),
         ),
         ExploreActivitySection(

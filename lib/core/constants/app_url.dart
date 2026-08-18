@@ -28,6 +28,10 @@ abstract class AppUrl {
 
   static const String eventList="$baseUrl/events";
   static  String rsvpEvent(String eventId)=>"$baseUrl/events/$eventId/rsvp";
+  static String eventRsvpList(String eventId)=>"$baseUrl/events/$eventId/rsvp";
+  static String eventRsvpExport(String eventId)=>"$baseUrl/events/$eventId/rsvp/export";
+  static String eventCheckins(String eventId)=>"$baseUrl/events/$eventId/checkins";
+  static String eventCheckinsExport(String eventId)=>"$baseUrl/events/$eventId/checkins/export";
   static String eventDetails(String id)=>"$baseUrl/events/$id";
   static const String eventManualCheckIn="$baseUrl/events/check-in";
   static const String createEvent="$baseUrl/events";
@@ -37,12 +41,17 @@ abstract class AppUrl {
   ///===========================  routes ===================================================
   static const String routeList="$baseUrl/routes";
   static  String routeDetails(String routeId)=>"$baseUrl/routes/$routeId";
+  static  String routeCheckins(String routeId)=>"$baseUrl/routes/$routeId/checkins";
+  static  String routeCheckinsExport(String routeId)=>"$baseUrl/routes/$routeId/checkins/export";
   static  String routeManualCheckIn="$baseUrl/routes/check-in";
   static const String createRoute="$baseUrl/routes";
 
   ///-------------raffle--------------------------------
   static const String raffles="$baseUrl/raffles";
   static  String rafflesDetails(String raffleId)=>"$baseUrl/raffles/$raffleId";
+  static  String participateRaffle(String raffleId)=>"$baseUrl/raffles/$raffleId/participate";
+  static  String raffleParticipants(String raffleId)=>"$baseUrl/raffles/$raffleId/participants";
+  static  String raffleParticipantsExport(String raffleId)=>"$baseUrl/raffles/$raffleId/participants/export";
   static const String searchTask="$baseUrl/raffles/search";
 
 

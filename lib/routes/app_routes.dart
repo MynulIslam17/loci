@@ -30,8 +30,6 @@ static const String meeting="/meeting";
 static const String referral="/referral";
 static const String sendReferral="/sendReferral";
 static const String scheduleMeeting="/scheduleMeeting";
-static const String referralsInvitation="/referralsInvitation";
-static const String meetingInvitation="/meetingInvitation";
 
 
 //---checkIn(barcode)
