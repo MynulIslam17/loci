@@ -453,11 +453,19 @@ class ChatSocketService extends GetxService with WidgetsBindingObserver {
     }
   }
 
+  Completer<void>? _flushCompleter;
+
   Future<void> flushGlobalOutbox() async {
-    if (_flushInProgress) return;
+    if (_flushInProgress) {
+      if (_flushCompleter != null && !_flushCompleter!.isCompleted) {
+        await _flushCompleter!.future;
+      }
+      return;
+    }
     if (!isConnected) return;
 
     _flushInProgress = true;
+    _flushCompleter = Completer<void>();
     try {
       final storage = _storageOrNull();
       if (storage == null) return;
@@ -499,6 +507,10 @@ class ChatSocketService extends GetxService with WidgetsBindingObserver {
     } catch (_) {
     } finally {
       _flushInProgress = false;
+      if (_flushCompleter != null && !_flushCompleter!.isCompleted) {
+        _flushCompleter!.complete();
+      }
+      _flushCompleter = null;
     }
   }
 

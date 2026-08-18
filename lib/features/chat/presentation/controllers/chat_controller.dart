@@ -72,16 +72,6 @@ class ChatController extends GetxController {
   final Set<String> _flushingTempIds = {};
   final Map<String, Timer> _liveSendTimers = {};
 
-  bool _isRecent(String? t1, String? t2) {
-    if (t1 == null || t2 == null) return false;
-    try {
-      final d1 = DateTime.parse(t1).toUtc();
-      final d2 = DateTime.parse(t2).toUtc();
-      return (d1.difference(d2).inSeconds).abs() < 120;
-    } catch (_) {
-      return false;
-    }
-  }
 
   void _deduplicateMessages() {
     final seenIds = <String>{};
@@ -256,10 +246,16 @@ class ChatController extends GetxController {
           if (mineOnServer &&
               serverMsg.content != null &&
               p.content != null &&
-              serverMsg.content == p.content &&
-              _isRecent(serverMsg.createdAt, p.createdAt)) {
-            matchIdx = i;
-            break;
+              serverMsg.content == p.content) {
+            final pTime = DateTime.tryParse(p.createdAt ?? '');
+            final sTime = DateTime.tryParse(serverMsg.createdAt ?? '');
+            if (pTime != null && sTime != null) {
+              final diffSec = (sTime.difference(pTime).inSeconds).abs();
+              if (diffSec <= 15) {
+                matchIdx = i;
+                break;
+              }
+            }
           }
         }
         if (matchIdx != -1) {

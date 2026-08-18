@@ -1284,7 +1284,6 @@ void main() {
 
     test('ChatController: Failed message retry resets status to sending and updates outbox', () async {
       final fakeChatService = FakeChatService();
-      final hiveService = createTestHiveService();
       final socket = ChatSocketService();
       Get.put<ChatSocketService>(socket);
 
