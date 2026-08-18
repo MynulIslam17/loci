@@ -79,6 +79,7 @@ class ChatMessageModel {
     bool? isEdited,
     bool? isDeleted,
     String? status,
+    String? createdAt,
     bool clearContent = false,
   }) {
     return ChatMessageModel(
@@ -91,7 +92,7 @@ class ChatMessageModel {
       isEdited: isEdited ?? this.isEdited,
       isDeleted: isDeleted ?? this.isDeleted,
       status: status ?? this.status,
-      createdAt: createdAt,
+      createdAt: createdAt ?? this.createdAt,
       editedAt: editedAt,
       unsendableUntil: unsendableUntil,
       editableUntil: editableUntil,

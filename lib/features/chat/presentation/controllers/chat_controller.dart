@@ -180,6 +180,11 @@ class ChatController extends GetxController {
   void _onConnectionChanged(bool connected) {
     if (!connected) {
       _connectionDropped = true;
+      for (final timer in _liveSendTimers.values) {
+        timer.cancel();
+      }
+      _liveSendTimers.clear();
+      _flushingTempIds.clear();
       return;
     }
     final shouldResync = _connectionDropped;
@@ -452,16 +457,26 @@ class ChatController extends GetxController {
     final existingServerIdx =
         messages.indexWhere((m) => m.id == ack.message.id);
 
+    final localCreatedAt = tempIdx != -1
+        ? messages[tempIdx].createdAt
+        : (existingServerIdx != -1 ? messages[existingServerIdx].createdAt : null);
+
+    final msgToApply = (localCreatedAt != null && localCreatedAt.isNotEmpty)
+        ? ack.message.copyWith(createdAt: localCreatedAt)
+        : ack.message;
+
     if (existingServerIdx != -1 && tempIdx != -1 && existingServerIdx != tempIdx) {
       // Both server message (from loadMessages) and temp message exist!
       // Remove temp bubble so only 1 copy remains.
       messages.removeAt(tempIdx);
+      final sIdx = messages.indexWhere((m) => m.id == ack.message.id);
+      if (sIdx != -1) messages[sIdx] = msgToApply;
     } else if (tempIdx != -1) {
-      messages[tempIdx] = ack.message;
+      messages[tempIdx] = msgToApply;
     } else if (existingServerIdx != -1) {
-      messages[existingServerIdx] = ack.message;
+      messages[existingServerIdx] = msgToApply;
     } else {
-      messages.add(ack.message);
+      messages.add(msgToApply);
     }
 
     _deduplicateMessages();

@@ -54,7 +54,10 @@ class ConnectivityService extends GetxService {
     _processResults(results);
   }
 
+  Set<ConnectivityResult> _previousResults = {};
+
   void _processResults(List<ConnectivityResult> results) {
+    final currentSet = results.toSet();
     final hasNoConnection = results.contains(ConnectivityResult.none) && results.length == 1;
     final nowOffline = hasNoConnection || results.isEmpty;
 
@@ -66,8 +69,13 @@ class ConnectivityService extends GetxService {
         justReconnected.value = false;
       }
     } else {
-      if (isOffline.value) {
-        // Transition from offline -> online.
+      final wasOffline = isOffline.value;
+      final interfaceChanged = _previousResults.isNotEmpty &&
+          !_previousResults.contains(ConnectivityResult.none) &&
+          !_setEquals(_previousResults, currentSet);
+
+      if (wasOffline || interfaceChanged) {
+        // Transition from offline -> online OR switched interface (Wi-Fi <-> Mobile Data).
         // Flag reconnect first so the banner can turn green in the same
         // frame instead of collapsing, then sliding back in.
         justReconnected.value = true;
@@ -82,6 +90,12 @@ class ConnectivityService extends GetxService {
         _reconnectStreamCtrl.add(null);
       }
     }
+    _previousResults = currentSet;
+  }
+
+  bool _setEquals(Set<ConnectivityResult> a, Set<ConnectivityResult> b) {
+    if (a.length != b.length) return false;
+    return a.containsAll(b);
   }
 
   /// Manually checks if the device can actually reach the internet.

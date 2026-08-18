@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
@@ -28,6 +29,7 @@ class _MessageScreenState extends State<MessageScreen> {
   final FocusNode _inputFocus = FocusNode();
   final ScrollController _scroll = ScrollController();
   int _lastCount = 0;
+  StreamSubscription? _msgSub;
 
   late final ChatUserModel _other;
 
@@ -56,6 +58,11 @@ class _MessageScreenState extends State<MessageScreen> {
       ),
     );
 
+    _lastCount = controller.messages.length;
+    _msgSub = controller.messages.listen((list) {
+      _jumpToBottomIfNeeded(list.length);
+    });
+
     _scroll.addListener(_onScroll);
   }
 
@@ -70,6 +77,7 @@ class _MessageScreenState extends State<MessageScreen> {
 
   @override
   void dispose() {
+    _msgSub?.cancel();
     _input.dispose();
     _inputFocus.dispose();
     _scroll.dispose();
@@ -127,9 +135,11 @@ class _MessageScreenState extends State<MessageScreen> {
 
   void _jumpToBottomIfNeeded(int count) {
     if (count == _lastCount) return;
+    final initialLoad = _lastCount == 0;
     final grew = count > _lastCount;
     _lastCount = count;
-    if (!grew) return;
+    // Don't animate during initial message load — the reversed list starts at index 0.
+    if (initialLoad || !grew) return;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       // Offset 0 is the newest message in the reversed list.
       if (_scroll.hasClients && _scroll.position.pixels < 300) {
@@ -208,8 +218,8 @@ class _MessageScreenState extends State<MessageScreen> {
         children: [
           Expanded(
             child: GestureDetector(
-              behavior: HitTestBehavior.opaque,
-              onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
+              behavior: HitTestBehavior.translucent,
+              onTap: () => FocusScope.of(context).unfocus(),
               child: Obx(() {
                 final ctrl = controller;
                 if (ctrl.isLoading.value && ctrl.messages.isEmpty) {
@@ -239,8 +249,6 @@ class _MessageScreenState extends State<MessageScreen> {
                     ),
                   );
                 }
-
-                _jumpToBottomIfNeeded(ctrl.messages.length);
 
               final count = ctrl.messages.length;
               final showTopLoader = ctrl.isLoadingMore.value;
