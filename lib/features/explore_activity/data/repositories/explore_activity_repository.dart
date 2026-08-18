@@ -205,4 +205,68 @@ class ExploreActivityRepository {
     }
     return res.body ?? const {};
   }
+
+  Future<Map<String, dynamic>> getEventRsvpList({
+    required String eventId,
+    int page = 1,
+    int limit = 20,
+    String? search,
+  }) async {
+    final res = await _network.getRequest(
+      url: AppUrl.eventRsvpList(eventId),
+      queryParams: {
+        'page': page,
+        'limit': limit,
+        if (search != null && search.trim().isNotEmpty) 'search': search.trim(),
+      },
+    );
+    if (!res.isSuccess || res.body == null) {
+      throw Exception(res.errorMessage ?? 'Failed to load RSVP list');
+    }
+    return res.body!;
+  }
+
+  Future<String> exportEventRsvpCsv({required String eventId}) async {
+    return _network.getTextBody(url: AppUrl.eventRsvpExport(eventId));
+  }
+
+  Future<Map<String, dynamic>> getEventCheckins({
+    required String eventId,
+    String? search,
+  }) async {
+    final res = await _network.getRequest(
+      url: AppUrl.eventCheckins(eventId),
+      queryParams: {
+        if (search != null && search.trim().isNotEmpty) 'search': search.trim(),
+      },
+    );
+    if (!res.isSuccess || res.body == null) {
+      throw Exception(res.errorMessage ?? 'Failed to load check-ins');
+    }
+    return res.body!;
+  }
+
+  Future<String> exportEventCheckinsCsv({required String eventId}) async {
+    return _network.getTextBody(url: AppUrl.eventCheckinsExport(eventId));
+  }
+
+  Future<Map<String, dynamic>> getRouteCheckins({
+    required String routeId,
+    String? search,
+  }) async {
+    final res = await _network.getRequest(
+      url: AppUrl.routeCheckins(routeId),
+      queryParams: {
+        if (search != null && search.trim().isNotEmpty) 'search': search.trim(),
+      },
+    );
+    if (!res.isSuccess || res.body == null) {
+      throw Exception(res.errorMessage ?? 'Failed to load check-ins');
+    }
+    return res.body!;
+  }
+
+  Future<String> exportRouteCheckinsCsv({required String routeId}) async {
+    return _network.getTextBody(url: AppUrl.routeCheckinsExport(routeId));
+  }
 }

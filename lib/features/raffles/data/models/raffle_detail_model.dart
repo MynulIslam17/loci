@@ -10,6 +10,7 @@ class RaffleDetailsModel {
   final String userRole;
   final bool isParticipating;
   final int participantCount;
+  final String? voucherCode;
 
   RaffleDetailsModel({
     required this.raffleModel,
@@ -21,23 +22,33 @@ class RaffleDetailsModel {
     required this.userRole,
     required this.isParticipating,
     required this.participantCount,
+    this.voucherCode,
   });
 
   factory RaffleDetailsModel.fromJson(Map<String, dynamic> json) {
-    final data = json['data'] ?? {};
+    final data = json['data'] is Map ? json['data'] : json;
+    final myProgress = data['myProgress'] is Map ? data['myProgress'] : {};
+
+    final isPart = data['isParticipating'] == true ||
+        data['userRole'] == 'participant' ||
+        (json['message']?.toString().toLowerCase().contains('joined') ?? false);
 
     return RaffleDetailsModel(
       raffleModel: RaffleModel.fromJson(data),
       tasks: (data['tasks'] as List<dynamic>? ?? [])
           .map((e) => RaffleTaskModel.fromJson(e))
           .toList(),
-      isPublic: data['isPublic'] ?? false,
-      status: data['status'] ?? '',
-      sponsor: SponsorModel.fromJson(data['sponsor'] ?? {}),
-      totalTasks: data['totalTasks'] ?? 0,
-      userRole: data['userRole'] ?? '',
-      isParticipating: data['isParticipating'] ?? false,
-      participantCount: data['participantCount'] ?? 0,
+      isPublic: data['isPublic'] == true,
+      status: data['status']?.toString() ?? '',
+      sponsor: SponsorModel.fromJson(data['sponsor']),
+      totalTasks: (data['totalTasks'] as num?)?.toInt() ??
+          (data['tasks'] as List?)?.length ??
+          0,
+      userRole: data['userRole']?.toString() ?? '',
+      isParticipating: isPart,
+      participantCount: (data['participantCount'] as num?)?.toInt() ?? 0,
+      voucherCode: data['voucherCode']?.toString() ??
+          myProgress['voucherCode']?.toString(),
     );
   }
 
@@ -51,6 +62,7 @@ class RaffleDetailsModel {
     String? userRole,
     bool? isParticipating,
     int? participantCount,
+    String? voucherCode,
   }) {
     return RaffleDetailsModel(
       raffleModel: raffleModel ?? this.raffleModel,
@@ -62,6 +74,7 @@ class RaffleDetailsModel {
       userRole: userRole ?? this.userRole,
       isParticipating: isParticipating ?? this.isParticipating,
       participantCount: participantCount ?? this.participantCount,
+      voucherCode: voucherCode ?? this.voucherCode,
     );
   }
 }
@@ -81,12 +94,23 @@ class TaskActivityModel {
     required this.details,
   });
 
-  factory TaskActivityModel.fromJson(Map<String, dynamic> json) {
+  factory TaskActivityModel.fromJson(dynamic rawJson) {
+    if (rawJson is! Map) {
+      return TaskActivityModel(
+        id: rawJson?.toString() ?? '',
+        banner: '',
+        title: '',
+        details: '',
+      );
+    }
+    final json = Map<String, dynamic>.from(rawJson);
     return TaskActivityModel(
       id: (json['_id'] ?? json['id'] ?? '').toString(),
-      banner: json['banner'] ?? '',
-      title: json['title'] ?? '',
-      details: json['details'] ?? '',
+      banner: json['banner']?.toString() ?? '',
+      title: json['title']?.toString() ?? '',
+      details: json['details']?.toString() ??
+          json['description']?.toString() ??
+          '',
     );
   }
 
@@ -120,12 +144,16 @@ class RaffleTaskModel {
     required this.isCompleted,
   });
 
-  factory RaffleTaskModel.fromJson(Map<String, dynamic> json) {
+  factory RaffleTaskModel.fromJson(dynamic rawJson) {
+    if (rawJson is! Map) {
+      return RaffleTaskModel(order: 0, isCompleted: false);
+    }
+    final json = Map<String, dynamic>.from(rawJson);
     return RaffleTaskModel(
       routeActivity: _parseTaskActivity(json['routeActivity']),
       eventActivity: _parseTaskActivity(json['eventActivity']),
-      order: json['order'] ?? 0,
-      isCompleted: json['isCompleted'] ?? false,
+      order: (json['order'] as num?)?.toInt() ?? 0,
+      isCompleted: json['isCompleted'] == true,
     );
   }
 
@@ -182,12 +210,21 @@ class SponsorModel {
     required this.description,
   });
 
-  factory SponsorModel.fromJson(Map<String, dynamic> json) {
+  factory SponsorModel.fromJson(dynamic rawJson) {
+    if (rawJson is! Map) {
+      return SponsorModel(
+        id: rawJson?.toString() ?? '',
+        name: '',
+        logo: '',
+        description: '',
+      );
+    }
+    final json = Map<String, dynamic>.from(rawJson);
     return SponsorModel(
-      id: json['_id'] ?? '',
-      name: json['name'] ?? '',
-      logo: json['logo'] ?? '',
-      description: json['description'] ?? '',
+      id: (json['_id'] ?? json['id'] ?? '').toString(),
+      name: json['name']?.toString() ?? '',
+      logo: json['logo']?.toString() ?? '',
+      description: json['description']?.toString() ?? '',
     );
   }
 

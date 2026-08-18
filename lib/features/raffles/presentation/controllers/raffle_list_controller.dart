@@ -119,4 +119,17 @@ class RaffleListController extends GetxController {
   }
 
   Future<void> refreshRaffles() => fetchRaffles(isRefresh: true);
+
+  /// Updates an entered raffle in the active list
+  void markRaffleEntered(String raffleId) {
+    final idx = _raffleList.indexWhere((r) => r.id == raffleId);
+    if (idx >= 0) {
+      final old = _raffleList[idx];
+      _raffleList[idx] = old.copyWith(
+        isParticipating: true,
+        participantCount: old.participantCount + 1,
+      );
+      _raffleList.refresh();
+    }
+  }
 }

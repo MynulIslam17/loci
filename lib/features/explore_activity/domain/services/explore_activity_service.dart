@@ -6,6 +6,7 @@ import 'package:loci/features/raffles/data/models/raffle_detail_model.dart';
 import 'package:loci/features/raffles/data/models/raffle_list_model.dart';
 import 'package:loci/features/routes/data/models/route_detail_model.dart';
 import 'package:loci/features/routes/data/models/route_list_model.dart';
+import 'package:loci/features/explore_activity/data/models/activity_attendee_model.dart';
 import 'package:loci/features/explore_activity/data/models/update_event_request_model.dart';
 import 'package:loci/features/explore_activity/data/models/update_raffle_request_model.dart';
 import 'package:loci/features/explore_activity/data/models/update_route_request_model.dart';
@@ -152,5 +153,75 @@ class ExploreActivityService {
       files: files,
     );
     return res['message']?.toString() ?? 'Created successfully';
+  }
+
+  Future<List<RsvpAttendeeModel>> getEventRsvpList({
+    required String eventId,
+    int page = 1,
+    int limit = 50,
+    String? search,
+  }) async {
+    final body = await _repository.getEventRsvpList(
+      eventId: eventId,
+      page: page,
+      limit: limit,
+      search: search,
+    );
+    final rawList = body['data'];
+    if (rawList is List) {
+      return rawList
+          .whereType<Map<String, dynamic>>()
+          .map((json) => RsvpAttendeeModel.fromJson(json))
+          .toList();
+    }
+    return [];
+  }
+
+  Future<String> exportEventRsvpCsv({required String eventId}) {
+    return _repository.exportEventRsvpCsv(eventId: eventId);
+  }
+
+  Future<List<CheckInAttendeeModel>> getEventCheckins({
+    required String eventId,
+    String? search,
+  }) async {
+    final body = await _repository.getEventCheckins(
+      eventId: eventId,
+      search: search,
+    );
+    final rawList = body['data'];
+    if (rawList is List) {
+      return rawList
+          .whereType<Map<String, dynamic>>()
+          .map((json) => CheckInAttendeeModel.fromJson(json))
+          .toList();
+    }
+    return [];
+  }
+
+  Future<String> exportEventCheckinsCsv({required String eventId}) {
+    return _repository.exportEventCheckinsCsv(eventId: eventId);
+  }
+
+  Future<List<CheckInAttendeeModel>> getRouteCheckins({
+    required String routeId,
+    String? search,
+  }) async {
+    final body = await _repository.getRouteCheckins(
+      routeId: routeId,
+      search: search,
+    );
+    final rawList = body['data'];
+    if (rawList is List) {
+      return rawList
+          .whereType<Map<String, dynamic>>()
+          .map((json) => CheckInAttendeeModel.fromJson(json))
+          .toList();
+    }
+    return [];
+  }
+
+  Future<String> exportRouteCheckinsCsv({required String routeId}) {
+    return _repository.exportRouteCheckinsCsv(routeId: routeId);
   }
 }

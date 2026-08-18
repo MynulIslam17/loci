@@ -46,7 +46,6 @@ import 'package:loci/features/chat/presentation/pages/message_screen.dart';
 import 'package:loci/features/qr_code/presentation/bindings/qr_code_binding.dart';
 import 'package:loci/features/qr_code/presentation/pages/my_qr_code_screen.dart';
 import 'package:loci/features/network/presentation/pages/connections/connection_screen.dart';
-import 'package:loci/features/network/presentation/pages/meetings/meeting_invitation_screen.dart';
 import 'package:loci/features/network/presentation/pages/meetings/meeting_screen.dart';
 import 'package:loci/features/network/presentation/pages/referrals/referrals_screen.dart';
 import 'package:loci/features/network/presentation/pages/meetings/schedule_meeting_screen.dart';
@@ -166,11 +165,6 @@ abstract class AppPages {
       binding: MeetingsBindings(),
     ),
 
-    GetPage(
-      name: AppRoutes.meetingInvitation,
-      page: () => MeetingInvitationScreen(),
-    ),
-
     // ----- CheckIn
     GetPage(
       name: AppRoutes.checkIn,
@@ -281,8 +275,16 @@ abstract class AppPages {
       binding: ExploreActivityBindings(),
     ),
 
-    GetPage(name: AppRoutes.viewTotalCheckIn, page: () => TotalCheckInScreen()),
-    GetPage(name: AppRoutes.viewTotalRSVP, page: () => TotalRsvpScreen()),
+    GetPage(
+      name: AppRoutes.viewTotalCheckIn,
+      page: () => const TotalCheckInScreen(),
+      binding: ExploreActivityBindings(),
+    ),
+    GetPage(
+      name: AppRoutes.viewTotalRSVP,
+      page: () => const TotalRsvpScreen(),
+      binding: ExploreActivityBindings(),
+    ),
 
     //---create activity
     GetPage(

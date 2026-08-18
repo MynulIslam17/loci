@@ -25,4 +25,9 @@ class RafflesService {
     final body = await _repository.getRaffleDetails(raffleId);
     return RaffleDetailsModel.fromJson(body);
   }
+
+  Future<RaffleDetailsModel> participateInRaffle(String raffleId) async {
+    final body = await _repository.participateInRaffle(raffleId);
+    return RaffleDetailsModel.fromJson(body);
+  }
 }

@@ -23,22 +23,22 @@ class RaffleCard extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: colorScheme.surfaceContainerHigh,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(18),
         border: Border.all(
-          color: colorScheme.outline.withValues(alpha: isDark ? 0.3 : 0.18),
+          color: colorScheme.outline.withValues(alpha: isDark ? 0.25 : 0.15),
           width: 1,
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: isDark ? 0.28 : 0.06),
-            blurRadius: 14,
-            offset: const Offset(0, 4),
+            color: Colors.black.withValues(alpha: isDark ? 0.22 : 0.05),
+            blurRadius: 12,
+            offset: const Offset(0, 3),
           ),
         ],
       ),
       child: Material(
         color: Colors.transparent,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(18),
         clipBehavior: Clip.antiAlias,
         child: InkWell(
           onTap: onTap,
@@ -57,7 +57,7 @@ class RaffleCard extends StatelessWidget {
                     fit: BoxFit.cover,
                     borderRadius: 0,
                   ),
-                  // Subtle bottom gradient for image readability
+                  // Bottom gradient for text readability
                   Positioned.fill(
                     child: DecoratedBox(
                       decoration: BoxDecoration(
@@ -75,7 +75,7 @@ class RaffleCard extends StatelessWidget {
                     ),
                   ),
 
-                  // Top-Left Entries Badge
+                  // Top-Left Entries / Max Badge
                   Positioned(
                     top: 10,
                     left: 10,
@@ -116,37 +116,45 @@ class RaffleCard extends StatelessWidget {
                     ),
                   ),
 
-                  // Top-Right Bundle Badge
-                  if (raffle.bundleName.isNotEmpty)
+                  // Top-Right Entered Badge
+                  if (raffle.isParticipating)
                     Positioned(
                       top: 10,
                       right: 10,
                       child: Container(
-                        constraints: const BoxConstraints(maxWidth: 140),
                         padding: const EdgeInsets.symmetric(
                           horizontal: 8,
                           vertical: 4,
                         ),
                         decoration: BoxDecoration(
-                          color: colorScheme.primary,
-                          borderRadius: BorderRadius.circular(16),
+                          color: const Color(0xFF10B981),
+                          borderRadius: BorderRadius.circular(12),
                           boxShadow: [
                             BoxShadow(
-                              color: colorScheme.primary.withValues(alpha: 0.3),
+                              color: const Color(0xFF10B981).withValues(alpha: 0.4),
                               blurRadius: 6,
                               offset: const Offset(0, 2),
                             ),
                           ],
                         ),
-                        child: Text(
-                          raffle.bundleName,
-                          style: TextStyle(
-                            fontSize: 10,
-                            fontWeight: FontWeight.w700,
-                            color: colorScheme.onPrimary,
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
+                        child: const Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.check_circle_rounded,
+                              size: 11,
+                              color: Colors.white,
+                            ),
+                            SizedBox(width: 3),
+                            Text(
+                              "Entered",
+                              style: TextStyle(
+                                fontSize: 10,
+                                fontWeight: FontWeight.w700,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     ),
@@ -195,19 +203,80 @@ class RaffleCard extends StatelessWidget {
                       overflow: TextOverflow.ellipsis,
                     ),
 
-                    if (raffle.description.isNotEmpty) ...[
-                      const SizedBox(height: 3),
-                      Text(
-                        raffle.description,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: AppTextStyle.textXs(
-                          color: colorScheme.onSurfaceVariant,
+                    const SizedBox(height: 6),
+
+                    // Prize Row — Supports at least 2 lines of text
+                    if (raffle.bundleName.isNotEmpty) ...[
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+                        decoration: BoxDecoration(
+                          color: colorScheme.primaryContainer.withValues(alpha: isDark ? 0.3 : 0.55),
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(
+                            color: colorScheme.primary.withValues(alpha: 0.25),
+                            width: 0.8,
+                          ),
+                        ),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            if (raffle.rafflePrizeImage != null &&
+                                raffle.rafflePrizeImage!.isNotEmpty)
+                              ClipRRect(
+                                borderRadius: BorderRadius.circular(6),
+                                child: CustomCachedImage(
+                                  imageUrl: raffle.rafflePrizeImage!,
+                                  width: 26,
+                                  height: 26,
+                                  fit: BoxFit.cover,
+                                ),
+                              )
+                            else
+                              Container(
+                                padding: const EdgeInsets.all(4),
+                                decoration: BoxDecoration(
+                                  color: colorScheme.primary.withValues(alpha: 0.15),
+                                  borderRadius: BorderRadius.circular(6),
+                                ),
+                                child: Icon(
+                                  Icons.card_giftcard_rounded,
+                                  size: 16,
+                                  color: colorScheme.primary,
+                                ),
+                              ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'PRIZE',
+                                    style: TextStyle(
+                                      fontSize: 9,
+                                      fontWeight: FontWeight.w800,
+                                      letterSpacing: 0.5,
+                                      color: colorScheme.primary,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 1),
+                                  Text(
+                                    raffle.bundleName,
+                                    style: AppTextStyle.textXs(
+                                      weight: FontWeight.w700,
+                                      color: colorScheme.onSurface,
+                                    ),
+                                    maxLines: 2,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
                         ),
                       ),
+                      const SizedBox(height: 8),
                     ],
-
-                    const SizedBox(height: 8),
 
                     // Date Row
                     if (dateRange.isNotEmpty) ...[
@@ -226,7 +295,7 @@ class RaffleCard extends StatelessWidget {
                       child: CustomButton(
                         backgroundColor: colorScheme.primary,
                         textColor: colorScheme.onPrimary,
-                        text: "Enter Raffle",
+                        text: "View Raffle",
                         textStyle: AppTextStyle.textSm(weight: FontWeight.w600),
                         onPressed: onTap,
                       ),
@@ -241,4 +310,3 @@ class RaffleCard extends StatelessWidget {
     );
   }
 }
-

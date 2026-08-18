@@ -43,6 +43,10 @@ class RaffleModel {
   final String organizerName;
   final String organizerLogo;
 
+  final bool isParticipating;
+  final int participantCount;
+  final int completionPercentage;
+
   RaffleModel({
     required this.id,
     required this.title,
@@ -55,28 +59,56 @@ class RaffleModel {
     required this.banner,
     required this.organizerName,
     required this.organizerLogo,
+    this.isParticipating = false,
+    this.participantCount = 0,
+    this.completionPercentage = 0,
   });
 
-  factory RaffleModel.fromJson(Map<String, dynamic> json) {
-    final sponsor = json['sponsor'] ?? {};
+  factory RaffleModel.fromJson(dynamic rawJson) {
+    if (rawJson is! Map) {
+      return RaffleModel(
+        id: rawJson?.toString() ?? '',
+        title: '',
+        description: '',
+        startDate: '',
+        endDate: '',
+        maxSupply: 0,
+        rafflePrizeImage: null,
+        bundleName: '',
+        banner: '',
+        organizerName: '',
+        organizerLogo: '',
+      );
+    }
+    final json = Map<String, dynamic>.from(rawJson);
+    final sponsor = json['sponsor'];
+    final myProgress = json['myProgress'] is Map ? json['myProgress'] : {};
 
     return RaffleModel(
-      id: json['_id'] ?? '',
-      title: json['title'] ?? '',
-      description: json['details'] ?? '',
+      id: (json['_id'] ?? json['id'] ?? '').toString(),
+      title: json['title']?.toString() ?? '',
+      description: json['details']?.toString() ??
+          json['description']?.toString() ??
+          '',
 
-      startDate: json['startDate'] ?? '',
-      endDate: json['endDate'] ?? '',
+      startDate: json['startDate']?.toString() ?? '',
+      endDate: json['endDate']?.toString() ?? '',
 
-      maxSupply: json['maxSupply'] ?? 0,
+      maxSupply: (json['maxSupply'] as num?)?.toInt() ?? 0,
 
-      rafflePrizeImage: json['rafflePrizeImage'],
-      bundleName: json['raffleBundleName'] ?? '',
+      rafflePrizeImage: json['rafflePrizeImage']?.toString(),
+      bundleName: json['raffleBundleName']?.toString() ?? '',
 
-      banner: json['banner'] ?? '',
+      banner: json['banner']?.toString() ?? '',
 
-      organizerName: sponsor['name'] ?? '',
-      organizerLogo: sponsor['logo'] ?? '',
+      organizerName: sponsor is Map ? (sponsor['name']?.toString() ?? '') : '',
+      organizerLogo: sponsor is Map ? (sponsor['logo']?.toString() ?? '') : '',
+
+      isParticipating: json['isParticipating'] == true ||
+          json['userRole'] == 'participant',
+      participantCount: (json['participantCount'] as num?)?.toInt() ?? 0,
+      completionPercentage:
+          (myProgress['completionPercentage'] as num?)?.toInt() ?? 0,
     );
   }
 
@@ -93,6 +125,9 @@ class RaffleModel {
     String? banner,
     String? organizerName,
     String? organizerLogo,
+    bool? isParticipating,
+    int? participantCount,
+    int? completionPercentage,
   }) {
     return RaffleModel(
       id: id ?? this.id,
@@ -106,6 +141,9 @@ class RaffleModel {
       banner: banner ?? this.banner,
       organizerName: organizerName ?? this.organizerName,
       organizerLogo: organizerLogo ?? this.organizerLogo,
+      isParticipating: isParticipating ?? this.isParticipating,
+      participantCount: participantCount ?? this.participantCount,
+      completionPercentage: completionPercentage ?? this.completionPercentage,
     );
   }
 }

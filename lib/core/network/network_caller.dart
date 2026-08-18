@@ -1,4 +1,4 @@
-﻿import 'dart:async';
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
@@ -221,7 +221,7 @@ class NetworkCaller {
       final response = await post(
         uri,
         headers: headers,
-        body: jsonEncode(body),
+        body: jsonEncode(body ?? {}),
       ).timeout(const Duration(seconds: 30));
 
       _logResponse(url, response);
@@ -278,7 +278,7 @@ class NetworkCaller {
       final response = await patch(
         uri,
         headers: headers,
-        body: jsonEncode(body),
+        body: jsonEncode(body ?? {}),
       ).timeout(const Duration(seconds: 30));
 
       _logResponse(url, response);
@@ -334,7 +334,7 @@ class NetworkCaller {
       final response = await put(
         uri,
         headers: headers,
-        body: jsonEncode(body),
+        body: jsonEncode(body ?? {}),
       ).timeout(const Duration(seconds: 30));
 
       _logResponse(url, response);

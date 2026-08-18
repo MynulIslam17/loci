@@ -35,4 +35,15 @@ class RafflesRepository {
     }
     return res.body!;
   }
+
+  Future<Map<String, dynamic>> participateInRaffle(String raffleId) async {
+    final res = await _network.postRequest(
+      url: AppUrl.participateRaffle(raffleId),
+      body: const {},
+    );
+    if (!res.isSuccess || res.body == null) {
+      throw Exception(res.errorMessage ?? 'Failed to participate in raffle');
+    }
+    return res.body!;
+  }
 }
