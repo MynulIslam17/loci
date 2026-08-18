@@ -50,7 +50,7 @@ class _NetworkScreenState extends State<NetworkScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const SizedBox(height: 8),
+                const SizedBox(height: 4),
                 Text(
                   'Networking Dashboard',
                   style: AppTextStyle.textXl(
@@ -66,14 +66,14 @@ class _NetworkScreenState extends State<NetworkScreen> {
                     weight: FontWeight.w500,
                   ),
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 8),
                 if (showShimmer)
                   _buildDashboardShimmer(context)
                 else ...[
                   if (counts != null) _buildStats(context, counts),
-                  const SizedBox(height: 14),
+                  const SizedBox(height: 10),
                   _buildQuickActions(context),
-                  const SizedBox(height: 14),
+                  const SizedBox(height: 10),
                   _buildRecentCheckIns(context, checkIns),
                 ],
                 const SizedBox(height: 16),
@@ -91,65 +91,45 @@ class _NetworkScreenState extends State<NetworkScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // 1. Stats Grid Shimmer (2x2 cards)
-        GridView.count(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          crossAxisCount: 2,
-          crossAxisSpacing: 8,
-          mainAxisSpacing: 8,
-          childAspectRatio: 2.1,
-          children: List.generate(
-            4,
-            (_) => Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-              decoration: BoxDecoration(
-                color: colors.surfaceContainerHigh,
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(
-                  color: colors.outlineVariant.withValues(alpha: 0.4),
-                ),
-              ),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      AppSkeleton.box(width: 20, height: 20, radius: 4),
-                      const SizedBox(width: 8),
-                      AppSkeleton.box(width: 32, height: 18, radius: 4),
-                    ],
-                  ),
-                  const SizedBox(height: 4),
-                  AppSkeleton.box(width: 76, height: 10, radius: 3),
-                ],
-              ),
-            ),
-          ),
+        // 1. Stats Grid Shimmer (2 rows x 2 columns)
+        Row(
+          children: [
+            Expanded(child: _shimmerStatCard(colors)),
+            const SizedBox(width: 8),
+            Expanded(child: _shimmerStatCard(colors)),
+          ],
         ),
-        const SizedBox(height: 14),
-
-        // 2. Quick Actions Shimmer
-        AppSkeleton.box(width: 100, height: 14, radius: 4),
-        const SizedBox(height: 8),
-        AppSkeleton.box(width: double.infinity, height: 42, radius: 10),
         const SizedBox(height: 8),
         Row(
           children: [
-            Expanded(child: AppSkeleton.box(height: 38, radius: 10)),
+            Expanded(child: _shimmerStatCard(colors)),
             const SizedBox(width: 8),
-            Expanded(child: AppSkeleton.box(height: 38, radius: 10)),
-            const SizedBox(width: 8),
-            Expanded(child: AppSkeleton.box(height: 38, radius: 10)),
+            Expanded(child: _shimmerStatCard(colors)),
           ],
         ),
-        const SizedBox(height: 14),
+        const SizedBox(height: 10),
+
+        // 2. Quick Actions Shimmer
+        AppSkeleton.box(width: 100, height: 13, radius: 4),
+        const SizedBox(height: 6),
+        AppSkeleton.box(width: double.infinity, height: 40, radius: 10),
+        const SizedBox(height: 6),
+        Row(
+          children: [
+            Expanded(child: AppSkeleton.box(height: 36, radius: 10)),
+            const SizedBox(width: 8),
+            Expanded(child: AppSkeleton.box(height: 36, radius: 10)),
+            const SizedBox(width: 8),
+            Expanded(child: AppSkeleton.box(height: 36, radius: 10)),
+          ],
+        ),
+        const SizedBox(height: 10),
 
         // 3. Recent Check-Ins Shimmer
-        AppSkeleton.box(width: 120, height: 14, radius: 4),
-        const SizedBox(height: 8),
+        AppSkeleton.box(width: 120, height: 13, radius: 4),
+        const SizedBox(height: 6),
         ListView.separated(
+          padding: EdgeInsets.zero,
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
           itemCount: 2,
@@ -160,7 +140,7 @@ class _NetworkScreenState extends State<NetworkScreen> {
               color: colors.surfaceContainerHigh,
               borderRadius: BorderRadius.circular(10),
               border: Border.all(
-                color: colors.outlineVariant.withValues(alpha: 0.4),
+                color: colors.outlineVariant.withValues(alpha: 0.35),
               ),
             ),
             child: Column(
@@ -201,23 +181,85 @@ class _NetworkScreenState extends State<NetworkScreen> {
     );
   }
 
+  Widget _shimmerStatCard(ColorScheme colors) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+      decoration: BoxDecoration(
+        color: colors.surfaceContainerHigh,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(
+          color: colors.outlineVariant.withValues(alpha: 0.35),
+        ),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              AppSkeleton.box(width: 18, height: 18, radius: 4),
+              const SizedBox(width: 6),
+              AppSkeleton.box(width: 32, height: 18, radius: 4),
+            ],
+          ),
+          const SizedBox(height: 4),
+          AppSkeleton.box(width: 72, height: 10, radius: 3),
+        ],
+      ),
+    );
+  }
+
   Widget _buildStats(BuildContext context, DashboardCounts counts) {
-    return GridView.count(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      crossAxisCount: 2,
-      crossAxisSpacing: 8,
-      mainAxisSpacing: 8,
-      childAspectRatio: 2.1,
+    return Column(
       children: [
-        _statCard(context, 'Total Contacts', '${counts.connections}',
-            Icons.people_outline, AppRoutes.connection),
-        _statCard(context, 'Check-Ins', '${counts.totalCheckIns}',
-            Icons.qr_code_scanner_outlined, AppRoutes.checkIn),
-        _statCard(context, 'Referrals Sent', '${counts.referralsSent}',
-            Icons.send_outlined, AppRoutes.referral),
-        _statCard(context, 'Upcoming Meetings', '${counts.upcomingMeetings}',
-            Icons.handshake_outlined, AppRoutes.meeting),
+        Row(
+          children: [
+            Expanded(
+              child: _statCard(
+                context,
+                'Total Contacts',
+                '${counts.connections}',
+                Icons.people_outline,
+                AppRoutes.connection,
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: _statCard(
+                context,
+                'Check-Ins',
+                '${counts.totalCheckIns}',
+                Icons.qr_code_scanner_outlined,
+                AppRoutes.checkIn,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        Row(
+          children: [
+            Expanded(
+              child: _statCard(
+                context,
+                'Referrals Sent',
+                '${counts.referralsSent}',
+                Icons.send_outlined,
+                AppRoutes.referral,
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: _statCard(
+                context,
+                'Upcoming Meetings',
+                '${counts.upcomingMeetings}',
+                Icons.handshake_outlined,
+                AppRoutes.meeting,
+              ),
+            ),
+          ],
+        ),
       ],
     );
   }
@@ -238,21 +280,22 @@ class _NetworkScreenState extends State<NetworkScreen> {
         onTap: () => Get.toNamed(route),
         borderRadius: BorderRadius.circular(10),
         child: Ink(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(10),
             border: Border.all(
-              color: colors.outlineVariant.withValues(alpha: 0.4),
+              color: colors.outlineVariant.withValues(alpha: 0.35),
             ),
           ),
           child: Column(
+            mainAxisSize: MainAxisSize.min,
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(icon, color: colors.primary, size: 20),
-                  const SizedBox(width: 8),
+                  Icon(icon, color: colors.primary, size: 18),
+                  const SizedBox(width: 6),
                   Text(
                     value,
                     style: AppTextStyle.textLg(
@@ -293,10 +336,10 @@ class _NetworkScreenState extends State<NetworkScreen> {
             weight: FontWeight.w600,
           ),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 6),
         ElevatedButton.icon(
           onPressed: () => Get.toNamed(AppRoutes.checkIn),
-          icon: Icon(Icons.qr_code_scanner_rounded, color: colors.onPrimary, size: 20),
+          icon: Icon(Icons.qr_code_scanner_rounded, color: colors.onPrimary, size: 18),
           label: Text(
             'Check In',
             style: AppTextStyle.textSm(
@@ -307,14 +350,14 @@ class _NetworkScreenState extends State<NetworkScreen> {
           style: ElevatedButton.styleFrom(
             backgroundColor: colors.primary,
             foregroundColor: colors.onPrimary,
-            minimumSize: const Size(double.infinity, 42),
+            minimumSize: const Size(double.infinity, 40),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(10),
             ),
             elevation: 0,
           ),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 6),
         Row(
           children: [
             _actionButton(context, 'Referral', AppRoutes.referral),
@@ -335,7 +378,7 @@ class _NetworkScreenState extends State<NetworkScreen> {
       child: OutlinedButton(
         onPressed: () => Get.toNamed(route),
         style: OutlinedButton.styleFrom(
-          padding: const EdgeInsets.symmetric(vertical: 9),
+          padding: const EdgeInsets.symmetric(vertical: 8),
           side: BorderSide(color: colors.outlineVariant.withValues(alpha: 0.6)),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(10),
@@ -368,7 +411,7 @@ class _NetworkScreenState extends State<NetworkScreen> {
             weight: FontWeight.w600,
           ),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 6),
         if (checkIns.isEmpty)
           EmptyState(
             icon: Icons.qr_code_scanner_outlined,
@@ -389,6 +432,7 @@ class _NetworkScreenState extends State<NetworkScreen> {
           )
         else
           ListView.separated(
+            padding: EdgeInsets.zero,
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
             itemCount: checkIns.length,

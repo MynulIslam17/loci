@@ -221,7 +221,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
           name: other?.name ?? '',
           avatarUrl: other?.avatar,
           size: 55,
-          showOnlineDot: isOnline,
+          showOnlineDot: false,
         ),
         title: Text(
           other?.name ?? 'Unknown',
@@ -307,13 +307,13 @@ class _ChatListScreenState extends State<ChatListScreen> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                 constraints: const BoxConstraints(minWidth: 20, minHeight: 20),
-                alignment: Alignment.center,
                 decoration: BoxDecoration(
                   color: colorScheme.primary,
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Text(
                   unread > 99 ? '99+' : '$unread',
+                  textAlign: TextAlign.center,
                   style: AppTextStyle.textXs(
                     color: colorScheme.onPrimary,
                     weight: FontWeight.w700,

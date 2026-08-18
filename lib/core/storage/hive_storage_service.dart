@@ -192,7 +192,11 @@ class HiveStorageService {
       }
 
       if (idx != -1) {
-        cached[idx] = message;
+        final originalCreatedAt = cached[idx].createdAt;
+        final msgToSave = (originalCreatedAt != null && originalCreatedAt.isNotEmpty)
+            ? message.copyWith(createdAt: originalCreatedAt)
+            : message;
+        cached[idx] = msgToSave;
       } else if (!isOptimistic(message)) {
         cached.add(message);
       }

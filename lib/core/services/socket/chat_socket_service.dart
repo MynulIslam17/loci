@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/foundation.dart';
+import 'package:flutter/widgets.dart';
 import 'package:get/get.dart';
 import 'package:logger/logger.dart';
 import 'package:socket_io_client/socket_io_client.dart' as io;
@@ -49,7 +50,7 @@ abstract class ChatSocketEvent {
 /// Connects with the user's JWT (same token as REST) and re-broadcasts the
 /// server's events through typed broadcast streams that controllers subscribe
 /// to. One socket is shared app-wide (registered permanent in bindings).
-class ChatSocketService extends GetxService {
+class ChatSocketService extends GetxService with WidgetsBindingObserver {
   /// Chat socket logs print in brown; errors stay red so failures pop out.
   static const AnsiColor _brown = AnsiColor.fg(130);
   static const AnsiColor _red = AnsiColor.fg(196);
@@ -112,26 +113,40 @@ class ChatSocketService extends GetxService {
   @override
   void onInit() {
     super.onInit();
+    WidgetsBinding.instance.addObserver(this);
     if (Get.isRegistered<ConnectivityService>()) {
       _connectivitySub =
           Get.find<ConnectivityService>().onReconnect.listen((_) {
-        // Network came back — make sure the socket is alive and flush.
-        connect();
+        // Network came back OR interface switched (Wi-Fi <-> Mobile Data).
+        // Force-reconnect to discard any half-open/zombie socket on the old interface.
+        connect(force: true);
       });
     }
   }
 
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      if (!isConnected) {
+        connect(force: true);
+      } else {
+        unawaited(flushGlobalOutbox());
+      }
+    }
+  }
+
   // ── Connection lifecycle ────────────────────────────────────────────────────
-  void connect() {
+  void connect({bool force = false}) {
     final token = Get.find<AuthController>().accessToken ?? '';
     if (token.isEmpty) {
       _logger.w('ChatSocket: no token, skipping connect.');
       return;
     }
 
-    if (_socket != null && _socketToken == token) {
+    if (!force && _socket != null && _socketToken == token) {
       if (_socket!.connected) {
         _logger.d('ChatSocket: connect() called but already connected.');
+        unawaited(flushGlobalOutbox());
       } else {
         // Manager is already retrying with this token; don't stack another.
         _logger.d('ChatSocket: connect already in progress, ignoring.');
@@ -139,10 +154,9 @@ class ChatSocketService extends GetxService {
       return;
     }
 
+    _logger.d('ChatSocket: (re)connecting (force: $force) to ${AppUrl.socketUrl} …');
     _socket?.dispose();
     _socket = null;
-
-    _logger.d('ChatSocket: connecting to ${AppUrl.socketUrl} …');
 
     _socket = io.io(
       AppUrl.socketUrl,
@@ -185,6 +199,9 @@ class ChatSocketService extends GetxService {
     s.onConnect((_) {
       _logger.i('ChatSocket ✔ connected (id: ${s.id})');
       _connectionCtrl.add(true);
+      _emittedTempIds.clear();
+      _globalFlushingTempIds.clear();
+      _ackWaiters.clear();
       unawaited(flushGlobalOutbox());
     });
     s.onDisconnect((reason) {
@@ -192,6 +209,11 @@ class ChatSocketService extends GetxService {
       // Allow a later reconnect flush to retry unacked rows. Acked ids stay
       // so a stale outbox row cannot be sent a second time.
       _emittedTempIds.clear();
+      _globalFlushingTempIds.clear();
+      for (final waiter in _ackWaiters.values) {
+        if (!waiter.isCompleted) waiter.complete();
+      }
+      _ackWaiters.clear();
       _connectionCtrl.add(false);
     });
     s.onConnectError((e) => _logger.e('ChatSocket ✖ connect error: $e'));
@@ -201,6 +223,9 @@ class ChatSocketService extends GetxService {
     );
     s.onReconnect((_) {
       _logger.i('ChatSocket ↻ reconnected');
+      _emittedTempIds.clear();
+      _globalFlushingTempIds.clear();
+      _ackWaiters.clear();
       unawaited(flushGlobalOutbox());
     });
 
@@ -429,9 +454,6 @@ class ChatSocketService extends GetxService {
     }
   }
 
-  /// Scans Hive for pending outbox messages and sends them **in order**,
-  /// waiting for each ack before the next emit. One flusher at a time so
-  /// connect + reconnect + open-thread cannot double-send.
   Future<void> flushGlobalOutbox() async {
     if (_flushInProgress) return;
     if (!isConnected) return;
@@ -446,7 +468,7 @@ class ChatSocketService extends GetxService {
         final next = _nextQueuedMessage(storage, skipIds: skipIds);
         if (next == null) break;
 
-        final convId = next.$1;
+        final convOrRecipientKey = next.$1;
         final m = next.$2;
 
         if (_ackedTempIds.contains(m.id)) {
@@ -459,15 +481,21 @@ class ChatSocketService extends GetxService {
             _globalFlushingTempIds.contains(m.id)) {
           if (_ackWaiters.containsKey(m.id)) {
             final ok = await _waitForAck(m.id);
-            if (!ok) return;
+            if (!ok) {
+              skipIds.add(m.id);
+              continue;
+            }
             continue;
           }
           skipIds.add(m.id);
           continue;
         }
 
-        final ok = await _emitQueuedAndWait(convId, m);
-        if (!ok) return;
+        final ok = await _emitQueuedAndWait(convOrRecipientKey, m);
+        if (!ok) {
+          skipIds.add(m.id);
+          continue;
+        }
       }
     } catch (_) {
     } finally {
@@ -489,10 +517,12 @@ class ChatSocketService extends GetxService {
     return null;
   }
 
-  Future<bool> _emitQueuedAndWait(String convId, ChatMessageModel m) async {
+  Future<bool> _emitQueuedAndWait(String key, ChatMessageModel m) async {
     if (!isConnected) return false;
+    final isConv = m.conversationId.isNotEmpty;
     sendMessage(
-      conversationId: convId.isNotEmpty ? convId : null,
+      conversationId: isConv ? m.conversationId : (key.isNotEmpty ? key : null),
+      recipientId: !isConv && key.isNotEmpty ? key : null,
       content: m.content!,
       tempId: m.id,
     );
@@ -544,6 +574,7 @@ class ChatSocketService extends GetxService {
 
   @override
   void onClose() {
+    WidgetsBinding.instance.removeObserver(this);
     _connectivitySub?.cancel();
     disconnect();
     _messageCtrl.close();
