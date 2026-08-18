@@ -194,7 +194,6 @@ class _ChatListScreenState extends State<ChatListScreen> {
     final colorScheme = context.colorScheme;
     final other = conv.other(_myId);
     final unread = conv.unreadCount;
-    final isOnline = ctrl.isUserActive(other);
     final isTyping = ctrl.isTyping(conv.id);
 
     final isPending = conv.lastMessage?.status == 'sending';
