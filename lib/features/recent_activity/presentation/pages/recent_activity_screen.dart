@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:loci/core/constants/app_text_style.dart';
 import 'package:loci/core/enums/recent_activity.dart';
 import 'package:loci/core/theme/theme_extention.dart';
 import 'package:loci/core/utils/date_parser.dart';
@@ -12,10 +11,10 @@ import 'package:loci/features/recent_activity/presentation/widgets/business_acti
 import 'package:loci/features/recent_activity/presentation/widgets/question_activity_card.dart';
 import 'package:loci/features/recent_activity/presentation/widgets/recent_activity_shimmer.dart';
 import 'package:loci/features/recent_activity/presentation/widgets/review_activity_card.dart';
+import 'package:loci/shared/widgets/adaptive_expandable_search_header.dart';
 import 'package:loci/shared/widgets/adaptive_refresh.dart';
 import 'package:loci/shared/widgets/confirm_dialog.dart';
 import 'package:loci/shared/widgets/custom_appbar.dart';
-import 'package:loci/shared/widgets/custom_text_field.dart';
 import 'package:loci/shared/widgets/empty_state.dart';
 import 'package:loci/shared/widgets/error_state.dart';
 
@@ -32,6 +31,8 @@ class _RecentActivityState extends State<RecentActivity>
   late final RecentActivityController _ctrl;
   late final RemoveSavedBusinessController _removeCtrl;
   final _searchController = TextEditingController();
+  final FocusNode _searchFocus = FocusNode();
+  bool _isSearchExpanded = false;
 
   static const _tabTypes = [
     RecentActivityType.questions,
@@ -54,14 +55,28 @@ class _RecentActivityState extends State<RecentActivity>
     });
   }
 
+  void _resetSearchToDefault() {
+    if (_isSearchExpanded || _searchController.text.isNotEmpty) {
+      if (mounted) {
+        setState(() {
+          _isSearchExpanded = false;
+        });
+      }
+      _searchFocus.unfocus();
+      _searchController.clear();
+    }
+  }
+
   void _onTabChanged() {
     if (_tabController.indexIsChanging) return;
+    _resetSearchToDefault();
     _ctrl.ensureLoaded(_tabTypes[_tabController.index]);
   }
 
   @override
   void dispose() {
     _tabController.removeListener(_onTabChanged);
+    _searchFocus.dispose();
     _searchController.dispose();
     _tabController.dispose();
     super.dispose();
@@ -79,37 +94,21 @@ class _RecentActivityState extends State<RecentActivity>
           return [
             SliverToBoxAdapter(
               child: Padding(
-                padding: const EdgeInsets.all(12),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    CustomTextField(
-                      controller: _searchController,
-                      hintText: 'Search activity...',
-                      borderColor: colorScheme.outline,
-                      showClearButton: true,
-                      suffixIcon: Icon(
-                        Icons.search,
-                        color: colorScheme.onSurfaceVariant,
-                      ),
-                    ),
-                    const SizedBox(height: 14),
-                    Text(
-                      'Recent Activity',
-                      style: AppTextStyle.textXl(
-                        color: colorScheme.onSurface,
-                        weight: FontWeight.w600,
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
+                padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+                child: AdaptiveExpandableSearchHeader(
+                  title: 'Recent Activity',
+                  subtitle:
                       'Track your questions, answers, reviews and saved businesses',
-                      style: AppTextStyle.textXs(
-                        color: colorScheme.onSurfaceVariant,
-                        weight: FontWeight.w600,
-                      ),
-                    ),
-                  ],
+                  hintText: 'Search activity...',
+                  searchController: _searchController,
+                  searchFocus: _searchFocus,
+                  isExpanded: _isSearchExpanded,
+                  onToggleExpand: (expanded) {
+                    setState(() => _isSearchExpanded = expanded);
+                  },
+                  onSearchChanged: (query) {
+                    // Filter or search logic
+                  },
                 ),
               ),
             ),

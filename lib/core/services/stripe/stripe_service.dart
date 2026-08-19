@@ -6,9 +6,9 @@ import 'package:flutter_stripe/flutter_stripe.dart';
 import 'package:get/get.dart';
 import 'package:logger/logger.dart';
 
-import '../constants/app_url.dart';
-import '../network/network_caller.dart';
-import '../../features/subscription/data/models/checkout_response_model.dart';
+import '../../constants/app_url.dart';
+import '../../network/network_caller.dart';
+import '../../../features/subscription/data/models/checkout_response_model.dart';
 
 /// Owns Stripe SDK setup + PaymentSheet presentation for iOS/Android.
 ///

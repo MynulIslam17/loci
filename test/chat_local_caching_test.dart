@@ -12,7 +12,7 @@ import 'package:loci/features/chat/data/models/conversation_model.dart';
 import 'package:loci/features/chat/domain/services/chat_service.dart';
 import 'package:loci/features/chat/presentation/controllers/chat_controller.dart';
 import 'package:loci/features/chat/presentation/controllers/chat_list_controller.dart';
-import 'package:loci/core/services/connectivity_service.dart';
+import 'package:loci/core/services/connectivity/connectivity_service.dart';
 import 'package:loci/features/home/data/models/question_list_response.dart';
 import 'package:loci/features/home/data/models/question_model.dart';
 import 'package:loci/features/home/domain/services/home_service.dart';

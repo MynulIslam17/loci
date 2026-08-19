@@ -6,7 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart';
 import 'package:http/http.dart' as http;
 import 'package:logger/logger.dart';
-import 'package:loci/core/services/connectivity_service.dart';
+import 'package:loci/core/services/connectivity/connectivity_service.dart';
 import 'package:loci/core/utils/app_error_messages.dart';
 import 'package:loci/core/utils/image_upload_preparer.dart';
 import 'network_response.dart';
@@ -16,8 +16,13 @@ class NetworkCaller {
 
   final VoidCallback onUnAuthorize;
   final String Function() accessToken;
+  final Future<bool> Function()? onRefreshToken;
 
-  NetworkCaller({required this.onUnAuthorize, required this.accessToken});
+  NetworkCaller({
+    required this.onUnAuthorize,
+    required this.accessToken,
+    this.onRefreshToken,
+  });
 
   /// Instagram / Facebook rule: if we already know the radio is down, do not
   /// open a socket. Likes still flip in the UI then revert from this failure;
@@ -43,13 +48,6 @@ class NetworkCaller {
   // resolve via status code — they never become FormatException.
   // ===========================================================
   String _resolveErrorMessage(int statusCode, Map<String, dynamic>? decoded) {
-    // Field-level validation messages (e.g. "Please provide a valid email
-    // address") are far more useful than the generic wrapper message
-    // ("Validation failed"), so prefer them when present. Auth failures (wrong
-    // email/password) intentionally don't carry an `errors` map, so this never
-    // turns those into an enumeration ("no such email" vs "wrong password")
-    // leak — it only ever surfaces genuine per-field input validation problems.
-    // Shape: {"errors": {"field": ["msg1", "msg2"]}}
     final fieldErrors = _extractFieldErrors(decoded);
     if (fieldErrors != null) return fieldErrors;
 
@@ -90,11 +88,19 @@ class NetworkCaller {
   }
 
   // ===========================================================
-  // CENTRAL UNAUTHORIZED + FORBIDDEN HANDLER
-  // Call this after every non-success response.
+  // CENTRAL UNAUTHORIZED + REFRESH TOKEN HANDLER
   // ===========================================================
+  Future<bool> _handle401({required bool hadToken}) async {
+    if (!hadToken) return false;
+    if (onRefreshToken != null) {
+      final refreshed = await onRefreshToken!();
+      if (refreshed) return true;
+    }
+    onUnAuthorize();
+    return false;
+  }
+
   void _handleAuthErrors(int statusCode, {required bool hadToken}) {
-    // Only redirect when a token was sent but rejected — not for logged-out calls.
     if (statusCode == 401 && hadToken) {
       onUnAuthorize();
     }
@@ -106,6 +112,7 @@ class NetworkCaller {
   Future<NetworkResponse> getRequest({
     required String url,
     Map<String, dynamic>? queryParams,
+    bool isRetry = false,
   }) async {
     final offline = _offlineResponse();
     if (offline != null) return offline;
@@ -147,7 +154,18 @@ class NetworkCaller {
         );
       }
 
-      _handleAuthErrors(response.statusCode, hadToken: token.isNotEmpty);
+      if (response.statusCode == 401 && token.isNotEmpty && !isRetry) {
+        final refreshed = await _handle401(hadToken: true);
+        if (refreshed) {
+          return getRequest(
+            url: url,
+            queryParams: queryParams,
+            isRetry: true,
+          );
+        }
+      } else {
+        _handleAuthErrors(response.statusCode, hadToken: token.isNotEmpty);
+      }
 
       return NetworkResponse(
         isSuccess: false,
@@ -165,7 +183,10 @@ class NetworkCaller {
   }
 
   /// GET whose successful body is plain text (e.g. CSV export).
-  Future<String> getTextBody({required String url}) async {
+  Future<String> getTextBody({
+    required String url,
+    bool isRetry = false,
+  }) async {
     if (ConnectivityService.isCurrentOffline) {
       throw Exception(AppErrorMessages.noInternet);
     }
@@ -189,7 +210,14 @@ class NetworkCaller {
       }
 
       final decoded = _tryDecodeBody(response.body);
-      _handleAuthErrors(response.statusCode, hadToken: token.isNotEmpty);
+      if (response.statusCode == 401 && token.isNotEmpty && !isRetry) {
+        final refreshed = await _handle401(hadToken: true);
+        if (refreshed) {
+          return getTextBody(url: url, isRetry: true);
+        }
+      } else {
+        _handleAuthErrors(response.statusCode, hadToken: token.isNotEmpty);
+      }
       throw Exception(_resolveErrorMessage(response.statusCode, decoded));
     } catch (e) {
       _logger.e('GET text request failed: $e');
@@ -206,6 +234,7 @@ class NetworkCaller {
     Map<String, dynamic>? body,
     bool isFromLogin = false,
     String? overrideToken,
+    bool isRetry = false,
   }) async {
     final offline = _offlineResponse();
     if (offline != null) return offline;
@@ -236,7 +265,20 @@ class NetworkCaller {
         );
       }
 
-      if (!isFromLogin) {
+      if (response.statusCode == 401 &&
+          token.isNotEmpty &&
+          !isFromLogin &&
+          !isRetry) {
+        final refreshed = await _handle401(hadToken: true);
+        if (refreshed) {
+          return postRequest(
+            url: url,
+            body: body,
+            overrideToken: overrideToken,
+            isRetry: true,
+          );
+        }
+      } else if (!isFromLogin) {
         _handleAuthErrors(response.statusCode, hadToken: token.isNotEmpty);
       }
 
@@ -255,7 +297,6 @@ class NetworkCaller {
       );
     }
   }
-
   // ===========================================================
   // PATCH REQUEST
   // ===========================================================
@@ -263,6 +304,7 @@ class NetworkCaller {
     required String url,
     Map<String, dynamic>? body,
     bool isFromLogin = false,
+    bool isRetry = false,
   }) async {
     final offline = _offlineResponse();
     if (offline != null) return offline;
@@ -293,7 +335,20 @@ class NetworkCaller {
         );
       }
 
-      if (!isFromLogin) {
+      if (response.statusCode == 401 &&
+          token.isNotEmpty &&
+          !isFromLogin &&
+          !isRetry) {
+        final refreshed = await _handle401(hadToken: true);
+        if (refreshed) {
+          return patchRequest(
+            url: url,
+            body: body,
+            isFromLogin: isFromLogin,
+            isRetry: true,
+          );
+        }
+      } else if (!isFromLogin) {
         _handleAuthErrors(response.statusCode, hadToken: token.isNotEmpty);
       }
 
@@ -319,6 +374,7 @@ class NetworkCaller {
     required String url,
     Map<String, dynamic>? body,
     bool isFromLogin = false,
+    bool isRetry = false,
   }) async {
     final offline = _offlineResponse();
     if (offline != null) return offline;
@@ -349,7 +405,20 @@ class NetworkCaller {
         );
       }
 
-      if (!isFromLogin) {
+      if (response.statusCode == 401 &&
+          token.isNotEmpty &&
+          !isFromLogin &&
+          !isRetry) {
+        final refreshed = await _handle401(hadToken: true);
+        if (refreshed) {
+          return putRequest(
+            url: url,
+            body: body,
+            isFromLogin: isFromLogin,
+            isRetry: true,
+          );
+        }
+      } else if (!isFromLogin) {
         _handleAuthErrors(response.statusCode, hadToken: token.isNotEmpty);
       }
 
@@ -375,6 +444,7 @@ class NetworkCaller {
     required String url,
     Map<String, dynamic>? body,
     bool isFromLogin = false,
+    bool isRetry = false,
   }) async {
     final offline = _offlineResponse();
     if (offline != null) return offline;
@@ -405,7 +475,20 @@ class NetworkCaller {
         );
       }
 
-      if (!isFromLogin) {
+      if (response.statusCode == 401 &&
+          token.isNotEmpty &&
+          !isFromLogin &&
+          !isRetry) {
+        final refreshed = await _handle401(hadToken: true);
+        if (refreshed) {
+          return deleteRequest(
+            url: url,
+            body: body,
+            isFromLogin: isFromLogin,
+            isRetry: true,
+          );
+        }
+      } else if (!isFromLogin) {
         _handleAuthErrors(response.statusCode, hadToken: token.isNotEmpty);
       }
 
@@ -435,6 +518,7 @@ class NetworkCaller {
     Map<String, File>? files,
     Map<String, List<File>>? multiFiles, // for multiple files with the same key
     bool isFromLogin = false,
+    bool isRetry = false,
   }) async {
     final offline = _offlineResponse();
     if (offline != null) return offline;
@@ -497,7 +581,23 @@ class NetworkCaller {
         );
       }
 
-      if (!isFromLogin) {
+      if (streamed.statusCode == 401 &&
+          token.isNotEmpty &&
+          !isFromLogin &&
+          !isRetry) {
+        final refreshed = await _handle401(hadToken: true);
+        if (refreshed) {
+          return multipartRequest(
+            url: url,
+            method: method,
+            fields: fields,
+            files: files,
+            multiFiles: multiFiles,
+            isFromLogin: isFromLogin,
+            isRetry: true,
+          );
+        }
+      } else if (!isFromLogin) {
         _handleAuthErrors(streamed.statusCode, hadToken: token.isNotEmpty);
       }
 

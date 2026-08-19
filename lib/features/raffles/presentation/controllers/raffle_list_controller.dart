@@ -14,13 +14,16 @@ class RaffleListController extends GetxController {
 
   final Rxn<String> _errorMessage = Rxn<String>();
   final RxList<RaffleModel> _raffleList = <RaffleModel>[].obs;
+  final List<RaffleModel> _unfilteredRaffles = <RaffleModel>[];
+  bool _unfilteredHasNextPage = true;
 
   int _currentPage = 1;
-  final int _limit = 10;
+  final int _limit = 20;
   bool _hasNextPage = true;
 
   String _searchQuery = '';
   Timer? _searchDebounce;
+  int _searchSeq = 0;
   final RxBool isSearching = false.obs;
 
   bool get isInitialLoading => _fetch.initialLoading.value;
@@ -36,17 +39,53 @@ class RaffleListController extends GetxController {
 
   void onSearchChanged(String query) {
     if (query == _searchQuery) return;
+    final hadSearch = _searchQuery.trim().isNotEmpty;
     _searchQuery = query;
+    final seq = ++_searchSeq;
     _searchDebounce?.cancel();
-    _searchDebounce = Timer(const Duration(milliseconds: 400), () {
-      fetchRaffles(isSearch: true);
-    });
+
+    if (query.trim().isEmpty) {
+      if (hadSearch) {
+        _restoreUnfilteredList(sequenceToken: seq);
+      }
+    } else {
+      isSearching.value = true;
+      _searchDebounce = Timer(const Duration(milliseconds: 300), () {
+        fetchRaffles(isSearch: true, sequenceToken: seq);
+      });
+    }
+  }
+
+  void submitSearch(String query) {
+    _searchDebounce?.cancel();
+    if (query.trim() == _searchQuery && query.trim().isNotEmpty) return;
+    _searchQuery = query;
+    final seq = ++_searchSeq;
+    if (query.trim().isEmpty) {
+      _restoreUnfilteredList(sequenceToken: seq);
+    } else {
+      isSearching.value = true;
+      fetchRaffles(isSearch: true, sequenceToken: seq);
+    }
   }
 
   void clearSearch() {
+    if (_searchQuery.isEmpty) return; // Do not refetch if already empty
     _searchQuery = '';
     _searchDebounce?.cancel();
-    fetchRaffles(isSearch: true);
+    final seq = ++_searchSeq;
+    _restoreUnfilteredList(sequenceToken: seq);
+  }
+
+  void _restoreUnfilteredList({int? sequenceToken}) {
+    if (_unfilteredRaffles.isNotEmpty) {
+      _raffleList.assignAll(_unfilteredRaffles);
+      _hasNextPage = _unfilteredHasNextPage;
+      isSearching.value = false;
+      _errorMessage.value = null;
+    } else {
+      fetchRaffles(isSearch: true, sequenceToken: sequenceToken);
+    }
   }
 
   @override
@@ -58,7 +97,10 @@ class RaffleListController extends GetxController {
   Future<void> fetchRaffles({
     bool isRefresh = false,
     bool isSearch = false,
+    int? sequenceToken,
   }) async {
+    final currentSeq = sequenceToken ?? ++_searchSeq;
+
     if (isRefresh || isSearch) {
       _currentPage = 1;
       _hasNextPage = true;
@@ -78,16 +120,27 @@ class RaffleListController extends GetxController {
         search: _searchQuery,
       );
 
+      // Discard stale out-of-order response
+      if (currentSeq != _searchSeq) return;
+
       _raffleList.assignAll(model.raffles);
       _hasNextPage = model.meta.hasNextPage;
       _currentPage++;
       _fetch.endFirstPage();
+
+      if (_searchQuery.isEmpty && !isSearch) {
+        _unfilteredRaffles.assignAll(model.raffles);
+        _unfilteredHasNextPage = model.meta.hasNextPage;
+      }
     } catch (e) {
+      if (currentSeq != _searchSeq) return;
       _errorMessage.value = e.toString().replaceFirst('Exception: ', '');
       SnackbarService.error(_errorMessage.value!);
       _fetch.endFirstPage(markFetched: hasFetched);
     } finally {
-      if (isSearch) isSearching.value = false;
+      if (currentSeq == _searchSeq && isSearch) {
+        isSearching.value = false;
+      }
     }
   }
 
@@ -125,10 +178,15 @@ class RaffleListController extends GetxController {
     final idx = _raffleList.indexWhere((r) => r.id == raffleId);
     if (idx >= 0) {
       final old = _raffleList[idx];
-      _raffleList[idx] = old.copyWith(
+      final updated = old.copyWith(
         isParticipating: true,
         participantCount: old.participantCount + 1,
       );
+      _raffleList[idx] = updated;
+      final unfIdx = _unfilteredRaffles.indexWhere((r) => r.id == raffleId);
+      if (unfIdx >= 0) {
+        _unfilteredRaffles[unfIdx] = updated;
+      }
       _raffleList.refresh();
     }
   }

@@ -173,6 +173,7 @@ class AppNavigationDrawer extends StatelessWidget {
 
   /// Routes a tapped drawer item. Closes the drawer first, then navigates.
   void _handleItem(BuildContext context, String title) {
+    FocusScope.of(context).unfocus();
     Get.back();
 
     final navController = Get.find<NavController>();
@@ -242,6 +243,9 @@ class AppNavigationDrawer extends StatelessWidget {
     );
 
     if (confirmed) {
+      if (context.mounted) {
+        Navigator.of(context).pop();
+      }
       Get.find<AuthController>().logout();
     }
   }

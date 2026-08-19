@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:loci/core/constants/app_text_style.dart';
 import 'package:loci/core/theme/theme_extention.dart';
 import 'package:loci/features/network/data/models/connection_item.dart';
 import 'package:loci/features/network/presentation/controllers/connections_controller.dart';
 import 'package:loci/features/network/presentation/widgets/connections/connection_card.dart';
 import 'package:loci/features/network/presentation/widgets/connections/connection_shimmer.dart';
+import 'package:loci/shared/widgets/adaptive_expandable_search_header.dart';
 import 'package:loci/shared/widgets/adaptive_refresh.dart';
-import 'package:loci/shared/widgets/custom_text_field.dart';
+import 'package:loci/shared/widgets/custom_appbar.dart';
 import 'package:loci/shared/widgets/empty_state.dart';
 import 'package:loci/shared/widgets/error_state.dart';
 
@@ -21,16 +21,33 @@ class ConnectionScreen extends StatefulWidget {
 class _ConnectionScreenState extends State<ConnectionScreen> {
   final _controller = Get.find<ConnectionsController>();
   final _searchController = TextEditingController();
+  final FocusNode _searchFocus = FocusNode();
+  bool _isSearchExpanded = false;
 
   @override
   void initState() {
     super.initState();
     _searchController.text = _controller.searchQuery;
+    _isSearchExpanded = _controller.searchQuery.isNotEmpty;
+  }
+
+  void _resetSearchToDefault() {
+    if (_isSearchExpanded || _searchController.text.isNotEmpty) {
+      if (mounted) {
+        setState(() {
+          _isSearchExpanded = false;
+        });
+      }
+      _searchFocus.unfocus();
+      _searchController.clear();
+      _controller.clearSearch();
+    }
   }
 
   @override
   void dispose() {
-    _controller.clearSearch();
+    _resetSearchToDefault();
+    _searchFocus.dispose();
     _searchController.dispose();
     super.dispose();
   }
@@ -43,12 +60,7 @@ class _ConnectionScreenState extends State<ConnectionScreen> {
 
     return Scaffold(
       backgroundColor: colors.surface,
-      appBar: AppBar(
-        title: Text(
-          'Connections',
-          style: AppTextStyle.textLg(weight: FontWeight.w700),
-        ),
-      ),
+      appBar: const CustomAppbar(title: 'Connections'),
       body: Obx(() {
         if (_controller.showInitialShimmer) {
           return AdaptiveRefresh(
@@ -63,6 +75,10 @@ class _ConnectionScreenState extends State<ConnectionScreen> {
             _controller.searchQuery.trim().isNotEmpty &&
             filtered.isEmpty;
 
+        final contactCount = _controller.connections.length;
+        final subtitle =
+            '$contactCount ${contactCount == 1 ? 'contact' : 'contacts'} in your network';
+
         return AdaptiveRefresh(
           onRefresh: _onRefresh,
           child: CustomScrollView(
@@ -71,46 +87,26 @@ class _ConnectionScreenState extends State<ConnectionScreen> {
             slivers: [
               SliverToBoxAdapter(
                 child: Padding(
-                  padding: const EdgeInsets.fromLTRB(12, 12, 12, 0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      CustomTextField(
-                        controller: _searchController,
-                        hintText: 'Search connections ..',
-                        textColor: colors.onSurface,
-                        borderColor: colors.outline,
-                        onChanged: _controller.onSearchChanged,
-                        showClearButton: true,
-                        onClear: () {
-                          _searchController.clear();
-                          FocusScope.of(context).unfocus();
-                          _controller.clearSearch();
-                        },
-                        suffixIcon: Icon(
-                          Icons.search,
-                          color: colors.onSurfaceVariant,
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                      Text(
-                        'Your network',
-                        style: AppTextStyle.textXl(weight: FontWeight.w600),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        '${_controller.connections.length} '
-                        '${_controller.connections.length == 1 ? 'contact' : 'contacts'}',
-                        style: AppTextStyle.textSm(
-                          color: colors.onSurfaceVariant,
-                          weight: FontWeight.w500,
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                    ],
+                  padding: const EdgeInsets.symmetric(horizontal: 4),
+                  child: AdaptiveExpandableSearchHeader(
+                    title: 'Your Network',
+                    subtitle: subtitle,
+                    hintText: 'Search connections...',
+                    searchController: _searchController,
+                    searchFocus: _searchFocus,
+                    isExpanded: _isSearchExpanded ||
+                        _controller.searchQuery.isNotEmpty,
+                    onToggleExpand: (expanded) {
+                      setState(() => _isSearchExpanded = expanded);
+                    },
+                    onSearchChanged: _controller.onSearchChanged,
+                    onClear: () {
+                      _controller.clearSearch();
+                    },
                   ),
                 ),
               ),
+              const SliverToBoxAdapter(child: SizedBox(height: 8)),
               if (showSearchEmpty)
                 const SliverFillRemaining(
                   hasScrollBody: false,
@@ -152,7 +148,7 @@ class _ConnectionScreenState extends State<ConnectionScreen> {
     }
 
     return SliverPadding(
-      padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
       sliver: SliverList.separated(
         itemCount: connections.length,
         separatorBuilder: (context, index) => const SizedBox(height: 12),

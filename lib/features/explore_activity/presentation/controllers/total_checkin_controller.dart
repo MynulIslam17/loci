@@ -59,9 +59,13 @@ class TotalCheckinController extends GetxController {
   void onSearchChanged(String query) {
     _searchQuery = query;
     _searchDebounce?.cancel();
-    _searchDebounce = Timer(const Duration(milliseconds: 300), () {
+    if (query.trim().isEmpty) {
       _attendees.refresh();
-    });
+    } else {
+      _searchDebounce = Timer(const Duration(milliseconds: 300), () {
+        _attendees.refresh();
+      });
+    }
   }
 
   Future<void> fetchCheckins({bool isRefresh = false}) async {

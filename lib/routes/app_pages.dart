@@ -37,6 +37,7 @@ import 'package:loci/features/explore_activity/presentation/pages/explore_activi
 import 'package:loci/features/recent_activity/presentation/bindings/recent_activity_binding.dart';
 import 'package:loci/features/recent_activity/presentation/pages/recent_activity_screen.dart';
 import 'package:loci/features/explore_activity/presentation/pages/total_checkin_screen.dart';
+import 'package:loci/features/explore_activity/presentation/pages/total_participants_screen.dart';
 import 'package:loci/features/explore_activity/presentation/pages/total_rsvp_screen.dart';
 import 'package:loci/features/explore_activity/presentation/pages/view_activity_screen.dart';
 import 'package:loci/features/routes/presentation/pages/explore_routes_screen.dart';
@@ -283,6 +284,11 @@ abstract class AppPages {
     GetPage(
       name: AppRoutes.viewTotalRSVP,
       page: () => const TotalRsvpScreen(),
+      binding: ExploreActivityBindings(),
+    ),
+    GetPage(
+      name: AppRoutes.viewTotalParticipants,
+      page: () => const TotalParticipantsScreen(),
       binding: ExploreActivityBindings(),
     ),
 

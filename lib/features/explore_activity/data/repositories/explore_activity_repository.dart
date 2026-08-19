@@ -269,4 +269,28 @@ class ExploreActivityRepository {
   Future<String> exportRouteCheckinsCsv({required String routeId}) async {
     return _network.getTextBody(url: AppUrl.routeCheckinsExport(routeId));
   }
+
+  Future<Map<String, dynamic>> getRaffleParticipants({
+    required String raffleId,
+    int page = 1,
+    int limit = 50,
+    String? search,
+  }) async {
+    final res = await _network.getRequest(
+      url: AppUrl.raffleParticipants(raffleId),
+      queryParams: {
+        'page': page,
+        'limit': limit,
+        if (search != null && search.trim().isNotEmpty) 'search': search.trim(),
+      },
+    );
+    if (!res.isSuccess || res.body == null) {
+      throw Exception(res.errorMessage ?? 'Failed to load raffle participants');
+    }
+    return res.body!;
+  }
+
+  Future<String> exportRaffleParticipantsCsv({required String raffleId}) async {
+    return _network.getTextBody(url: AppUrl.raffleParticipantsExport(raffleId));
+  }
 }

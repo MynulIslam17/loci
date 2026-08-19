@@ -1,4 +1,5 @@
 import 'package:get/get.dart';
+import 'package:loci/core/utils/app_error_messages.dart';
 import 'package:loci/features/auth/domain/services/auth_service.dart';
 
 class ForgetPassController extends GetxController {
@@ -19,7 +20,7 @@ class ForgetPassController extends GetxController {
       successMessage.value = await _service.sendForgotOtp(email: email);
       return true;
     } catch (e) {
-      errorMessage.value = e.toString().replaceFirst('Exception: ', '');
+      errorMessage.value = AppErrorMessages.sanitize(e);
       return false;
     } finally {
       isLoading.value = false;

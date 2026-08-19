@@ -29,6 +29,48 @@ class AuthRepository {
     return res.body!;
   }
 
+  Future<Map<String, dynamic>> loginWithGoogle({
+    required String idToken,
+  }) async {
+    final res = await _network.postRequest(
+      url: AppUrl.googleLogin,
+      isFromLogin: true,
+      body: {'idToken': idToken},
+    );
+    if (!res.isSuccess || res.body == null) {
+      throw Exception(res.errorMessage ?? 'Google login failed');
+    }
+    return res.body!;
+  }
+
+  Future<Map<String, dynamic>> loginWithApple({
+    required String identityToken,
+  }) async {
+    final res = await _network.postRequest(
+      url: AppUrl.appleLogin,
+      isFromLogin: true,
+      body: {'identityToken': identityToken},
+    );
+    if (!res.isSuccess || res.body == null) {
+      throw Exception(res.errorMessage ?? 'Apple login failed');
+    }
+    return res.body!;
+  }
+
+  Future<Map<String, dynamic>> refreshToken({
+    required String refreshToken,
+  }) async {
+    final res = await _network.postRequest(
+      url: AppUrl.refreshToken,
+      isFromLogin: true,
+      body: {'refreshToken': refreshToken},
+    );
+    if (!res.isSuccess || res.body == null) {
+      throw Exception(res.errorMessage ?? 'Failed to refresh token');
+    }
+    return res.body!;
+  }
+
   /// Best-effort server logout. Failures are ignored by the caller.
   Future<void> logoutRemote() async {
     final res = await _network.postRequest(url: AppUrl.logout, body: {});
@@ -141,8 +183,12 @@ class AuthRepository {
   Future<void> saveUserData({
     required UserModel model,
     required String token,
+    String? refreshToken,
   }) async {
     await _storage.saveToken(token);
+    if (refreshToken != null && refreshToken.isNotEmpty) {
+      await _storage.saveRefreshToken(refreshToken);
+    }
     await _storage.saveUserModel(model);
   }
 
@@ -166,7 +212,20 @@ class AuthRepository {
     return _storage.getRememberMe();
   }
 
+  Future<void> saveTokens({
+    required String token,
+    String? refreshToken,
+  }) async {
+    await _storage.saveToken(token);
+    if (refreshToken != null && refreshToken.isNotEmpty) {
+      await _storage.saveRefreshToken(refreshToken);
+    }
+  }
+
+  Future<String?> getRefreshToken() => _storage.getRefreshToken();
+  Future<String?> getAccessToken() => _storage.getToken();
+
   Future<void> clearUserData() async {
-    await _storage.clearAll();
+    await _storage.clearAuthData();
   }
 }

@@ -19,17 +19,27 @@ class SystemUiConfig {
   }
 
   static Widget wrapApp(BuildContext context, Widget? child) {
+    final mediaQuery = MediaQuery.of(context);
+    final textScaleFactor =
+        mediaQuery.textScaler.scale(1.0).clamp(0.85, 1.15);
+    final clampedMediaQuery = mediaQuery.copyWith(
+      textScaler: TextScaler.linear(textScaleFactor),
+    );
+
     final theme = Theme.of(context);
     final isIOS = theme.platform == TargetPlatform.iOS;
-    final content = AnnotatedRegion<SystemUiOverlayStyle>(
-      value: _overlayStyle,
-      child: SafeArea(
-        top: false,
-        // Skip the bottom inset on iOS so the native glass tab bar can sit
-        // in the home-indicator region (Android keeps the existing inset).
-        bottom: !isIOS,
-        child: OfflineIndicatorBanner(
-          child: child ?? const SizedBox.shrink(),
+    final content = MediaQuery(
+      data: clampedMediaQuery,
+      child: AnnotatedRegion<SystemUiOverlayStyle>(
+        value: _overlayStyle,
+        child: SafeArea(
+          top: false,
+          // Skip the bottom inset on iOS so the native glass tab bar can sit
+          // in the home-indicator region (Android keeps the existing inset).
+          bottom: !isIOS,
+          child: OfflineIndicatorBanner(
+            child: child ?? const SizedBox.shrink(),
+          ),
         ),
       ),
     );

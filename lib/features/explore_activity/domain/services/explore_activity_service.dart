@@ -224,4 +224,30 @@ class ExploreActivityService {
   Future<String> exportRouteCheckinsCsv({required String routeId}) {
     return _repository.exportRouteCheckinsCsv(routeId: routeId);
   }
+
+  Future<List<RaffleParticipantAttendeeModel>> getRaffleParticipants({
+    required String raffleId,
+    int page = 1,
+    int limit = 50,
+    String? search,
+  }) async {
+    final body = await _repository.getRaffleParticipants(
+      raffleId: raffleId,
+      page: page,
+      limit: limit,
+      search: search,
+    );
+    final rawList = body['data'];
+    if (rawList is List) {
+      return rawList
+          .whereType<Map<String, dynamic>>()
+          .map((json) => RaffleParticipantAttendeeModel.fromJson(json))
+          .toList();
+    }
+    return [];
+  }
+
+  Future<String> exportRaffleParticipantsCsv({required String raffleId}) {
+    return _repository.exportRaffleParticipantsCsv(raffleId: raffleId);
+  }
 }

@@ -87,46 +87,43 @@ class _NetworkScreenState extends State<NetworkScreen> {
 
   Widget _buildDashboardShimmer(BuildContext context) {
     final colors = context.colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // 1. Stats Grid Shimmer (2 rows x 2 columns)
+        // 1. Stats Row Shimmer (1 row x 4 responsive columns)
         Row(
           children: [
-            Expanded(child: _shimmerStatCard(colors)),
+            Expanded(child: _shimmerStatCard(colors, isDark)),
             const SizedBox(width: 8),
-            Expanded(child: _shimmerStatCard(colors)),
+            Expanded(child: _shimmerStatCard(colors, isDark)),
+            const SizedBox(width: 8),
+            Expanded(child: _shimmerStatCard(colors, isDark)),
+            const SizedBox(width: 8),
+            Expanded(child: _shimmerStatCard(colors, isDark)),
           ],
         ),
-        const SizedBox(height: 8),
-        Row(
-          children: [
-            Expanded(child: _shimmerStatCard(colors)),
-            const SizedBox(width: 8),
-            Expanded(child: _shimmerStatCard(colors)),
-          ],
-        ),
-        const SizedBox(height: 10),
+        const SizedBox(height: 12),
 
         // 2. Quick Actions Shimmer
-        AppSkeleton.box(width: 100, height: 13, radius: 4),
+        AppSkeleton.box(width: 100, height: 14, radius: 4),
         const SizedBox(height: 6),
         AppSkeleton.box(width: double.infinity, height: 40, radius: 10),
         const SizedBox(height: 6),
         Row(
           children: [
-            Expanded(child: AppSkeleton.box(height: 36, radius: 10)),
+            Expanded(child: AppSkeleton.box(height: 38, radius: 10)),
             const SizedBox(width: 8),
-            Expanded(child: AppSkeleton.box(height: 36, radius: 10)),
+            Expanded(child: AppSkeleton.box(height: 38, radius: 10)),
             const SizedBox(width: 8),
-            Expanded(child: AppSkeleton.box(height: 36, radius: 10)),
+            Expanded(child: AppSkeleton.box(height: 38, radius: 10)),
           ],
         ),
-        const SizedBox(height: 10),
+        const SizedBox(height: 12),
 
         // 3. Recent Check-Ins Shimmer
-        AppSkeleton.box(width: 120, height: 13, radius: 4),
+        AppSkeleton.box(width: 120, height: 14, radius: 4),
         const SizedBox(height: 6),
         ListView.separated(
           padding: EdgeInsets.zero,
@@ -140,17 +137,27 @@ class _NetworkScreenState extends State<NetworkScreen> {
               color: colors.surfaceContainerHigh,
               borderRadius: BorderRadius.circular(10),
               border: Border.all(
-                color: colors.outlineVariant.withValues(alpha: 0.35),
+                color: colors.outlineVariant.withValues(alpha: isDark ? 0.3 : 0.4),
+                width: 0.6,
               ),
+              boxShadow: [
+                BoxShadow(
+                  color: isDark
+                      ? Colors.black.withValues(alpha: 0.2)
+                      : colors.shadow.withValues(alpha: 0.04),
+                  blurRadius: 6,
+                  offset: const Offset(0, 2),
+                ),
+              ],
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Row(
                   children: [
-                    AppSkeleton.box(width: 64, height: 18, radius: 6),
+                    AppSkeleton.box(width: 58, height: 18, radius: 6),
                     const Spacer(),
-                    AppSkeleton.box(width: 48, height: 10, radius: 4),
+                    AppSkeleton.box(width: 44, height: 10, radius: 4),
                   ],
                 ),
                 const SizedBox(height: 8),
@@ -163,9 +170,9 @@ class _NetworkScreenState extends State<NetworkScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          AppSkeleton.box(width: 120, height: 12, radius: 4),
+                          AppSkeleton.box(width: 110, height: 12, radius: 4),
                           const SizedBox(height: 4),
-                          AppSkeleton.box(width: 150, height: 10, radius: 4),
+                          AppSkeleton.box(width: 140, height: 10, radius: 4),
                         ],
                       ),
                     ),
@@ -181,84 +188,81 @@ class _NetworkScreenState extends State<NetworkScreen> {
     );
   }
 
-  Widget _shimmerStatCard(ColorScheme colors) {
+  Widget _shimmerStatCard(ColorScheme colors, bool isDark) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
       decoration: BoxDecoration(
         color: colors.surfaceContainerHigh,
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(14),
         border: Border.all(
-          color: colors.outlineVariant.withValues(alpha: 0.35),
+          color: colors.outlineVariant.withValues(alpha: isDark ? 0.3 : 0.45),
+          width: 0.6,
         ),
+        boxShadow: [
+          BoxShadow(
+            color: isDark
+                ? Colors.black.withValues(alpha: 0.25)
+                : colors.shadow.withValues(alpha: 0.04),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
+      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              AppSkeleton.box(width: 18, height: 18, radius: 4),
-              const SizedBox(width: 6),
-              AppSkeleton.box(width: 32, height: 18, radius: 4),
-            ],
-          ),
+          AppSkeleton.box(width: 28, height: 28, radius: 8),
           const SizedBox(height: 4),
-          AppSkeleton.box(width: 72, height: 10, radius: 3),
+          AppSkeleton.box(width: 26, height: 14, radius: 4),
+          const SizedBox(height: 2),
+          AppSkeleton.box(width: 44, height: 9, radius: 3),
         ],
       ),
     );
   }
 
   Widget _buildStats(BuildContext context, DashboardCounts counts) {
-    return Column(
+    return Row(
       children: [
-        Row(
-          children: [
-            Expanded(
-              child: _statCard(
-                context,
-                'Total Contacts',
-                '${counts.connections}',
-                Icons.people_outline,
-                AppRoutes.connection,
-              ),
-            ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: _statCard(
-                context,
-                'Check-Ins',
-                '${counts.totalCheckIns}',
-                Icons.qr_code_scanner_outlined,
-                AppRoutes.checkIn,
-              ),
-            ),
-          ],
+        Expanded(
+          child: _statCard(
+            context,
+            'Contacts',
+            '${counts.connections}',
+            Icons.people_outline_rounded,
+            AppRoutes.connection,
+          ),
         ),
-        const SizedBox(height: 8),
-        Row(
-          children: [
-            Expanded(
-              child: _statCard(
-                context,
-                'Referrals Sent',
-                '${counts.referralsSent}',
-                Icons.send_outlined,
-                AppRoutes.referral,
-              ),
-            ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: _statCard(
-                context,
-                'Upcoming Meetings',
-                '${counts.upcomingMeetings}',
-                Icons.handshake_outlined,
-                AppRoutes.meeting,
-              ),
-            ),
-          ],
+        const SizedBox(width: 8),
+        Expanded(
+          child: _statCard(
+            context,
+            'Check-Ins',
+            '${counts.totalCheckIns}',
+            Icons.qr_code_scanner_rounded,
+            AppRoutes.checkIn,
+          ),
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          child: _statCard(
+            context,
+            'Referrals',
+            '${counts.referralsSent}',
+            Icons.send_rounded,
+            AppRoutes.referral,
+          ),
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          child: _statCard(
+            context,
+            'Meetings',
+            '${counts.upcomingMeetings}',
+            Icons.handshake_outlined,
+            AppRoutes.meeting,
+          ),
         ),
       ],
     );
@@ -272,51 +276,83 @@ class _NetworkScreenState extends State<NetworkScreen> {
     String route,
   ) {
     final colors = context.colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    return Material(
-      color: colors.surfaceContainerHigh,
-      borderRadius: BorderRadius.circular(10),
-      child: InkWell(
-        onTap: () => Get.toNamed(route),
-        borderRadius: BorderRadius.circular(10),
-        child: Ink(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(10),
-            border: Border.all(
-              color: colors.outlineVariant.withValues(alpha: 0.35),
-            ),
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(14),
+        boxShadow: [
+          BoxShadow(
+            color: isDark
+                ? Colors.black.withValues(alpha: 0.25)
+                : colors.shadow.withValues(alpha: 0.04),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
           ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(icon, color: colors.primary, size: 18),
-                  const SizedBox(width: 6),
-                  Text(
+        ],
+      ),
+      child: Material(
+        color: colors.surfaceContainerHigh,
+        borderRadius: BorderRadius.circular(14),
+        child: InkWell(
+          onTap: () => Get.toNamed(route),
+          borderRadius: BorderRadius.circular(14),
+          splashColor: colors.primary.withValues(alpha: 0.1),
+          highlightColor: colors.primary.withValues(alpha: 0.05),
+          child: Ink(
+            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(
+                color: colors.outlineVariant.withValues(alpha: isDark ? 0.3 : 0.45),
+                width: 0.6,
+              ),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Container(
+                  width: 28,
+                  height: 28,
+                  decoration: BoxDecoration(
+                    color: colors.primary.withValues(alpha: isDark ? 0.18 : 0.10),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Center(
+                    child: Icon(icon, color: colors.primary, size: 15),
+                  ),
+                ),
+                const SizedBox(height: 4),
+                FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text(
                     value,
-                    style: AppTextStyle.textLg(
+                    maxLines: 1,
+                    style: AppTextStyle.textSm(
                       color: colors.onSurface,
-                      weight: FontWeight.w700,
+                      weight: FontWeight.w800,
                     ),
                   ),
-                ],
-              ),
-              const SizedBox(height: 2),
-              Text(
-                label,
-                textAlign: TextAlign.center,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: AppTextStyle.textXs(
-                  color: colors.onSurfaceVariant,
-                  weight: FontWeight.w500,
                 ),
-              ),
-            ],
+                const SizedBox(height: 2),
+                FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text(
+                    label,
+                    maxLines: 1,
+                    textAlign: TextAlign.center,
+                    style: AppTextStyle.textXs(
+                      color: colors.onSurfaceVariant,
+                      weight: FontWeight.w600,
+                    ).copyWith(
+                      fontSize: 10.5,
+                      letterSpacing: -0.1,
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -378,17 +414,21 @@ class _NetworkScreenState extends State<NetworkScreen> {
       child: OutlinedButton(
         onPressed: () => Get.toNamed(route),
         style: OutlinedButton.styleFrom(
-          padding: const EdgeInsets.symmetric(vertical: 8),
+          padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
           side: BorderSide(color: colors.outlineVariant.withValues(alpha: 0.6)),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(10),
           ),
         ),
-        child: Text(
-          label,
-          style: AppTextStyle.textSm(
-            color: colors.onSurface,
-            weight: FontWeight.w600,
+        child: FittedBox(
+          fit: BoxFit.scaleDown,
+          child: Text(
+            label,
+            maxLines: 1,
+            style: AppTextStyle.textSm(
+              color: colors.onSurface,
+              weight: FontWeight.w600,
+            ),
           ),
         ),
       ),

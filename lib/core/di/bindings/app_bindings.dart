@@ -1,9 +1,10 @@
 import 'package:get/get.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:loci/core/network/network_caller.dart';
 import 'package:loci/core/network/network_setup.dart';
-import 'package:loci/core/services/connectivity_service.dart';
+import 'package:loci/core/services/connectivity/connectivity_service.dart';
 import 'package:loci/core/services/socket/chat_socket_service.dart';
-import 'package:loci/core/services/stripe_service.dart';
+import 'package:loci/core/services/stripe/stripe_service.dart';
 import 'package:loci/core/storage/hive_storage_service.dart';
 import 'package:loci/core/storage/local_storage_service.dart';
 import 'package:loci/core/utils/show_snackbar.dart';
@@ -66,7 +67,13 @@ class AppBindings extends Bindings {
     SnackbarService.errorInterceptor = UpgradeRequiredSheet.maybeIntercept;
 
     // Storage & Connectivity
-    Get.put<LocalStorageService>(LocalStorageService(), permanent: true);
+    final prefs = Get.isRegistered<SharedPreferences>()
+        ? Get.find<SharedPreferences>()
+        : null;
+    Get.put<LocalStorageService>(
+      LocalStorageService(prefs: prefs),
+      permanent: true,
+    );
     if (HiveStorageService.isInitialized) {
       Get.put<HiveStorageService>(HiveStorageService.instance, permanent: true);
     }

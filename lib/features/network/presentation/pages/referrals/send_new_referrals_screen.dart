@@ -5,8 +5,10 @@ import 'package:loci/core/theme/theme_extention.dart';
 import 'package:loci/core/utils/show_snackbar.dart';
 import 'package:loci/core/utils/validators.dart';
 import 'package:loci/features/network/presentation/controllers/send_new_referrals_controller.dart';
+import 'package:loci/shared/widgets/custom_appbar.dart';
 import 'package:loci/shared/widgets/custom_button.dart';
 import 'package:loci/shared/widgets/custom_text_field.dart';
+import 'package:loci/shared/widgets/persistent_action_bar.dart';
 
 class SendNewReferralsScreen extends StatefulWidget {
   const SendNewReferralsScreen({super.key});
@@ -83,145 +85,142 @@ class _SendNewReferralsScreenState extends State<SendNewReferralsScreen> {
 
     return Scaffold(
       backgroundColor: colorScheme.surface,
-      appBar: AppBar(
-        leading: const BackButton(),
-        title: Text(
-          "Send New Referral",
-          style: AppTextStyle.textMd(weight: FontWeight.w600),
-        ),
+      appBar: const CustomAppbar(title: "Send Referral"),
+      bottomNavigationBar: PersistentActionBar(
+        child: Obx(() {
+          return SizedBox(
+            width: double.infinity,
+            height: 48,
+            child: CustomButton(
+              backgroundColor: colorScheme.primary,
+              onPressed: _controller.isLoading ? null : _onSubmit,
+              child: _controller.isLoading
+                  ? SizedBox(
+                      height: 20,
+                      width: 20,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: colorScheme.onPrimary,
+                      ),
+                    )
+                  : Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          "Send Referral",
+                          style: AppTextStyle.textMd(
+                            color: colorScheme.onPrimary,
+                            weight: FontWeight.w600,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Icon(
+                          Icons.send_outlined,
+                          color: colorScheme.onPrimary,
+                          size: 18,
+                        ),
+                      ],
+                    ),
+            ),
+          );
+        }),
       ),
       body: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          child: Form(
-            key: _formKey,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _buildHeader(),
-                const SizedBox(height: 24),
+        padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+        child: Form(
+          key: _formKey,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildHeader(),
+              const SizedBox(height: 24),
 
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: colorScheme.surface,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: colorScheme.outline.withValues(alpha: 0.2),
-                    ),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // --- Recipient details ---
-                      _buildSectionLabel("Recipient details"),
-                      const SizedBox(height: 12),
-                      _buildField(
-                        label: "Full name",
-                        hint: "Enter recipient's full name",
-                        controller: _recipientNameController,
-                        validator: validateFullName,
-                        isNameField: true,
-                      ),
-                      const SizedBox(height: 12),
-                      _buildField(
-                        label: "Email",
-                        hint: "Enter recipient's email",
-                        controller: _recipientEmailController,
-                        keyboardType: TextInputType.emailAddress,
-                        validator: validateEmail,
-                      ),
-                      const SizedBox(height: 12),
-                      _buildField(
-                        label: "Company",
-                        hint: "Enter recipient's company",
-                        controller: _recipientCompanyController,
-                        isRequired: false,
-                      ),
-                      const SizedBox(height: 20),
-
-                      // --- Business owner ---
-                      _buildSectionLabel("Business owner"),
-                      const SizedBox(height: 12),
-                      _buildField(
-                        label: "Name",
-                        hint: "Enter owner's name",
-                        controller: _ownerNameController,
-                        validator: (v) => validateName(v, fieldName: 'Name'),
-                        isNameField: true,
-                      ),
-                      const SizedBox(height: 12),
-                      _buildField(
-                        label: "Email",
-                        hint: "Enter owner's email",
-                        controller: _ownerEmailController,
-                        keyboardType: TextInputType.emailAddress,
-                        validator: validateEmail,
-                      ),
-                      const SizedBox(height: 12),
-                      _buildField(
-                        label: "Company",
-                        hint: "Enter owner's business name",
-                        controller: _ownerCompanyName,
-                        isRequired: false,
-                      ),
-
-                      const SizedBox(height: 20),
-
-                      // --- Message (optional) ---
-                      _buildField(
-                        label: "Message",
-                        isRequired: false,
-                        hint: "You should connect with James!",
-                        controller: _messageController,
-                        maxLines: 4,
-                        maxLength: _messageMaxLength,
-                        validator: (v) => validateMaxLength(
-                          v,
-                          _messageMaxLength,
-                          fieldName: "Message",
-                        ),
-                      ),
-                    ],
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: colorScheme.surface,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: colorScheme.outline.withValues(alpha: 0.2),
                   ),
                 ),
-                const SizedBox(height: 32),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // --- Recipient details ---
+                    _buildSectionLabel("Recipient details"),
+                    const SizedBox(height: 12),
+                    _buildField(
+                      label: "Full name",
+                      hint: "Enter recipient's full name",
+                      controller: _recipientNameController,
+                      validator: validateFullName,
+                      isNameField: true,
+                    ),
+                    const SizedBox(height: 12),
+                    _buildField(
+                      label: "Email",
+                      hint: "Enter recipient's email",
+                      controller: _recipientEmailController,
+                      keyboardType: TextInputType.emailAddress,
+                      validator: validateEmail,
+                    ),
+                    const SizedBox(height: 12),
+                    _buildField(
+                      label: "Company",
+                      hint: "Enter recipient's company",
+                      controller: _recipientCompanyController,
+                      isRequired: false,
+                    ),
+                    const SizedBox(height: 20),
 
-                Obx(() {
-                  return CustomButton(
-                    backgroundColor: colorScheme.primary,
-                    onPressed: _controller.isLoading ? null : _onSubmit,
-                    child: _controller.isLoading
-                        ? SizedBox(
-                            height: 20,
-                            width: 20,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              color: colorScheme.onPrimary,
-                            ),
-                          )
-                        : Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Text(
-                                "Send Referral",
-                                style: AppTextStyle.textMd(
-                                  color: colorScheme.onPrimary,
-                                  weight: FontWeight.w600,
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-                              Icon(
-                                Icons.send_outlined,
-                                color: colorScheme.onPrimary,
-                                size: 18,
-                              ),
-                            ],
-                          ),
-                  );
-                }),
-              ],
-            ),
+                    // --- Business owner ---
+                    _buildSectionLabel("Business owner"),
+                    const SizedBox(height: 12),
+                    _buildField(
+                      label: "Name",
+                      hint: "Enter owner's name",
+                      controller: _ownerNameController,
+                      validator: (v) => validateName(v, fieldName: 'Name'),
+                      isNameField: true,
+                    ),
+                    const SizedBox(height: 12),
+                    _buildField(
+                      label: "Email",
+                      hint: "Enter owner's email",
+                      controller: _ownerEmailController,
+                      keyboardType: TextInputType.emailAddress,
+                      validator: validateEmail,
+                    ),
+                    const SizedBox(height: 12),
+                    _buildField(
+                      label: "Company",
+                      hint: "Enter owner's business name",
+                      controller: _ownerCompanyName,
+                      isRequired: false,
+                    ),
+
+                    const SizedBox(height: 20),
+
+                    // --- Message (optional) ---
+                    _buildField(
+                      label: "Message",
+                      isRequired: false,
+                      hint: "You should connect with James!",
+                      controller: _messageController,
+                      maxLines: 4,
+                      maxLength: _messageMaxLength,
+                      validator: (v) => validateMaxLength(
+                        v,
+                        _messageMaxLength,
+                        fieldName: "Message",
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
+            ],
           ),
         ),
       ),

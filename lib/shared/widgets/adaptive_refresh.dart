@@ -69,11 +69,15 @@ class AdaptiveRefresh extends StatelessWidget {
   }
 
   Widget _buildChild(BuildContext context, Widget child) {
+    final effectiveColor = color ?? context.colorScheme.primary;
+    final effectiveBgColor =
+        backgroundColor ?? context.colorScheme.surfaceContainerHigh;
+
     if (context.isCupertino) {
       return RefreshIndicator.adaptive(
         onRefresh: onRefresh,
-        color: color,
-        backgroundColor: backgroundColor,
+        color: effectiveColor,
+        backgroundColor: effectiveBgColor,
         displacement: displacement,
         edgeOffset: edgeOffset,
         notificationPredicate: notificationPredicate,
@@ -84,8 +88,8 @@ class AdaptiveRefresh extends StatelessWidget {
     }
     return RefreshIndicator(
       onRefresh: onRefresh,
-      color: color ?? context.colorScheme.primary,
-      backgroundColor: backgroundColor,
+      color: effectiveColor,
+      backgroundColor: effectiveBgColor,
       displacement: displacement,
       edgeOffset: edgeOffset,
       notificationPredicate: notificationPredicate,
@@ -97,6 +101,10 @@ class AdaptiveRefresh extends StatelessWidget {
 
   Widget _buildScroll(BuildContext context, List<Widget> slivers) {
     final isIOS = context.isCupertino;
+    final effectiveColor = color ?? context.colorScheme.primary;
+    final effectiveBgColor =
+        backgroundColor ?? context.colorScheme.surfaceContainerHigh;
+
     final scrollView = CustomScrollView(
       controller: controller,
       physics:
@@ -118,8 +126,8 @@ class AdaptiveRefresh extends StatelessWidget {
 
     return RefreshIndicator(
       onRefresh: onRefresh,
-      color: color ?? context.colorScheme.primary,
-      backgroundColor: backgroundColor,
+      color: effectiveColor,
+      backgroundColor: effectiveBgColor,
       displacement: displacement,
       edgeOffset: edgeOffset,
       notificationPredicate: notificationPredicate,

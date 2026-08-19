@@ -1,14 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
-import 'package:loci/features/auth/presentation/controllers/resend_otp_controller.dart';
-import 'package:pinput/pinput.dart';
 import 'package:loci/core/constants/app_text_style.dart';
 import 'package:loci/core/theme/theme_extention.dart';
 import 'package:loci/core/utils/show_snackbar.dart';
-import 'package:loci/gen/assets.gen.dart';
-import 'package:loci/routes/app_routes.dart';
+import 'package:loci/features/auth/presentation/controllers/resend_otp_controller.dart';
 import 'package:loci/features/auth/presentation/controllers/verify_email_controller.dart';
+import 'package:loci/features/auth/presentation/widgets/auth_logo_header.dart';
+import 'package:loci/routes/app_routes.dart';
+import 'package:loci/shared/widgets/custom_appbar.dart';
 import 'package:loci/shared/widgets/custom_button.dart';
+import 'package:pinput/pinput.dart';
 
 class OtpScreen extends StatefulWidget {
   const OtpScreen({super.key});
@@ -18,16 +20,13 @@ class OtpScreen extends StatefulWidget {
 }
 
 class _OtpScreenState extends State<OtpScreen> {
-  // Controllers for verification and resending OTP
   final verifyEmailController = Get.find<VerifyEmailController>();
   final resendController = Get.find<ResendOtpController>();
 
-  // Data passed from previous screen
   late final String email;
   late final String message;
-  late final String type; // signup or forgot password
+  late final String type;
 
-  // Text controller and focus for OTP input
   final otpTEController = TextEditingController();
   final focusNode = FocusNode();
   final isOtpComplete = false.obs;
@@ -35,16 +34,12 @@ class _OtpScreenState extends State<OtpScreen> {
   @override
   void initState() {
     super.initState();
-
-    // Receive arguments from previous screen
     final args = Get.arguments as Map<String, dynamic>?;
 
     email = args?["email"] ?? "";
     message = args?["message"] ?? "";
     type = args?["type"] ?? "";
 
-    // Rebuild on every input change so the Verify button
-    // enables/disables as the user types (or the field is cleared).
     otpTEController.addListener(_onOtpChanged);
   }
 
@@ -54,73 +49,65 @@ class _OtpScreenState extends State<OtpScreen> {
 
   @override
   void dispose() {
-    // Dispose controllers and focus node to avoid memory leaks
     otpTEController.removeListener(_onOtpChanged);
     otpTEController.dispose();
     focusNode.dispose();
     super.dispose();
   }
 
-  /// -------------------------
-  /// Verify the OTP entered by the user
-  /// -------------------------
   void _verifyEmailHandler() async {
-    // Hide keyboard
     FocusScope.of(context).unfocus();
 
     final otp = otpTEController.text.trim();
-
-    // Check if OTP length is valid
     if (otp.length != 6) {
       SnackbarService.warning("OTP must be 6 digits");
       return;
     }
 
-    // Determine flow: signup or forgot password
+    TextInput.finishAutofillContext();
+    HapticFeedback.mediumImpact();
+
     final isVerified = type == "signup"
         ? await verifyEmailController.verifySignupOtp(email: email, otp: otp)
         : await verifyEmailController.verifyForgotOtp(email: email, otp: otp);
 
     if (isVerified) {
-      // Navigate to the correct screen based on type
       if (type == "signup") {
-        Get.offNamed(AppRoutes.bottomNav); // Main app
+        Get.offNamed(AppRoutes.bottomNav);
       } else {
         Get.toNamed(
           AppRoutes.passReset,
-          arguments: {"email": email}, // Pass email for password reset
+          arguments: {"email": email},
         );
       }
     } else {
-      // Show error if verification failed
-      SnackbarService.error(verifyEmailController.errorMessage.value!);
+      SnackbarService.error(
+        verifyEmailController.errorMessage.value!,
+        title: 'Verification failed',
+      );
     }
   }
 
-  /// -------------------------
-  /// Resend OTP
-  /// -------------------------
   void _resendCodeHandler() async {
-    if (!resendController.canResend.value) return; // Check cooldown
+    if (!resendController.canResend.value) return;
 
+    HapticFeedback.lightImpact();
     final isResent = await resendController.resendOtp(email: email);
 
     if (!isResent) {
       if (!resendController.canResend.value) {
-        // Server-side cooldown — the countdown is already showing,
-        // so present it as info rather than an error.
         SnackbarService.info(
           "You can request a new code in ${resendController.secondsRemaining.value}s.",
           title: "Please wait",
         );
       } else {
-        // Show error if resend failed
         SnackbarService.error(
-          resendController.errorMessage.value ?? "Failed to resend OTP",
+          resendController.errorMessage.value ?? 'Failed to resend OTP',
+          title: 'Could not resend code',
         );
       }
     } else {
-      otpTEController.clear(); // Clear old OTP input
+      otpTEController.clear();
       SnackbarService.success(
         resendController.successMessage.value ?? "OTP resent successfully",
       );
@@ -129,38 +116,43 @@ class _OtpScreenState extends State<OtpScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Default OTP input style
+    final colors = context.colorScheme;
+
     final defaultPinTheme = PinTheme(
-      width: 56,
-      height: 60,
+      width: 52,
+      height: 58,
       textStyle: AppTextStyle.displayXs(
-        color: context.colorScheme.onSurface,
+        color: colors.onSurface,
         weight: FontWeight.w600,
       ),
       decoration: BoxDecoration(
-        color: context.colorScheme.surface,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: context.colorScheme.outlineVariant),
+        color: colors.surfaceContainerLow,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: colors.outlineVariant.withValues(alpha: 0.6),
+        ),
       ),
     );
 
-    // OTP input style when focused
     final focusedPinTheme = defaultPinTheme.copyWith(
       decoration: defaultPinTheme.decoration!.copyWith(
-        border: Border.all(color: context.colorScheme.primary, width: 2),
+        color: colors.surface,
+        border: Border.all(color: colors.primary, width: 2),
+      ),
+    );
+
+    final submittedPinTheme = defaultPinTheme.copyWith(
+      decoration: defaultPinTheme.decoration!.copyWith(
+        color: colors.surface,
+        border: Border.all(
+          color: colors.primary.withValues(alpha: 0.5),
+        ),
       ),
     );
 
     return Scaffold(
-      backgroundColor: context.colorScheme.surface,
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: context.colorScheme.onSurface),
-          onPressed: () => Navigator.pop(context),
-        ),
-      ),
+      backgroundColor: colors.surface,
+      appBar: const CustomAppbar(title: ''),
       body: LayoutBuilder(
         builder: (context, constraints) {
           return SingleChildScrollView(
@@ -172,128 +164,142 @@ class _OtpScreenState extends State<OtpScreen> {
                     horizontal: 24,
                     vertical: 20,
                   ),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      /// -------------------------
-                      /// 1. App Logo
-                      /// -------------------------
-                      Image.asset(Assets.images.logoPng.path, height: 100),
-                      const SizedBox(height: 40),
-
-                      /// -------------------------
-                      /// 2. Title
-                      /// -------------------------
-                      Text(
-                        "Enter verification code",
-                        style: AppTextStyle.displayXs(
-                          color: context.colorScheme.onSurface,
-                          weight: FontWeight.w700,
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-
-                      /// -------------------------
-                      /// 3. Message
-                      /// Show different messages based on type
-                      /// -------------------------
-                      Text(
-                        type == "signup"
-                            ? message
-                            : "We’ve sent a verification code to $email. Please enter the code to continue",
-                        style: AppTextStyle.textXs(
-                          color: context.colorScheme.onSurfaceVariant,
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                      const SizedBox(height: 40),
-
-                      /// -------------------------
-                      /// 4. OTP Input Field
-                      /// -------------------------
-                      Pinput(
-                        length: 6,
-                        controller: otpTEController,
-                        focusNode: focusNode,
-                        defaultPinTheme: defaultPinTheme,
-                        focusedPinTheme: focusedPinTheme,
-                        separatorBuilder: (index) => const SizedBox(width: 8),
-                        hapticFeedbackType: HapticFeedbackType.lightImpact,
-                        onCompleted: (pin) {
-                          debugPrint('Completed: $pin');
-                        },
-                      ),
-                      const SizedBox(height: 32),
-
-                      /// -------------------------
-                      /// 5. Resend OTP Section
-                      /// -------------------------
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(
-                            "Didn’t receive the code?",
-                            style: AppTextStyle.textSm(
-                              color: context.colorScheme.onSurfaceVariant,
+                  child: AutofillGroup(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Spacer(),
+                        AuthLogoHeader(
+                          title: "Verification Code",
+                          subtitle: "",
+                          customSubtitle: Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 16),
+                            child: RichText(
+                              textAlign: TextAlign.center,
+                              text: TextSpan(
+                                style: AppTextStyle.textSm(
+                                  color: colors.onSurfaceVariant,
+                                ),
+                                children: [
+                                  const TextSpan(
+                                    text: "We sent a 6-digit code to ",
+                                  ),
+                                  TextSpan(
+                                    text: email.isNotEmpty ? email : "your email",
+                                    style: AppTextStyle.textSm(
+                                      color: colors.onSurface,
+                                      weight: FontWeight.w600,
+                                    ),
+                                  ),
+                                  const TextSpan(
+                                    text: ". Enter it below to continue.",
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
-                          Obx(() {
-                            // Show loader if sending
-                            if (resendController.isLoading.value) {
-                              return const SizedBox(
-                                width: 20,
-                                height: 20,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                ),
-                              );
-                            }
-
-                            // Show countdown if cannot resend yet
-                            if (!resendController.canResend.value) {
-                              return Text(
-                                "Resend in ${resendController.secondsRemaining.value}s",
-                                style: AppTextStyle.textSm(
-                                  color: context.colorScheme.onSurfaceVariant,
-                                ),
-                              );
-                            }
-
-                            // Resend button
-                            return TextButton(
-                              onPressed: _resendCodeHandler,
-                              child: Text(
-                                "Resend Code",
-                                style: AppTextStyle.textSm(
-                                  color: Colors.redAccent,
-                                  weight: FontWeight.w600,
-                                ),
-                              ),
-                            );
-                          }),
-                        ],
-                      ),
-
-                      const Spacer(),
-                      const SizedBox(height: 40),
-
-                      /// -------------------------
-                      /// 6. Verify Button
-                      /// -------------------------
-                      Obx(
-                        () => CustomButton(
-                          isLoading: verifyEmailController.isLoading.value,
-                          backgroundColor: context.colorScheme.primary,
-                          textColor: context.colorScheme.onPrimary,
-                          text: "Verify",
-                          // Disabled (greyed out) until all 6 digits are entered.
-                          onPressed: isOtpComplete.value
-                              ? _verifyEmailHandler
-                              : null,
                         ),
-                      ),
-                      const SizedBox(height: 20),
-                    ],
+                        const SizedBox(height: 36),
+
+                        // OTP Input
+                        Pinput(
+                          length: 6,
+                          controller: otpTEController,
+                          focusNode: focusNode,
+                          autofillHints: const [AutofillHints.oneTimeCode],
+                          defaultPinTheme: defaultPinTheme,
+                          focusedPinTheme: focusedPinTheme,
+                          submittedPinTheme: submittedPinTheme,
+                          separatorBuilder: (index) => const SizedBox(width: 8),
+                          hapticFeedbackType: HapticFeedbackType.lightImpact,
+                          onCompleted: (pin) {
+                            _verifyEmailHandler();
+                          },
+                        ),
+                        const SizedBox(height: 28),
+
+                        // Resend Section
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              "Didn’t receive the code?",
+                              style: AppTextStyle.textSm(
+                                color: colors.onSurfaceVariant,
+                              ),
+                            ),
+                            Obx(() {
+                              if (resendController.isLoading.value) {
+                                return SizedBox(
+                                  width: 18,
+                                  height: 18,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: colors.primary,
+                                  ),
+                                );
+                              }
+
+                              if (!resendController.canResend.value) {
+                                return Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 10,
+                                    vertical: 4,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: colors.surfaceContainerHighest
+                                        .withValues(alpha: 0.5),
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: Text(
+                                    "Resend in ${resendController.secondsRemaining.value}s",
+                                    style: AppTextStyle.textXs(
+                                      color: colors.onSurfaceVariant,
+                                      weight: FontWeight.w600,
+                                    ),
+                                  ),
+                                );
+                              }
+
+                              return InkWell(
+                                borderRadius: BorderRadius.circular(8),
+                                onTap: _resendCodeHandler,
+                                child: Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 6,
+                                    vertical: 4,
+                                  ),
+                                  child: Text(
+                                    "Resend Code",
+                                    style: AppTextStyle.textSm(
+                                      color: colors.primary,
+                                      weight: FontWeight.w700,
+                                    ),
+                                  ),
+                                ),
+                              );
+                            }),
+                          ],
+                        ),
+
+                        const Spacer(),
+                        const SizedBox(height: 32),
+
+                        // Verify Button
+                        Obx(
+                          () => CustomButton(
+                            isLoading: verifyEmailController.isLoading.value,
+                            backgroundColor: colors.primary,
+                            textColor: colors.onPrimary,
+                            text: "Verify & Continue",
+                            onPressed: isOtpComplete.value
+                                ? _verifyEmailHandler
+                                : null,
+                          ),
+                        ),
+                        const SizedBox(height: 24),
+                      ],
+                    ),
                   ),
                 ),
               ),

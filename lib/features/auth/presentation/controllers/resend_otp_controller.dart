@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:get/get.dart';
+import 'package:loci/core/utils/app_error_messages.dart';
 import 'package:loci/features/auth/domain/services/auth_service.dart';
 
 class ResendOtpController extends GetxController {
@@ -31,13 +32,13 @@ class ResendOtpController extends GetxController {
       _startCountdown();
       return true;
     } catch (e) {
-      final message = e.toString().replaceFirst('Exception: ', '');
-      final match = _waitSecondsRegex.firstMatch(message);
+      final raw = e.toString().replaceFirst(RegExp(r'^Exception:\s*'), '');
+      final match = _waitSecondsRegex.firstMatch(raw);
       if (match != null) {
         final seconds = int.tryParse(match.group(1) ?? '') ?? 40;
         _startCountdown(seconds: seconds);
       }
-      errorMessage.value = message;
+      errorMessage.value = AppErrorMessages.sanitize(e);
       return false;
     } finally {
       isLoading.value = false;

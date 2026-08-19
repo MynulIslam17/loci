@@ -1,17 +1,13 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:loci/core/theme/theme_extention.dart';
 import 'package:loci/features/subscription/presentation/controllers/plans_controller.dart';
 import 'package:loci/features/subscription/presentation/widgets/billing_toggle.dart';
 
-/// Keeps the billing toggle pinned at the top of the scroll view.
-///
-/// The toggle content is wrapped in its own [Obx] that reads *only*
-/// `isMonthly`, and this delegate is created once by the screen (not inside a
-/// reactive builder). That isolation is deliberate: switching tabs triggers a
-/// plan reload, and previously the whole scroll view — including this pinned
-/// header — was rebuilt by a single screen-wide `Obx`, resetting the toggle's
-/// colour animation and its drop shadow mid-switch (the "colour flicker on the
-/// tab bar"). Now a plan reload never touches the toggle.
+/// Keeps the billing toggle pinned at the top of the scroll view with platform-adapted aesthetics:
+/// - **iOS:** Frosted glass [BackdropFilter] with live content blur as cards slide underneath.
+/// - **Android:** Clean elevated surface container with dynamic overlap shadow.
 class BillingTogglePinnedHeader extends SliverPersistentHeaderDelegate {
   final Color backgroundColor;
 
@@ -33,13 +29,48 @@ class BillingTogglePinnedHeader extends SliverPersistentHeaderDelegate {
     bool overlapsContent,
   ) {
     final PlansController controller = Get.find<PlansController>();
+    final isIOS = context.isCupertino;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    final toggleContent = Obx(
+      () => BillingToggleSection(
+        isMonthly: controller.isMonthly,
+        onChanged: controller.selectBilling,
+      ),
+    );
+
+    if (isIOS) {
+      return ClipRect(
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
+          child: Container(
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: isDark
+                  ? backgroundColor.withValues(alpha: 0.82)
+                  : backgroundColor.withValues(alpha: 0.88),
+              border: overlapsContent
+                  ? Border(
+                      bottom: BorderSide(
+                        color: Theme.of(context).colorScheme.outlineVariant.withValues(
+                          alpha: isDark ? 0.2 : 0.35,
+                        ),
+                        width: 0.5,
+                      ),
+                    )
+                  : null,
+            ),
+            child: toggleContent,
+          ),
+        ),
+      );
+    }
 
     return AnimatedContainer(
       duration: const Duration(milliseconds: 150),
       alignment: Alignment.center,
       decoration: BoxDecoration(
         color: backgroundColor,
-        // Soft shadow only once plan cards start sliding underneath.
         boxShadow: overlapsContent
             ? [
                 BoxShadow(
@@ -50,18 +81,12 @@ class BillingTogglePinnedHeader extends SliverPersistentHeaderDelegate {
               ]
             : const [],
       ),
-      child: Obx(
-        () => BillingToggleSection(
-          isMonthly: controller.isMonthly,
-          onChanged: controller.selectBilling,
-        ),
-      ),
+      child: toggleContent,
     );
   }
 
   @override
   bool shouldRebuild(BillingTogglePinnedHeader oldDelegate) {
-    // isMonthly is handled by the nested Obx, so only a theme change matters.
     return backgroundColor != oldDelegate.backgroundColor;
   }
 }
