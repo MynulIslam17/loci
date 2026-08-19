@@ -1,3 +1,4 @@
+import 'dart:ui';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:loci/core/theme/theme_extention.dart';
@@ -125,46 +126,100 @@ Future<DateTime?> _showCupertinoDateTime({
   bool use24hFormat = false,
 }) {
   var selected = initialDateTime;
-  final scheme = Theme.of(context).colorScheme;
+  final colors = Theme.of(context).colorScheme;
+  final isDark = Theme.of(context).brightness == Brightness.dark;
 
   return showCupertinoModalPopup<DateTime>(
     context: context,
     builder: (ctx) {
-      return Material(
-        color: scheme.surface,
-        child: SafeArea(
-          top: false,
-          child: SizedBox(
-            height: 280,
-            child: Column(
-              children: [
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 8),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      CupertinoButton(
-                        onPressed: () => Navigator.of(ctx).pop(),
-                        child: const Text('Cancel'),
-                      ),
-                      CupertinoButton(
-                        onPressed: () => Navigator.of(ctx).pop(selected),
-                        child: const Text('Done'),
-                      ),
-                    ],
+      return ClipRRect(
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(22)),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+          child: Container(
+            decoration: BoxDecoration(
+              color: isDark
+                  ? colors.surface.withValues(alpha: 0.85)
+                  : colors.surface.withValues(alpha: 0.88),
+              borderRadius:
+                  const BorderRadius.vertical(top: Radius.circular(22)),
+              border: Border(
+                top: BorderSide(
+                  color: colors.outlineVariant.withValues(
+                    alpha: isDark ? 0.25 : 0.35,
                   ),
+                  width: 0.5,
                 ),
-                Expanded(
-                  child: CupertinoDatePicker(
-                    mode: mode,
-                    initialDateTime: initialDateTime,
-                    minimumDate: minimumDate,
-                    maximumDate: maximumDate,
-                    use24hFormat: use24hFormat,
-                    onDateTimeChanged: (value) => selected = value,
-                  ),
+              ),
+            ),
+            child: SafeArea(
+              top: false,
+              child: SizedBox(
+                height: 290,
+                child: Column(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 4,
+                      ),
+                      decoration: BoxDecoration(
+                        border: Border(
+                          bottom: BorderSide(
+                            color: colors.outlineVariant.withValues(
+                              alpha: isDark ? 0.2 : 0.25,
+                            ),
+                            width: 0.5,
+                          ),
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          CupertinoButton(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 10,
+                            ),
+                            onPressed: () => Navigator.of(ctx).pop(),
+                            child: Text(
+                              'Cancel',
+                              style: TextStyle(
+                                color: colors.onSurfaceVariant,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ),
+                          CupertinoButton(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 10,
+                            ),
+                            onPressed: () => Navigator.of(ctx).pop(selected),
+                            child: Text(
+                              'Done',
+                              style: TextStyle(
+                                color: colors.primary,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Expanded(
+                      child: CupertinoDatePicker(
+                        mode: mode,
+                        initialDateTime: initialDateTime,
+                        minimumDate: minimumDate,
+                        maximumDate: maximumDate,
+                        use24hFormat: use24hFormat,
+                        onDateTimeChanged: (value) => selected = value,
+                      ),
+                    ),
+                  ],
                 ),
-              ],
+              ),
             ),
           ),
         ),

@@ -67,6 +67,7 @@
 		<string>https</string>
 		<string>http</string>
 		<string>maps</string>
+		<string>comgooglemaps</string>
 	</array>
 
 	<!-- Stripe PaymentSheet return URL (Link / 3DS / bank redirects on iOS).
@@ -81,6 +82,14 @@
 			<key>CFBundleURLSchemes</key>
 			<array>
 				<string>loci</string>
+			</array>
+		</dict>
+		<dict>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>com.googleusercontent.apps.339606588573-nf9lhkj2qo4555mt7j4rmr4hjhllrb34</string>
 			</array>
 		</dict>
 	</array>

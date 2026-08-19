@@ -8,6 +8,7 @@ class NavController extends GetxController {
   final drawerTitle = RxnString();
 
   void changeIndex(int index) {
+    FocusManager.instance.primaryFocus?.unfocus();
     if (index == 0) {
       HomeNavigator.reset();
     }
@@ -17,11 +18,13 @@ class NavController extends GetxController {
   }
 
   void openDrawerPage(Widget page, {required String title}) {
+    FocusManager.instance.primaryFocus?.unfocus();
     drawerPage.value = page;
     drawerTitle.value = title;
   }
 
   void closeDrawer() {
+    FocusManager.instance.primaryFocus?.unfocus();
     drawerPage.value = null;
     drawerTitle.value = null;
   }

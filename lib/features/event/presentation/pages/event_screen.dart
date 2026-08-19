@@ -1,4 +1,3 @@
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
@@ -8,9 +7,10 @@ import 'package:loci/core/theme/theme_extention.dart';
 import 'package:loci/core/utils/show_snackbar.dart';
 import 'package:loci/features/event/presentation/controllers/event_list_controller.dart';
 import 'package:loci/features/event/presentation/controllers/rsvp_controller.dart';
+import 'package:loci/features/main_nav/presentation/controllers/nav_controller.dart';
 import 'package:loci/routes/app_routes.dart';
+import 'package:loci/shared/widgets/adaptive_expandable_search_header.dart';
 import 'package:loci/shared/widgets/adaptive_refresh.dart';
-import 'package:loci/shared/widgets/custom_text_field.dart';
 import 'package:loci/shared/widgets/error_state.dart';
 import 'package:loci/shared/widgets/pagination_loading.dart';
 import '../widgets/event_card.dart';
@@ -32,6 +32,8 @@ class _EventScreenState extends State<EventScreen> {
   final FocusNode _searchFocus = FocusNode();
 
   bool _showScrollToTop = false;
+  bool _isSearchExpanded = false;
+  final List<Worker> _workers = [];
 
   @override
   void initState() {
@@ -39,7 +41,14 @@ class _EventScreenState extends State<EventScreen> {
     _scrollController.addListener(_onScroll);
 
     _searchController.text = eventController.searchQuery;
+    _isSearchExpanded = eventController.searchQuery.isNotEmpty;
     eventController.fetchEvents();
+
+    if (Get.isRegistered<NavController>()) {
+      final nav = Get.find<NavController>();
+      _workers.add(ever(nav.currentIndex, (_) => _resetSearchToDefault()));
+      _workers.add(ever(nav.drawerPage, (_) => _resetSearchToDefault()));
+    }
   }
 
   void _onScroll() {
@@ -65,8 +74,25 @@ class _EventScreenState extends State<EventScreen> {
     );
   }
 
+  void _resetSearchToDefault() {
+    FocusManager.instance.primaryFocus?.unfocus();
+    _searchFocus.unfocus();
+    if (_isSearchExpanded || _searchController.text.isNotEmpty) {
+      if (mounted) {
+        setState(() {
+          _isSearchExpanded = false;
+        });
+      }
+      _searchController.clear();
+      eventController.clearSearch();
+    }
+  }
+
   @override
   void dispose() {
+    for (final w in _workers) {
+      w.dispose();
+    }
     _scrollController.removeListener(_onScroll);
     _scrollController.dispose();
     _searchFocus.dispose();
@@ -76,7 +102,7 @@ class _EventScreenState extends State<EventScreen> {
   }
 
   void _eventOnTapHandler(String eventId, String eventTitle) {
-    FocusScope.of(context).unfocus();
+    _resetSearchToDefault();
     Get.toNamed(
       AppRoutes.eventDetails,
       arguments: {'eventId': eventId, "eventTitle": eventTitle},
@@ -101,7 +127,6 @@ class _EventScreenState extends State<EventScreen> {
   @override
   Widget build(BuildContext context) {
     final colors = context.colorScheme;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
       floatingActionButton: AnimatedSlide(
@@ -142,112 +167,28 @@ class _EventScreenState extends State<EventScreen> {
               parent: AlwaysScrollableScrollPhysics(),
             ),
             slivers: [
-              // ── 1. Top Title Section (Scrolls with page) ──────────────────
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 14, 16, 8),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Upcoming Events',
-                              style: AppTextStyle.textXl(
-                                color: colors.onSurface,
-                                weight: FontWeight.w800,
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                            const SizedBox(height: 3),
-                            Text(
-                              'RSVP to the events which you are interested in',
-                              style: AppTextStyle.textXs(
-                                color: colors.onSurfaceVariant,
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ],
-                        ),
-                      ),
-                      if (!showShimmer && events.isNotEmpty) ...[
-                        const SizedBox(width: 12),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 10,
-                            vertical: 5,
-                          ),
-                          decoration: BoxDecoration(
-                            color: colors.primary.withValues(alpha: 0.12),
-                            borderRadius: BorderRadius.circular(20),
-                            border: Border.all(
-                              color: colors.primary.withValues(alpha: 0.25),
-                              width: 0.8,
-                            ),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(
-                                Icons.event_available_rounded,
-                                size: 14,
-                                color: colors.primary,
-                              ),
-                              const SizedBox(width: 4),
-                              Text(
-                                '${events.length} events',
-                                style: TextStyle(
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w700,
-                                  color: colors.primary,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ],
-                  ),
-                ),
-              ),
-
-              // ── 2. Pinned Search Bar (Fixes at top when scrolled) ──────────
+              // ── 1. Floating Quick-Return Search Header (iOS Glass / Android M3) ─
               SliverPersistentHeader(
-                pinned: true,
-                delegate: _PinnedSearchBarDelegate(
-                  child: Container(
-                    height: 68,
-                    alignment: Alignment.center,
-                    padding: const EdgeInsets.fromLTRB(16, 6, 16, 10),
-                    child: SizedBox(
-                      height: 52,
-                      child: CustomTextField(
-                        controller: _searchController,
-                        focusNode: _searchFocus,
-                        hintText: "Search events, topics, or places...",
-                        borderColor: colors.outline.withValues(
-                          alpha: isDark ? 0.35 : 0.2,
-                        ),
-                        fontSize: 14,
-                        contentPaddingVertical: 12,
-                        textColor: colors.onSurface,
-                        hintTextColor: colors.onSurfaceVariant,
-                        onChanged: eventController.onSearchChanged,
-                        showClearButton: true,
-                        onClear: () {
-                          _searchController.clear();
-                          eventController.clearSearch();
-                        },
-                        prefixIcon: Icon(
-                          Icons.search_rounded,
-                          size: 20,
-                          color: colors.primary,
-                        ),
-                      ),
-                    ),
+                pinned: _isSearchExpanded || controller.searchQuery.isNotEmpty,
+                floating:
+                    !_isSearchExpanded && controller.searchQuery.isEmpty,
+                delegate: AdaptivePinnedSearchDelegate(
+                  child: AdaptiveExpandableSearchHeader(
+                    title: 'Upcoming Events',
+                    subtitle: 'RSVP to events you are interested in',
+                    searchController: _searchController,
+                    searchFocus: _searchFocus,
+                    isExpanded: _isSearchExpanded ||
+                        eventController.searchQuery.isNotEmpty,
+                    onToggleExpand: (expanded) {
+                      setState(() => _isSearchExpanded = expanded);
+                    },
+                    onSearchChanged: eventController.onSearchChanged,
+                    onSearchSubmitted: (v) =>
+                        eventController.submitSearch(v),
+                    onClear: () {
+                      eventController.clearSearch();
+                    },
                   ),
                 ),
               ),
@@ -347,85 +288,7 @@ class _EventScreenState extends State<EventScreen> {
   }
 }
 
-/// Sliver persistent header delegate for pinning the search bar with smooth frosted glass & bottom fade
-class _PinnedSearchBarDelegate extends SliverPersistentHeaderDelegate {
-  final Widget child;
 
-  _PinnedSearchBarDelegate({required this.child});
-
-  @override
-  double get minExtent => 68.0;
-
-  @override
-  double get maxExtent => 68.0;
-
-  @override
-  Widget build(
-    BuildContext context,
-    double shrinkOffset,
-    bool overlapsContent,
-  ) {
-    final colors = Theme.of(context).colorScheme;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final isScrolled = shrinkOffset > 0 || overlapsContent;
-
-    return ClipRect(
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 14, sigmaY: 14),
-        child: Container(
-          decoration: BoxDecoration(
-            color: Theme.of(context).scaffoldBackgroundColor.withValues(
-                  alpha: isScrolled ? (isDark ? 0.88 : 0.92) : 1.0,
-                ),
-            boxShadow: isScrolled
-                ? [
-                    BoxShadow(
-                      color: Colors.black.withValues(
-                        alpha: isDark ? 0.22 : 0.05,
-                      ),
-                      blurRadius: 12,
-                      offset: const Offset(0, 4),
-                    ),
-                  ]
-                : null,
-          ),
-          child: Stack(
-            children: [
-              child,
-              // Smooth bottom gradient transition line
-              if (isScrolled)
-                Positioned(
-                  bottom: 0,
-                  left: 0,
-                  right: 0,
-                  height: 4,
-                  child: DecoratedBox(
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                        colors: [
-                          colors.outline.withValues(
-                            alpha: isDark ? 0.15 : 0.08,
-                          ),
-                          Colors.transparent,
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  @override
-  bool shouldRebuild(covariant _PinnedSearchBarDelegate oldDelegate) {
-    return oldDelegate.child != child;
-  }
-}
 
 /// Modern illustrated empty state
 class _ModernEmptyState extends StatelessWidget {

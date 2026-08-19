@@ -13,6 +13,7 @@ import 'package:loci/features/explore_activity/presentation/controllers/raffle_e
 import 'package:loci/features/explore_activity/presentation/controllers/view_activity_controller.dart';
 import 'package:loci/features/explore_activity/presentation/controllers/task_controller.dart';
 import 'package:loci/features/explore_activity/presentation/controllers/total_checkin_controller.dart';
+import 'package:loci/features/explore_activity/presentation/controllers/total_participants_controller.dart';
 import 'package:loci/features/explore_activity/presentation/controllers/total_rsvp_controller.dart';
 
 class ExploreActivityBinding extends Bindings {
@@ -39,6 +40,7 @@ class ExploreActivityBinding extends Bindings {
 
     Get.lazyPut(() => TotalRsvpController(service), fenix: true);
     Get.lazyPut(() => TotalCheckinController(service), fenix: true);
+    Get.lazyPut(() => TotalParticipantsController(service), fenix: true);
   }
 }
 

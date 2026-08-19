@@ -7,8 +7,10 @@ import 'package:loci/core/utils/show_snackbar.dart';
 import 'package:loci/core/utils/validators.dart';
 import 'package:loci/features/network/presentation/controllers/schedule_meeting_controller.dart';
 import 'package:loci/shared/widgets/adaptive_pickers.dart';
+import 'package:loci/shared/widgets/custom_appbar.dart';
 import 'package:loci/shared/widgets/custom_button.dart';
 import 'package:loci/shared/widgets/custom_text_field.dart';
+import 'package:loci/shared/widgets/persistent_action_bar.dart';
 
 class ScheduleMeetingScreen extends StatefulWidget {
   const ScheduleMeetingScreen({super.key});
@@ -129,157 +131,155 @@ class _ScheduleMeetingScreenState extends State<ScheduleMeetingScreen> {
 
     return Scaffold(
       backgroundColor: colorScheme.surface,
-      appBar: AppBar(
-        leading: const BackButton(),
-        title: Text(
-          'Schedule Meeting',
-          style: AppTextStyle.textMd(weight: FontWeight.w600),
+      appBar: const CustomAppbar(title: 'Schedule Meeting'),
+      bottomNavigationBar: PersistentActionBar(
+        child: Obx(
+          () => SizedBox(
+            width: double.infinity,
+            height: 48,
+            child: CustomButton(
+              backgroundColor: colorScheme.primary,
+              onPressed: _controller.isLoading ? null : _onSubmit,
+              child: _controller.isLoading
+                  ? SizedBox(
+                      height: 20,
+                      width: 20,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: colorScheme.onPrimary,
+                      ),
+                    )
+                  : Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          'Schedule Meeting',
+                          style: AppTextStyle.textMd(
+                            color: colorScheme.onPrimary,
+                            weight: FontWeight.w600,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Icon(
+                          Icons.send_outlined,
+                          color: colorScheme.onPrimary,
+                          size: 18,
+                        ),
+                      ],
+                    ),
+            ),
+          ),
         ),
       ),
       body: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          child: Form(
-            key: _formKey,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _buildHeader(),
-                const SizedBox(height: 24),
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: colorScheme.surface,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: colorScheme.outline.withValues(alpha: 0.2),
+        padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+        child: Form(
+          key: _formKey,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildHeader(),
+              const SizedBox(height: 24),
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: colorScheme.surface,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: colorScheme.outline.withValues(alpha: 0.2),
+                  ),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildSectionLabel('Recipient details'),
+                    const SizedBox(height: 12),
+                    _buildField(
+                      label: 'Full name',
+                      hint: "Enter recipient's full name",
+                      controller: _recipientNameController,
+                      validator: validateFullName,
+                      isNameField: true,
                     ),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _buildSectionLabel('Recipient details'),
-                      const SizedBox(height: 12),
-                      _buildField(
-                        label: 'Full name',
-                        hint: "Enter recipient's full name",
-                        controller: _recipientNameController,
-                        validator: validateFullName,
-                        isNameField: true,
-                      ),
-                      const SizedBox(height: 12),
-                      _buildField(
-                        label: 'Email',
-                        hint: "Enter recipient's email",
-                        controller: _recipientEmailController,
-                        keyboardType: TextInputType.emailAddress,
-                        validator: validateEmail,
-                      ),
-                      const SizedBox(height: 20),
-                      _buildSectionLabel('Meeting details'),
-                      const SizedBox(height: 12),
-                      Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Expanded(
-                            child: _buildField(
-                              label: 'Date',
-                              hint: 'Pick date',
-                              controller: _dateController,
-                              readOnly: true,
-                              onTap: _showCalendar,
-                              validator: _validateDate,
-                              suffixIcon: Icon(
-                                Icons.calendar_today_outlined,
-                                size: 18,
-                                color: colorScheme.onSurfaceVariant,
-                              ),
+                    const SizedBox(height: 12),
+                    _buildField(
+                      label: 'Email',
+                      hint: "Enter recipient's email",
+                      controller: _recipientEmailController,
+                      keyboardType: TextInputType.emailAddress,
+                      validator: validateEmail,
+                    ),
+                    const SizedBox(height: 20),
+                    _buildSectionLabel('Meeting details'),
+                    const SizedBox(height: 12),
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(
+                          child: _buildField(
+                            label: 'Date',
+                            hint: 'Pick date',
+                            controller: _dateController,
+                            readOnly: true,
+                            onTap: _showCalendar,
+                            validator: _validateDate,
+                            suffixIcon: Icon(
+                              Icons.calendar_today_outlined,
+                              size: 18,
+                              color: colorScheme.onSurfaceVariant,
                             ),
                           ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: _buildField(
-                              label: 'Time',
-                              hint: 'Pick time',
-                              controller: _timeController,
-                              readOnly: true,
-                              onTap: _showTime,
-                              validator: _validateTime,
-                              suffixIcon: Icon(
-                                Icons.access_time,
-                                size: 18,
-                                color: colorScheme.onSurfaceVariant,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 12),
-                      _buildField(
-                        label: 'Location',
-                        hint: 'Enter meeting location',
-                        controller: _locationController,
-                        validator: (v) =>
-                            validateRequired(v, fieldName: 'Location'),
-                        prefixIcon: Icon(
-                          Icons.location_on_outlined,
-                          size: 18,
-                          color: colorScheme.onSurfaceVariant,
                         ),
-                      ),
-                      const SizedBox(height: 20),
-                      _buildField(
-                        label: 'Message',
-                        isRequired: false,
-                        hint: "Let's meet to discuss our plans...",
-                        controller: _messageController,
-                        maxLines: 4,
-                        maxLength: _messageMaxLength,
-                        validator: (v) => validateMaxLength(
-                          v,
-                          _messageMaxLength,
-                          fieldName: 'Message',
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 32),
-                Obx(
-                  () => CustomButton(
-                    backgroundColor: colorScheme.primary,
-                    onPressed: _controller.isLoading ? null : _onSubmit,
-                    child: _controller.isLoading
-                        ? SizedBox(
-                            height: 20,
-                            width: 20,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              color: colorScheme.onPrimary,
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: _buildField(
+                            label: 'Time',
+                            hint: 'Pick time',
+                            controller: _timeController,
+                            readOnly: true,
+                            onTap: _showTime,
+                            validator: _validateTime,
+                            suffixIcon: Icon(
+                              Icons.access_time,
+                              size: 18,
+                              color: colorScheme.onSurfaceVariant,
                             ),
-                          )
-                        : Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Text(
-                                'Schedule Meeting',
-                                style: AppTextStyle.textMd(
-                                  color: colorScheme.onPrimary,
-                                  weight: FontWeight.w600,
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-                              Icon(
-                                Icons.send_outlined,
-                                color: colorScheme.onPrimary,
-                                size: 18,
-                              ),
-                            ],
                           ),
-                  ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    _buildField(
+                      label: 'Location',
+                      hint: 'Enter meeting location',
+                      controller: _locationController,
+                      validator: (v) =>
+                          validateRequired(v, fieldName: 'Location'),
+                      prefixIcon: Icon(
+                        Icons.location_on_outlined,
+                        size: 18,
+                        color: colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    _buildField(
+                      label: 'Message',
+                      isRequired: false,
+                      hint: "Let's meet to discuss our plans...",
+                      controller: _messageController,
+                      maxLines: 4,
+                      maxLength: _messageMaxLength,
+                      validator: (v) => validateMaxLength(
+                        v,
+                        _messageMaxLength,
+                        fieldName: 'Message',
+                      ),
+                    ),
+                  ],
                 ),
-              ],
-            ),
+              ),
+              const SizedBox(height: 16),
+            ],
           ),
         ),
       ),

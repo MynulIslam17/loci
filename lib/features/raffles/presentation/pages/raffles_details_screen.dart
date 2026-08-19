@@ -19,6 +19,7 @@ import 'package:loci/shared/widgets/custom_appbar.dart';
 import 'package:loci/shared/widgets/custom_button.dart';
 import 'package:loci/shared/widgets/custom_image_container.dart';
 import 'package:loci/shared/widgets/error_state.dart';
+import 'package:loci/shared/widgets/persistent_action_bar.dart';
 import 'package:percent_indicator/linear_percent_indicator.dart';
 
 class RafflesDetailsScreen extends StatefulWidget {
@@ -93,38 +94,105 @@ class _RafflesDetailsScreenState extends State<RafflesDetailsScreen> {
   Widget build(BuildContext context) {
     final colorScheme = context.colorScheme;
 
-    return Scaffold(
-      backgroundColor: colorScheme.surface,
-      appBar: _showAppBar ? const CustomAppbar(title: 'Raffle Details') : null,
-      body: Obx(() {
-        if (_controller.isLoading) {
-          return const RafflesDetailsShimmer();
-        }
+    return Obx(() {
+      final details = _controller.raffleDetails;
+      final bool showBottomCta = !_controller.isLoading &&
+          _controller.errorMessage == null &&
+          details != null;
 
-        if (_controller.errorMessage != null &&
-            _controller.raffleDetails == null) {
-          return ErrorStateWidget(
-            message: _controller.errorMessage!,
-            onRetry: () => _controller.fetchRaffleDetails(_activeRaffleId),
+      final tasks = details?.tasks ?? [];
+      final completedTasks = tasks.where((t) => t.isCompleted).length;
+      final isAllCompleted = tasks.isNotEmpty && completedTasks == tasks.length;
+
+      return Scaffold(
+        backgroundColor: colorScheme.surface,
+        appBar:
+            _showAppBar ? const CustomAppbar(title: 'Raffle Details') : null,
+        body: () {
+          if (_controller.isLoading) {
+            return const RafflesDetailsShimmer();
+          }
+
+          if (_controller.errorMessage != null &&
+              _controller.raffleDetails == null) {
+            return ErrorStateWidget(
+              message: _controller.errorMessage!,
+              onRetry: () => _controller.fetchRaffleDetails(_activeRaffleId),
+            );
+          }
+
+          if (details == null) {
+            return const Center(child: Text('No raffle found'));
+          }
+
+          return AdaptiveRefresh(
+            onRefresh: () => _controller.refreshRaffleDetails(_activeRaffleId),
+            child: _RaffleDetailsContent(
+              details: details,
+              controller: _controller,
+              raffleId: _activeRaffleId,
+              onTaskTap: _taskHandler,
+            ),
           );
-        }
-
-        final details = _controller.raffleDetails;
-        if (details == null) {
-          return const Center(child: Text('No raffle found'));
-        }
-
-        return AdaptiveRefresh(
-          onRefresh: () => _controller.refreshRaffleDetails(_activeRaffleId),
-          child: _RaffleDetailsContent(
-            details: details,
-            controller: _controller,
-            raffleId: _activeRaffleId,
-            onTaskTap: _taskHandler,
-          ),
-        );
-      }),
-    );
+        }(),
+        bottomNavigationBar: showBottomCta
+            ? PersistentActionBar(
+                child: !details.isParticipating
+                    ? SizedBox(
+                        width: double.infinity,
+                        height: 48,
+                        child: CustomButton(
+                          text: 'Enter Raffle',
+                          isLoading: _controller.isJoining,
+                          backgroundColor: colorScheme.primary,
+                          textColor: colorScheme.onPrimary,
+                          textStyle:
+                              AppTextStyle.textSm(weight: FontWeight.w700),
+                          onPressed: () =>
+                              _controller.joinRaffle(_activeRaffleId),
+                        ),
+                      )
+                    : Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 14,
+                          vertical: 10,
+                        ),
+                        decoration: BoxDecoration(
+                          color:
+                              const Color(0xFF10B981).withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color:
+                                const Color(0xFF10B981).withValues(alpha: 0.35),
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            const Icon(
+                              Icons.verified_rounded,
+                              color: Color(0xFF10B981),
+                              size: 20,
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                isAllCompleted
+                                    ? "Raffle completed! Download prize above."
+                                    : "Entered ($completedTasks/${tasks.length} completed). Finish tasks to win!",
+                                style: AppTextStyle.textXs(
+                                  weight: FontWeight.w600,
+                                  color: colorScheme.onSurface,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+              )
+            : null,
+      );
+    });
   }
 }
 
@@ -503,60 +571,9 @@ class _RaffleDetailsContent extends StatelessWidget {
                 ],
               ),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 8),
           ],
-
-          // ── 6. Bottom Action / Status Bar ─────────────────────────────────
-          if (!details.isParticipating)
-            Obx(() {
-              return SizedBox(
-                width: double.infinity,
-                height: 46,
-                child: CustomButton(
-                  text: 'Enter Raffle',
-                  isLoading: controller.isJoining,
-                  backgroundColor: colorScheme.primary,
-                  textColor: colorScheme.onPrimary,
-                  textStyle: AppTextStyle.textSm(weight: FontWeight.w700),
-                  onPressed: () => controller.joinRaffle(raffleId),
-                ),
-              );
-            })
-          else
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-              decoration: BoxDecoration(
-                color: const Color(0xFF10B981).withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                  color: const Color(0xFF10B981).withValues(alpha: 0.3),
-                ),
-              ),
-              child: Row(
-                children: [
-                  const Icon(
-                    Icons.verified_rounded,
-                    color: Color(0xFF10B981),
-                    size: 20,
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      isAllCompleted
-                          ? "Raffle completed! Download your prize image above."
-                          : "You're entered! Complete all tasks to claim prize.",
-                      style: AppTextStyle.textXs(
-                        weight: FontWeight.w600,
-                        color: colorScheme.onSurface,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-
-          const SizedBox(height: 20),
+          const SizedBox(height: 12),
         ],
       ),
     );

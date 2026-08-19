@@ -6,7 +6,7 @@ import 'package:logger/logger.dart';
 import 'package:socket_io_client/socket_io_client.dart' as io;
 
 import '../../constants/app_url.dart';
-import 'package:loci/core/services/connectivity_service.dart';
+import 'package:loci/core/services/connectivity/connectivity_service.dart';
 import 'package:loci/core/storage/hive_storage_service.dart';
 import 'package:loci/features/chat/data/models/chat_message_model.dart';
 import 'package:loci/features/auth/presentation/controllers/auth_controller.dart';

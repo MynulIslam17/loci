@@ -2,7 +2,7 @@ import 'dart:async';
 
 import 'package:get/get.dart';
 import 'package:loci/core/enums/rsvp_status.dart';
-import 'package:loci/core/services/connectivity_service.dart';
+import 'package:loci/core/services/connectivity/connectivity_service.dart';
 import 'package:loci/core/storage/hive_storage_service.dart';
 import 'package:loci/core/utils/paginated_list_fetch_state.dart';
 import 'package:loci/features/event/data/models/event_list_model.dart';
@@ -22,6 +22,8 @@ class EventListController extends GetxController {
 
   final Rxn<String> _errorMessage = Rxn<String>();
   final RxList<EventModel> _eventList = <EventModel>[].obs;
+  final List<EventModel> _unfilteredEvents = <EventModel>[];
+  bool _unfilteredHasNextPage = true;
 
   int _currentPage = 1;
   bool _hasNextPage = true;
@@ -29,6 +31,7 @@ class EventListController extends GetxController {
 
   String _searchQuery = '';
   Timer? _searchDebounce;
+  int _searchSeq = 0;
   final RxBool isSearching = false.obs;
 
   bool get isInitialLoading => _fetch.initialLoading.value;
@@ -50,11 +53,11 @@ class EventListController extends GetxController {
     if (_storage != null && _searchQuery.isEmpty) {
       final cached = _storage.getFeedList('event_list_feed');
       if (cached.isNotEmpty) {
-        _eventList.assignAll(
-          cached
-              .map((e) => EventModel.fromJson(Map<String, dynamic>.from(e)))
-              .toList(),
-        );
+        final parsed = cached
+            .map((e) => EventModel.fromJson(Map<String, dynamic>.from(e)))
+            .toList();
+        _eventList.assignAll(parsed);
+        _unfilteredEvents.assignAll(parsed);
         _fetch.endFirstPage(markFetched: true);
       }
     }
@@ -68,17 +71,53 @@ class EventListController extends GetxController {
 
   void onSearchChanged(String query) {
     if (query == _searchQuery) return;
+    final hadSearch = _searchQuery.trim().isNotEmpty;
     _searchQuery = query;
+    final seq = ++_searchSeq;
     _searchDebounce?.cancel();
-    _searchDebounce = Timer(const Duration(milliseconds: 400), () {
-      fetchEvents(isSearch: true);
-    });
+
+    if (query.trim().isEmpty) {
+      if (hadSearch) {
+        _restoreUnfilteredList(sequenceToken: seq);
+      }
+    } else {
+      isSearching.value = true;
+      _searchDebounce = Timer(const Duration(milliseconds: 300), () {
+        fetchEvents(isSearch: true, sequenceToken: seq);
+      });
+    }
+  }
+
+  void submitSearch(String query) {
+    _searchDebounce?.cancel();
+    if (query.trim() == _searchQuery && query.trim().isNotEmpty) return;
+    _searchQuery = query;
+    final seq = ++_searchSeq;
+    if (query.trim().isEmpty) {
+      _restoreUnfilteredList(sequenceToken: seq);
+    } else {
+      isSearching.value = true;
+      fetchEvents(isSearch: true, sequenceToken: seq);
+    }
   }
 
   void clearSearch() {
+    if (_searchQuery.isEmpty) return; // Do not refetch if already empty
     _searchQuery = '';
     _searchDebounce?.cancel();
-    fetchEvents(isSearch: true);
+    final seq = ++_searchSeq;
+    _restoreUnfilteredList(sequenceToken: seq);
+  }
+
+  void _restoreUnfilteredList({int? sequenceToken}) {
+    if (_unfilteredEvents.isNotEmpty) {
+      _eventList.assignAll(_unfilteredEvents);
+      _hasNextPage = _unfilteredHasNextPage;
+      isSearching.value = false;
+      _errorMessage.value = null;
+    } else {
+      fetchEvents(isSearch: true, sequenceToken: sequenceToken);
+    }
   }
 
   @override
@@ -92,7 +131,10 @@ class EventListController extends GetxController {
     bool isRefresh = false,
     bool isSearch = false,
     String? businessId,
+    int? sequenceToken,
   }) async {
+    final currentSeq = sequenceToken ?? ++_searchSeq;
+
     if (isRefresh || isSearch) {
       _currentPage = 1;
       _hasNextPage = true;
@@ -118,9 +160,18 @@ class EventListController extends GetxController {
         businessId: businessId,
         search: _searchQuery,
       );
+
+      // Discard stale out-of-order response if another search was fired in the meantime
+      if (currentSeq != _searchSeq) return;
+
       _eventList.assignAll(model.events);
       _hasNextPage = model.meta.hasNextPage;
       _fetch.endFirstPage();
+
+      if (_searchQuery.isEmpty && !isSearch) {
+        _unfilteredEvents.assignAll(model.events);
+        _unfilteredHasNextPage = model.meta.hasNextPage;
+      }
 
       if (_currentPage == 1 &&
           _searchQuery.isEmpty &&
@@ -132,12 +183,15 @@ class EventListController extends GetxController {
         );
       }
     } catch (e) {
+      if (currentSeq != _searchSeq) return;
       if (_eventList.isEmpty) {
         _errorMessage.value = e.toString().replaceFirst('Exception: ', '');
       }
       _fetch.endFirstPage(markFetched: hasFetched || _eventList.isNotEmpty);
     } finally {
-      if (isSearch) isSearching.value = false;
+      if (currentSeq == _searchSeq && isSearch) {
+        isSearching.value = false;
+      }
     }
   }
 

@@ -4,6 +4,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:loci/core/constants/app_text_style.dart';
 import 'package:loci/core/theme/theme_extention.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 /// Loads a static map preview and opens Apple/Google Maps on tap.
@@ -47,24 +48,70 @@ class AuthenticatedMapImage extends StatelessWidget {
     final lat = latitude!;
     final lng = longitude!;
 
-    // Directions URL from user's current location to target event/route coordinates:
-    // - iOS: Apple Maps with destination address (daddr) and driving mode (dirflg=d)
-    // - Android & Web: Google Maps directions API with destination and driving travelmode
-    final mapUri = Platform.isIOS
-        ? Uri.parse('https://maps.apple.com/?daddr=$lat,$lng&dirflg=d')
-        : Uri.parse(
-            'https://www.google.com/maps/dir/?api=1&destination=$lat,$lng&travelmode=driving',
-          );
+    // 1. Request/verify location permission from the device
+    try {
+      if (Platform.isIOS || Platform.isAndroid) {
+        final status = await Permission.locationWhenInUse.status;
+        if (!status.isGranted && !status.isPermanentlyDenied) {
+          await Permission.locationWhenInUse.request();
+        }
+      }
+    } catch (_) {}
 
-    if (await canLaunchUrl(mapUri)) {
-      await launchUrl(mapUri, mode: LaunchMode.externalApplication);
-    } else {
-      await launchUrl(
-        Uri.parse(
+    try {
+      if (Platform.isIOS) {
+        // iOS Directions: Explicitly specify 'saddr=Current+Location' so Apple Maps
+        // uses the user's current GPS location to plot the turn-by-turn route to destination.
+        final appleMapsScheme = Uri.parse(
+          'maps://?saddr=Current+Location&daddr=$lat,$lng&dirflg=d',
+        );
+        if (await canLaunchUrl(appleMapsScheme)) {
+          await launchUrl(appleMapsScheme, mode: LaunchMode.externalApplication);
+          return;
+        }
+
+        // Fallback: Apple Maps HTTPS Universal link
+        final appleMapsWeb = Uri.parse(
+          'https://maps.apple.com/?saddr=Current+Location&daddr=$lat,$lng&dirflg=d',
+        );
+        if (await canLaunchUrl(appleMapsWeb)) {
+          await launchUrl(appleMapsWeb, mode: LaunchMode.externalApplication);
+          return;
+        }
+
+        // Fallback: Google Maps Universal Directions
+        final googleMapsWeb = Uri.parse(
           'https://www.google.com/maps/dir/?api=1&destination=$lat,$lng&travelmode=driving',
-        ),
-        mode: LaunchMode.externalApplication,
+        );
+        await launchUrl(googleMapsWeb, mode: LaunchMode.externalApplication);
+      } else {
+        // Android & Web Directions:
+        // 1. Try Google Maps Native Navigation intent (prompts for current location & launches turn-by-turn)
+        final googleNavUri = Uri.parse('google.navigation:q=$lat,$lng&mode=d');
+        if (await canLaunchUrl(googleNavUri)) {
+          await launchUrl(googleNavUri, mode: LaunchMode.externalApplication);
+          return;
+        }
+
+        // 2. Google Maps Universal directions API URL
+        final googleMapsUri = Uri.parse(
+          'https://www.google.com/maps/dir/?api=1&destination=$lat,$lng&travelmode=driving',
+        );
+        if (await canLaunchUrl(googleMapsUri)) {
+          await launchUrl(googleMapsUri, mode: LaunchMode.externalApplication);
+        } else {
+          await launchUrl(
+            googleMapsUri,
+            mode: LaunchMode.externalNonBrowserApplication,
+          );
+        }
+      }
+    } catch (_) {
+      // Resilient fallback to universal web directions
+      final fallbackUri = Uri.parse(
+        'https://www.google.com/maps/dir/?api=1&destination=$lat,$lng&travelmode=driving',
       );
+      await launchUrl(fallbackUri, mode: LaunchMode.externalApplication);
     }
   }
 

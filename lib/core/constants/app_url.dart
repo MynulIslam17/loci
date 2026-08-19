@@ -12,6 +12,9 @@ abstract class AppUrl {
 
   static const String signUp="$baseUrl/auth/register";
   static const String login="$baseUrl/auth/login";
+  static const String googleLogin="$baseUrl/auth/google";
+  static const String appleLogin="$baseUrl/auth/apple";
+  static const String refreshToken="$baseUrl/auth/refresh";
   static const String logout="$baseUrl/auth/logout";
   static const String forgetPassword="$baseUrl/auth/forgot-password";
   static const String verifySignupOtp="$baseUrl/auth/verify-email";

@@ -1,4 +1,5 @@
 import 'package:get/get.dart';
+import 'package:loci/core/utils/app_error_messages.dart';
 import 'package:loci/features/auth/domain/services/auth_service.dart';
 import 'package:loci/features/auth/presentation/controllers/auth_controller.dart';
 
@@ -30,7 +31,7 @@ class VerifyEmailController extends GetxController {
       }
       return true;
     } catch (e) {
-      errorMessage.value = e.toString().replaceFirst('Exception: ', '');
+      errorMessage.value = AppErrorMessages.sanitize(e);
       return false;
     } finally {
       isLoading.value = false;
@@ -52,7 +53,7 @@ class VerifyEmailController extends GetxController {
       );
       return true;
     } catch (e) {
-      errorMessage.value = e.toString().replaceFirst('Exception: ', '');
+      errorMessage.value = AppErrorMessages.sanitize(e);
       return false;
     } finally {
       isLoading.value = false;

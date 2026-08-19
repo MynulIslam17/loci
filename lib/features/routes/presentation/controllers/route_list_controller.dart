@@ -13,12 +13,17 @@ class RouteListController extends GetxController {
 
   final Rxn<String> _errorMessage = Rxn<String>();
   final RxList<RouteModel> _routeList = <RouteModel>[].obs;
+  final List<RouteModel> _unfilteredRoutes = <RouteModel>[];
+  bool _unfilteredHasNextPage = true;
+
   int _currentPage = 1;
   bool _hasNextPage = true;
-  final int _limit = 5;
+  final int _limit = 20;
 
   String _searchQuery = '';
   Timer? _searchDebounce;
+  int _searchSeq = 0;
+  final RxBool isSearching = false.obs;
 
   bool get isInitialLoading => _fetch.initialLoading.value;
   bool get isRefreshing => _fetch.refreshing.value;
@@ -33,17 +38,53 @@ class RouteListController extends GetxController {
 
   void onSearchChanged(String query) {
     if (query == _searchQuery) return;
+    final hadSearch = _searchQuery.trim().isNotEmpty;
     _searchQuery = query;
+    final seq = ++_searchSeq;
     _searchDebounce?.cancel();
-    _searchDebounce = Timer(const Duration(milliseconds: 400), () {
-      fetchRoutes(isSearch: true);
-    });
+
+    if (query.trim().isEmpty) {
+      if (hadSearch) {
+        _restoreUnfilteredList(sequenceToken: seq);
+      }
+    } else {
+      isSearching.value = true;
+      _searchDebounce = Timer(const Duration(milliseconds: 300), () {
+        fetchRoutes(isSearch: true, sequenceToken: seq);
+      });
+    }
+  }
+
+  void submitSearch(String query) {
+    _searchDebounce?.cancel();
+    if (query.trim() == _searchQuery && query.trim().isNotEmpty) return;
+    _searchQuery = query;
+    final seq = ++_searchSeq;
+    if (query.trim().isEmpty) {
+      _restoreUnfilteredList(sequenceToken: seq);
+    } else {
+      isSearching.value = true;
+      fetchRoutes(isSearch: true, sequenceToken: seq);
+    }
   }
 
   void clearSearch() {
+    if (_searchQuery.isEmpty) return; // Do not refetch if already empty
     _searchQuery = '';
     _searchDebounce?.cancel();
-    fetchRoutes(isSearch: true);
+    final seq = ++_searchSeq;
+    _restoreUnfilteredList(sequenceToken: seq);
+  }
+
+  void _restoreUnfilteredList({int? sequenceToken}) {
+    if (_unfilteredRoutes.isNotEmpty) {
+      _routeList.assignAll(_unfilteredRoutes);
+      _hasNextPage = _unfilteredHasNextPage;
+      isSearching.value = false;
+      _errorMessage.value = null;
+    } else {
+      fetchRoutes(isSearch: true, sequenceToken: sequenceToken);
+    }
   }
 
   @override
@@ -56,14 +97,17 @@ class RouteListController extends GetxController {
     bool isRefresh = false,
     bool isSearch = false,
     String? businessId,
+    int? sequenceToken,
   }) async {
+    final currentSeq = sequenceToken ?? ++_searchSeq;
+
     if (isRefresh || isSearch) {
       _currentPage = 1;
       _hasNextPage = true;
     }
 
     if (isSearch) {
-      _fetch.beginFirstPage(isRefresh: _routeList.isNotEmpty);
+      isSearching.value = true;
     } else {
       _fetch.beginFirstPage(isRefresh: isRefresh);
     }
@@ -76,12 +120,26 @@ class RouteListController extends GetxController {
         businessId: businessId,
         search: _searchQuery,
       );
+
+      // Discard stale out-of-order response
+      if (currentSeq != _searchSeq) return;
+
       _routeList.assignAll(model.routes);
       _hasNextPage = model.meta.hasNextPage;
       _fetch.endFirstPage();
+
+      if (_searchQuery.isEmpty && !isSearch) {
+        _unfilteredRoutes.assignAll(model.routes);
+        _unfilteredHasNextPage = model.meta.hasNextPage;
+      }
     } catch (e) {
+      if (currentSeq != _searchSeq) return;
       _errorMessage.value = e.toString().replaceFirst('Exception: ', '');
       _fetch.endFirstPage(markFetched: hasFetched);
+    } finally {
+      if (currentSeq == _searchSeq && isSearch) {
+        isSearching.value = false;
+      }
     }
   }
 
@@ -117,6 +175,7 @@ class RouteListController extends GetxController {
     _fetch.reset();
     _errorMessage.value = null;
     _routeList.clear();
+    _unfilteredRoutes.clear();
     _currentPage = 1;
     _hasNextPage = true;
     _searchQuery = '';

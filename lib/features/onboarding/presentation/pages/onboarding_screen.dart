@@ -1,14 +1,16 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/svg.dart';
 import 'package:get/get.dart';
 import 'package:loci/core/constants/app_text_style.dart';
 import 'package:loci/core/theme/theme_extention.dart';
+import 'package:loci/features/onboarding/data/models/onboarding_item.dart';
+import 'package:loci/features/onboarding/presentation/widgets/onboarding_bottom_bar.dart';
+import 'package:loci/features/onboarding/presentation/widgets/onboarding_card_stack.dart';
 import 'package:loci/routes/app_routes.dart';
 
-import 'package:loci/gen/assets.gen.dart';
-
 class OnboardingScreen extends StatefulWidget {
-  const OnboardingScreen({super.key});
+  final List<OnboardingItem>? items;
+
+  const OnboardingScreen({super.key, this.items});
 
   @override
   State<OnboardingScreen> createState() => _OnboardingScreenState();
@@ -19,30 +21,12 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   final RxInt _currentPage = 0.obs;
   final RxDouble _scrollPosition = 0.0.obs;
 
-  final List<Map<String, dynamic>> _pages = [
-    {
-      "title": "Discover Together",
-      "description": "Connect with locals by asking questions, sharing answers, and discovering great businesses.",
-      "image1": Assets.images.onimg1,
-      "image2": Assets.images.onimg2,
-    },
-    {
-      "title": "Discover your Place",
-      "description": "Find local events, meet friendly faces, and discover your place together.",
-      "image1": Assets.images.onimg3,
-      "image2": Assets.images.onimg4,
-    },
-    {
-      "title": "Where locals Lead",
-      "description": "Simplify networking and Elevate your events.",
-      "image1": Assets.images.onimg5,
-      "image2": Assets.images.onimg6,
-    },
-  ];
+  late final List<OnboardingItem> _pages;
 
   @override
   void initState() {
     super.initState();
+    _pages = widget.items ?? OnboardingItem.defaultItems;
     _pageController.addListener(() {
       _scrollPosition.value = _pageController.page ?? 0.0;
     });
@@ -61,242 +45,101 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   void _nextPage() {
     if (_currentPage.value < _pages.length - 1) {
       _pageController.nextPage(
-        duration: const Duration(milliseconds: 300),
-        curve: Curves.easeInOut,
+        duration: const Duration(milliseconds: 350),
+        curve: Curves.easeInOutCubic,
       );
     } else {
-      _navigateToHome();
+      _navigateToLogin();
     }
   }
 
-  void _navigateToHome() {
-
-    Get.toNamed(AppRoutes.login);
+  void _navigateToLogin() {
+    Get.offAllNamed(AppRoutes.login);
   }
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.colorScheme;
+
     return Scaffold(
-      backgroundColor: context.colorScheme.surface,
-      body: Stack(
-        children: [
-          Obx(() {
-            final scrollPosition = _scrollPosition.value;
-            return PageView.builder(
-            controller: _pageController,
-            onPageChanged: _onPageChanged,
-            itemCount: _pages.length,
-            itemBuilder: (context, index) {
-              final page = _pages[index];
+      backgroundColor: colors.surface,
+      body: SafeArea(
+        child: Column(
+          children: [
+            Expanded(
+              child: Obx(() {
+                final scrollPosition = _scrollPosition.value;
+                return PageView.builder(
+                  controller: _pageController,
+                  onPageChanged: _onPageChanged,
+                  itemCount: _pages.length,
+                  itemBuilder: (context, index) {
+                    final item = _pages[index];
+                    final double delta = index - scrollPosition;
+                    final double opacity = (1.0 - delta.abs()).clamp(0.0, 1.0);
 
-              // delta: distance from center (0.0 is center)
-              double delta = (index - scrollPosition);
-
-              // Calculate opacity based on distance from center
-              double opacity = (1.0 - delta.abs()).clamp(0.0, 1.0);
-
-              return Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 24),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    SizedBox(
-                      height: 380,
-                      width: double.infinity,
-                      child: Stack(
-                        alignment: Alignment.center,
-                        children: [
-                          // --- 1. BACKGROUND CONTAINER ---
-                          Transform(
-                            alignment: Alignment.center,
-                            transform: Matrix4.identity()
-                              ..setEntry(3, 2, 0.001)
-                              ..rotateZ(-0.15 + (delta * 0.05)),
-                            child: Container(
-                              width: 300,
-                              height: 300,
-                              decoration: BoxDecoration(
-                                color: context.colorScheme.primaryContainer.withValues(alpha: 0.4),
-                                borderRadius: BorderRadius.circular(48),
-                              ),
-                            ),
-                          ),
-
-                          // --- 2. BACK IMAGE ---
-                          Transform(
-                            alignment: Alignment.center,
-                            transform: Matrix4.identity()
-                              ..setEntry(3, 2, 0.001)
-                              ..translateByDouble(
-                                -20.0 - (delta * 12),
-                                -10.0,
-                                0.0,
-                                1.0,
-                              )
-                              ..rotateZ(-0.22 - (delta * 0.08))
-                              ..rotateY(-0.1),
-                            child: ClipRRect(
-                              borderRadius: BorderRadius.circular(28),
-                              child: _buildAssetWidget(
-                                page['image1'].path,
-                                width: 200,
-                                height: 240,
-
-                              ),
-                            ),
-                          ),
-
-                          // --- 3. FRONT IMAGE ---
-                          Transform(
-                            alignment: Alignment.center,
-                            transform: Matrix4.identity()
-                              ..setEntry(3, 2, 0.001)
-                              ..translateByDouble(
-                                35.0 + (delta * 12),
-                                50.0 + (delta * 8),
-                                0.0,
-                                1.0,
-                              )
-                              ..rotateZ(0.08 + (delta * 0.05)),
-                            child: Container(
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(28),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.black.withValues(alpha: 0.4),
-                                    blurRadius: 30,
-                                    offset: const Offset(12, 12),
-                                  )
-                                ],
-                              ),
-                              child: ClipRRect(
-                                borderRadius: BorderRadius.circular(26),
-                                child: _buildAssetWidget(
-                                  page['image2'].path,
-                                  width: 200,
-                                  height: 240,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 50),
-
-
-                    //  ensure opacity is high enough to be seen when the page is near active
-                    Opacity(
-                      opacity: opacity,
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 24),
                       child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Text(
-                            page['title'],
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              fontSize: 28,
-                              fontWeight: FontWeight.bold,
-                              color: context.colorScheme.onSurface,
-                            ),
-                          ),
-                          const SizedBox(height: 16),
-                          Text(
-                            page['description'],
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              fontSize: 16,
-                              color: context.colorScheme.onSurfaceVariant,
-                              height: 1.5,
+                          // 1. Dual-Card 3D Parallax Stack
+                          OnboardingCardStack(item: item, delta: delta),
+
+                          const SizedBox(height: 36),
+
+                          // 2. Fade & Glide Text Content
+                          Opacity(
+                            opacity: opacity,
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(
+                                  item.title,
+                                  textAlign: TextAlign.center,
+                                  style: AppTextStyle.displayXs(
+                                    color: colors.onSurface,
+                                    weight: FontWeight.w800,
+                                  ),
+                                ),
+                                const SizedBox(height: 12),
+                                Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 8,
+                                  ),
+                                  child: Text(
+                                    item.description,
+                                    textAlign: TextAlign.center,
+                                    style: AppTextStyle.textMd(
+                                      color: colors.onSurfaceVariant,
+                                      weight: FontWeight.w400,
+                                      height: 1.5,
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
                         ],
                       ),
-                    ),
-                  ],
-                ),
-              );
-            },
-          );
-          }),
+                    );
+                  },
+                );
+              }),
+            ),
 
-          // Bottom Navigation Controls (Static on top of PageView)
-          Positioned(
-            bottom: 40,
-            left: 20,
-            right: 20,
-            child: Obx(() {
-              final currentPage = _currentPage.value;
-              return Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                // Skip Button
-                Visibility(
-                  visible: currentPage < _pages.length - 1,
-                  maintainSize: true,
-                  maintainAnimation: true,
-                  maintainState: true,
-                  child: TextButton(
-                    onPressed: _navigateToHome,
-                    child:  Text("Skip", style:AppTextStyle.textMd(color: context.colorScheme.onSurface)),
-                  ),
-                ),
-
-                // Indicators
-                Row(
-                  children: List.generate(
-                    _pages.length,
-                        (index) => AnimatedContainer(
-                      duration: const Duration(milliseconds: 300),
-                      margin: const EdgeInsets.symmetric(horizontal: 4),
-                      height: 8,
-                      width: currentPage == index ? 24 : 8,
-                      decoration: BoxDecoration(
-                        color: currentPage == index ? context.colorScheme.primary : context.colorScheme.onSurface,
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                    ),
-                  ),
-                ),
-
-                // Next Button
-                IconButton(
-                  onPressed: _nextPage,
-                  icon: Icon(
-                    currentPage == _pages.length - 1 ? Icons.check : Icons.arrow_forward,
-                    color: Colors.white,
-                  ),
-                  style: IconButton.styleFrom(
-                    backgroundColor: context.colorScheme.primary,
-                    shape: const CircleBorder(),
-                  ),
-                ),
-              ],
-            );
-            }),
-          ),
-        ],
+            // 3. Modern Bottom Bar Navigation
+            Obx(
+              () => OnboardingBottomBar(
+                currentPage: _currentPage.value,
+                totalPages: _pages.length,
+                onSkip: _navigateToLogin,
+                onNext: _nextPage,
+              ),
+            ),
+          ],
+        ),
       ),
-    );
-  }
-
-  /// widget for show image based on extention
-  Widget _buildAssetWidget(String path, {double? width, double? height, Color? tintColor}) {
-    if (path.endsWith('.svg')) {
-      return SvgPicture.asset(
-        path,
-        width: width,
-        height: height,
-        fit: BoxFit.cover,
-        colorFilter: tintColor != null ? ColorFilter.mode(tintColor, BlendMode.srcIn) : null,
-      );
-    }
-    return Image.asset(
-      path,
-      width: width,
-      height: height,
-      fit: BoxFit.cover,
-      color: tintColor,
-      colorBlendMode: tintColor != null ? BlendMode.darken : null,
     );
   }
 }

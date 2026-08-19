@@ -34,6 +34,9 @@ class _ExploreActivityScreenState extends State<ExploreActivityScreen>
   late final ExploreActivitySearchFocus _searchFocus;
   Timer? _searchDebounce;
 
+  // Preserves separate search query for each tab: [0: Events, 1: Routes, 2: Raffles]
+  final List<String> _tabSearchQueries = ['', '', ''];
+
   late final String businessId;
   late final String businessName;
 
@@ -54,6 +57,16 @@ class _ExploreActivityScreenState extends State<ExploreActivityScreen>
     _tabController.addListener(() {
       if (_tabController.indexIsChanging) return;
       _searchDebounce?.cancel();
+
+      // Sync search field with the active tab's stored query
+      final tabQuery = _tabSearchQueries[_tabController.index];
+      if (_searchController.text != tabQuery) {
+        _searchController.text = tabQuery;
+        _searchController.selection = TextSelection.fromPosition(
+          TextPosition(offset: tabQuery.length),
+        );
+      }
+
       setState(() {});
       _loadTab(_tabController.index);
     });
@@ -73,10 +86,21 @@ class _ExploreActivityScreenState extends State<ExploreActivityScreen>
   }
 
   void _onSearchChanged(String query) {
+    _tabSearchQueries[_tabController.index] = query;
     _searchDebounce?.cancel();
-    _searchDebounce = Timer(const Duration(milliseconds: 400), () {
+    if (query.trim().isEmpty) {
       _applySearchToTab(_tabController.index, query);
-    });
+    } else {
+      _searchDebounce = Timer(const Duration(milliseconds: 300), () {
+        _applySearchToTab(_tabController.index, query);
+      });
+    }
+  }
+
+  void _submitSearch(String query) {
+    _tabSearchQueries[_tabController.index] = query;
+    _searchDebounce?.cancel();
+    _applySearchToTab(_tabController.index, query);
   }
 
   void _applySearchToTab(int index, String query) {
@@ -91,7 +115,7 @@ class _ExploreActivityScreenState extends State<ExploreActivityScreen>
   }
 
   void _loadTab(int index) {
-    final search = _searchController.text.trim();
+    final search = _tabSearchQueries[index].trim();
     switch (index) {
       case 0:
         _eventListController.loadIfNeeded(businessId, search: search);
@@ -126,9 +150,12 @@ class _ExploreActivityScreenState extends State<ExploreActivityScreen>
               controller: _searchController,
               focusNode: _searchFocusNode,
               onChanged: _onSearchChanged,
+              textInputAction: TextInputAction.search,
+              onFieldSubmitted: (v) => _submitSearch(v),
               showClearButton: true,
               onClear: () {
                 _searchDebounce?.cancel();
+                _tabSearchQueries[_tabController.index] = '';
                 _searchController.clear();
                 _applySearchToTab(_tabController.index, '');
               },
@@ -136,9 +163,13 @@ class _ExploreActivityScreenState extends State<ExploreActivityScreen>
               hintText: _searchHint,
               hintTextColor: colorScheme.onSurfaceVariant,
               textColor: colorScheme.onSurface,
-              suffixIcon: Icon(
-                Icons.search,
-                color: colorScheme.onSurfaceVariant,
+              suffixIcon: InkWell(
+                borderRadius: BorderRadius.circular(20),
+                onTap: () => _submitSearch(_searchController.text),
+                child: Icon(
+                  Icons.search,
+                  color: colorScheme.primary,
+                ),
               ),
             ),
           ),

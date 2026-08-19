@@ -2,7 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_stripe/flutter_stripe.dart';
 import 'package:get/get.dart';
-import 'package:loci/core/services/stripe_service.dart';
+import 'package:loci/core/services/stripe/stripe_service.dart';
 import 'package:loci/core/utils/show_snackbar.dart';
 import 'package:loci/features/my_business/data/models/my_business_list_model.dart';
 import 'package:loci/features/auth/presentation/controllers/auth_controller.dart';

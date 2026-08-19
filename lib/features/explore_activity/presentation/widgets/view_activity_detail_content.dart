@@ -408,7 +408,15 @@ class _RaffleDetailContent extends StatelessWidget {
                   icon: Icons.people_outline_rounded,
                   count: '${rafflesDetails.participantCount}',
                   label: 'Participants',
-                  onTap: () {},
+                  onTap: () {
+                    Get.toNamed(
+                      AppRoutes.viewTotalParticipants,
+                      arguments: {
+                        'title': 'Raffle Participants',
+                        'raffleId': rafflesDetails.raffleModel.id,
+                      },
+                    );
+                  },
                 ),
               ),
               const SizedBox(width: 12),

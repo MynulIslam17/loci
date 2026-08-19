@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
+import 'package:loci/core/constants/app_text_style.dart';
+import 'package:loci/core/theme/theme_extention.dart';
 import 'package:loci/core/utils/show_snackbar.dart';
 import 'package:loci/core/utils/validators.dart';
 import 'package:loci/features/auth/presentation/controllers/pass_reset_controller.dart';
+import 'package:loci/features/auth/presentation/widgets/auth_logo_header.dart';
 import 'package:loci/routes/app_routes.dart';
-import 'package:loci/core/constants/app_text_style.dart';
-import 'package:loci/core/theme/theme_extention.dart';
-import 'package:loci/gen/assets.gen.dart';
+import 'package:loci/shared/widgets/custom_appbar.dart';
 import 'package:loci/shared/widgets/custom_button.dart';
 import 'package:loci/shared/widgets/custom_text_field.dart';
 
@@ -18,50 +20,47 @@ class ResetPassScreen extends StatefulWidget {
 }
 
 class _ResetPassScreenState extends State<ResetPassScreen> {
-  // Form Key
   final _formKey = GlobalKey<FormState>();
-  // Get x controller
   final passResetController = Get.find<PassResetController>();
 
-  // Text controllers
   final TextEditingController passwordTEController = TextEditingController();
   final TextEditingController confirmPasswordTEController =
       TextEditingController();
 
-  // Data passed from previous screen
+  final FocusNode passwordFocus = FocusNode();
+  final FocusNode confirmPasswordFocus = FocusNode();
+
   late final String email;
 
   @override
   void initState() {
-    // TODO: implement initState
     super.initState();
-
-    // Receive arguments from previous screen
     final args = Get.arguments as Map<String, dynamic>?;
     email = args?["email"] ?? "";
   }
 
   @override
   void dispose() {
-    // TODO: implement dispose
-    // Dispose controllers and focus node to avoid memory leaks
     passwordTEController.dispose();
     confirmPasswordTEController.dispose();
+    passwordFocus.dispose();
+    confirmPasswordFocus.dispose();
     super.dispose();
   }
 
-  ///---pass reset handler
   void _passResetHandler() async {
-    //hide keyboard
     FocusScope.of(context).unfocus();
 
     if (!_formKey.currentState!.validate()) {
       return;
     }
 
-    String password = confirmPasswordTEController.text.trim();
+    TextInput.finishAutofillContext();
+    HapticFeedback.lightImpact();
 
-    bool success = await passResetController.resetPassword(
+    final password = confirmPasswordTEController.text.trim();
+
+    final success = await passResetController.resetPassword(
       email: email,
       newPassword: password,
     );
@@ -70,22 +69,20 @@ class _ResetPassScreenState extends State<ResetPassScreen> {
       SnackbarService.success(passResetController.successMessage.value!);
       Get.offAllNamed(AppRoutes.login);
     } else {
-      SnackbarService.error(passResetController.errorMessage.value!);
+      SnackbarService.error(
+        passResetController.errorMessage.value!,
+        title: 'Password reset failed',
+      );
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.colorScheme;
+
     return Scaffold(
-      backgroundColor: context.colorScheme.surface,
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: context.colorScheme.onSurface),
-          onPressed: () => Navigator.pop(context),
-        ),
-      ),
+      backgroundColor: colors.surface,
+      appBar: const CustomAppbar(title: ''),
       body: LayoutBuilder(
         builder: (context, constraints) {
           return SingleChildScrollView(
@@ -97,85 +94,83 @@ class _ResetPassScreenState extends State<ResetPassScreen> {
                     horizontal: 24,
                     vertical: 20,
                   ),
-                  child: Form(
-                    key: _formKey,
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        // 1. Logo
-                        Image.asset(Assets.images.logoPng.path, height: 100),
-                        const SizedBox(height: 40),
-
-                        // 2. Title
-                        Text(
-                          "Reset Password",
-                          style: AppTextStyle.displayXs(
-                            color: context.colorScheme.onSurface,
-                            weight: FontWeight.w700,
+                  child: AutofillGroup(
+                    child: Form(
+                      key: _formKey,
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Spacer(),
+                          const AuthLogoHeader(
+                            title: "Reset Password",
+                            subtitle:
+                                "Enter and confirm your new password below to reset your account access. Must be at least 8 characters long.",
                           ),
-                        ),
-                        const SizedBox(height: 12),
+                          const SizedBox(height: 36),
 
-                        // 3. Subtitle
-                        Text(
-                          "Enter and confirm your new password below to reset your account access. Your new password must be at least 8 characters long",
-                          textAlign: TextAlign.center,
-                          style: AppTextStyle.textXs(
-                            color: context.colorScheme.onSurfaceVariant,
+                          // New Password Field
+                          CustomTextField(
+                            controller: passwordTEController,
+                            focusNode: passwordFocus,
+                            title: "New Password",
+                            hintText: "Enter new password",
+                            isPassword: true,
+                            isObscureText: true,
+                            autofillHints: const [AutofillHints.newPassword],
+                            textInputAction: TextInputAction.next,
+                            onFieldSubmitted: (_) => FocusScope.of(context)
+                                .requestFocus(confirmPasswordFocus),
+                            borderColor:
+                                colors.outlineVariant.withValues(alpha: 0.6),
+                            textColor: colors.onSurface,
+                            titleStyle: AppTextStyle.textSm(
+                              color: colors.onSurface,
+                              weight: FontWeight.w600,
+                            ),
+                            validator: validatePassword,
                           ),
-                        ),
-                        const SizedBox(height: 40),
+                          const SizedBox(height: 18),
 
-                        // 4. New Password Field
-                        CustomTextField(
-                          controller: passwordTEController,
-                          title: "New Password",
-                          hintText: "Enter Password",
-                          isPassword: true,
-                          borderColor: context.colorScheme.outline,
-                          textColor: context.colorScheme.onSurface,
-                          titleStyle: AppTextStyle.textXs(
-                            color: context.colorScheme.onSurface,
-                            weight: FontWeight.w600,
+                          // Confirm Password Field
+                          CustomTextField(
+                            controller: confirmPasswordTEController,
+                            focusNode: confirmPasswordFocus,
+                            title: "Confirm Password",
+                            hintText: "Confirm new password",
+                            isPassword: true,
+                            isObscureText: true,
+                            autofillHints: const [AutofillHints.newPassword],
+                            textInputAction: TextInputAction.done,
+                            onFieldSubmitted: (_) => _passResetHandler(),
+                            borderColor:
+                                colors.outlineVariant.withValues(alpha: 0.6),
+                            textColor: colors.onSurface,
+                            titleStyle: AppTextStyle.textSm(
+                              color: colors.onSurface,
+                              weight: FontWeight.w600,
+                            ),
+                            validator: (value) => validateConfirmPassword(
+                              value,
+                              passwordTEController.text,
+                            ),
                           ),
-                          validator: validatePassword,
-                        ),
-                        const SizedBox(height: 20),
 
-                        // 5. Confirm Password Field
-                        CustomTextField(
-                          controller: confirmPasswordTEController,
-                          title: "Confirm Password",
-                          hintText: "Enter Password",
-                          isPassword: true,
-                          borderColor: context.colorScheme.outline,
-                          textColor: context.colorScheme.onSurface,
-                          titleStyle: AppTextStyle.textXs(
-                            color: context.colorScheme.onSurface,
-                            weight: FontWeight.w600,
+                          const Spacer(),
+                          const SizedBox(height: 32),
+
+                          // Action Button
+                          Obx(
+                            () => CustomButton(
+                              isLoading: passResetController.isLoading.value,
+                              backgroundColor: colors.primary,
+                              textColor: colors.onPrimary,
+                              text: "Reset Password",
+                              onPressed: _passResetHandler,
+                            ),
                           ),
-                          validator: (value) => validateConfirmPassword(
-                            value,
-                            passwordTEController.text,
-                          ),
-                        ),
-
-                        const Spacer(),
-                        const SizedBox(height: 40),
-
-                        // 6. Action Button
-                        Obx(
-                          () => CustomButton(
-                            isLoading: passResetController.isLoading.value,
-                            backgroundColor: context.colorScheme.primary,
-                            textColor: context.colorScheme.onPrimary,
-                            text: "Reset Password",
-                            onPressed: _passResetHandler,
-                          ),
-                        ),
-
-                        const SizedBox(height: 20),
-                      ],
+                          const SizedBox(height: 24),
+                        ],
+                      ),
                     ),
                   ),
                 ),

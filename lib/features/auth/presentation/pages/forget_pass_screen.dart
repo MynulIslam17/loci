@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
-import 'package:loci/core/utils/show_snackbar.dart';
-import 'package:loci/core/utils/validators.dart';
-import 'package:loci/routes/app_routes.dart';
 import 'package:loci/core/constants/app_text_style.dart';
 import 'package:loci/core/theme/theme_extention.dart';
-import 'package:loci/gen/assets.gen.dart';
+import 'package:loci/core/utils/show_snackbar.dart';
+import 'package:loci/core/utils/validators.dart';
 import 'package:loci/features/auth/presentation/controllers/forget_pass_controller.dart';
+import 'package:loci/features/auth/presentation/widgets/auth_logo_header.dart';
+import 'package:loci/routes/app_routes.dart';
+import 'package:loci/shared/widgets/custom_appbar.dart';
 import 'package:loci/shared/widgets/custom_button.dart';
 import 'package:loci/shared/widgets/custom_text_field.dart';
 
@@ -18,27 +20,30 @@ class ForgetPassScreen extends StatefulWidget {
 }
 
 class _ForgetPassScreenState extends State<ForgetPassScreen> {
-  // textField Controllers
   final emailTEController = TextEditingController();
-
-  // Form Key
+  final FocusNode emailFocus = FocusNode();
   final _formKey = GlobalKey<FormState>();
-
   final forgetPassController = Get.find<ForgetPassController>();
 
-  ///---- emailVerifyHandler
+  @override
+  void dispose() {
+    emailTEController.dispose();
+    emailFocus.dispose();
+    super.dispose();
+  }
 
   void _emailVerifyHandler() async {
-    //  Hide keyboard
     FocusScope.of(context).unfocus();
 
     if (!_formKey.currentState!.validate()) {
       return;
     }
 
-    String email = emailTEController.text.trim();
+    TextInput.finishAutofillContext();
+    HapticFeedback.lightImpact();
 
-    bool success = await forgetPassController.sendForgotOtp(email: email);
+    final email = emailTEController.text.trim();
+    final success = await forgetPassController.sendForgotOtp(email: email);
 
     if (success) {
       SnackbarService.success(
@@ -55,23 +60,19 @@ class _ForgetPassScreenState extends State<ForgetPassScreen> {
       );
     } else {
       SnackbarService.error(
-        forgetPassController.errorMessage.value ?? "Something went wrong",
+        forgetPassController.errorMessage.value ?? 'Something went wrong',
+        title: 'Could not send code',
       );
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.colorScheme;
+
     return Scaffold(
-      backgroundColor: context.colorScheme.surface,
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: context.colorScheme.onSurface),
-          onPressed: () => Navigator.pop(context),
-        ),
-      ),
+      backgroundColor: colors.surface,
+      appBar: const CustomAppbar(title: ''),
       body: LayoutBuilder(
         builder: (context, constraints) {
           return SingleChildScrollView(
@@ -83,70 +84,56 @@ class _ForgetPassScreenState extends State<ForgetPassScreen> {
                     horizontal: 24,
                     vertical: 20,
                   ),
-                  child: Form(
-                    key: _formKey,
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        // Logo centered
-                        Image.asset(
-                          Assets.images.logoPng.path,
-                          height: 90,
-                          width: 169,
-                        ),
-                        const SizedBox(height: 48),
-
-                        // Title text
-                        Text(
-                          "Forgot Password",
-                          style: AppTextStyle.displayXs(
-                            color: context.colorScheme.onSurface,
-                            weight: FontWeight.w700,
+                  child: AutofillGroup(
+                    child: Form(
+                      key: _formKey,
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Spacer(),
+                          const AuthLogoHeader(
+                            title: "Forgot Password",
+                            subtitle:
+                                "Enter your email address to receive a verification code.",
                           ),
-                        ),
-                        const SizedBox(height: 10),
+                          const SizedBox(height: 36),
 
-                        // Subtitle text
-                        Text(
-                          "Enter email address to reset your password.",
-                          textAlign: TextAlign.center,
-                          style: AppTextStyle.textXs(
-                            color: context.colorScheme.onSurfaceVariant,
+                          // Email Field
+                          CustomTextField(
+                            controller: emailTEController,
+                            focusNode: emailFocus,
+                            keyboardType: TextInputType.emailAddress,
+                            textInputAction: TextInputAction.done,
+                            autofillHints: const [AutofillHints.email],
+                            onFieldSubmitted: (_) => _emailVerifyHandler(),
+                            title: "Email",
+                            hintText: "example@gmail.com",
+                            borderColor:
+                                colors.outlineVariant.withValues(alpha: 0.6),
+                            textColor: colors.onSurface,
+                            titleStyle: AppTextStyle.textSm(
+                              color: colors.onSurface,
+                              weight: FontWeight.w600,
+                            ),
+                            validator: validateEmail,
                           ),
-                        ),
-                        const SizedBox(height: 40),
 
-                        // Email Field with theme-aware colors
-                        CustomTextField(
-                          controller: emailTEController,
-                          title: "Email",
-                          hintText: "example@gmail.com",
-                          borderColor: context.colorScheme.outline,
-                          textColor: context.colorScheme.onSurface,
-                          titleStyle: AppTextStyle.textXs(
-                            color: context.colorScheme.onSurface,
-                            weight: FontWeight.w600,
+                          const Spacer(),
+                          const SizedBox(height: 32),
+
+                          // Action Button
+                          Obx(
+                            () => CustomButton(
+                              isLoading: forgetPassController.isLoading.value,
+                              backgroundColor: colors.primary,
+                              textColor: colors.onPrimary,
+                              text: "Send Code",
+                              onPressed: _emailVerifyHandler,
+                            ),
                           ),
-                          validator: validateEmail,
-                        ),
-
-                        const Spacer(),
-
-                        const SizedBox(height: 40),
-
-                        // Action Button
-                        Obx(
-                          () => CustomButton(
-                            isLoading: forgetPassController.isLoading.value,
-                            backgroundColor: context.colorScheme.primary,
-                            textColor: context.colorScheme.onPrimary,
-                            text: "Send Code",
-                            onPressed: _emailVerifyHandler,
-                          ),
-                        ),
-
-                        const SizedBox(height: 20),
-                      ],
+                          const SizedBox(height: 24),
+                        ],
+                      ),
                     ),
                   ),
                 ),

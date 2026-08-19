@@ -3,6 +3,7 @@ import 'package:loci/core/constants/app_text_style.dart';
 import 'package:loci/core/theme/theme_extention.dart';
 import 'package:get/get.dart';
 import 'package:loci/features/routes/domain/services/routes_service.dart';
+import 'package:loci/shared/widgets/custom_appbar.dart';
 import 'package:loci/shared/widgets/error_state.dart';
 import 'package:loci/routes/app_routes.dart';
 import 'package:loci/core/enums/checkin_status.dart';
@@ -11,6 +12,7 @@ import 'package:loci/features/routes/presentation/widgets/route_details_skeleton
 import 'package:loci/shared/widgets/company_info_card.dart';
 import 'package:loci/shared/widgets/authenticated_map_image.dart';
 import 'package:loci/shared/widgets/custom_image_container.dart';
+import 'package:loci/shared/widgets/persistent_action_bar.dart';
 
 class RouteDetailsScreen extends StatefulWidget {
   const RouteDetailsScreen({
@@ -105,131 +107,122 @@ class _RouteDetailsScreenState extends State<RouteDetailsScreen> {
         if (didPop) return;
         _popWithResult();
       },
-      child: Scaffold(
-      backgroundColor: colorScheme.surface,
-      appBar: showAppbar
-          ? AppBar(
-              title: Text(
-                routeName,
-                style: AppTextStyle.textMd(weight: FontWeight.w600),
-              ),
-              leading: IconButton(
-                icon: Icon(Icons.arrow_back, color: colorScheme.onSurface),
-                onPressed: () => Get.back(),
-              ),
-            )
-          : null,
-      body: Obx(() {
-        if (controller.isLoading) {
-          return const RouteDetailsSkeleton();
-        }
+      child: Obx(() {
+        final bool showBottomBar = !controller.isLoading &&
+            controller.errorMessage == null &&
+            controller.routeDetails != null;
 
-        // --- Error state
-        if (controller.errorMessage != null) {
-          return ErrorStateWidget(
-            message: controller.errorMessage!,
-            onRetry: () => controller.fetchRouteDetails(routeId),
-          );
-        }
+        final checkInStatus = controller.routeDetails?.myCheckInStatus;
+        final isCheckedIn = checkInStatus == CheckInStatus.checkedIn;
 
-        // --- Normal state
-
-        final business = controller.routeDetails?.organizerBusiness;
-        final route = controller.routeDetails?.routeModel;
-
-        return SingleChildScrollView(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // 1. Header Image Section
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                child: CustomCachedImage(
-                  imageUrl: route?.banner,
-                  height: 200,
-                  width: double.infinity,
-                  fit: BoxFit.cover,
-                  customBorderRadius: BorderRadius.circular(16),
-                ),
-              ),
-
-              Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      route?.title ?? "",
-                      style: AppTextStyle.textLg(weight: FontWeight.w600),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      route?.details ?? "",
-                      style: AppTextStyle.textXs(
-                        color: colorScheme.onSurfaceVariant,
+        return Scaffold(
+          backgroundColor: colorScheme.surface,
+          appBar: showAppbar
+              ? CustomAppbar(
+                  title: routeName.isNotEmpty ? routeName : 'Route Details',
+                )
+              : null,
+          bottomNavigationBar: showBottomBar
+              ? PersistentActionBar(
+                  child: SizedBox(
+                    width: double.infinity,
+                    height: 48,
+                    child: ElevatedButton.icon(
+                      icon: Icon(
+                        isCheckedIn
+                            ? Icons.check_circle_rounded
+                            : Icons.qr_code_scanner_rounded,
+                        size: 20,
+                        color: isCheckedIn
+                            ? const Color(0xFF10B981)
+                            : colorScheme.onPrimary,
+                      ),
+                      onPressed: isCheckedIn ? null : _openCheckIn,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: isCheckedIn
+                            ? const Color(0xFF10B981).withValues(alpha: 0.15)
+                            : colorScheme.primary,
+                        foregroundColor: isCheckedIn
+                            ? const Color(0xFF10B981)
+                            : colorScheme.onPrimary,
+                        disabledBackgroundColor:
+                            const Color(0xFF10B981).withValues(alpha: 0.15),
+                        disabledForegroundColor: const Color(0xFF10B981),
+                        elevation: isCheckedIn ? 0 : 2,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                      ),
+                      label: Text(
+                        isCheckedIn
+                            ? 'Checked In to Route'
+                            : 'Check In to Route',
+                        style: AppTextStyle.textSm(weight: FontWeight.w700),
                       ),
                     ),
-                    const SizedBox(height: 16),
+                  ),
+                )
+              : null,
+          body: () {
+            if (controller.isLoading) {
+              return const RouteDetailsSkeleton();
+            }
 
-                    // 2. Info Section with Side Button
-                    Row(
+            // --- Error state
+            if (controller.errorMessage != null) {
+              return ErrorStateWidget(
+                message: controller.errorMessage!,
+                onRetry: () => controller.fetchRouteDetails(routeId),
+              );
+            }
+
+            // --- Normal state
+            final business = controller.routeDetails?.organizerBusiness;
+            final route = controller.routeDetails?.routeModel;
+
+            return SingleChildScrollView(
+              padding: const EdgeInsets.only(bottom: 24),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // 1. Header Image Section
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                    child: CustomCachedImage(
+                      imageUrl: route?.banner,
+                      height: 200,
+                      width: double.infinity,
+                      fit: BoxFit.cover,
+                      customBorderRadius: BorderRadius.circular(16),
+                    ),
+                  ),
+
+                  Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Expanded(
-                          child: _buildInfoRow(
-                            colorScheme,
-                            route?.location ?? "",
-                            route?.openingTime ?? "",
-                            route?.availabilityType ?? "",
+                        Text(
+                          route?.title ?? "",
+                          style: AppTextStyle.textLg(weight: FontWeight.w600),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          route?.details ?? "",
+                          style: AppTextStyle.textXs(
+                            color: colorScheme.onSurfaceVariant,
                           ),
                         ),
-                        const SizedBox(width: 8),
-                        Obx(() {
-                          final checkInStatus =
-                              controller.routeDetails?.myCheckInStatus;
-                          final isCheckedIn =
-                              checkInStatus == CheckInStatus.checkedIn;
+                        const SizedBox(height: 16),
 
-                          return ConstrainedBox(
-                            constraints: const BoxConstraints(maxWidth: 140),
-                            child: ElevatedButton.icon(
-                              icon: Icon(
-                                isCheckedIn
-                                    ? Icons.check_circle
-                                    : Icons.qr_code,
-                                size: 18,
-                                color: context.colorScheme.onSurface,
-                              ),
-                              onPressed: isCheckedIn ? null : _openCheckIn,
-                              style: ElevatedButton.styleFrom(
-                                foregroundColor:
-                                    context.colorScheme.onSurface,
-                                backgroundColor: isCheckedIn
-                                    ? context
-                                        .colorScheme.surfaceContainerHigh
-                                    : context.colorScheme.primary,
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 10,
-                                  vertical: 10,
-                                ),
-                                visualDensity: VisualDensity.compact,
-                                tapTargetSize:
-                                    MaterialTapTargetSize.shrinkWrap,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(6),
-                                ),
-                              ),
-                              label: Text(
-                                checkInStatus?.label ?? 'Check In',
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-                          );
-                        }),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
+                        // 2. Info Section
+                        _buildInfoRow(
+                          colorScheme,
+                          route?.location ?? "",
+                          route?.openingTime ?? "",
+                          route?.availabilityType ?? "",
+                        ),
+                        const SizedBox(height: 16),
 
                     // 3. Interactive Map Section
                     Card(
@@ -272,10 +265,11 @@ class _RouteDetailsScreenState extends State<RouteDetailsScreen> {
             ],
           ),
         );
-      }),
-      ),
+      }(),
     );
-  }
+  }),
+);
+}
 
   Widget _buildInfoRow(
     ColorScheme colorScheme,

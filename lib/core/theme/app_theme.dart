@@ -4,9 +4,12 @@ import 'app_colors.dart';
 class AppThemes {
   AppThemes._();
 
+  static const String _fontFamily = 'Inter';
+
   // --- LIGHT THEME ---
   static final lightTheme = ThemeData(
     useMaterial3: true,
+    fontFamily: _fontFamily,
     brightness: Brightness.light,
     colorScheme: ColorScheme.light(
       surface: AppColors.background,        // Pure white from image
@@ -25,8 +28,6 @@ class AppThemes {
       surfaceContainerHigh: AppColors.base100, // Card background
 
       surfaceContainer: AppColors.base500, //works on card (on light mode show light dark)
-
-
     ),
 
     appBarTheme: const AppBarTheme(
@@ -36,12 +37,19 @@ class AppThemes {
       elevation: 0,
       scrolledUnderElevation: 3,            // Shadow appears when content scrolls under
       surfaceTintColor: Colors.transparent, // Required for real shadow in M3
+      titleTextStyle: TextStyle(
+        fontFamily: _fontFamily,
+        fontSize: 18,
+        fontWeight: FontWeight.w700,
+        color: AppColors.dark900,
+      ),
     ),
   );
 
   // --- DARK THEME ---
   static final darkTheme = ThemeData(
     useMaterial3: true,
+    fontFamily: _fontFamily,
     brightness: Brightness.dark,
     colorScheme: ColorScheme.dark(
       surface: AppColors.dark900,           // Dark Background (#141414)
@@ -58,17 +66,21 @@ class AppThemes {
       error: AppColors.danger,
 
       surfaceContainer: AppColors.dark800,//works on card (on dark mode show deep dark)
-
-
     ),
 
     appBarTheme: const AppBarTheme(
-      backgroundColor:AppColors.dark500,
+      backgroundColor: AppColors.dark500,
       foregroundColor: AppColors.base50,
       centerTitle: false,
       elevation: 0,
       scrolledUnderElevation: 3,
       surfaceTintColor: Colors.transparent,
+      titleTextStyle: TextStyle(
+        fontFamily: _fontFamily,
+        fontSize: 18,
+        fontWeight: FontWeight.w700,
+        color: AppColors.base50,
+      ),
     ),
   );
 }

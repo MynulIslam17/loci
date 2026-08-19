@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:loci/core/constants/app_text_style.dart';
-import 'package:loci/core/services/connectivity_service.dart';
+import 'package:loci/core/services/connectivity/connectivity_service.dart';
 import 'package:loci/core/utils/app_error_messages.dart';
 
 import '../theme/app_colors.dart';

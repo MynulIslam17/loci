@@ -16,6 +16,43 @@ class AuthService {
     return _persistAuthResponse(body);
   }
 
+  Future<({UserModel user, String token})> loginWithGoogle({
+    required String idToken,
+  }) async {
+    final body = await _repository.loginWithGoogle(idToken: idToken);
+    return _persistAuthResponse(body);
+  }
+
+  Future<({UserModel user, String token})> loginWithApple({
+    required String identityToken,
+  }) async {
+    final body = await _repository.loginWithApple(identityToken: identityToken);
+    return _persistAuthResponse(body);
+  }
+
+  Future<({String accessToken, String? refreshToken})> refreshToken({
+    required String refreshToken,
+  }) async {
+    final body = await _repository.refreshToken(refreshToken: refreshToken);
+    final inner = body['data'];
+    if (inner is! Map) throw Exception('Invalid refresh token response');
+
+    final token = (inner['accessToken'] ?? inner['token'])?.toString();
+    final newRefreshToken = inner['refreshToken']?.toString();
+    if (token == null || token.isEmpty) {
+      throw Exception('Invalid refresh token response');
+    }
+
+    await _repository.saveTokens(
+      token: token,
+      refreshToken: newRefreshToken ?? refreshToken,
+    );
+    return (
+      accessToken: token,
+      refreshToken: newRefreshToken ?? refreshToken,
+    );
+  }
+
   Future<({UserModel user, String token})> _persistAuthResponse(
     Map<String, dynamic> body,
   ) async {
@@ -24,12 +61,17 @@ class AuthService {
 
     final userJson = inner['user'];
     final token = (inner['accessToken'] ?? inner['token'])?.toString();
+    final refreshToken = inner['refreshToken']?.toString();
     if (userJson == null || token == null || token.isEmpty) {
       throw Exception('Invalid login response');
     }
 
     final user = UserModel.fromJson(Map<String, dynamic>.from(userJson as Map));
-    await _repository.saveUserData(model: user, token: token);
+    await _repository.saveUserData(
+      model: user,
+      token: token,
+      refreshToken: refreshToken,
+    );
     return (user: user, token: token);
   }
 

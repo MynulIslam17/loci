@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:loci/core/constants/app_text_style.dart';
-import 'package:loci/core/services/connectivity_service.dart';
+import 'package:loci/core/services/connectivity/connectivity_service.dart';
 
 /// LinkedIn-style full-width connectivity strip.
 ///
@@ -37,38 +37,33 @@ class OfflineIndicatorBanner extends StatelessWidget {
       final restored =
           connectivity.justReconnected.value && connectivity.isAppReady.value;
       final showBar = offline || restored;
+
+      if (!showBar) {
+        return child;
+      }
+
       final media = MediaQuery.of(context);
       final topInset = media.padding.top;
 
       return AnnotatedRegion<SystemUiOverlayStyle>(
-        value: showBar
-            ? _barOverlay
-            : const SystemUiOverlayStyle(
-                statusBarColor: Colors.transparent,
-                systemNavigationBarColor: Colors.transparent,
-                systemNavigationBarDividerColor: Colors.transparent,
-              ),
+        value: _barOverlay,
         child: Column(
           children: [
             AnimatedSize(
               duration: const Duration(milliseconds: 380),
               curve: Curves.easeInOutCubic,
               alignment: Alignment.topCenter,
-              child: showBar
-                  ? _NetworkStatusBar(
-                      statusBarHeight: topInset,
-                      restored: restored && !offline,
-                    )
-                  : const SizedBox(width: double.infinity),
+              child: _NetworkStatusBar(
+                statusBarHeight: topInset,
+                restored: restored && !offline,
+              ),
             ),
             Expanded(
               child: MediaQuery(
-                data: showBar
-                    ? media.copyWith(
-                        padding: media.padding.copyWith(top: 0),
-                        viewPadding: media.viewPadding.copyWith(top: 0),
-                      )
-                    : media,
+                data: media.copyWith(
+                  padding: media.padding.copyWith(top: 0),
+                  viewPadding: media.viewPadding.copyWith(top: 0),
+                ),
                 child: child,
               ),
             ),

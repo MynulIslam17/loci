@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'package:flutter/cupertino.dart';
 import 'package:get/get.dart';
-import 'package:loci/core/services/connectivity_service.dart';
+import 'package:loci/core/services/connectivity/connectivity_service.dart';
 import 'package:loci/core/storage/hive_storage_service.dart';
 import 'package:loci/core/utils/paginated_list_fetch_state.dart';
 import 'package:loci/shared/models/pagination_model.dart';

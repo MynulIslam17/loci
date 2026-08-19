@@ -1,5 +1,5 @@
 import 'package:flutter/foundation.dart';
-import 'package:loci/core/services/connectivity_service.dart';
+import 'package:loci/core/services/connectivity/connectivity_service.dart';
 
 /// Instagram-style like while offline: paint the like, then undo it.
 /// Never hits the network.

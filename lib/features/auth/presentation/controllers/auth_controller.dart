@@ -3,9 +3,10 @@ import 'package:loci/core/di/bindings/app_bindings.dart';
 import 'package:loci/features/auth/data/models/user_model.dart';
 import 'package:loci/features/auth/domain/services/auth_service.dart';
 import 'package:loci/core/services/socket/chat_socket_service.dart';
-import 'package:loci/core/services/stripe_service.dart';
+import 'package:loci/core/services/stripe/stripe_service.dart';
 import 'package:loci/core/storage/hive_storage_service.dart';
 import 'package:loci/routes/app_routes.dart';
+import 'package:loci/shared/widgets/loading_dialog.dart';
 
 /// Session / auth shell controller. UI listens via Obx.
 class AuthController extends GetxController {
@@ -102,12 +103,20 @@ class AuthController extends GetxController {
   // logout() only tears down once.
   static bool _loggingOut = false;
 
-  Future<void> logout() async {
+  Future<void> logout({bool showLoader = true}) async {
     if (_loggingOut) return;
     _loggingOut = true;
+
+    if (showLoader) {
+      showLoadingDialog(message: 'Signing out...');
+    }
+
     try {
       await _performLogout();
     } finally {
+      if (showLoader) {
+        hideLoadingDialog();
+      }
       _loggingOut = false;
     }
   }

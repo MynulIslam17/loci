@@ -7,9 +7,10 @@ import 'package:loci/features/explore_activity/domain/services/explore_activity_
 import 'package:loci/features/explore_activity/presentation/controllers/business_event_details_controller.dart';
 import 'package:loci/features/explore_activity/presentation/controllers/business_route_details_controller.dart';
 import 'package:loci/features/explore_activity/presentation/controllers/total_checkin_controller.dart';
+import 'package:loci/shared/widgets/adaptive_expandable_search_header.dart';
+import 'package:loci/shared/widgets/adaptive_refresh.dart';
 import 'package:loci/shared/widgets/custom_appbar.dart';
 import 'package:loci/shared/widgets/custom_image_container.dart';
-import 'package:loci/shared/widgets/custom_text_field.dart';
 
 class TotalCheckInScreen extends StatefulWidget {
   const TotalCheckInScreen({super.key});
@@ -22,6 +23,9 @@ class _TotalCheckInScreenState extends State<TotalCheckInScreen> {
   late String title;
   late final TotalCheckinController _controller;
   final _searchController = TextEditingController();
+
+  final FocusNode _searchFocus = FocusNode();
+  bool _isSearchExpanded = false;
 
   @override
   void initState() {
@@ -67,6 +71,7 @@ class _TotalCheckInScreenState extends State<TotalCheckInScreen> {
 
   @override
   void dispose() {
+    _searchFocus.dispose();
     _searchController.dispose();
     super.dispose();
   }
@@ -78,7 +83,7 @@ class _TotalCheckInScreenState extends State<TotalCheckInScreen> {
     return Scaffold(
       backgroundColor: colorScheme.surface,
       appBar: CustomAppbar(title: title),
-      body: RefreshIndicator(
+      body: AdaptiveRefresh(
         onRefresh: () => _controller.fetchCheckins(isRefresh: true),
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16.0),
@@ -86,81 +91,61 @@ class _TotalCheckInScreenState extends State<TotalCheckInScreen> {
             physics: const AlwaysScrollableScrollPhysics(),
             slivers: [
               SliverToBoxAdapter(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const SizedBox(height: 12),
-
-                    // --- Search Bar ---
-                    CustomTextField(
-                      controller: _searchController,
-                      borderColor: colorScheme.outline,
+                child: Padding(
+                  padding: const EdgeInsets.only(top: 8, bottom: 8),
+                  child: Obx(
+                    () => AdaptiveExpandableSearchHeader(
+                      title: "Total Check-Ins",
+                      subtitle: "${_controller.totalCount} Leads",
                       hintText: "Search check-ins contacts...",
-                      hintTextColor: colorScheme.onSurfaceVariant,
-                      textColor: colorScheme.onSurface,
-                      showClearButton: true,
-                      onChanged: _controller.onSearchChanged,
-                      suffixIcon: Icon(
-                        Icons.search,
-                        color: colorScheme.onSurfaceVariant,
-                      ),
-                    ),
-                    const SizedBox(height: 20),
-
-                    // --- Header Row ---
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          "Total Check-Ins",
-                          style: AppTextStyle.textLg(weight: FontWeight.w700),
-                        ),
-                        Obx(
-                          () => OutlinedButton.icon(
-                            onPressed: _controller.isExporting
-                                ? null
-                                : _controller.exportCsv,
-                            icon: _controller.isExporting
-                                ? const SizedBox(
-                                    width: 14,
-                                    height: 14,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 2,
-                                    ),
-                                  )
-                                : Icon(
-                                    Icons.save_alt,
-                                    size: 18,
-                                    color: colorScheme.onSurface,
-                                  ),
-                            label: Text(
-                              _controller.isExporting ? "Saving..." : "Save",
-                              style: AppTextStyle.textSm(
+                      padding: EdgeInsets.zero,
+                      searchController: _searchController,
+                      searchFocus: _searchFocus,
+                      isExpanded: _isSearchExpanded,
+                      onToggleExpand: (expanded) {
+                        setState(() => _isSearchExpanded = expanded);
+                      },
+                      onSearchChanged: _controller.onSearchChanged,
+                      onClear: () {
+                        _controller.onSearchChanged('');
+                      },
+                      trailing: OutlinedButton.icon(
+                        onPressed: _controller.isExporting
+                            ? null
+                            : _controller.exportCsv,
+                        icon: _controller.isExporting
+                            ? const SizedBox(
+                                width: 14,
+                                height: 14,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                ),
+                              )
+                            : Icon(
+                                Icons.save_alt,
+                                size: 18,
                                 color: colorScheme.onSurface,
-                                weight: FontWeight.w500,
                               ),
-                            ),
-                            style: OutlinedButton.styleFrom(
-                              foregroundColor: colorScheme.onSurface,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                            ),
+                        label: Text(
+                          _controller.isExporting ? "Saving..." : "Save",
+                          style: AppTextStyle.textSm(
+                            color: colorScheme.onSurface,
+                            weight: FontWeight.w500,
                           ),
                         ),
-                      ],
-                    ),
-                    Obx(
-                      () => Text(
-                        "${_controller.totalCount} Leads",
-                        style: AppTextStyle.textXs(
-                          color: colorScheme.onSurfaceVariant,
-                          weight: FontWeight.w500,
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: colorScheme.onSurface,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 8,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
                         ),
                       ),
                     ),
-                    const SizedBox(height: 16),
-                  ],
+                  ),
                 ),
               ),
 
