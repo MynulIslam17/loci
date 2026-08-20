@@ -166,7 +166,12 @@ class ProfileScreen extends StatelessWidget {
                     : const ClampingScrollPhysics(
                         parent: AlwaysScrollableScrollPhysics(),
                       ),
-                padding: const EdgeInsets.fromLTRB(16, 16, 16, 40),
+                padding: EdgeInsets.fromLTRB(
+                  16,
+                  16,
+                  16,
+                  MediaQuery.paddingOf(context).bottom + 110,
+                ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [

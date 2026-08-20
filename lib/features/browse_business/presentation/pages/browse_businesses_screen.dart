@@ -91,10 +91,8 @@ class _BrowseBusinessesState extends State<BrowseBusinesses> {
           slivers: [
             // ── 1. Floating Quick-Return Search Header (iOS Glass / Android M3) ─
             SliverPersistentHeader(
-              pinned: _isSearchExpanded ||
-                  browseBusinessController.searchQuery.isNotEmpty,
-              floating: !_isSearchExpanded &&
-                  browseBusinessController.searchQuery.isEmpty,
+              pinned: true,
+              floating: false,
               delegate: AdaptivePinnedSearchDelegate(
                 child: AdaptiveExpandableSearchHeader(
                   title: 'Browse Business',

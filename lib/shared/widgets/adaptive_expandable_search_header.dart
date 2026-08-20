@@ -145,11 +145,11 @@ class AdaptiveExpandableSearchHeader extends StatelessWidget {
     void handleTap() {
       HapticFeedback.lightImpact();
       onToggleExpand(true);
-      if (searchFocus != null) {
-        Future.delayed(const Duration(milliseconds: 50), () {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (searchFocus != null && !searchFocus!.hasFocus) {
           searchFocus!.requestFocus();
-        });
-      }
+        }
+      });
     }
 
     if (isIOS) {
@@ -261,6 +261,7 @@ class AdaptiveExpandableSearchHeader extends StatelessWidget {
                       child: CupertinoTextField(
                         controller: searchController,
                         focusNode: searchFocus,
+                        autofocus: true,
                         placeholder: hintText,
                         placeholderStyle: AppTextStyle.textSm(
                           color: colors.onSurfaceVariant.withValues(alpha: 0.6),
@@ -348,6 +349,7 @@ class AdaptiveExpandableSearchHeader extends StatelessWidget {
                   child: TextField(
                     controller: searchController,
                     focusNode: searchFocus,
+                    autofocus: true,
                     textInputAction: TextInputAction.search,
                     style: AppTextStyle.textSm(
                       color: colors.onSurface,
