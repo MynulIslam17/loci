@@ -169,8 +169,9 @@ class _EventScreenState extends State<EventScreen> {
             slivers: [
               // ── 1. Floating Quick-Return Search Header (iOS Glass / Android M3) ─
               SliverPersistentHeader(
-                pinned: true,
-                floating: false,
+                pinned: _isSearchExpanded || controller.searchQuery.isNotEmpty,
+                floating:
+                    !_isSearchExpanded && controller.searchQuery.isEmpty,
                 delegate: AdaptivePinnedSearchDelegate(
                   child: AdaptiveExpandableSearchHeader(
                     title: 'Upcoming Events',
