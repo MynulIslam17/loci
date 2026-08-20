@@ -136,9 +136,8 @@ class _ActiveRafflesPageState extends State<ActiveRafflesPage> {
             slivers: [
               // ── 1. Floating Quick-Return Search Header (iOS Glass / Android M3) ─
               SliverPersistentHeader(
-                pinned: _isSearchExpanded || controller.searchQuery.isNotEmpty,
-                floating:
-                    !_isSearchExpanded && controller.searchQuery.isEmpty,
+                pinned: true,
+                floating: false,
                 delegate: AdaptivePinnedSearchDelegate(
                   child: AdaptiveExpandableSearchHeader(
                     title: 'Active Raffles',
