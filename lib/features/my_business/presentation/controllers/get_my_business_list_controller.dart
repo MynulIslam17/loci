@@ -21,10 +21,21 @@ class GetMyBusinessController extends GetxController {
   bool get hasFetched => _fetch.hasFetched.value;
   RxBool get isLoading => _fetch.initialLoading;
 
-  Future<void> getMyBusinesses({String? category, bool isRefresh = false}) async {
+  Future<void> getMyBusinesses({
+    String? category,
+    bool isRefresh = false,
+    bool isCategoryChange = false,
+  }) async {
     if (isInitialLoading || isRefreshing) return;
 
-    _fetch.beginFirstPage(isRefresh: isRefresh);
+    if (isCategoryChange) {
+      businessList.clear();
+      _fetch.initialLoading.value = true;
+      _fetch.refreshing.value = false;
+      _fetch.hasFetched.value = false;
+    } else {
+      _fetch.beginFirstPage(isRefresh: isRefresh);
+    }
     errorMessage.value = null;
 
     try {

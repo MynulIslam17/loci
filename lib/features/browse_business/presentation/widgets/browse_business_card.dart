@@ -52,32 +52,39 @@ class BrowseBusinessCard extends StatelessWidget {
         curve: Curves.easeInOut,
         decoration: BoxDecoration(
           color: context.colorScheme.surfaceContainerHigh,
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(16),
           border: Border.all(
             color: isExpanded
-                ? context.colorScheme.primary.withValues(alpha: 0.5)
-                : context.colorScheme.outline,
-            width: isExpanded ? 1.5 : 0.8,
+                ? context.colorScheme.primary.withValues(alpha: 0.6)
+                : context.colorScheme.outlineVariant.withValues(alpha: 0.5),
+            width: isExpanded ? 1.2 : 0.8,
           ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: isExpanded ? 0.04 : 0.02),
+              blurRadius: isExpanded ? 10 : 4,
+              offset: const Offset(0, 2),
+            ),
+          ],
         ),
         child: ClipRRect(
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // ================= HEADER =================
               Padding(
                 padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 10,
+                  horizontal: 14,
+                  vertical: 12,
                 ),
                 child: Row(
                   children: [
                     BusinessLogoAvatar(
                       logo: item.logo,
                       name: item.name,
-                      size: 52,
-                      borderRadius: 10,
+                      size: 50,
+                      borderRadius: 12,
                     ),
                     const SizedBox(width: 12),
 
@@ -88,7 +95,7 @@ class BrowseBusinessCard extends StatelessWidget {
                           Text(
                             item.name,
                             style: AppTextStyle.textSm(
-                              weight: FontWeight.w600,
+                              weight: FontWeight.w700,
                               color: context.colorScheme.onSurface,
                             ),
                             maxLines: 1,
@@ -99,6 +106,7 @@ class BrowseBusinessCard extends StatelessWidget {
                             item.category,
                             style: AppTextStyle.textXs(
                               color: context.colorScheme.onSurfaceVariant,
+                              weight: FontWeight.w500,
                             ),
                           ),
                         ],
@@ -108,25 +116,29 @@ class BrowseBusinessCard extends StatelessWidget {
                     Container(
                       padding: const EdgeInsets.symmetric(
                         horizontal: 8,
-                        vertical: 4,
+                        vertical: 3.5,
                       ),
                       decoration: BoxDecoration(
-                        color: context.colorScheme.primaryContainer,
+                        color: const Color(0xFFF59E0B).withValues(alpha: 0.12),
                         borderRadius: BorderRadius.circular(20),
+                        border: Border.all(
+                          color: const Color(0xFFF59E0B).withValues(alpha: 0.3),
+                          width: 0.8,
+                        ),
                       ),
                       child: Row(
                         children: [
-                          Icon(
+                          const Icon(
                             Icons.star_rounded,
                             size: 13,
-                            color: context.colorScheme.primary,
+                            color: Color(0xFFF59E0B),
                           ),
                           const SizedBox(width: 3),
                           Text(
                             item.rating.toStringAsFixed(1),
                             style: AppTextStyle.textXs(
-                              color: context.colorScheme.primary,
-                              weight: FontWeight.w600,
+                              color: const Color(0xFFD97706),
+                              weight: FontWeight.w700,
                             ),
                           ),
                         ],

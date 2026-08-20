@@ -8,8 +8,19 @@ import 'package:loci/features/subscription/presentation/widgets/subscription_hea
 import 'package:loci/shared/widgets/adaptive_refresh.dart';
 import 'package:loci/shared/widgets/custom_appbar.dart';
 
-class SubscriptionScreen extends StatelessWidget {
+class SubscriptionScreen extends StatefulWidget {
   const SubscriptionScreen({super.key});
+
+  @override
+  State<SubscriptionScreen> createState() => _SubscriptionScreenState();
+}
+
+class _SubscriptionScreenState extends State<SubscriptionScreen> {
+  @override
+  void initState() {
+    super.initState();
+    Get.find<PlansController>().resetToMonthly();
+  }
 
   @override
   Widget build(BuildContext context) {
