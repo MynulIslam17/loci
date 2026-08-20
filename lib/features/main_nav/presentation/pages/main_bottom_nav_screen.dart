@@ -95,13 +95,24 @@ class _MainBottomNavState extends State<MainBottomNav> {
 
   /// Lets lists / SafeArea keep last items above the glass bar without
   /// covering the pixels the bar needs to blur.
+  ///
+  /// IMPORTANT: We always return a `MediaQuery` widget regardless of keyboard
+  /// state so the child element tree structure stays stable. If we returned
+  /// `child` directly when the keyboard is open, Flutter would see the
+  /// `Positioned.fill` child change from `MediaQuery` → `PopScope`, unmount
+  /// the entire subtree, and destroy all FocusNode / scroll / text state in
+  /// the tab screens.
   Widget _withIosTabInset(
     BuildContext context, {
     required bool keyboardOpen,
     required Widget child,
   }) {
-    if (keyboardOpen) return child;
     final mq = MediaQuery.of(context);
+    if (keyboardOpen) {
+      // Pass through the original MediaQuery data unchanged, but keep
+      // the MediaQuery widget in the tree for stable element reconciliation.
+      return MediaQuery(data: mq, child: child);
+    }
     return MediaQuery(
       data: mq.copyWith(
         padding: mq.padding.copyWith(bottom: IosGlassBottomNavBar.height),
