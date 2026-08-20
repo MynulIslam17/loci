@@ -142,8 +142,9 @@ class _ExploreRoutesPageState extends State<ExploreRoutesPage> {
             slivers: [
               // ── 1. Floating Quick-Return Search Header (iOS Glass / Android M3) ─
               SliverPersistentHeader(
-                pinned: true,
-                floating: false,
+                pinned: _isSearchExpanded || controller.searchQuery.isNotEmpty,
+                floating:
+                    !_isSearchExpanded && controller.searchQuery.isEmpty,
                 delegate: AdaptivePinnedSearchDelegate(
                   child: AdaptiveExpandableSearchHeader(
                     title: 'Explore Routes',

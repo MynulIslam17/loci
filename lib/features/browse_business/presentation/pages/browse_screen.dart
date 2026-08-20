@@ -152,11 +152,12 @@ class _BrowseScreenState extends State<BrowseScreen> {
             ],
           ),
 
-          const SizedBox(height: 14),
+          const SizedBox(height: 12),
 
           // ── 3. Centered Professional Category Grid ────────────────
           GridView.builder(
             shrinkWrap: true,
+            padding: EdgeInsets.zero,
             physics: const NeverScrollableScrollPhysics(),
             gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
               crossAxisCount: 2,

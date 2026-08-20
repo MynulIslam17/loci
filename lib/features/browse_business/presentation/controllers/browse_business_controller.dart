@@ -284,6 +284,9 @@ class BrowseBusinessController extends GetxController {
   }
 
   void changeCategory(BusinessCategory? category) {
+    _searchQuery = '';
+    _searchDebounce?.cancel();
+    isSearching.value = false;
     fetchBusinesses(category, isCategoryChange: true);
   }
 
