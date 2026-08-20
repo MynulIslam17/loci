@@ -11,8 +11,8 @@ import 'package:loci/features/my_business/presentation/widgets/business_search_r
 import 'package:loci/features/my_business/presentation/widgets/expandable_business_card.dart';
 import 'package:loci/features/my_business/presentation/widgets/manual_add_business_card.dart';
 import 'package:loci/shared/widgets/adaptive_refresh.dart';
-import 'package:loci/shared/widgets/custom_dropdown.dart';
 import 'package:loci/shared/widgets/custom_text_field.dart';
+import 'package:loci/shared/widgets/modern_category_dropdown.dart';
 import 'package:loci/routes/app_routes.dart';
 
 import 'package:loci/features/my_business/presentation/controllers/get_my_business_list_controller.dart';
@@ -104,7 +104,10 @@ class _SearchMyBusinessState extends State<SearchMyBusiness> {
 
   void _onCategoryChanged(BusinessCategory? value) {
     selectedCategory.value = value;
-    myBusinessController.getMyBusinesses(category: value?.label);
+    myBusinessController.getMyBusinesses(
+      category: value?.label,
+      isCategoryChange: true,
+    );
   }
 
   void _retry() {
@@ -274,29 +277,14 @@ class _SearchMyBusinessState extends State<SearchMyBusiness> {
   Widget _buildCategoryFilter(ColorScheme colorScheme) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(15, 0, 15, 16),
-      child: SizedBox(
-        width: 200,
-        child: Card(
-          color: colorScheme.surfaceContainerHigh,
-          child: CustomDropdown<BusinessCategory?>(
-            dropdownColor: colorScheme.surfaceContainerHigh,
-            borderColor: colorScheme.outline,
-            hintColor: colorScheme.onSurfaceVariant,
-            textColor: colorScheme.onSurface,
-            value: selectedCategory.value,
+      child: Align(
+        alignment: Alignment.centerLeft,
+        child: Obx(
+          () => ModernCategoryDropdown(
+            selectedCategory: selectedCategory.value,
+            includeAllOption: true,
+            label: 'Filter My Businesses',
             onChanged: _onCategoryChanged,
-            items: [
-              const DropdownMenuItem<BusinessCategory?>(
-                value: null,
-                child: Text('All'),
-              ),
-              ...BusinessCategory.values.map(
-                (category) => DropdownMenuItem<BusinessCategory?>(
-                  value: category,
-                  child: Text(category.label),
-                ),
-              ),
-            ],
           ),
         ),
       ),

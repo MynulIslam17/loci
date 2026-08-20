@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:loci/core/utils/show_snackbar.dart';
 import 'package:loci/features/browse_business/data/models/browse_business_model.dart';
@@ -50,6 +51,10 @@ class _BusinessProfileScreenState extends State<BusinessProfileScreen> {
   }
 
   Future<bool> _submitReview(String content, double rating) async {
+    FocusScope.of(context).unfocus();
+    FocusManager.instance.primaryFocus?.unfocus();
+    SystemChannels.textInput.invokeMethod('TextInput.hide');
+
     final success = await postReviewController.postReview(
       businessId: businessId,
       rating: rating,

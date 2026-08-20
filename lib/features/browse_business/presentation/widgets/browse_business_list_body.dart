@@ -1,99 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:loci/core/constants/app_text_style.dart';
-import 'package:loci/core/enums/category_enum.dart';
-import 'package:loci/core/theme/theme_extention.dart';
 import 'package:loci/features/browse_business/presentation/controllers/browse_business_controller.dart';
 import 'package:loci/features/browse_business/presentation/controllers/save_business_controller.dart';
 import 'package:loci/features/browse_business/presentation/widgets/browse_business_card.dart';
 import 'package:loci/features/browse_business/presentation/widgets/browse_shimmer.dart';
 import 'package:loci/routes/app_routes.dart';
-import 'package:loci/shared/widgets/custom_dropdown.dart';
-import 'package:loci/shared/widgets/custom_text_field.dart';
 import 'package:loci/shared/widgets/empty_state.dart';
 import 'package:loci/shared/widgets/error_state.dart';
 import 'package:loci/shared/widgets/pagination_loading.dart';
-
-class BrowseBusinessSearchHeader extends StatelessWidget {
-  const BrowseBusinessSearchHeader({
-    super.key,
-    required this.screenWidth,
-    required this.searchController,
-    required this.selectedCategory,
-    required this.onCategoryChanged,
-    required this.onSearchChanged,
-    required this.onClearSearch,
-  });
-
-  final double screenWidth;
-  final TextEditingController searchController;
-  final Rx<BusinessCategory> selectedCategory;
-  final ValueChanged<BusinessCategory> onCategoryChanged;
-  final ValueChanged<String> onSearchChanged;
-  final VoidCallback onClearSearch;
-
-  @override
-  Widget build(BuildContext context) {
-    final colorScheme = context.colorScheme;
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          CustomTextField(
-            controller: searchController,
-            borderColor: colorScheme.outline,
-            hintText: 'Search Business',
-            hintTextColor: colorScheme.onSurfaceVariant,
-            textColor: colorScheme.onSurface,
-            onChanged: onSearchChanged,
-            showClearButton: true,
-            onClear: () {
-              searchController.clear();
-              FocusScope.of(context).unfocus();
-              onClearSearch();
-            },
-            suffixIcon: Icon(
-              Icons.search,
-              color: colorScheme.onSurfaceVariant,
-            ),
-          ),
-          const SizedBox(height: 16),
-          SizedBox(
-            width: screenWidth * 0.7,
-            child: Obx(
-              () => CustomDropdown<BusinessCategory>(
-                borderColor: colorScheme.outline,
-                dropdownColor: colorScheme.surfaceContainerHigh,
-                fillColor: colorScheme.surface,
-                hintText: 'Select Category',
-                items: BusinessCategory.values
-                    .map(
-                      (category) => DropdownMenuItem(
-                        value: category,
-                        child: Text(
-                          category.label,
-                          style: AppTextStyle.textXs(
-                            color: colorScheme.onSurface,
-                          ),
-                        ),
-                      ),
-                    )
-                    .toList(),
-                value: selectedCategory.value,
-                onChanged: (value) {
-                  if (value == null) return;
-                  onCategoryChanged(value);
-                },
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
 
 class BrowseBusinessListBody extends StatelessWidget {
   const BrowseBusinessListBody({

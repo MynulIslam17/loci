@@ -83,6 +83,14 @@ class PlansController extends GetxController {
     fetchPlans(_selectedType);
   }
 
+  /// Resets the billing toggle back to Monthly (the first tab) and collapses cards.
+  /// Called whenever the Subscription screen opens so previous state is not retained.
+  void resetToMonthly() {
+    _isMonthly.value = true;
+    _expandedIndex.value = null;
+    fetchPlans(BillingType.monthly);
+  }
+
   void toggleExpanded(int index) {
     _expandedIndex.value = _expandedIndex.value == index ? null : index;
   }

@@ -11,11 +11,12 @@ import 'package:loci/features/chat/presentation/widgets/chat_avatar.dart';
 import 'package:loci/routes/app_routes.dart';
 import 'package:loci/shared/widgets/confirm_dialog.dart';
 
-/// Side navigation drawer for the main shell.
+/// Side navigation drawer for the main shell with modern, overflow-safe styling.
 ///
-/// Layout is pinned top and bottom: the profile header stays fixed at the
-/// top and the "Sign Out" action stays fixed at the bottom, while only the
-/// middle menu options scroll between them.
+/// Layout is pinned top and bottom:
+/// - Top: Modern elevated profile header with avatar, name, email, and role badge.
+/// - Middle: Scrollable list of sleek navigation cards with category icons.
+/// - Bottom: Pinned Sign Out action and app version label.
 class AppNavigationDrawer extends StatelessWidget {
   const AppNavigationDrawer({super.key});
 
@@ -37,6 +38,8 @@ class AppNavigationDrawer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.colorScheme;
+
     // Members (role `user`) can't use subscriptions — hide that entry until a
     // business claim promotes them to business_owner.
     final canSubscribe = Get.find<AuthController>().canAccessSubscription;
@@ -53,84 +56,164 @@ class AppNavigationDrawer extends StatelessWidget {
         .toList();
 
     return Drawer(
-      backgroundColor: context.colorScheme.surface,
-      child: SafeArea(
-        top: false,
-        child: Column(
-          children: [
-            /// Profile header (pinned)
-            _buildHeader(context),
+      backgroundColor: colors.surface,
+      elevation: 0,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.horizontal(right: Radius.circular(24)),
+      ),
+      child: Column(
+        children: [
+          /// ── 1. Modern Profile Header (Pinned) ───────────────────
+          _buildHeader(context),
 
-            /// Scrollable menu list
-            Expanded(
-              child: ListView.builder(
-                padding: EdgeInsets.zero,
-                itemCount: scrollableItems.length,
-                itemBuilder: (context, index) =>
-                    _buildTile(context, scrollableItems[index]),
-              ),
+          /// ── 2. Scrollable Navigation Menu ───────────────────────
+          Expanded(
+            child: ListView.separated(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              physics: const BouncingScrollPhysics(),
+              itemCount: scrollableItems.length,
+              separatorBuilder: (_, _) => const SizedBox(height: 4),
+              itemBuilder: (context, index) =>
+                  _buildTile(context, scrollableItems[index]),
             ),
+          ),
 
-            /// Pinned actions at the bottom (Sign Out)
-            if (pinnedItems.isNotEmpty) ...[
-              Divider(
-                height: 1,
-                thickness: 1,
-                color: context.colorScheme.outlineVariant.withValues(
-                  alpha: 0.4,
+          /// ── 3. Pinned Bottom Actions (Sign Out & Version) ───────
+          if (pinnedItems.isNotEmpty) ...[
+            Container(
+              padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
+              decoration: BoxDecoration(
+                color: colors.surface,
+                border: Border(
+                  top: BorderSide(
+                    color: colors.outlineVariant.withValues(alpha: 0.35),
+                    width: 1,
+                  ),
                 ),
               ),
-              ...pinnedItems.map((item) => _buildTile(context, item)),
-              const SizedBox(height: 8),
-            ],
+              child: SafeArea(
+                top: false,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    ...pinnedItems.map((item) => _buildTile(context, item)),
+                    const SizedBox(height: 6),
+                    Text(
+                      'Loci App v1.0.0',
+                      style: AppTextStyle.textXs(
+                        color: colors.onSurfaceVariant.withValues(alpha: 0.45),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
           ],
-        ),
+        ],
       ),
     );
   }
 
-  /// Top header showing the current user's avatar, name and role.
+  /// Top header showing current user avatar, name, email and role badge with zero-overflow safety.
   Widget _buildHeader(BuildContext context) {
     final authController = Get.find<AuthController>();
+    final colors = context.colorScheme;
+    final topPadding = MediaQuery.paddingOf(context).top;
 
     return Obx(() {
       final user = authController.userModel;
+      final userName =
+          (user?.name ?? '').trim().isNotEmpty ? user!.name : 'Guest User';
+      final userEmail = (user?.email ?? '').trim();
+      final role = user?.role;
 
       return Container(
         width: double.infinity,
-        height: 160,
-        color: context.colorScheme.surfaceContainer,
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 30),
+        padding: EdgeInsets.fromLTRB(18, topPadding + 16, 18, 18),
+        decoration: BoxDecoration(
+          color: colors.surfaceContainerHigh,
+          border: Border(
+            bottom: BorderSide(
+              color: colors.outlineVariant.withValues(alpha: 0.4),
+              width: 1,
+            ),
+          ),
+        ),
         child: Row(
           children: [
-            /// User profile image — cached + initials fallback when no photo.
-            ChatAvatar(
-              name: (user?.name ?? '').isNotEmpty ? user!.name : 'Guest',
-              avatarUrl: user?.avatar,
-              size: 56,
+            /// Avatar with rounded ring border
+            Container(
+              padding: const EdgeInsets.all(2.5),
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: colors.primary.withValues(alpha: 0.6),
+                  width: 2,
+                ),
+              ),
+              child: ChatAvatar(
+                name: userName,
+                avatarUrl: user?.avatar,
+                size: 52,
+              ),
             ),
 
-            const SizedBox(width: 20),
+            const SizedBox(width: 14),
 
-            /// User name + role
-            Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  (user?.name ?? '').isNotEmpty ? user!.name : 'Guest',
-                  style: AppTextStyle.textLg(
-                    color: context.colorScheme.onSurface,
-                    weight: FontWeight.w600,
+            /// Name + Email + Role Badge (Wrapped in Expanded for zero-overflow)
+            Expanded(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    userName,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: AppTextStyle.textMd(
+                      color: colors.onSurface,
+                      weight: FontWeight.w700,
+                    ),
                   ),
-                ),
-                Text(
-                  _roleLabel(user?.role),
-                  style: AppTextStyle.textXs(
-                    color: context.colorScheme.onSurfaceVariant,
+                  if (userEmail.isNotEmpty) ...[
+                    const SizedBox(height: 2),
+                    Text(
+                      userEmail,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: AppTextStyle.textXs(
+                        color: colors.onSurfaceVariant,
+                      ),
+                    ),
+                  ],
+                  const SizedBox(height: 6),
+
+                  /// Styled Role Badge
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 2.5,
+                    ),
+                    decoration: BoxDecoration(
+                      color: colors.primary.withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(6),
+                      border: Border.all(
+                        color: colors.primary.withValues(alpha: 0.25),
+                        width: 0.8,
+                      ),
+                    ),
+                    child: Text(
+                      _roleLabel(role),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: AppTextStyle.textXs(
+                        color: colors.primary,
+                        weight: FontWeight.w600,
+                      ),
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ],
         ),
@@ -138,22 +221,91 @@ class AppNavigationDrawer extends StatelessWidget {
     });
   }
 
-  /// Single drawer row. Items flagged `isDanger` (e.g. Sign Out) render in red.
+  /// Single drawer row with modern rounded card hover styling.
   Widget _buildTile(BuildContext context, Map<String, dynamic> item) {
+    final colors = context.colorScheme;
     final isDanger = item['isDanger'] ?? false;
-    final color = isDanger ? Colors.red : context.colorScheme.onSurface;
+    final isSubscription = item['title'] == 'Subscription';
+    final Color textColor = isDanger ? Colors.red : colors.onSurface;
+    final Color iconColor = isDanger ? Colors.red : colors.primary;
 
-    return ListTile(
-      onTap: () => _handleItem(context, item['title']),
-      leading: SvgPicture.asset(
-        'assets/icons/${item["icon"]}.svg',
-        width: 20,
-        height: 20,
-        colorFilter: ColorFilter.mode(color, BlendMode.srcIn),
-      ),
-      title: Text(
-        item['title'],
-        style: AppTextStyle.textSm(color: color, weight: FontWeight.w500),
+    return Material(
+      color: Colors.transparent,
+      borderRadius: BorderRadius.circular(12),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(12),
+        onTap: () => _handleItem(context, item['title']),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+          child: Row(
+            children: [
+              /// Leading Icon Container
+              Container(
+                width: 36,
+                height: 36,
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: isDanger
+                      ? Colors.red.withValues(alpha: 0.1)
+                      : colors.surfaceContainerHighest.withValues(alpha: 0.6),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: SvgPicture.asset(
+                  'assets/icons/${item["icon"]}.svg',
+                  colorFilter: ColorFilter.mode(iconColor, BlendMode.srcIn),
+                ),
+              ),
+
+              const SizedBox(width: 14),
+
+              /// Title (Wrapped in Expanded for zero-overflow)
+              Expanded(
+                child: Text(
+                  item['title'],
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppTextStyle.textSm(
+                    color: textColor,
+                    weight: isDanger ? FontWeight.w600 : FontWeight.w500,
+                  ),
+                ),
+              ),
+
+              /// Pro / Crown Badge for Subscription
+              if (isSubscription)
+                Container(
+                  margin: const EdgeInsets.only(right: 6),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 7,
+                    vertical: 2,
+                  ),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFFD700).withValues(alpha: 0.2),
+                    borderRadius: BorderRadius.circular(6),
+                    border: Border.all(
+                      color: const Color(0xFFFFD700).withValues(alpha: 0.6),
+                      width: 0.8,
+                    ),
+                  ),
+                  child: Text(
+                    'PRO',
+                    style: AppTextStyle.textXs(
+                      color: const Color(0xFFD4AF37),
+                      weight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+
+              /// Trailing Chevron
+              if (!isDanger)
+                Icon(
+                  Icons.chevron_right_rounded,
+                  size: 18,
+                  color: colors.onSurfaceVariant.withValues(alpha: 0.35),
+                ),
+            ],
+          ),
+        ),
       ),
     );
   }

@@ -22,6 +22,8 @@ class BrowseBusinessController extends GetxController {
 
   final errorMessage = RxnString();
   final businesses = <BrowseBusinessModel>[].obs;
+  final List<BrowseBusinessModel> _unfilteredBusinesses = <BrowseBusinessModel>[];
+  bool _unfilteredHasNextPage = true;
   final selectedCategory = Rxn<BusinessCategory>();
 
   int _currentPage = 1;
@@ -30,13 +32,16 @@ class BrowseBusinessController extends GetxController {
 
   String _searchQuery = '';
   Timer? _searchDebounce;
+  int _searchSeq = 0;
+  final RxBool isSearching = false.obs;
 
   String get searchQuery => _searchQuery;
 
   bool get hasMore => hasNextPage.value;
   bool get isInitialLoading => _fetch.initialLoading.value;
   bool get isRefreshing => _fetch.refreshing.value;
-  bool get showInitialShimmer => _fetch.showInitialShimmer;
+  bool get showInitialShimmer =>
+      _fetch.showInitialShimmer || (isSearching.value && businesses.isEmpty);
   bool get hasFetched => _fetch.hasFetched.value;
   RxBool get isLoading => _fetch.initialLoading;
   RxBool get isPaginationLoading => _fetch.loadingMore;
@@ -45,16 +50,19 @@ class BrowseBusinessController extends GetxController {
   void onInit() {
     super.onInit();
 
-    // Frame-0 instant load from Hive cache
-    if (_storage != null && _searchQuery.isEmpty) {
+    final arg = Get.arguments;
+    final category = arg is BusinessCategory ? arg : null;
+
+    // Frame-0 instant load from Hive cache ONLY when not opening for a specific category
+    if (_storage != null && _searchQuery.isEmpty && category == null) {
       final cached = _storage.getFeedList('browse_business_feed');
       if (cached.isNotEmpty) {
-        businesses.assignAll(
-          cached
-              .map((e) =>
-                  BrowseBusinessModel.fromJson(Map<String, dynamic>.from(e)))
-              .toList(),
-        );
+        final parsed = cached
+            .map((e) =>
+                BrowseBusinessModel.fromJson(Map<String, dynamic>.from(e)))
+            .toList();
+        businesses.assignAll(parsed);
+        _unfilteredBusinesses.assignAll(parsed);
         _fetch.endFirstPage(markFetched: true);
       }
     }
@@ -65,13 +73,28 @@ class BrowseBusinessController extends GetxController {
       });
     }
 
-    final arg = Get.arguments;
-
-    if (arg != null && arg is BusinessCategory) {
-      fetchBusinesses(arg, isRefresh: true);
-    } else {
+    if (category != null) {
+      initForCategory(category);
+    } else if (businesses.isEmpty) {
       fetchBusinesses(null, isRefresh: true);
     }
+  }
+
+  /// Initializes or resets the feed for a new category selection, ensuring
+  /// any previously loaded data from another category is immediately cleared
+  /// and the shimmer is shown until new data is fetched.
+  void initForCategory(BusinessCategory? category) {
+    _searchQuery = '';
+    _searchDebounce?.cancel();
+    isSearching.value = false;
+    _unfilteredBusinesses.clear();
+    businesses.clear();
+    _fetch.reset();
+    _fetch.initialLoading.value = true;
+    _fetch.hasFetched.value = false;
+    _fetch.refreshing.value = false;
+    selectedCategory.value = category;
+    fetchBusinesses(category, isCategoryChange: true);
   }
 
   @override
@@ -82,26 +105,86 @@ class BrowseBusinessController extends GetxController {
   }
 
   void onSearchChanged(String query) {
+    if (query == _searchQuery) return;
+    final hadSearch = _searchQuery.trim().isNotEmpty;
     _searchQuery = query;
+    final seq = ++_searchSeq;
     _searchDebounce?.cancel();
-    _searchDebounce = Timer(const Duration(milliseconds: 400), () {
-      fetchBusinesses(selectedCategory.value, isSearch: true);
-    });
+
+    if (query.trim().isEmpty) {
+      if (hadSearch) {
+        _restoreUnfilteredList(sequenceToken: seq);
+      }
+    } else {
+      isSearching.value = true;
+      businesses.clear();
+      _fetch.initialLoading.value = true;
+      _fetch.hasFetched.value = false;
+      _searchDebounce = Timer(const Duration(milliseconds: 300), () {
+        fetchBusinesses(
+          selectedCategory.value,
+          isSearch: true,
+          sequenceToken: seq,
+        );
+      });
+    }
+  }
+
+  void submitSearch(String query) {
+    _searchDebounce?.cancel();
+    if (query.trim() == _searchQuery && query.trim().isNotEmpty) return;
+    _searchQuery = query;
+    final seq = ++_searchSeq;
+    if (query.trim().isEmpty) {
+      _restoreUnfilteredList(sequenceToken: seq);
+    } else {
+      isSearching.value = true;
+      businesses.clear();
+      _fetch.initialLoading.value = true;
+      _fetch.hasFetched.value = false;
+      fetchBusinesses(
+        selectedCategory.value,
+        isSearch: true,
+        sequenceToken: seq,
+      );
+    }
   }
 
   void clearSearch() {
+    if (_searchQuery.isEmpty) return;
     _searchQuery = '';
     _searchDebounce?.cancel();
-    fetchBusinesses(selectedCategory.value, isSearch: true);
+    final seq = ++_searchSeq;
+    _restoreUnfilteredList(sequenceToken: seq);
+  }
+
+  void _restoreUnfilteredList({int? sequenceToken}) {
+    if (_unfilteredBusinesses.isNotEmpty) {
+      businesses.assignAll(_unfilteredBusinesses);
+      hasNextPage.value = _unfilteredHasNextPage;
+      isSearching.value = false;
+      _fetch.endFirstPage(markFetched: true);
+      errorMessage.value = null;
+    } else {
+      fetchBusinesses(
+        selectedCategory.value,
+        isSearch: true,
+        sequenceToken: sequenceToken,
+      );
+    }
   }
 
   Future<void> fetchBusinesses(
     BusinessCategory? category, {
     bool isRefresh = false,
     bool isSearch = false,
+    bool isCategoryChange = false,
+    int? sequenceToken,
   }) async {
+    final currentSeq = sequenceToken ?? ++_searchSeq;
+
     try {
-      if (isRefresh || isSearch) {
+      if (isRefresh || isSearch || isCategoryChange) {
         _currentPage = 1;
         hasNextPage.value = true;
       }
@@ -112,7 +195,16 @@ class BrowseBusinessController extends GetxController {
         return;
       }
 
-      if (isSearch) {
+      if (isCategoryChange) {
+        _unfilteredBusinesses.clear();
+        businesses.clear();
+        isSearching.value = false;
+        _fetch.initialLoading.value = true;
+        _fetch.refreshing.value = false;
+        _fetch.hasFetched.value = false;
+      } else if (isSearch) {
+        isSearching.value = true;
+        businesses.clear();
         _fetch.initialLoading.value = true;
         _fetch.refreshing.value = false;
         _fetch.hasFetched.value = false;
@@ -129,9 +221,17 @@ class BrowseBusinessController extends GetxController {
         search: _searchQuery,
       );
 
+      if (currentSeq != _searchSeq) return;
+
       businesses.assignAll(model.data);
       hasNextPage.value = model.meta.hasNextPage;
       _fetch.endFirstPage();
+      isSearching.value = false;
+
+      if (_searchQuery.isEmpty && _currentPage == 1) {
+        _unfilteredBusinesses.assignAll(model.data);
+        _unfilteredHasNextPage = model.meta.hasNextPage;
+      }
 
       if (_currentPage == 1 &&
           _searchQuery.isEmpty &&
@@ -143,10 +243,12 @@ class BrowseBusinessController extends GetxController {
         );
       }
     } catch (e) {
+      if (currentSeq != _searchSeq) return;
       if (businesses.isEmpty) {
         errorMessage.value = AppErrorMessages.sanitize(e);
       }
       _fetch.endFirstPage(markFetched: hasFetched || businesses.isNotEmpty);
+      isSearching.value = false;
     }
   }
 
@@ -182,7 +284,7 @@ class BrowseBusinessController extends GetxController {
   }
 
   void changeCategory(BusinessCategory? category) {
-    fetchBusinesses(category, isRefresh: true);
+    fetchBusinesses(category, isCategoryChange: true);
   }
 
   Future<void> refreshData() async {

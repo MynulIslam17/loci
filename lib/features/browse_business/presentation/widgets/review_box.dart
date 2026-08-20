@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_rating_bar/flutter_rating_bar.dart';
 import 'package:get/get.dart';
 import 'package:loci/core/constants/app_text_style.dart';
@@ -43,6 +44,10 @@ class _ReviewBoxState extends State<ReviewBox> {
 
   Future<void> _submit() async {
     if (!_canSubmit || _isSubmitting.value) return;
+    FocusScope.of(context).unfocus();
+    FocusManager.instance.primaryFocus?.unfocus();
+    SystemChannels.textInput.invokeMethod('TextInput.hide');
+
     _isSubmitting.value = true;
     try {
       final success =
@@ -52,6 +57,8 @@ class _ReviewBoxState extends State<ReviewBox> {
         _controller.clear();
         _rating.value = 0;
         _textRevision.value++;
+        FocusManager.instance.primaryFocus?.unfocus();
+        SystemChannels.textInput.invokeMethod('TextInput.hide');
       }
     } finally {
       if (mounted) _isSubmitting.value = false;

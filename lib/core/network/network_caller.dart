@@ -157,7 +157,7 @@ class NetworkCaller {
       if (response.statusCode == 401 && token.isNotEmpty && !isRetry) {
         final refreshed = await _handle401(hadToken: true);
         if (refreshed) {
-          return getRequest(
+          return await getRequest(
             url: url,
             queryParams: queryParams,
             isRetry: true,
@@ -213,7 +213,7 @@ class NetworkCaller {
       if (response.statusCode == 401 && token.isNotEmpty && !isRetry) {
         final refreshed = await _handle401(hadToken: true);
         if (refreshed) {
-          return getTextBody(url: url, isRetry: true);
+          return await getTextBody(url: url, isRetry: true);
         }
       } else {
         _handleAuthErrors(response.statusCode, hadToken: token.isNotEmpty);
@@ -271,7 +271,7 @@ class NetworkCaller {
           !isRetry) {
         final refreshed = await _handle401(hadToken: true);
         if (refreshed) {
-          return postRequest(
+          return await postRequest(
             url: url,
             body: body,
             overrideToken: overrideToken,
@@ -341,7 +341,7 @@ class NetworkCaller {
           !isRetry) {
         final refreshed = await _handle401(hadToken: true);
         if (refreshed) {
-          return patchRequest(
+          return await patchRequest(
             url: url,
             body: body,
             isFromLogin: isFromLogin,
@@ -411,7 +411,7 @@ class NetworkCaller {
           !isRetry) {
         final refreshed = await _handle401(hadToken: true);
         if (refreshed) {
-          return putRequest(
+          return await putRequest(
             url: url,
             body: body,
             isFromLogin: isFromLogin,
@@ -481,7 +481,7 @@ class NetworkCaller {
           !isRetry) {
         final refreshed = await _handle401(hadToken: true);
         if (refreshed) {
-          return deleteRequest(
+          return await deleteRequest(
             url: url,
             body: body,
             isFromLogin: isFromLogin,
@@ -587,7 +587,7 @@ class NetworkCaller {
           !isRetry) {
         final refreshed = await _handle401(hadToken: true);
         if (refreshed) {
-          return multipartRequest(
+          return await multipartRequest(
             url: url,
             method: method,
             fields: fields,
