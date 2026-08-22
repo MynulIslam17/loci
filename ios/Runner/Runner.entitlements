@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!-- Xcode overrides this at build time from the signing provisioning
+	     profile: "development" for local debug builds, "production" for
+	     TestFlight and the App Store. Leave it as "development" — editing it by
+	     hand only desynchronises it from the profile.
+
+	     The value the profile carries is what actually decides which APNs
+	     environment the device token belongs to, so the App ID must have Push
+	     Notifications enabled in the developer portal. Without it the
+	     distribution profile ships no aps-environment at all and every push to
+	     a TestFlight build fails with BadDeviceToken. -->
+	<key>aps-environment</key>
+	<string>development</string>
+</dict>
+</plist>

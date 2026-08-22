@@ -46,6 +46,13 @@
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
 
+	<!-- Remote push notification background modes -->
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>fetch</string>
+		<string>remote-notification</string>
+	</array>
+
 	<!-- Only standard HTTPS/TLS encryption; skips ASC export-compliance prompt. -->
 	<key>ITSAppUsesNonExemptEncryption</key>
 	<false/>

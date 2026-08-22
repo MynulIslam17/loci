@@ -121,6 +121,7 @@ class _ExploreRoutesPageState extends State<ExploreRoutesPage> {
         onRefresh: () => routeController.fetchRoutes(isRefresh: true),
         child: CustomScrollView(
           controller: _scrollController,
+          keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
           physics: const BouncingScrollPhysics(
             parent: AlwaysScrollableScrollPhysics(),
           ),

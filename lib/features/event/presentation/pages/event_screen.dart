@@ -138,6 +138,7 @@ class _EventScreenState extends State<EventScreen> {
         onRefresh: () => eventController.fetchEvents(isRefresh: true),
         child: CustomScrollView(
           controller: _scrollController,
+          keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
           physics: const BouncingScrollPhysics(
             parent: AlwaysScrollableScrollPhysics(),
           ),
