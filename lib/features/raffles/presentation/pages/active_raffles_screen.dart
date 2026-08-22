@@ -33,8 +33,8 @@ class _ActiveRafflesPageState extends State<ActiveRafflesPage> {
   void initState() {
     super.initState();
     _scrollController.addListener(_onScroll);
-    _searchController.text = raffleListController.searchQuery;
-    _isSearchExpanded = raffleListController.searchQuery.isNotEmpty;
+    _searchController.text = '';
+    _isSearchExpanded = false;
     raffleListController.fetchRaffles(isRefresh: true);
   }
 
@@ -65,11 +65,7 @@ class _ActiveRafflesPageState extends State<ActiveRafflesPage> {
     FocusManager.instance.primaryFocus?.unfocus();
     _searchFocus.unfocus();
     if (_isSearchExpanded || _searchController.text.isNotEmpty) {
-      if (mounted) {
-        setState(() {
-          _isSearchExpanded = false;
-        });
-      }
+      setState(() => _isSearchExpanded = false);
       _searchController.clear();
       raffleListController.clearSearch();
     }
@@ -90,7 +86,7 @@ class _ActiveRafflesPageState extends State<ActiveRafflesPage> {
     final colorScheme = context.colorScheme;
 
     return Scaffold(
-      backgroundColor: Colors.transparent,
+      backgroundColor: colorScheme.surface,
       floatingActionButton: AnimatedSlide(
         duration: const Duration(milliseconds: 250),
         offset: _showScrollToTop ? Offset.zero : const Offset(0, 2),
@@ -117,52 +113,54 @@ class _ActiveRafflesPageState extends State<ActiveRafflesPage> {
             await raffleListController.refreshRaffles();
           }
         },
-        child: Obx(() {
-          final controller = raffleListController;
-          final raffles = controller.raffleList;
-          final hasSearch = controller.searchQuery.trim().isNotEmpty;
-          final showShimmer =
-              controller.showInitialShimmer || controller.isSearching.value;
-          final hasFatalError =
-              controller.errorMessage != null &&
-              raffles.isEmpty &&
-              !showShimmer;
-
-          return CustomScrollView(
-            controller: _scrollController,
-            physics: const BouncingScrollPhysics(
-              parent: AlwaysScrollableScrollPhysics(),
-            ),
-            slivers: [
-              // ── 1. Floating Quick-Return Search Header (iOS Glass / Android M3) ─
-              SliverPersistentHeader(
-                pinned: true,
-                floating: false,
-                delegate: AdaptivePinnedSearchDelegate(
-                  child: AdaptiveExpandableSearchHeader(
-                    title: 'Active Raffles',
-                    subtitle: 'Check in to locations to enter and win prizes',
-                    hintText: 'Search active raffles...',
-                    searchController: _searchController,
-                    searchFocus: _searchFocus,
-                    isExpanded: _isSearchExpanded ||
-                        raffleListController.searchQuery.isNotEmpty,
-                    onToggleExpand: (expanded) {
-                      setState(() => _isSearchExpanded = expanded);
-                    },
-                    onSearchChanged: raffleListController.onSearchChanged,
-                    onSearchSubmitted: (v) =>
-                        raffleListController.submitSearch(v),
-                    onClear: () {
-                      raffleListController.clearSearch();
-                    },
-                  ),
+        child: CustomScrollView(
+          controller: _scrollController,
+          physics: const BouncingScrollPhysics(
+            parent: AlwaysScrollableScrollPhysics(),
+          ),
+          slivers: [
+            // ── 1. Floating Quick-Return Search Header (iOS Glass / Android M3) ─
+            SliverPersistentHeader(
+              pinned: _isSearchExpanded || raffleListController.searchQuery.isNotEmpty,
+              floating:
+                  !_isSearchExpanded && raffleListController.searchQuery.isEmpty,
+              delegate: AdaptivePinnedSearchDelegate(
+                child: AdaptiveExpandableSearchHeader(
+                  title: 'Active Raffles',
+                  subtitle: 'Check in to locations to enter and win prizes',
+                  hintText: 'Search active raffles...',
+                  searchController: _searchController,
+                  searchFocus: _searchFocus,
+                  isExpanded: _isSearchExpanded ||
+                      raffleListController.searchQuery.isNotEmpty,
+                  onToggleExpand: (expanded) {
+                    setState(() => _isSearchExpanded = expanded);
+                  },
+                  onSearchChanged: raffleListController.onSearchChanged,
+                  onSearchSubmitted: (v) =>
+                      raffleListController.submitSearch(v),
+                  onClear: () {
+                    raffleListController.clearSearch();
+                  },
                 ),
               ),
+            ),
 
-              // ── 2. Content Body ───────────────────────────────────────────
-              if (showShimmer)
-                SliverPadding(
+            // ── 2. Content Body ───────────────────────────────────────────
+            // Only content is reactive via Obx
+            Obx(() {
+              final controller = raffleListController;
+              final raffles = controller.raffleList;
+              final hasSearch = controller.searchQuery.trim().isNotEmpty;
+              final showShimmer =
+                  controller.showInitialShimmer || controller.isSearching.value;
+              final hasFatalError =
+                  controller.errorMessage != null &&
+                  raffles.isEmpty &&
+                  !showShimmer;
+
+              if (showShimmer) {
+                return SliverPadding(
                   padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
                   sliver: SliverList(
                     delegate: SliverChildBuilderDelegate(
@@ -170,17 +168,21 @@ class _ActiveRafflesPageState extends State<ActiveRafflesPage> {
                       childCount: 3,
                     ),
                   ),
-                )
-              else if (hasFatalError)
-                SliverFillRemaining(
+                );
+              }
+
+              if (hasFatalError) {
+                return SliverFillRemaining(
                   hasScrollBody: false,
                   child: ErrorStateWidget(
                     message: controller.errorMessage!,
                     onRetry: () => controller.fetchRaffles(isRefresh: true),
                   ),
-                )
-              else if (raffles.isEmpty)
-                SliverFillRemaining(
+                );
+              }
+
+              if (raffles.isEmpty) {
+                return SliverFillRemaining(
                   hasScrollBody: false,
                   child: Center(
                     child: Padding(
@@ -257,41 +259,42 @@ class _ActiveRafflesPageState extends State<ActiveRafflesPage> {
                       ),
                     ),
                   ),
-                )
-              else
-                SliverPadding(
-                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
-                  sliver: SliverList(
-                    delegate: SliverChildBuilderDelegate(
-                      (context, index) {
-                        if (index == raffles.length) {
-                          return const PaginationLoader();
-                        }
+                );
+              }
 
-                        final raffle = raffles[index];
-                        return Padding(
-                          padding: const EdgeInsets.only(bottom: 14),
-                          child: RaffleCard(
-                            raffle: raffle,
-                            onTap: () {
-                              _resetSearchToDefault();
-                              Get.toNamed(
-                                AppRoutes.rafflesDetails,
-                                arguments: {'raffleId': raffle.id},
-                              );
-                            },
-                          ),
-                        );
-                      },
-                      childCount:
-                          raffles.length +
-                          (controller.isPaginationLoading ? 1 : 0),
-                    ),
+              return SliverPadding(
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+                sliver: SliverList(
+                  delegate: SliverChildBuilderDelegate(
+                    (context, index) {
+                      if (index == raffles.length) {
+                        return const PaginationLoader();
+                      }
+
+                      final raffle = raffles[index];
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: 14),
+                        child: RaffleCard(
+                          raffle: raffle,
+                          onTap: () {
+                            _resetSearchToDefault();
+                            Get.toNamed(
+                              AppRoutes.rafflesDetails,
+                              arguments: {'raffleId': raffle.id},
+                            );
+                          },
+                        ),
+                      );
+                    },
+                    childCount:
+                        raffles.length +
+                        (controller.isPaginationLoading ? 1 : 0),
                   ),
                 ),
-            ],
-          );
-        }),
+              );
+            }),
+          ],
+        ),
       ),
     );
   }

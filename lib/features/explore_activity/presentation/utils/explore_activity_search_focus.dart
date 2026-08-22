@@ -18,15 +18,9 @@ class ExploreActivitySearchFocus {
   }
 
   Future<T?> guard<T>(Future<T?>? Function() navigate) async {
-    focusNode.canRequestFocus = false;
     unfocus();
-    try {
-      final future = navigate();
-      if (future == null) return null;
-      return await future;
-    } finally {
-      focusNode.canRequestFocus = true;
-      unfocus();
-    }
+    final future = navigate();
+    if (future == null) return null;
+    return await future;
   }
 }

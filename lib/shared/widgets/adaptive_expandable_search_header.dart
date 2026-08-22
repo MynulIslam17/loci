@@ -145,43 +145,37 @@ class AdaptiveExpandableSearchHeader extends StatelessWidget {
     void handleTap() {
       HapticFeedback.lightImpact();
       onToggleExpand(true);
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (searchFocus != null && !searchFocus!.hasFocus) {
+      Future.delayed(const Duration(milliseconds: 200), () {
+        if (searchFocus != null && searchFocus!.canRequestFocus) {
           searchFocus!.requestFocus();
         }
       });
     }
 
     if (isIOS) {
-      return ClipRRect(
-        borderRadius: BorderRadius.circular(22),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
-          child: CupertinoButton(
-            padding: EdgeInsets.zero,
-            minimumSize: const Size(44, 44),
-            onPressed: handleTap,
-            child: Container(
-              width: 44,
-              height: 44,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: isDark
-                    ? Colors.white.withValues(alpha: 0.12)
-                    : Colors.black.withValues(alpha: 0.06),
-                border: Border.all(
-                  color: isDark
-                      ? Colors.white.withValues(alpha: 0.18)
-                      : Colors.black.withValues(alpha: 0.08),
-                  width: 0.8,
-                ),
-              ),
-              child: Icon(
-                CupertinoIcons.search,
-                size: 20,
-                color: colors.primary,
-              ),
+      return CupertinoButton(
+        padding: EdgeInsets.zero,
+        minimumSize: const Size(44, 44),
+        onPressed: handleTap,
+        child: Container(
+          width: 44,
+          height: 44,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: isDark
+                ? Colors.white.withValues(alpha: 0.12)
+                : Colors.black.withValues(alpha: 0.06),
+            border: Border.all(
+              color: isDark
+                  ? Colors.white.withValues(alpha: 0.18)
+                  : Colors.black.withValues(alpha: 0.08),
+              width: 0.8,
             ),
+          ),
+          child: Icon(
+            CupertinoIcons.search,
+            size: 20,
+            color: colors.primary,
           ),
         ),
       );
@@ -228,60 +222,54 @@ class AdaptiveExpandableSearchHeader extends StatelessWidget {
       key: const ValueKey('ios_glass_search_bar'),
       children: [
         Expanded(
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(14),
-            child: BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
-              child: Container(
-                height: 46,
-                decoration: BoxDecoration(
+          child: Container(
+            height: 46,
+            decoration: BoxDecoration(
+              color: isDark
+                  ? Colors.white.withValues(alpha: 0.14)
+                  : Colors.black.withValues(alpha: 0.07),
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(
+                color: isDark
+                    ? Colors.white.withValues(alpha: 0.2)
+                    : Colors.black.withValues(alpha: 0.08),
+                width: 0.8,
+              ),
+            ),
+            child: Row(
+              children: [
+                const SizedBox(width: 12),
+                Icon(
+                  CupertinoIcons.search,
+                  size: 18,
                   color: isDark
-                      ? Colors.white.withValues(alpha: 0.14)
-                      : Colors.black.withValues(alpha: 0.07),
-                  borderRadius: BorderRadius.circular(14),
-                  border: Border.all(
-                    color: isDark
-                        ? Colors.white.withValues(alpha: 0.2)
-                        : Colors.black.withValues(alpha: 0.08),
-                    width: 0.8,
+                      ? CupertinoColors.systemGrey.color
+                      : CupertinoColors.systemGrey2.color,
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: CupertinoTextField(
+                    controller: searchController,
+                    focusNode: searchFocus,
+                    autofocus: false,
+                    placeholder: hintText,
+                    placeholderStyle: AppTextStyle.textSm(
+                      color: colors.onSurfaceVariant.withValues(alpha: 0.6),
+                    ),
+                    style: AppTextStyle.textSm(
+                      color: colors.onSurface,
+                      weight: FontWeight.w500,
+                    ),
+                    textInputAction: TextInputAction.search,
+                    decoration: null,
+                    padding: const EdgeInsets.symmetric(vertical: 11),
+                    onChanged: onSearchChanged,
+                    onSubmitted: onSearchSubmitted,
+                    clearButtonMode: OverlayVisibilityMode.editing,
                   ),
                 ),
-                child: Row(
-                  children: [
-                    const SizedBox(width: 12),
-                    Icon(
-                      CupertinoIcons.search,
-                      size: 18,
-                      color: isDark
-                          ? CupertinoColors.systemGrey.color
-                          : CupertinoColors.systemGrey2.color,
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: CupertinoTextField(
-                        controller: searchController,
-                        focusNode: searchFocus,
-                        autofocus: true,
-                        placeholder: hintText,
-                        placeholderStyle: AppTextStyle.textSm(
-                          color: colors.onSurfaceVariant.withValues(alpha: 0.6),
-                        ),
-                        style: AppTextStyle.textSm(
-                          color: colors.onSurface,
-                          weight: FontWeight.w500,
-                        ),
-                        textInputAction: TextInputAction.search,
-                        decoration: null,
-                        padding: const EdgeInsets.symmetric(vertical: 11),
-                        onChanged: onSearchChanged,
-                        onSubmitted: onSearchSubmitted,
-                        clearButtonMode: OverlayVisibilityMode.editing,
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                  ],
-                ),
-              ),
+                const SizedBox(width: 8),
+              ],
             ),
           ),
         ),
@@ -349,7 +337,7 @@ class AdaptiveExpandableSearchHeader extends StatelessWidget {
                   child: TextField(
                     controller: searchController,
                     focusNode: searchFocus,
-                    autofocus: true,
+                    autofocus: false,
                     textInputAction: TextInputAction.search,
                     style: AppTextStyle.textSm(
                       color: colors.onSurface,
@@ -455,7 +443,7 @@ class AdaptivePinnedSearchDelegate extends SliverPersistentHeaderDelegate {
         filter: ImageFilter.blur(sigmaX: 14, sigmaY: 14),
         child: Container(
           decoration: BoxDecoration(
-            color: Theme.of(context).scaffoldBackgroundColor.withValues(
+            color: colors.surface.withValues(
                   alpha: isScrolled ? (isDark ? 0.88 : 0.92) : 1.0,
                 ),
             boxShadow: isScrolled

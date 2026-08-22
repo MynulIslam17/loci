@@ -33,8 +33,8 @@ class _ExploreRoutesPageState extends State<ExploreRoutesPage> {
   void initState() {
     super.initState();
     _scrollController.addListener(_onScroll);
-    _searchController.text = routeController.searchQuery;
-    _isSearchExpanded = routeController.searchQuery.isNotEmpty;
+    _searchController.text = '';
+    _isSearchExpanded = false;
     routeController.fetchRoutes();
   }
 
@@ -65,11 +65,7 @@ class _ExploreRoutesPageState extends State<ExploreRoutesPage> {
     FocusManager.instance.primaryFocus?.unfocus();
     _searchFocus.unfocus();
     if (_isSearchExpanded || _searchController.text.isNotEmpty) {
-      if (mounted) {
-        setState(() {
-          _isSearchExpanded = false;
-        });
-      }
+      setState(() => _isSearchExpanded = false);
       _searchController.clear();
       routeController.clearSearch();
     }
@@ -101,7 +97,7 @@ class _ExploreRoutesPageState extends State<ExploreRoutesPage> {
     final colorScheme = context.colorScheme;
 
     return Scaffold(
-      backgroundColor: Colors.transparent,
+      backgroundColor: colorScheme.surface,
       floatingActionButton: AnimatedSlide(
         duration: const Duration(milliseconds: 250),
         offset: _showScrollToTop ? Offset.zero : const Offset(0, 2),
@@ -123,51 +119,54 @@ class _ExploreRoutesPageState extends State<ExploreRoutesPage> {
       body: AdaptiveRefresh(
         color: colorScheme.primary,
         onRefresh: () => routeController.fetchRoutes(isRefresh: true),
-        child: Obx(() {
-          final controller = routeController;
-          final routes = controller.routeList;
-          final hasSearch = controller.searchQuery.trim().isNotEmpty;
-          final showShimmer =
-              controller.showInitialShimmer || controller.isSearching.value;
-          final hasFatalError =
-              controller.errorMessage != null &&
-              routes.isEmpty &&
-              !showShimmer;
-
-          return CustomScrollView(
-            controller: _scrollController,
-            physics: const BouncingScrollPhysics(
-              parent: AlwaysScrollableScrollPhysics(),
-            ),
-            slivers: [
-              // ── 1. Floating Quick-Return Search Header (iOS Glass / Android M3) ─
-              SliverPersistentHeader(
-                pinned: true,
-                floating: false,
-                delegate: AdaptivePinnedSearchDelegate(
-                  child: AdaptiveExpandableSearchHeader(
-                    title: 'Explore Routes',
-                    subtitle: 'Discover pub crawls, shop hopping, and scavenger hunts',
-                    hintText: 'Search routes by name or place...',
-                    searchController: _searchController,
-                    searchFocus: _searchFocus,
-                    isExpanded: _isSearchExpanded ||
-                        routeController.searchQuery.isNotEmpty,
-                    onToggleExpand: (expanded) {
-                      setState(() => _isSearchExpanded = expanded);
-                    },
-                    onSearchChanged: routeController.onSearchChanged,
-                    onSearchSubmitted: (v) => routeController.submitSearch(v),
-                    onClear: () {
-                      routeController.clearSearch();
-                    },
-                  ),
+        child: CustomScrollView(
+          controller: _scrollController,
+          physics: const BouncingScrollPhysics(
+            parent: AlwaysScrollableScrollPhysics(),
+          ),
+          slivers: [
+            // ── 1. Floating Quick-Return Search Header (iOS Glass / Android M3) ─
+            SliverPersistentHeader(
+              pinned: _isSearchExpanded ||
+                  routeController.searchQuery.isNotEmpty,
+              floating: !_isSearchExpanded &&
+                  routeController.searchQuery.isEmpty,
+              delegate: AdaptivePinnedSearchDelegate(
+                child: AdaptiveExpandableSearchHeader(
+                  title: 'Explore Routes',
+                  subtitle: 'Discover pub crawls, shop hopping, and scavenger hunts',
+                  hintText: 'Search routes by name or place...',
+                  searchController: _searchController,
+                  searchFocus: _searchFocus,
+                  isExpanded: _isSearchExpanded ||
+                      routeController.searchQuery.isNotEmpty,
+                  onToggleExpand: (expanded) {
+                    setState(() => _isSearchExpanded = expanded);
+                  },
+                  onSearchChanged: routeController.onSearchChanged,
+                  onSearchSubmitted: (v) => routeController.submitSearch(v),
+                  onClear: () {
+                    routeController.clearSearch();
+                  },
                 ),
               ),
+            ),
 
-              // ── 2. Content Body ───────────────────────────────────────────
-              if (showShimmer)
-                SliverPadding(
+            // ── 2. Content Body ───────────────────────────────────────────
+            // Only content is reactive via Obx
+            Obx(() {
+              final controller = routeController;
+              final routes = controller.routeList;
+              final hasSearch = controller.searchQuery.trim().isNotEmpty;
+              final showShimmer =
+                  controller.showInitialShimmer || controller.isSearching.value;
+              final hasFatalError =
+                  controller.errorMessage != null &&
+                  routes.isEmpty &&
+                  !showShimmer;
+
+              if (showShimmer) {
+                return SliverPadding(
                   padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
                   sliver: SliverList(
                     delegate: SliverChildBuilderDelegate(
@@ -178,17 +177,21 @@ class _ExploreRoutesPageState extends State<ExploreRoutesPage> {
                       childCount: 3,
                     ),
                   ),
-                )
-              else if (hasFatalError)
-                SliverFillRemaining(
+                );
+              }
+
+              if (hasFatalError) {
+                return SliverFillRemaining(
                   hasScrollBody: false,
                   child: ErrorStateWidget(
                     message: controller.errorMessage!,
                     onRetry: () => controller.fetchRoutes(),
                   ),
-                )
-              else if (routes.isEmpty)
-                SliverFillRemaining(
+                );
+              }
+
+              if (routes.isEmpty) {
+                return SliverFillRemaining(
                   hasScrollBody: false,
                   child: Center(
                     child: Padding(
@@ -265,46 +268,47 @@ class _ExploreRoutesPageState extends State<ExploreRoutesPage> {
                       ),
                     ),
                   ),
-                )
-              else
-                SliverPadding(
-                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
-                  sliver: SliverList(
-                    delegate: SliverChildBuilderDelegate(
-                      (context, index) {
-                        if (index == routes.length) {
-                          return const PaginationLoader();
-                        }
+                );
+              }
 
-                        final route = routes[index];
+              return SliverPadding(
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+                sliver: SliverList(
+                  delegate: SliverChildBuilderDelegate(
+                    (context, index) {
+                      if (index == routes.length) {
+                        return const PaginationLoader();
+                      }
 
-                        return Padding(
-                          padding: const EdgeInsets.only(bottom: 14),
-                          child: RouteCard(
-                            title: route.title,
-                            description: route.details,
-                            location: route.location,
-                            openingTime: route.openingTime,
-                            availabilityType: route.availabilityType,
-                            imageUrl: route.banner,
-                            onTap: () {
-                              _onTapRouteHandler(
-                                route.routeId,
-                                route.title,
-                              );
-                            },
-                          ),
-                        );
-                      },
-                      childCount:
-                          routes.length +
-                          (controller.isPaginationLoading ? 1 : 0),
-                    ),
+                      final route = routes[index];
+
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: 14),
+                        child: RouteCard(
+                          title: route.title,
+                          description: route.details,
+                          location: route.location,
+                          openingTime: route.openingTime,
+                          availabilityType: route.availabilityType,
+                          imageUrl: route.banner,
+                          onTap: () {
+                            _onTapRouteHandler(
+                              route.routeId,
+                              route.title,
+                            );
+                          },
+                        ),
+                      );
+                    },
+                    childCount:
+                        routes.length +
+                        (controller.isPaginationLoading ? 1 : 0),
                   ),
                 ),
-            ],
-          );
-        }),
+              );
+            }),
+          ],
+        ),
       ),
     );
   }
