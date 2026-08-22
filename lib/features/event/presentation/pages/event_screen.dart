@@ -7,7 +7,6 @@ import 'package:loci/core/theme/theme_extention.dart';
 import 'package:loci/core/utils/show_snackbar.dart';
 import 'package:loci/features/event/presentation/controllers/event_list_controller.dart';
 import 'package:loci/features/event/presentation/controllers/rsvp_controller.dart';
-import 'package:loci/features/main_nav/presentation/controllers/nav_controller.dart';
 import 'package:loci/routes/app_routes.dart';
 import 'package:loci/shared/widgets/adaptive_expandable_search_header.dart';
 import 'package:loci/shared/widgets/adaptive_refresh.dart';
@@ -33,22 +32,15 @@ class _EventScreenState extends State<EventScreen> {
 
   bool _showScrollToTop = false;
   bool _isSearchExpanded = false;
-  final List<Worker> _workers = [];
 
   @override
   void initState() {
     super.initState();
     _scrollController.addListener(_onScroll);
 
-    _searchController.text = eventController.searchQuery;
-    _isSearchExpanded = eventController.searchQuery.isNotEmpty;
+    _searchController.text = '';
+    _isSearchExpanded = false;
     eventController.fetchEvents();
-
-    if (Get.isRegistered<NavController>()) {
-      final nav = Get.find<NavController>();
-      _workers.add(ever(nav.currentIndex, (_) => _resetSearchToDefault()));
-      _workers.add(ever(nav.drawerPage, (_) => _resetSearchToDefault()));
-    }
   }
 
   void _onScroll() {
@@ -78,11 +70,7 @@ class _EventScreenState extends State<EventScreen> {
     FocusManager.instance.primaryFocus?.unfocus();
     _searchFocus.unfocus();
     if (_isSearchExpanded || _searchController.text.isNotEmpty) {
-      if (mounted) {
-        setState(() {
-          _isSearchExpanded = false;
-        });
-      }
+      setState(() => _isSearchExpanded = false);
       _searchController.clear();
       eventController.clearSearch();
     }
@@ -90,9 +78,6 @@ class _EventScreenState extends State<EventScreen> {
 
   @override
   void dispose() {
-    for (final w in _workers) {
-      w.dispose();
-    }
     _scrollController.removeListener(_onScroll);
     _scrollController.dispose();
     _searchFocus.dispose();
@@ -129,6 +114,7 @@ class _EventScreenState extends State<EventScreen> {
     final colors = context.colorScheme;
 
     return Scaffold(
+      backgroundColor: colors.surface,
       floatingActionButton: AnimatedSlide(
         duration: const Duration(milliseconds: 250),
         offset: _showScrollToTop ? Offset.zero : const Offset(0, 2),
@@ -147,54 +133,56 @@ class _EventScreenState extends State<EventScreen> {
           ),
         ),
       ),
-      body: Obx(() {
-        final controller = eventController;
-        final events = controller.eventList;
-        final hasSearch = controller.searchQuery.trim().isNotEmpty;
-        final showShimmer =
-            controller.showInitialShimmer || controller.isSearching.value;
-        final hasFatalError =
-            controller.errorMessage != null &&
-            controller.eventList.isEmpty &&
-            !showShimmer;
-
-        return AdaptiveRefresh(
-          color: colors.primary,
-          onRefresh: () => controller.fetchEvents(isRefresh: true),
-          child: CustomScrollView(
-            controller: _scrollController,
-            physics: const BouncingScrollPhysics(
-              parent: AlwaysScrollableScrollPhysics(),
-            ),
-            slivers: [
-              // ── 1. Floating Quick-Return Search Header (iOS Glass / Android M3) ─
-              SliverPersistentHeader(
-                pinned: true,
-                floating: false,
-                delegate: AdaptivePinnedSearchDelegate(
-                  child: AdaptiveExpandableSearchHeader(
-                    title: 'Upcoming Events',
-                    subtitle: 'RSVP to events you are interested in',
-                    searchController: _searchController,
-                    searchFocus: _searchFocus,
-                    isExpanded: _isSearchExpanded ||
-                        eventController.searchQuery.isNotEmpty,
-                    onToggleExpand: (expanded) {
-                      setState(() => _isSearchExpanded = expanded);
-                    },
-                    onSearchChanged: eventController.onSearchChanged,
-                    onSearchSubmitted: (v) =>
-                        eventController.submitSearch(v),
-                    onClear: () {
-                      eventController.clearSearch();
-                    },
-                  ),
+      body: AdaptiveRefresh(
+        color: colors.primary,
+        onRefresh: () => eventController.fetchEvents(isRefresh: true),
+        child: CustomScrollView(
+          controller: _scrollController,
+          physics: const BouncingScrollPhysics(
+            parent: AlwaysScrollableScrollPhysics(),
+          ),
+          slivers: [
+            // ── 1. Floating Quick-Return Search Header (iOS Glass / Android M3) ─
+            SliverPersistentHeader(
+              pinned: _isSearchExpanded || eventController.searchQuery.isNotEmpty,
+              floating:
+                  !_isSearchExpanded && eventController.searchQuery.isEmpty,
+              delegate: AdaptivePinnedSearchDelegate(
+                child: AdaptiveExpandableSearchHeader(
+                  title: 'Upcoming Events',
+                  subtitle: 'RSVP to events you are interested in',
+                  searchController: _searchController,
+                  searchFocus: _searchFocus,
+                  isExpanded: _isSearchExpanded ||
+                      eventController.searchQuery.isNotEmpty,
+                  onToggleExpand: (expanded) {
+                    setState(() => _isSearchExpanded = expanded);
+                  },
+                  onSearchChanged: eventController.onSearchChanged,
+                  onSearchSubmitted: (v) =>
+                      eventController.submitSearch(v),
+                  onClear: () {
+                    eventController.clearSearch();
+                  },
                 ),
               ),
+            ),
 
-              // ── 3. Content Body (Skeletons / Error / Empty / List) ─────────
-              if (showShimmer)
-                SliverPadding(
+            // ── 2. Content Body (Skeletons / Error / Empty / List) ─────────
+            // Only content is reactive via Obx
+            Obx(() {
+              final controller = eventController;
+              final events = controller.eventList;
+              final hasSearch = controller.searchQuery.trim().isNotEmpty;
+              final showShimmer =
+                  controller.showInitialShimmer || controller.isSearching.value;
+              final hasFatalError =
+                  controller.errorMessage != null &&
+                  controller.eventList.isEmpty &&
+                  !showShimmer;
+
+              if (showShimmer) {
+                return SliverPadding(
                   padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
                   sliver: SliverList(
                     delegate: SliverChildBuilderDelegate(
@@ -205,17 +193,21 @@ class _EventScreenState extends State<EventScreen> {
                       childCount: 3,
                     ),
                   ),
-                )
-              else if (hasFatalError)
-                SliverFillRemaining(
+                );
+              }
+
+              if (hasFatalError) {
+                return SliverFillRemaining(
                   hasScrollBody: false,
                   child: ErrorStateWidget(
                     message: controller.errorMessage!,
                     onRetry: () => controller.fetchEvents(),
                   ),
-                )
-              else if (events.isEmpty)
-                SliverFillRemaining(
+                );
+              }
+
+              if (events.isEmpty) {
+                return SliverFillRemaining(
                   hasScrollBody: false,
                   child: _ModernEmptyState(
                     hasSearch: hasSearch,
@@ -226,63 +218,64 @@ class _EventScreenState extends State<EventScreen> {
                     },
                     onRefresh: () => controller.fetchEvents(isRefresh: true),
                   ),
-                )
-              else
-                SliverPadding(
-                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
-                  sliver: SliverList(
-                    delegate: SliverChildBuilderDelegate(
-                      (context, index) {
-                        if (index == events.length) {
-                          return const PaginationLoader();
-                        }
+                );
+              }
 
-                        final event = events[index];
+              return SliverPadding(
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+                sliver: SliverList(
+                  delegate: SliverChildBuilderDelegate(
+                    (context, index) {
+                      if (index == events.length) {
+                        return const PaginationLoader();
+                      }
 
-                        return Padding(
-                          padding: const EdgeInsets.only(bottom: 14),
-                          child: Obx(() {
-                            final rsvpCtrl = rsvpController;
-                            final isThisButtonLoading =
-                                rsvpCtrl.isLoading &&
-                                event.id == rsvpCtrl.loadingEventId;
+                      final event = events[index];
 
-                            return EventCard(
-                              rsvpButtonText: event.myRsvpStatus.label,
-                              onTapCard: () => _eventOnTapHandler(
-                                event.id,
-                                event.title,
-                              ),
-                              imageUrl: event.coverImage,
-                              title: event.title,
-                              description: event.description,
-                              date: event.dateLabel,
-                              rawDate: event.date,
-                              location: event.location,
-                              attendance:
-                                  "${event.goingCount} going / ${event.maxAttendees} max",
-                              goingCount: event.goingCount,
-                              maxAttendees: event.maxAttendees,
-                              organizer: event.organizerName,
-                              organizerAvatar: event.organizerAvatar,
-                              isPublic: event.isPublic,
-                              myRsvpStatus: event.myRsvpStatus,
-                              onRSVP: () => _rsvpOnTapHandler(event.id),
-                              isLoading: isThisButtonLoading,
-                            );
-                          }),
-                        );
-                      },
-                      childCount:
-                          events.length +
-                          (controller.isPaginationLoading ? 1 : 0),
-                    ),
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: 14),
+                        child: Obx(() {
+                          final rsvpCtrl = rsvpController;
+                          final isThisButtonLoading =
+                              rsvpCtrl.isLoading &&
+                              event.id == rsvpCtrl.loadingEventId;
+
+                          return EventCard(
+                            rsvpButtonText: event.myRsvpStatus.label,
+                            onTapCard: () => _eventOnTapHandler(
+                              event.id,
+                              event.title,
+                            ),
+                            imageUrl: event.coverImage,
+                            title: event.title,
+                            description: event.description,
+                            date: event.dateLabel,
+                            rawDate: event.date,
+                            location: event.location,
+                            attendance:
+                                "${event.goingCount} going / ${event.maxAttendees} max",
+                            goingCount: event.goingCount,
+                            maxAttendees: event.maxAttendees,
+                            organizer: event.organizerName,
+                            organizerAvatar: event.organizerAvatar,
+                            isPublic: event.isPublic,
+                            myRsvpStatus: event.myRsvpStatus,
+                            onRSVP: () => _rsvpOnTapHandler(event.id),
+                            isLoading: isThisButtonLoading,
+                          );
+                        }),
+                      );
+                    },
+                    childCount:
+                        events.length +
+                        (controller.isPaginationLoading ? 1 : 0),
                   ),
                 ),
-            ],
-          ),
-        );
-      }),
+              );
+            }),
+          ],
+        ),
+      ),
     );
   }
 }
