@@ -27,14 +27,14 @@ class _ExploreRoutesPageState extends State<ExploreRoutesPage> {
   final FocusNode _searchFocus = FocusNode();
 
   bool _showScrollToTop = false;
-  final ValueNotifier<bool> _isSearchExpanded = ValueNotifier(false);
+  bool _isSearchExpanded = false;
 
   @override
   void initState() {
     super.initState();
     _scrollController.addListener(_onScroll);
-    _searchController.text = routeController.searchQuery;
-    _isSearchExpanded.value = routeController.searchQuery.isNotEmpty;
+    _searchController.text = '';
+    _isSearchExpanded = false;
     routeController.fetchRoutes();
   }
 
@@ -64,8 +64,8 @@ class _ExploreRoutesPageState extends State<ExploreRoutesPage> {
   void _resetSearchToDefault() {
     FocusManager.instance.primaryFocus?.unfocus();
     _searchFocus.unfocus();
-    if (_isSearchExpanded.value || _searchController.text.isNotEmpty) {
-      _isSearchExpanded.value = false;
+    if (_isSearchExpanded || _searchController.text.isNotEmpty) {
+      setState(() => _isSearchExpanded = false);
       _searchController.clear();
       routeController.clearSearch();
     }
@@ -77,7 +77,6 @@ class _ExploreRoutesPageState extends State<ExploreRoutesPage> {
     _scrollController.dispose();
     _searchFocus.dispose();
     _searchController.dispose();
-    _isSearchExpanded.dispose();
     routeController.clearSearch();
     super.dispose();
   }
@@ -98,7 +97,7 @@ class _ExploreRoutesPageState extends State<ExploreRoutesPage> {
     final colorScheme = context.colorScheme;
 
     return Scaffold(
-      backgroundColor: Colors.transparent,
+      backgroundColor: colorScheme.surface,
       floatingActionButton: AnimatedSlide(
         duration: const Duration(milliseconds: 250),
         offset: _showScrollToTop ? Offset.zero : const Offset(0, 2),
@@ -126,37 +125,31 @@ class _ExploreRoutesPageState extends State<ExploreRoutesPage> {
             parent: AlwaysScrollableScrollPhysics(),
           ),
           slivers: [
-            // ── 1. Floating Quick-Return Search Header ─────────────────────
-            // Wrapped in ValueListenableBuilder instead of setState to avoid
-            // full-screen rebuilds that trigger iOS MediaQuery cascades.
-            ValueListenableBuilder<bool>(
-              valueListenable: _isSearchExpanded,
-              builder: (context, isExpanded, _) {
-                return SliverPersistentHeader(
-                  pinned: isExpanded || routeController.searchQuery.isNotEmpty,
-                  floating:
-                      !isExpanded && routeController.searchQuery.isEmpty,
-                  delegate: AdaptivePinnedSearchDelegate(
-                    child: AdaptiveExpandableSearchHeader(
-                      title: 'Explore Routes',
-                      subtitle: 'Discover pub crawls, shop hopping, and scavenger hunts',
-                      hintText: 'Search routes by name or place...',
-                      searchController: _searchController,
-                      searchFocus: _searchFocus,
-                      isExpanded: isExpanded ||
-                          routeController.searchQuery.isNotEmpty,
-                      onToggleExpand: (expanded) {
-                        _isSearchExpanded.value = expanded;
-                      },
-                      onSearchChanged: routeController.onSearchChanged,
-                      onSearchSubmitted: (v) => routeController.submitSearch(v),
-                      onClear: () {
-                        routeController.clearSearch();
-                      },
-                    ),
-                  ),
-                );
-              },
+            // ── 1. Floating Quick-Return Search Header (iOS Glass / Android M3) ─
+            SliverPersistentHeader(
+              pinned: _isSearchExpanded ||
+                  routeController.searchQuery.isNotEmpty,
+              floating: !_isSearchExpanded &&
+                  routeController.searchQuery.isEmpty,
+              delegate: AdaptivePinnedSearchDelegate(
+                child: AdaptiveExpandableSearchHeader(
+                  title: 'Explore Routes',
+                  subtitle: 'Discover pub crawls, shop hopping, and scavenger hunts',
+                  hintText: 'Search routes by name or place...',
+                  searchController: _searchController,
+                  searchFocus: _searchFocus,
+                  isExpanded: _isSearchExpanded ||
+                      routeController.searchQuery.isNotEmpty,
+                  onToggleExpand: (expanded) {
+                    setState(() => _isSearchExpanded = expanded);
+                  },
+                  onSearchChanged: routeController.onSearchChanged,
+                  onSearchSubmitted: (v) => routeController.submitSearch(v),
+                  onClear: () {
+                    routeController.clearSearch();
+                  },
+                ),
+              ),
             ),
 
             // ── 2. Content Body ───────────────────────────────────────────

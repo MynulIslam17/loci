@@ -27,14 +27,14 @@ class _ActiveRafflesPageState extends State<ActiveRafflesPage> {
   final FocusNode _searchFocus = FocusNode();
 
   bool _showScrollToTop = false;
-  final ValueNotifier<bool> _isSearchExpanded = ValueNotifier(false);
+  bool _isSearchExpanded = false;
 
   @override
   void initState() {
     super.initState();
     _scrollController.addListener(_onScroll);
-    _searchController.text = raffleListController.searchQuery;
-    _isSearchExpanded.value = raffleListController.searchQuery.isNotEmpty;
+    _searchController.text = '';
+    _isSearchExpanded = false;
     raffleListController.fetchRaffles(isRefresh: true);
   }
 
@@ -64,8 +64,8 @@ class _ActiveRafflesPageState extends State<ActiveRafflesPage> {
   void _resetSearchToDefault() {
     FocusManager.instance.primaryFocus?.unfocus();
     _searchFocus.unfocus();
-    if (_isSearchExpanded.value || _searchController.text.isNotEmpty) {
-      _isSearchExpanded.value = false;
+    if (_isSearchExpanded || _searchController.text.isNotEmpty) {
+      setState(() => _isSearchExpanded = false);
       _searchController.clear();
       raffleListController.clearSearch();
     }
@@ -77,7 +77,6 @@ class _ActiveRafflesPageState extends State<ActiveRafflesPage> {
     _scrollController.dispose();
     _searchFocus.dispose();
     _searchController.dispose();
-    _isSearchExpanded.dispose();
     raffleListController.clearSearch();
     super.dispose();
   }
@@ -87,7 +86,7 @@ class _ActiveRafflesPageState extends State<ActiveRafflesPage> {
     final colorScheme = context.colorScheme;
 
     return Scaffold(
-      backgroundColor: Colors.transparent,
+      backgroundColor: colorScheme.surface,
       floatingActionButton: AnimatedSlide(
         duration: const Duration(milliseconds: 250),
         offset: _showScrollToTop ? Offset.zero : const Offset(0, 2),
@@ -120,38 +119,31 @@ class _ActiveRafflesPageState extends State<ActiveRafflesPage> {
             parent: AlwaysScrollableScrollPhysics(),
           ),
           slivers: [
-            // ── 1. Floating Quick-Return Search Header ─────────────────────
-            // Wrapped in ValueListenableBuilder instead of setState to avoid
-            // full-screen rebuilds that trigger iOS MediaQuery cascades.
-            ValueListenableBuilder<bool>(
-              valueListenable: _isSearchExpanded,
-              builder: (context, isExpanded, _) {
-                return SliverPersistentHeader(
-                  pinned: isExpanded || raffleListController.searchQuery.isNotEmpty,
-                  floating:
-                      !isExpanded && raffleListController.searchQuery.isEmpty,
-                  delegate: AdaptivePinnedSearchDelegate(
-                    child: AdaptiveExpandableSearchHeader(
-                      title: 'Active Raffles',
-                      subtitle: 'Check in to locations to enter and win prizes',
-                      hintText: 'Search active raffles...',
-                      searchController: _searchController,
-                      searchFocus: _searchFocus,
-                      isExpanded: isExpanded ||
-                          raffleListController.searchQuery.isNotEmpty,
-                      onToggleExpand: (expanded) {
-                        _isSearchExpanded.value = expanded;
-                      },
-                      onSearchChanged: raffleListController.onSearchChanged,
-                      onSearchSubmitted: (v) =>
-                          raffleListController.submitSearch(v),
-                      onClear: () {
-                        raffleListController.clearSearch();
-                      },
-                    ),
-                  ),
-                );
-              },
+            // ── 1. Floating Quick-Return Search Header (iOS Glass / Android M3) ─
+            SliverPersistentHeader(
+              pinned: _isSearchExpanded || raffleListController.searchQuery.isNotEmpty,
+              floating:
+                  !_isSearchExpanded && raffleListController.searchQuery.isEmpty,
+              delegate: AdaptivePinnedSearchDelegate(
+                child: AdaptiveExpandableSearchHeader(
+                  title: 'Active Raffles',
+                  subtitle: 'Check in to locations to enter and win prizes',
+                  hintText: 'Search active raffles...',
+                  searchController: _searchController,
+                  searchFocus: _searchFocus,
+                  isExpanded: _isSearchExpanded ||
+                      raffleListController.searchQuery.isNotEmpty,
+                  onToggleExpand: (expanded) {
+                    setState(() => _isSearchExpanded = expanded);
+                  },
+                  onSearchChanged: raffleListController.onSearchChanged,
+                  onSearchSubmitted: (v) =>
+                      raffleListController.submitSearch(v),
+                  onClear: () {
+                    raffleListController.clearSearch();
+                  },
+                ),
+              ),
             ),
 
             // ── 2. Content Body ───────────────────────────────────────────
