@@ -6,6 +6,7 @@ import 'package:loci/core/enums/rsvp_status.dart';
 import 'package:loci/core/theme/theme_extention.dart';
 import 'package:loci/core/utils/show_snackbar.dart';
 import 'package:loci/features/event/presentation/controllers/event_list_controller.dart';
+import 'package:loci/features/main_nav/presentation/widgets/ios_glass_bottom_nav_bar.dart';
 import 'package:loci/features/event/presentation/controllers/rsvp_controller.dart';
 import 'package:loci/routes/app_routes.dart';
 import 'package:loci/shared/widgets/adaptive_expandable_search_header.dart';
@@ -184,7 +185,12 @@ class _EventScreenState extends State<EventScreen> {
 
               if (showShimmer) {
                 return SliverPadding(
-                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+                  padding: EdgeInsets.fromLTRB(
+                    16,
+                    8,
+                    16,
+                    24 + IosGlassBottomNavBar.overlayBottomInset(context),
+                  ),
                   sliver: SliverList(
                     delegate: SliverChildBuilderDelegate(
                       (_, _) => const Padding(
@@ -223,7 +229,12 @@ class _EventScreenState extends State<EventScreen> {
               }
 
               return SliverPadding(
-                padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+                padding: EdgeInsets.fromLTRB(
+                  16,
+                  8,
+                  16,
+                  24 + IosGlassBottomNavBar.overlayBottomInset(context),
+                ),
                 sliver: SliverList(
                   delegate: SliverChildBuilderDelegate(
                     (context, index) {

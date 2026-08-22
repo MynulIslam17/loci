@@ -10,10 +10,16 @@ class _AnswerThread {
   int currentPage;
   bool hasNextPage;
 
+  /// Whether page 1 has ever been fetched successfully. Needed because an
+  /// empty [comments] list is ambiguous on its own — it could mean "never
+  /// fetched" or "fetched, and there are genuinely zero comments."
+  bool fetched;
+
   _AnswerThread({
     this.comments = const [],
     this.currentPage = 1,
     this.hasNextPage = false,
+    this.fetched = false,
   });
 }
 
@@ -79,7 +85,7 @@ class HomeCommentController extends GetxController {
     errorMessage.value = null;
 
     final cached = _threads[questionId];
-    if (cached != null && cached.comments.isNotEmpty) {
+    if (cached != null && cached.fetched) {
       // Instant display from cache — no spinner, no blank frame.
       isLoading.value = false;
       _syncActiveThread();
@@ -118,6 +124,7 @@ class HomeCommentController extends GetxController {
         comments: parsed.comments,
         currentPage: parsed.meta.page,
         hasNextPage: parsed.meta.hasNextPage,
+        fetched: true,
       );
     } catch (e) {
       if (!silent && questionId == _currentQuestionId) {
