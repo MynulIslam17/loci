@@ -15,6 +15,7 @@ import 'package:loci/features/auth/presentation/controllers/auth_controller.dart
 import 'package:loci/features/browse_business/data/repositories/browse_business_repository.dart';
 import 'package:loci/features/browse_business/domain/services/browse_business_service.dart';
 import 'package:loci/features/chat/data/repositories/chat_repository.dart';
+import 'package:loci/features/chat/domain/services/chat_notification_bridge.dart';
 import 'package:loci/features/chat/domain/services/chat_service.dart';
 import 'package:loci/features/chat/presentation/controllers/chat_list_controller.dart';
 import 'package:loci/features/chat/presentation/controllers/new_chat_controller.dart';
@@ -37,6 +38,8 @@ import 'package:loci/features/my_business/data/repositories/my_business_reposito
 import 'package:loci/features/my_business/domain/services/my_business_service.dart';
 import 'package:loci/features/network/data/repositories/network_repository.dart';
 import 'package:loci/features/network/domain/services/network_service.dart';
+import 'package:loci/core/services/notification/push_notification_service.dart';
+import 'package:loci/features/notification/data/repositories/push_token_repository.dart';
 import 'package:loci/features/notification/data/repositories/notification_repository.dart';
 import 'package:loci/features/notification/domain/services/notification_service.dart';
 import 'package:loci/features/notification/presentation/controllers/notification_controller.dart';
@@ -210,6 +213,18 @@ class AppBindings extends Bindings {
       permanent: true,
     );
 
+    Get.put<PushTokenRepository>(
+      PushTokenRepository(Get.find<NetworkCaller>()),
+      permanent: true,
+    );
+    Get.put<ChatSocketService>(ChatSocketService(), permanent: true);
+    Get.put<PushNotificationService>(
+      PushNotificationService(Get.find<PushTokenRepository>()),
+      permanent: true,
+    );
+    // Subscribes to the socket, so it must outlive any one chat screen.
+    Get.put<ChatNotificationBridge>(ChatNotificationBridge(), permanent: true);
+
     Get.put<NotificationRepository>(
       NotificationRepository(Get.find<NetworkCaller>()),
       permanent: true,
@@ -256,7 +271,6 @@ class AppBindings extends Bindings {
     );
 
     // Shared realtime / payments / nav
-    Get.put<ChatSocketService>(ChatSocketService(), permanent: true);
     Get.put<NavController>(NavController(), permanent: true);
     Get.put<StripeService>(StripeService(), permanent: true);
 

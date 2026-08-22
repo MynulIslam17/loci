@@ -115,6 +115,7 @@ class _ActiveRafflesPageState extends State<ActiveRafflesPage> {
         },
         child: CustomScrollView(
           controller: _scrollController,
+          keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
           physics: const BouncingScrollPhysics(
             parent: AlwaysScrollableScrollPhysics(),
           ),

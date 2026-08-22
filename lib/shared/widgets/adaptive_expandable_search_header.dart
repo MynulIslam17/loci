@@ -252,6 +252,8 @@ class AdaptiveExpandableSearchHeader extends StatelessWidget {
                     controller: searchController,
                     focusNode: searchFocus,
                     autofocus: false,
+                    cursorColor: colors.primary,
+                    autocorrect: false,
                     placeholder: hintText,
                     placeholderStyle: AppTextStyle.textSm(
                       color: colors.onSurfaceVariant.withValues(alpha: 0.6),

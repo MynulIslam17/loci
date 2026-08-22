@@ -3,6 +3,7 @@ import 'dart:math';
 
 import 'package:get/get.dart';
 import 'package:loci/core/services/connectivity/connectivity_service.dart';
+import 'package:loci/core/services/notification/local_notification_service.dart';
 import 'package:loci/core/services/socket/chat_socket_service.dart';
 import 'package:loci/core/storage/hive_storage_service.dart';
 import 'package:loci/core/utils/app_error_messages.dart';
@@ -691,6 +692,9 @@ class ChatController extends GetxController {
     if (Get.isRegistered<ChatListController>()) {
       Get.find<ChatListController>().clearUnread(conversationId!);
     }
+    // The user is reading the thread, so anything still in the tray about it is
+    // stale.
+    LocalNotificationService.clearConversation(conversationId!);
   }
 
   void _refreshChatList() {
