@@ -6,6 +6,7 @@ import 'package:loci/features/network/data/models/dashboard_count.dart';
 import 'package:loci/features/network/data/models/checkin_item.dart';
 import 'package:loci/features/network/presentation/controllers/network_dashboard_controller.dart';
 import 'package:loci/features/network/presentation/widgets/network_detail_row.dart';
+import 'package:loci/features/main_nav/presentation/widgets/ios_glass_bottom_nav_bar.dart';
 import 'package:loci/routes/app_routes.dart';
 import 'package:loci/shared/widgets/adaptive_refresh.dart';
 import 'package:loci/shared/widgets/app_skeleton.dart';
@@ -45,7 +46,12 @@ class _NetworkScreenState extends State<NetworkScreen> {
         return AdaptiveRefresh(
           onRefresh: _controller.refreshDashboard,
           child: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
+            padding: EdgeInsets.fromLTRB(
+              16,
+              0,
+              16,
+              IosGlassBottomNavBar.overlayBottomInset(context),
+            ),
             physics: const AlwaysScrollableScrollPhysics(),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
