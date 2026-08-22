@@ -7,7 +7,6 @@ import 'package:loci/core/theme/theme_extention.dart';
 import 'package:loci/core/utils/show_snackbar.dart';
 import 'package:loci/features/event/presentation/controllers/event_list_controller.dart';
 import 'package:loci/features/event/presentation/controllers/rsvp_controller.dart';
-import 'package:loci/features/main_nav/presentation/controllers/nav_controller.dart';
 import 'package:loci/routes/app_routes.dart';
 import 'package:loci/shared/widgets/adaptive_expandable_search_header.dart';
 import 'package:loci/shared/widgets/adaptive_refresh.dart';
@@ -32,23 +31,16 @@ class _EventScreenState extends State<EventScreen> {
   final FocusNode _searchFocus = FocusNode();
 
   bool _showScrollToTop = false;
-  final ValueNotifier<bool> _isSearchExpanded = ValueNotifier(false);
-  final List<Worker> _workers = [];
+  bool _isSearchExpanded = false;
 
   @override
   void initState() {
     super.initState();
     _scrollController.addListener(_onScroll);
 
-    _searchController.text = eventController.searchQuery;
-    _isSearchExpanded.value = eventController.searchQuery.isNotEmpty;
+    _searchController.text = '';
+    _isSearchExpanded = false;
     eventController.fetchEvents();
-
-    if (Get.isRegistered<NavController>()) {
-      final nav = Get.find<NavController>();
-      _workers.add(ever(nav.currentIndex, (_) => _resetSearchToDefault()));
-      _workers.add(ever(nav.drawerPage, (_) => _resetSearchToDefault()));
-    }
   }
 
   void _onScroll() {
@@ -77,8 +69,8 @@ class _EventScreenState extends State<EventScreen> {
   void _resetSearchToDefault() {
     FocusManager.instance.primaryFocus?.unfocus();
     _searchFocus.unfocus();
-    if (_isSearchExpanded.value || _searchController.text.isNotEmpty) {
-      _isSearchExpanded.value = false;
+    if (_isSearchExpanded || _searchController.text.isNotEmpty) {
+      setState(() => _isSearchExpanded = false);
       _searchController.clear();
       eventController.clearSearch();
     }
@@ -86,14 +78,10 @@ class _EventScreenState extends State<EventScreen> {
 
   @override
   void dispose() {
-    for (final w in _workers) {
-      w.dispose();
-    }
     _scrollController.removeListener(_onScroll);
     _scrollController.dispose();
     _searchFocus.dispose();
     _searchController.dispose();
-    _isSearchExpanded.dispose();
     eventController.clearSearch();
     super.dispose();
   }
@@ -126,6 +114,7 @@ class _EventScreenState extends State<EventScreen> {
     final colors = context.colorScheme;
 
     return Scaffold(
+      backgroundColor: colors.surface,
       floatingActionButton: AnimatedSlide(
         duration: const Duration(milliseconds: 250),
         offset: _showScrollToTop ? Offset.zero : const Offset(0, 2),
@@ -153,37 +142,30 @@ class _EventScreenState extends State<EventScreen> {
             parent: AlwaysScrollableScrollPhysics(),
           ),
           slivers: [
-            // ── 1. Floating Quick-Return Search Header ─────────────────────
-            // Wrapped in ValueListenableBuilder instead of setState to avoid
-            // full-screen rebuilds that trigger iOS MediaQuery cascades.
-            ValueListenableBuilder<bool>(
-              valueListenable: _isSearchExpanded,
-              builder: (context, isExpanded, _) {
-                return SliverPersistentHeader(
-                  pinned: isExpanded || eventController.searchQuery.isNotEmpty,
-                  floating:
-                      !isExpanded && eventController.searchQuery.isEmpty,
-                  delegate: AdaptivePinnedSearchDelegate(
-                    child: AdaptiveExpandableSearchHeader(
-                      title: 'Upcoming Events',
-                      subtitle: 'RSVP to events you are interested in',
-                      searchController: _searchController,
-                      searchFocus: _searchFocus,
-                      isExpanded: isExpanded ||
-                          eventController.searchQuery.isNotEmpty,
-                      onToggleExpand: (expanded) {
-                        _isSearchExpanded.value = expanded;
-                      },
-                      onSearchChanged: eventController.onSearchChanged,
-                      onSearchSubmitted: (v) =>
-                          eventController.submitSearch(v),
-                      onClear: () {
-                        eventController.clearSearch();
-                      },
-                    ),
-                  ),
-                );
-              },
+            // ── 1. Floating Quick-Return Search Header (iOS Glass / Android M3) ─
+            SliverPersistentHeader(
+              pinned: _isSearchExpanded || eventController.searchQuery.isNotEmpty,
+              floating:
+                  !_isSearchExpanded && eventController.searchQuery.isEmpty,
+              delegate: AdaptivePinnedSearchDelegate(
+                child: AdaptiveExpandableSearchHeader(
+                  title: 'Upcoming Events',
+                  subtitle: 'RSVP to events you are interested in',
+                  searchController: _searchController,
+                  searchFocus: _searchFocus,
+                  isExpanded: _isSearchExpanded ||
+                      eventController.searchQuery.isNotEmpty,
+                  onToggleExpand: (expanded) {
+                    setState(() => _isSearchExpanded = expanded);
+                  },
+                  onSearchChanged: eventController.onSearchChanged,
+                  onSearchSubmitted: (v) =>
+                      eventController.submitSearch(v),
+                  onClear: () {
+                    eventController.clearSearch();
+                  },
+                ),
+              ),
             ),
 
             // ── 2. Content Body (Skeletons / Error / Empty / List) ─────────
