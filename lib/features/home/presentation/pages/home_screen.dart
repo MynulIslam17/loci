@@ -22,6 +22,7 @@ import 'package:loci/features/home/presentation/widgets/carousel_fallback_banner
 import 'package:loci/shared/widgets/feed/post_input_field.dart';
 import 'package:loci/features/home/presentation/widgets/banner_shimmer.dart';
 import 'package:loci/features/home/presentation/widgets/home_shimmer.dart';
+import 'package:loci/features/main_nav/presentation/widgets/ios_glass_bottom_nav_bar.dart';
 import 'package:loci/features/raffles/presentation/pages/active_raffles_screen.dart';
 import 'package:loci/shared/widgets/empty_state.dart';
 import 'package:loci/shared/widgets/error_state.dart';
@@ -242,7 +243,7 @@ class _HomeScreenState extends State<HomeScreen> {
           padding: EdgeInsets.only(
             bottom: MediaQuery.viewInsetsOf(context).bottom > 0
                 ? MediaQuery.viewInsetsOf(context).bottom + 80
-                : 20,
+                : IosGlassBottomNavBar.overlayBottomInset(context) + 20,
           ),
           child: Column(
             children: [

@@ -5,6 +5,7 @@ import 'package:loci/shared/widgets/custom_image_container.dart';
 import 'package:loci/shared/widgets/custom_text_field.dart';
 import 'package:loci/core/utils/time_parser.dart';
 import 'package:loci/features/community/data/models/comment_model.dart';
+import 'package:loci/features/main_nav/presentation/widgets/ios_glass_bottom_nav_bar.dart';
 
 class PostCommentSection extends StatelessWidget {
   final List<CommentModel> comments;
@@ -33,9 +34,9 @@ class PostCommentSection extends StatelessWidget {
     final colorScheme = context.colorScheme;
 
     final keyboardInset = MediaQuery.viewInsetsOf(context).bottom;
-    final bottomInset = keyboardInset.isFinite
+    final bottomInset = keyboardInset.isFinite && keyboardInset > 0
         ? keyboardInset.clamp(0.0, MediaQuery.sizeOf(context).height * 0.5)
-        : 0.0;
+        : IosGlassBottomNavBar.overlayBottomInset(context);
 
     return Padding(
       padding: EdgeInsets.only(bottom: bottomInset),
@@ -191,8 +192,8 @@ class PostCommentSection extends StatelessWidget {
 
                 const SizedBox(width: 8),
 
-                IconButton(
-                  onPressed: isSending
+                GestureDetector(
+                  onTap: isSending
                       ? null
                       : () {
                           final text = controller.text.trim();
@@ -200,13 +201,28 @@ class PostCommentSection extends StatelessWidget {
                           onSendTap?.call(text);
                           controller.clear();
                         },
-                  icon: isSending
-                      ? const SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                      : Icon(Icons.send, color: colorScheme.primary),
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 150),
+                    width: 36,
+                    height: 36,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: colorScheme.primary,
+                    ),
+                    child: isSending
+                        ? const Padding(
+                            padding: EdgeInsets.all(9),
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Colors.white,
+                            ),
+                          )
+                        : const Icon(
+                            Icons.send_rounded,
+                            size: 18,
+                            color: Colors.white,
+                          ),
+                  ),
                 ),
               ],
             ),
