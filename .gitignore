@@ -50,3 +50,4 @@ temp_interactive_push.bat
 # build both fail without them. They contain public client identifiers that
 # ship inside every APK/IPA anyway — not secrets. Access control lives in
 # Firebase Security Rules, not in hiding these files.
+.gitignore
