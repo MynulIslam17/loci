@@ -3,16 +3,17 @@ import 'dart:convert';
 import 'dart:io' show Platform;
 import 'dart:ui' show DartPluginRegistrant;
 
+import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart'
     show NotificationResponse;
 import 'package:get/get.dart';
 import 'package:logger/logger.dart';
-import 'package:loci/core/services/notification/local_notification_service.dart';
-import 'package:loci/core/services/notification/notification_payload.dart';
 import 'package:loci/features/auth/presentation/controllers/auth_controller.dart';
-import 'package:loci/features/notification/data/repositories/push_token_repository.dart';
-import 'package:loci/features/notification/presentation/utils/notification_navigation.dart';
+import 'package:loci/features/push_notification/presentation/utils/notification_navigation.dart';
+import 'package:loci/features/push_notification/data/models/notification_payload.dart';
+import 'package:loci/features/push_notification/data/repositories/push_token_repository.dart';
+import 'package:loci/features/push_notification/domain/services/local_notification_service.dart';
 import 'package:loci/routes/app_routes.dart';
 
 /// Top-level background message handler required by FirebaseMessaging.
@@ -57,6 +58,26 @@ Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
 class PushNotificationService extends GetxService {
   final PushTokenRepository _repository;
   final Logger _logger = Logger();
+
+  /// Boots Firebase and attaches the background message handler.
+  ///
+  /// Called from `main()` before `runApp`, and kept here so app startup does
+  /// not need to know about firebase_core or the handler's top-level function.
+  /// Registering the handler after the first frame is too late — a push that
+  /// launched the app would already have been dropped.
+  ///
+  /// Failure is logged rather than rethrown: no push notifications is a
+  /// degraded app, not a broken one, and taking startup down with it would be
+  /// far worse than the feature being unavailable.
+  static Future<void> bootstrap() async {
+    try {
+      await Firebase.initializeApp();
+      FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
+    } catch (e, stack) {
+      Logger().e('Firebase setup failed; push notifications are unavailable',
+          error: e, stackTrace: stack);
+    }
+  }
 
   /// Resolved lazily: touching `FirebaseMessaging.instance` throws when
   /// `Firebase.initializeApp()` did not succeed, and constructing this service
@@ -105,16 +126,38 @@ class PushNotificationService extends GetxService {
     });
 
     await _step('permissions', () async {
-      await _messaging.requestPermission(
+      final settings = await _messaging.requestPermission(
         alert: true,
         badge: true,
         sound: true,
         provisional: false,
       );
 
-      // Let iOS present pushes while the app is foregrounded. `badge: true` only
-      // applies the server-sent count; it does not set one locally. This is a
-      // no-op on Android, where we post the notification ourselves.
+      // Logged because a denied or undetermined status is indistinguishable
+      // from a broken notification pipeline at every later stage: the post
+      // succeeds, no error is raised, and iOS silently displays nothing.
+      _logger.i(
+        'Notification permission: ${settings.authorizationStatus.name} '
+        '(alert=${settings.alert.name} sound=${settings.sound.name})',
+      );
+      if (settings.authorizationStatus != AuthorizationStatus.authorized &&
+          settings.authorizationStatus != AuthorizationStatus.provisional) {
+        _logger.w(
+          'Notifications are not authorised; nothing will be displayed until '
+          'the user enables them in Settings.',
+        );
+      }
+
+      // Must stay `alert: true`. firebase_messaging installs itself as the
+      // UNUserNotificationCenter delegate for *every* foreground notification;
+      // its `gcm.message_id` check gates only the onMessage callback, not the
+      // presentation options it hands back. `alert: false` therefore silences
+      // the notifications this app posts itself too, which looks exactly like
+      // a message arriving and displaying nothing at all.
+      //
+      // `badge: true` only applies the server-sent count; it does not set one
+      // locally. This is a no-op on Android, where we post notifications
+      // ourselves.
       await _messaging.setForegroundNotificationPresentationOptions(
         alert: true,
         badge: true,
@@ -213,14 +256,20 @@ class PushNotificationService extends GetxService {
   }
 
   Future<void> _handleTap(RemoteMessage message) async {
+    _logger.i('Push notification tapped: data=${message.data}');
     await _route(NotificationPayload.fromRemoteMessage(message));
   }
 
   /// A tap on a notification this app posted itself (see
   /// [LocalNotificationService]); the payload is the encoded FCM data map.
   void _handleLocalTap(NotificationResponse response) {
+    _logger.i('Local notification tapped: payload=${response.payload}');
     final payload = response.payload;
-    if (payload != null) _routePayload(payload);
+    if (payload == null) {
+      _logger.w('Tapped notification carried no payload; cannot route.');
+      return;
+    }
+    _routePayload(payload);
   }
 
   Future<void> _routePayload(String encoded) async {
@@ -236,13 +285,22 @@ class PushNotificationService extends GetxService {
   }
 
   Future<void> _route(NotificationPayload payload) async {
-    if (!await _awaitNavigable()) return;
+    if (!await _awaitNavigable()) {
+      _logger.w(
+        'Gave up waiting for a navigable route; notification tap dropped.',
+      );
+      return;
+    }
+    _logger.i(
+      'Routing notification: type=${payload.type.name} '
+      'conversationId=${payload.conversationId} from=${Get.currentRoute}',
+    );
     NotificationNavigation.openFromPayload(payload);
   }
 
   /// Android posts nothing for a push that arrives while the app is open, so
-  /// render it ourselves. iOS already shows its native banner via
-  /// [FirebaseMessaging.setForegroundNotificationPresentationOptions].
+  /// render it ourselves. iOS presents a foreground push natively, so posting
+  /// a copy there would show the same message twice.
   void _handleForeground(RemoteMessage message) {
     _logger.i(
       'FCM foreground message received: '
@@ -250,6 +308,7 @@ class PushNotificationService extends GetxService {
       'route=${Get.currentRoute} data=${message.data}',
     );
 
+    // iOS already displayed this push itself; only Android needs us to post.
     if (!Platform.isAndroid) return;
 
     final payload = NotificationPayload.fromRemoteMessage(message);

@@ -3,7 +3,7 @@ import 'package:loci/core/constants/app_text_style.dart';
 import 'package:loci/core/theme/theme_extention.dart';
 import 'package:loci/core/utils/time_parser.dart';
 import 'package:loci/features/notification/data/models/notification_model.dart';
-import 'package:loci/features/notification/presentation/utils/notification_navigation.dart';
+import 'package:loci/features/push_notification/presentation/utils/notification_navigation.dart';
 import 'package:loci/features/notification/presentation/widgets/notification_inline_action_row.dart';
 import 'package:loci/features/notification/presentation/widgets/notification_type_icon.dart';
 

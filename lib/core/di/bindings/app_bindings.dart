@@ -8,21 +8,17 @@ import 'package:loci/core/services/stripe/stripe_service.dart';
 import 'package:loci/core/storage/hive_storage_service.dart';
 import 'package:loci/core/storage/local_storage_service.dart';
 import 'package:loci/core/utils/show_snackbar.dart';
-import 'package:loci/features/subscription/presentation/widgets/upgrade_required_sheet.dart';
 import 'package:loci/features/auth/data/repositories/auth_repository.dart';
 import 'package:loci/features/auth/domain/services/auth_service.dart';
 import 'package:loci/features/auth/presentation/controllers/auth_controller.dart';
 import 'package:loci/features/browse_business/data/repositories/browse_business_repository.dart';
 import 'package:loci/features/browse_business/domain/services/browse_business_service.dart';
 import 'package:loci/features/chat/data/repositories/chat_repository.dart';
-import 'package:loci/features/chat/domain/services/chat_notification_bridge.dart';
 import 'package:loci/features/chat/domain/services/chat_service.dart';
 import 'package:loci/features/chat/presentation/controllers/chat_list_controller.dart';
 import 'package:loci/features/chat/presentation/controllers/new_chat_controller.dart';
 import 'package:loci/features/common/data/repositories/common_repository.dart';
 import 'package:loci/features/common/domain/services/common_service.dart';
-import 'package:loci/features/places/data/repositories/places_repository.dart';
-import 'package:loci/features/places/domain/services/places_service.dart';
 import 'package:loci/features/community/data/repositories/community_repository.dart';
 import 'package:loci/features/community/domain/services/community_service.dart';
 import 'package:loci/features/community/presentation/controllers/vote_controller.dart';
@@ -34,17 +30,19 @@ import 'package:loci/features/explore_activity/domain/services/explore_activity_
 import 'package:loci/features/home/data/repositories/home_repository.dart';
 import 'package:loci/features/home/domain/services/home_service.dart';
 import 'package:loci/features/home/presentation/controllers/post_question_controller.dart';
+import 'package:loci/features/main_nav/presentation/controllers/nav_controller.dart';
 import 'package:loci/features/my_business/data/repositories/my_business_repository.dart';
 import 'package:loci/features/my_business/domain/services/my_business_service.dart';
 import 'package:loci/features/network/data/repositories/network_repository.dart';
 import 'package:loci/features/network/domain/services/network_service.dart';
-import 'package:loci/core/services/notification/push_notification_service.dart';
-import 'package:loci/features/notification/data/repositories/push_token_repository.dart';
 import 'package:loci/features/notification/data/repositories/notification_repository.dart';
 import 'package:loci/features/notification/domain/services/notification_service.dart';
 import 'package:loci/features/notification/presentation/controllers/notification_controller.dart';
+import 'package:loci/features/places/data/repositories/places_repository.dart';
+import 'package:loci/features/places/domain/services/places_service.dart';
 import 'package:loci/features/profile/data/repositories/profile_repository.dart';
 import 'package:loci/features/profile/domain/services/profile_service.dart';
+import 'package:loci/features/push_notification/presentation/bindings/push_notification_binding.dart';
 import 'package:loci/features/qr_code/data/repositories/qr_code_repository.dart';
 import 'package:loci/features/qr_code/domain/services/qr_code_service.dart';
 import 'package:loci/features/qr_code/presentation/controllers/my_qr_code_controller.dart';
@@ -56,7 +54,7 @@ import 'package:loci/features/routes/data/repositories/routes_repository.dart';
 import 'package:loci/features/routes/domain/services/routes_service.dart';
 import 'package:loci/features/subscription/data/repositories/subscription_repository.dart';
 import 'package:loci/features/subscription/domain/services/subscription_service.dart';
-import 'package:loci/features/main_nav/presentation/controllers/nav_controller.dart';
+import 'package:loci/features/subscription/presentation/widgets/upgrade_required_sheet.dart';
 
 /// App-wide permanent dependencies.
 ///
@@ -213,17 +211,10 @@ class AppBindings extends Bindings {
       permanent: true,
     );
 
-    Get.put<PushTokenRepository>(
-      PushTokenRepository(Get.find<NetworkCaller>()),
-      permanent: true,
-    );
     Get.put<ChatSocketService>(ChatSocketService(), permanent: true);
-    Get.put<PushNotificationService>(
-      PushNotificationService(Get.find<PushTokenRepository>()),
-      permanent: true,
-    );
-    // Subscribes to the socket, so it must outlive any one chat screen.
-    Get.put<ChatNotificationBridge>(ChatNotificationBridge(), permanent: true);
+
+    // Owns its own registration order; the bridge here needs the socket above.
+    PushNotificationBinding.register();
 
     Get.put<NotificationRepository>(
       NotificationRepository(Get.find<NetworkCaller>()),

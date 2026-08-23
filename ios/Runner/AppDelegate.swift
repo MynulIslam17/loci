@@ -1,5 +1,6 @@
 import Flutter
 import UIKit
+import UserNotifications
 import Stripe
 
 @main
@@ -8,6 +9,21 @@ import Stripe
     _ application: UIApplication,
     didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?
   ) -> Bool {
+    // Must run BEFORE GeneratedPluginRegistrant. firebase_messaging installs
+    // itself as the UNUserNotificationCenter delegate only when it finds the
+    // slot empty, and then forwards to whatever it displaced. With the slot
+    // nil it captures nothing, becomes the sole delegate, and drops every
+    // notification callback flutter_local_notifications needs — taps on the
+    // notifications this app posts itself silently do nothing.
+    //
+    // FlutterAppDelegate conforms to FlutterAppLifeCycleProvider, which
+    // firebase_messaging explicitly declines to replace, so claiming the slot
+    // here leaves both plugins working: the app delegate fans callbacks out to
+    // every registered plugin.
+    if #available(iOS 10.0, *) {
+      UNUserNotificationCenter.current().delegate = self
+    }
+
     GeneratedPluginRegistrant.register(with: self)
     return super.application(application, didFinishLaunchingWithOptions: launchOptions)
   }

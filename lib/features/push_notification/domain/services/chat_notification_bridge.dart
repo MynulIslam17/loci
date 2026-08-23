@@ -1,14 +1,13 @@
 import 'dart:async';
-import 'dart:io' show Platform;
 
 import 'package:flutter/widgets.dart' show AppLifecycleState, WidgetsBinding;
 import 'package:get/get.dart';
-import 'package:loci/core/services/notification/local_notification_service.dart';
-import 'package:loci/core/services/notification/notification_payload.dart';
 import 'package:loci/core/services/socket/chat_socket_service.dart';
 import 'package:loci/features/auth/presentation/controllers/auth_controller.dart';
 import 'package:loci/features/chat/data/models/chat_message_model.dart';
-import 'package:loci/features/notification/presentation/utils/notification_navigation.dart';
+import 'package:loci/features/push_notification/presentation/utils/notification_navigation.dart';
+import 'package:loci/features/push_notification/data/models/notification_payload.dart';
+import 'package:loci/features/push_notification/domain/services/local_notification_service.dart';
 
 /// Notifies about chat messages that arrive over the socket instead of as a
 /// push.
@@ -27,9 +26,11 @@ class ChatNotificationBridge extends GetxService {
   @override
   void onInit() {
     super.onInit();
-    // iOS is excluded for the same reason LocalNotificationService is: APNs
-    // renders alerts natively there, and a local copy would double up.
-    if (!Platform.isAndroid) return;
+    // Both platforms subscribe. iOS used to be excluded on the grounds that
+    // APNs renders alerts natively, but that is exactly the case that never
+    // happens here: the backend sends no push at all while the socket is
+    // connected, so there was nothing to double up with and a foregrounded
+    // message simply displayed nothing.
     _sub = Get.find<ChatSocketService>().onMessage.listen(_onMessage);
   }
 

@@ -3,7 +3,6 @@ import 'dart:math';
 
 import 'package:get/get.dart';
 import 'package:loci/core/services/connectivity/connectivity_service.dart';
-import 'package:loci/core/services/notification/local_notification_service.dart';
 import 'package:loci/core/services/socket/chat_socket_service.dart';
 import 'package:loci/core/storage/hive_storage_service.dart';
 import 'package:loci/core/utils/app_error_messages.dart';
@@ -13,6 +12,7 @@ import 'package:loci/features/chat/data/models/chat_message_model.dart';
 import 'package:loci/features/chat/data/models/chat_user_model.dart';
 import 'package:loci/features/chat/domain/services/chat_service.dart';
 import 'package:loci/features/chat/presentation/controllers/chat_list_controller.dart';
+import 'package:loci/features/push_notification/domain/services/local_notification_service.dart';
 
 /// Drives a single open conversation: loads history over REST, joins the socket
 /// room, sends messages optimistically, and reflects realtime events (incoming
