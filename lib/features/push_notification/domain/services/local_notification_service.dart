@@ -1,20 +1,23 @@
 import 'dart:convert';
-import 'dart:io' show Platform;
 
 import 'package:flutter/material.dart' show Color;
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:logger/logger.dart';
-import 'package:loci/core/services/notification/notification_payload.dart';
+import 'package:loci/features/push_notification/data/models/notification_payload.dart';
 
-/// Posts real system-tray notifications on Android.
+/// Posts real system-tray notifications on Android and iOS.
 ///
 /// Three cases would otherwise look like a lost notification: Android never
 /// displays an incoming push itself while the app is foregrounded, it displays
 /// nothing at all for data-only payloads in the background, and the backend
 /// sends no push whatsoever for a chat message when the recipient's socket is
-/// connected. iOS is deliberately excluded: APNs renders the alert, sound and
-/// badge natively, so a local copy there would double up and fight the
-/// server-owned badge.
+/// connected.
+///
+/// iOS is included because leaving it to APNs loses messages: a foregrounded
+/// chat message arriving over the socket is displayed by nobody. Pushes are
+/// still left to the OS on iOS — it renders them natively in the foreground
+/// and the background alike — so only the socket path posts here. [_claim]
+/// guards the overlap where a message reaches this class twice.
 ///
 /// Everything here is static because the background isolate runs its own copy
 /// of the app and cannot reach the GetX dependency graph.
@@ -36,6 +39,12 @@ class LocalNotificationService {
 
   static bool _initialised = false;
 
+  /// Held separately from [_plugin] so that whoever initialises first — the
+  /// background isolate, or a socket message racing startup — cannot leave the
+  /// plugin permanently wired to a null tap handler. [init] only ever updates
+  /// this; the dispatcher handed to the plugin stays constant.
+  static DidReceiveNotificationResponseCallback? _onTap;
+
   /// Message ids already shown, so one that arrives over both the socket and
   /// FCM only surfaces once.
   static final Set<String> _shownKeys = <String>{};
@@ -54,19 +63,31 @@ class LocalNotificationService {
   static Future<void> init({
     DidReceiveNotificationResponseCallback? onTap,
   }) async {
-    if (!Platform.isAndroid || _initialised) return;
+    if (onTap != null) _onTap = onTap;
+    if (_initialised) return;
 
     try {
       await _plugin.initialize(
         settings: const InitializationSettings(
           android: AndroidInitializationSettings('ic_notification'),
+          // Permission is requested once by PushNotificationService through
+          // firebase_messaging; asking again here would raise a second prompt
+          // on first launch and a denial would be remembered.
+          iOS: DarwinInitializationSettings(
+            requestAlertPermission: false,
+            requestSoundPermission: false,
+            requestBadgePermission: false,
+          ),
         ),
-        onDidReceiveNotificationResponse: onTap,
+        // Indirected through [_onTap] so a later init() can still supply the
+        // handler after an early post has already initialised the plugin.
+        onDidReceiveNotificationResponse: (response) => _onTap?.call(response),
       );
 
-      // Creating the channel up front means the very first push is already
-      // high-importance (heads-up + sound) instead of landing silently on
-      // Android's fallback "Miscellaneous" channel.
+      // Android-only; the resolver returns null on iOS. Creating the channel up
+      // front means the very first push is already high-importance (heads-up +
+      // sound) instead of landing silently on Android's fallback
+      // "Miscellaneous" channel.
       await _plugin
           .resolvePlatformSpecificImplementation<
             AndroidFlutterLocalNotificationsPlugin
@@ -92,7 +113,6 @@ class LocalNotificationService {
 
   /// The payload of the notification that cold-started the app, if any.
   static Future<String?> launchPayload() async {
-    if (!Platform.isAndroid) return null;
     final details = await _plugin.getNotificationAppLaunchDetails();
     if (details?.didNotificationLaunchApp != true) return null;
     return details?.notificationResponse?.payload;
@@ -105,7 +125,6 @@ class LocalNotificationService {
   /// a thread rather than piling up as separate entries. Everything else posts
   /// as a standalone notification.
   static Future<void> show(NotificationPayload payload) async {
-    if (!Platform.isAndroid) return;
     await init();
     if (!_initialised) return;
 
@@ -174,7 +193,6 @@ class LocalNotificationService {
   /// Dismisses the notifications for a conversation the user just opened, and
   /// forgets its thread so the next message starts a fresh one.
   static Future<void> clearConversation(String conversationId) async {
-    if (!Platform.isAndroid) return;
     // Cancel unconditionally: a notification posted from the background isolate
     // leaves no thread behind in this one, but shares the conversation's id.
     _threads.remove(conversationId);
@@ -207,6 +225,21 @@ class LocalNotificationService {
             importance: Importance.high,
             priority: Priority.high,
             styleInformation: style,
+          ),
+          iOS: DarwinNotificationDetails(
+            // Groups a conversation's notifications into one thread, the iOS
+            // counterpart of the MessagingStyle grouping used on Android.
+            threadIdentifier: payload.conversationId,
+            // Stated explicitly rather than left to the initialisation
+            // defaults: this is what makes the banner appear while the app is
+            // foregrounded, which is the only time we post one at all.
+            presentAlert: true,
+            presentBanner: true,
+            presentList: true,
+            presentSound: true,
+            // The server owns the badge via `apns.payload.aps.badge`; letting a
+            // locally posted notification touch it would fight that count.
+            presentBadge: false,
           ),
         ),
         payload: jsonEncode(payload.data),
