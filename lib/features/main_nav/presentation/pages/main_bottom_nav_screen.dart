@@ -107,10 +107,18 @@ class _MainBottomNavState extends State<MainBottomNav> {
     required bool keyboardOpen,
     required Widget child,
   }) {
-    final mq = MediaQuery.of(context);
+    // `context` sits ABOVE this shell's Scaffold, so its MediaQuery still
+    // carries the full keyboard viewInsets. The Scaffold (resizeToAvoidBottomInset:
+    // true) has already shrunk the body for the keyboard AND normally strips
+    // the bottom viewInset for its body subtree. Re-injecting the raw outer
+    // MediaQuery here handed the keyboard inset back to every nested Scaffold
+    // (home / event / raffles / routes), which then resized a second time —
+    // leaving a keyboard-sized white band on iOS. Strip the bottom viewInset
+    // to mirror what a Scaffold body normally receives (matches Android).
+    final mq = MediaQuery.of(context).removeViewInsets(removeBottom: true);
     if (keyboardOpen) {
-      // Pass through the original MediaQuery data unchanged, but keep
-      // the MediaQuery widget in the tree for stable element reconciliation.
+      // Keep the MediaQuery widget in the tree for stable element
+      // reconciliation (see doc comment above).
       return MediaQuery(data: mq, child: child);
     }
     return MediaQuery(
