@@ -33,7 +33,23 @@ definitions:
     - &ios_code_signing
       name: Set up iOS code signing
       script: |
-        set -e
+        set -euo pipefail
+        # Codemagic already ran keychain initialize + add-certificates from
+        # ios_signing before this script. On macOS 15 the first `security
+        # import -f pkcs12` attempt often prints:
+        #   SecKeychainItemImport: Unable to decode the provided data.
+        # then retries with `-f openssl` and succeeds ("1 key imported").
+        # That stderr line alone is NOT a failure — verify the cert landed.
+        echo "Installed code signing certificates:"
+        keychain list-certificates
+        CERT_COUNT="$(keychain list-certificates | python3 -c 'import json,sys; print(len(json.load(sys.stdin)))')"
+        if [ "$CERT_COUNT" -lt 1 ]; then
+          echo "error: no code signing certificates in the keychain."
+          echo "In Codemagic → Team settings → Code signing identities,"
+          echo "re-upload the iOS Distribution .p12 with a NON-EMPTY password,"
+          echo "then set that password on the certificate entry."
+          exit 1
+        fi
         xcode-project use-profiles
 
     # Reads latest App Store / TestFlight version + build from ASC, then
