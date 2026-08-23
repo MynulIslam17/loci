@@ -5,6 +5,7 @@ import 'dart:ui' show DartPluginRegistrant;
 
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter/foundation.dart' show debugPrint;
 import 'package:flutter_local_notifications/flutter_local_notifications.dart'
     show NotificationResponse;
 import 'package:get/get.dart';
@@ -29,6 +30,14 @@ Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   // backgrounded push comes to show nothing at all.
   DartPluginRegistrant.ensureInitialized();
 
+  // debugPrint rather than Logger: it survives release builds and shows up in
+  // `adb logcat` even when no debugger is attached — which is the only way to
+  // observe this isolate when the app was killed.
+  debugPrint(
+    '[FCM] ✅ BACKGROUND handler fired: id=${message.messageId} '
+    'hasNotificationBlock=${message.notification != null} data=${message.data}',
+  );
+
   final logger = Logger();
   logger.i(
     'FCM background message: '
@@ -39,13 +48,18 @@ Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   // the OS (APNs on iOS, the FCM SDK on Android), so re-posting would duplicate
   // it. Data-only payloads are displayed by nobody, and used to disappear
   // silently — those are the ones we have to render ourselves.
-  if (message.notification != null) return;
+  if (message.notification != null) {
+    debugPrint('[FCM] OS already displayed this push (notification block); done.');
+    return;
+  }
 
   try {
     await LocalNotificationService.show(
       NotificationPayload.fromRemoteMessage(message),
     );
+    debugPrint('[FCM] ✅ background data-only push rendered to tray.');
   } catch (e, stack) {
+    debugPrint('[FCM] ❌ background notification failed: $e');
     logger.e('Background notification failed', error: e, stackTrace: stack);
   }
 }
@@ -73,7 +87,9 @@ class PushNotificationService extends GetxService {
     try {
       await Firebase.initializeApp();
       FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
+      debugPrint('[FCM] ✅ Firebase initialised; background handler registered.');
     } catch (e, stack) {
+      debugPrint('[FCM] ❌ Firebase setup failed: $e');
       Logger().e('Firebase setup failed; push notifications are unavailable',
           error: e, stackTrace: stack);
     }
@@ -140,6 +156,9 @@ class PushNotificationService extends GetxService {
         'Notification permission: ${settings.authorizationStatus.name} '
         '(alert=${settings.alert.name} sound=${settings.sound.name})',
       );
+      debugPrint(
+        '[FCM] permission: ${settings.authorizationStatus.name}',
+      );
       if (settings.authorizationStatus != AuthorizationStatus.authorized &&
           settings.authorizationStatus != AuthorizationStatus.provisional) {
         _logger.w(
@@ -168,6 +187,7 @@ class PushNotificationService extends GetxService {
     await _step('token refresh listener', () async {
       _tokenRefreshSub?.cancel();
       _tokenRefreshSub = _messaging.onTokenRefresh.listen((newToken) {
+        debugPrint('[FCM] token refreshed: $newToken');
         syncPushToken(customToken: newToken, force: true);
       });
     });
@@ -195,17 +215,29 @@ class PushNotificationService extends GetxService {
     _syncing = true;
     try {
       final token = customToken ?? await _resolveToken();
-      if (token == null || token.trim().isEmpty) return;
+      if (token == null || token.trim().isEmpty) {
+        debugPrint('[FCM] ❌ no device token available; cannot register for pushes.');
+        return;
+      }
+
+      // Printed so a test push can be sent to this exact device from the
+      // Firebase console (Messaging → "Send test message").
+      debugPrint('[FCM] device token: $token');
 
       // Avoid redundant calls if the token has not changed unless forced (e.g. new user login)
       if (!force && token == _lastSyncedToken) return;
 
       final success = await _repository.updatePushToken(token);
+      debugPrint(
+        success
+            ? '[FCM] ✅ token registered with backend.'
+            : '[FCM] ❌ backend rejected the token; server cannot push to this device.',
+      );
       if (success) {
         _lastSyncedToken = token;
       }
-    } catch (_) {
-      // Non-fatal exception during token push sync
+    } catch (e) {
+      debugPrint('[FCM] ❌ token sync failed: $e');
     } finally {
       _syncing = false;
     }
@@ -302,6 +334,10 @@ class PushNotificationService extends GetxService {
   /// render it ourselves. iOS presents a foreground push natively, so posting
   /// a copy there would show the same message twice.
   void _handleForeground(RemoteMessage message) {
+    debugPrint(
+      '[FCM] ✅ FOREGROUND message received: id=${message.messageId} '
+      'data=${message.data}',
+    );
     _logger.i(
       'FCM foreground message received: '
       'hasNotificationBlock=${message.notification != null} '
