@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io' show Platform;
 
 import 'package:flutter/widgets.dart';
 import 'package:get/get.dart';
@@ -109,6 +110,15 @@ class ChatSocketService extends GetxService with WidgetsBindingObserver {
 
   StreamSubscription<void>? _connectivitySub;
 
+  /// Android-only: pending disconnect scheduled when the app is backgrounded.
+  Timer? _backgroundDisconnectTimer;
+
+  /// Long enough to survive quick exits (share sheet, image picker, a brief
+  /// app switch) without dropping the connection; short enough that the
+  /// backend marks the user offline — and starts sending FCM pushes — soon
+  /// after a real backgrounding.
+  static const Duration _backgroundDisconnectGrace = Duration(seconds: 10);
+
   @override
   void onInit() {
     super.onInit();
@@ -126,16 +136,47 @@ class ChatSocketService extends GetxService with WidgetsBindingObserver {
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
+      _backgroundDisconnectTimer?.cancel();
+      _backgroundDisconnectTimer = null;
       if (!isConnected) {
         connect(force: true);
       } else {
         unawaited(flushGlobalOutbox());
       }
+    } else if (state == AppLifecycleState.paused ||
+        state == AppLifecycleState.detached) {
+      // Android keeps the process — and this socket — alive long after the
+      // app leaves the screen, and the backend suppresses FCM pushes while a
+      // recipient's socket is connected. Holding the connection open in the
+      // background therefore means chat messages are neither pushed nor
+      // displayed. Releasing it hands delivery to FCM, which is exactly what
+      // already happens on iOS when the OS suspends the app and the socket
+      // dies with it — so iOS needs (and gets) no change here.
+      if (!Platform.isAndroid) return;
+      _backgroundDisconnectTimer?.cancel();
+      _backgroundDisconnectTimer = Timer(_backgroundDisconnectGrace, () {
+        _backgroundDisconnectTimer = null;
+        debugPrint(
+          '[FCM] socket released after ${_backgroundDisconnectGrace.inSeconds}s '
+          'in background — server should now deliver via push.',
+        );
+        disconnect();
+      });
     }
   }
 
   // ── Connection lifecycle ────────────────────────────────────────────────────
   void connect({bool force = false}) {
+    // A backgrounded Android app must stay off the socket: the connectivity
+    // listener fires on network changes in the background too, and silently
+    // reviving the connection here would flip the backend back to "online"
+    // and suppress the FCM pushes the user relies on while away. Resume
+    // reconnects explicitly via didChangeAppLifecycleState.
+    if (Platform.isAndroid && _isBackgrounded) {
+      _logger.d('ChatSocket: app backgrounded — leaving delivery to FCM.');
+      return;
+    }
+
     final token = Get.find<AuthController>().accessToken ?? '';
     if (token.isEmpty) {
       _logger.w('ChatSocket: no token, skipping connect.');
@@ -178,6 +219,15 @@ class ChatSocketService extends GetxService with WidgetsBindingObserver {
     _socket!.connect();
   }
 
+  /// `null` means no lifecycle event has arrived yet (early startup), which
+  /// only happens in the foreground.
+  bool get _isBackgrounded {
+    final state = WidgetsBinding.instance.lifecycleState;
+    return state == AppLifecycleState.paused ||
+        state == AppLifecycleState.detached ||
+        state == AppLifecycleState.hidden;
+  }
+
   void disconnect() {
     _logger.d('ChatSocket: disconnect() — disposing socket.');
     _socket?.dispose();
@@ -196,6 +246,9 @@ class ChatSocketService extends GetxService with WidgetsBindingObserver {
   void _registerListeners() {
     final s = _socket!;
     s.onConnect((_) {
+      debugPrint(
+        '[FCM] socket connected — server suppresses pushes while online.',
+      );
       _logger.i('ChatSocket ✔ connected (id: ${s.id})');
       _connectionCtrl.add(true);
       _emittedTempIds.clear();
@@ -586,6 +639,7 @@ class ChatSocketService extends GetxService with WidgetsBindingObserver {
   @override
   void onClose() {
     WidgetsBinding.instance.removeObserver(this);
+    _backgroundDisconnectTimer?.cancel();
     _connectivitySub?.cancel();
     disconnect();
     _messageCtrl.close();

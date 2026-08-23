@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io' show Platform;
 
 import 'package:flutter/widgets.dart' show AppLifecycleState, WidgetsBinding;
 import 'package:get/get.dart';
@@ -35,7 +36,7 @@ class ChatNotificationBridge extends GetxService {
   }
 
   void _onMessage(ChatMessageModel message) {
-    if (!_isForeground || _isMine(message) || message.sender.id.isEmpty) return;
+    if (!_shouldPost || _isMine(message) || message.sender.id.isEmpty) return;
 
     final payload = NotificationPayload.chatMessage(
       conversationId: message.conversationId,
@@ -48,15 +49,33 @@ class ChatNotificationBridge extends GetxService {
       body: _preview(message),
     );
 
-    // The thread on screen renders the message itself.
-    if (NotificationNavigation.isConversationOnScreen(payload)) return;
+    // The thread on screen renders the message itself — but only while the
+    // user can actually see it. A backgrounded app keeps its route stack, so
+    // without the foreground check a message for the conversation the user
+    // left open would never be notified at all.
+    if (_isForeground &&
+        NotificationNavigation.isConversationOnScreen(payload)) {
+      return;
+    }
 
     LocalNotificationService.show(payload);
   }
 
-  /// The socket can outlive a backgrounding, and FCM delivers in that window
-  /// too. Let the push own it there so the two paths don't both post. A null
-  /// state means no lifecycle event has arrived yet, i.e. early startup.
+  /// Whether a socket-delivered message should be posted to the tray.
+  ///
+  /// Android: always. The backend sends no FCM push while this socket is
+  /// connected, so any message arriving here is one nothing else will
+  /// display — including during the short grace window after backgrounding,
+  /// before [ChatSocketService] releases the socket and FCM takes over.
+  /// [LocalNotificationService]'s dedupe (by messageId, shared notification
+  /// id per conversation) keeps the two paths from double-posting.
+  ///
+  /// iOS: foreground only, as before. The OS suspends a backgrounded app
+  /// almost immediately, the socket dies with it, and APNs owns delivery.
+  bool get _shouldPost => Platform.isAndroid || _isForeground;
+
+  /// A null state means no lifecycle event has arrived yet, i.e. early
+  /// startup, which only happens in the foreground.
   bool get _isForeground {
     final state = WidgetsBinding.instance.lifecycleState;
     return state == null || state == AppLifecycleState.resumed;

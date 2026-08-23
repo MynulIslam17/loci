@@ -1,7 +1,9 @@
 import 'dart:convert';
 
+import 'package:flutter/foundation.dart' show Uint8List, debugPrint;
 import 'package:flutter/material.dart' show Color;
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:http/http.dart' as http;
 import 'package:logger/logger.dart';
 import 'package:loci/features/push_notification/data/models/notification_payload.dart';
 
@@ -55,6 +57,16 @@ class LocalNotificationService {
   static final Map<String, List<Message>> _threads = {};
   static const int _maxThreadMessages = 6;
 
+  /// Downloaded avatars, keyed by URL. A null value records a failed fetch so
+  /// it is not retried on every message. Bounded — avatars are ~10-50 KB each.
+  static final Map<String, Uint8List?> _avatarCache = {};
+  static const int _maxCachedAvatars = 30;
+
+  /// A notification must never wait long on a slow CDN; past this the
+  /// message posts without a photo, exactly like WhatsApp on a bad
+  /// connection.
+  static const Duration _avatarFetchTimeout = Duration(seconds: 4);
+
   /// Safe to call from either isolate; each one initialises its own plugin.
   ///
   /// Failure is reported rather than thrown. The background isolate has no
@@ -102,7 +114,9 @@ class LocalNotificationService {
           );
 
       _initialised = true;
+      debugPrint('[FCM] ✅ notification channel "$channelId" ready.');
     } catch (e, stack) {
+      debugPrint('[FCM] ❌ local notification setup failed: $e');
       _logger.e(
         'Local notification setup failed; nothing can be displayed',
         error: e,
@@ -170,10 +184,21 @@ class LocalNotificationService {
   }) async {
     final conversationId = payload.conversationId!;
 
+    // The sender's photo, WhatsApp-style: Android clips a MessagingStyle
+    // Person icon into a circle next to their bolded name. Fetch failures
+    // degrade to the name-only look rather than delaying the notification.
+    final avatar = await _fetchAvatar(payload.senderAvatar);
+    final person = Person(
+      name: sender,
+      key: payload.senderId ?? sender,
+      important: true,
+      icon: avatar == null ? null : ByteArrayAndroidIcon(avatar),
+    );
+
     // Android replaces a MessagingStyle notification wholesale, so the full
     // recent history has to be re-sent on every message.
     final thread = _threads.putIfAbsent(conversationId, () => <Message>[]);
-    thread.add(Message(body, DateTime.now(), Person(name: sender)));
+    thread.add(Message(body, DateTime.now(), person));
     if (thread.length > _maxThreadMessages) thread.removeAt(0);
 
     await _post(
@@ -187,7 +212,36 @@ class LocalNotificationService {
         groupConversation: false,
         messages: List<Message>.of(thread),
       ),
+      isChat: true,
+      largeIcon: avatar,
+      messageCount: thread.length,
+      ticker: '$sender: $body',
     );
+  }
+
+  /// Downloads and caches [url]. Returns null — and remembers the failure —
+  /// when the fetch errors or exceeds [_avatarFetchTimeout].
+  static Future<Uint8List?> _fetchAvatar(String? url) async {
+    final trimmed = url?.trim();
+    if (trimmed == null || trimmed.isEmpty) return null;
+    if (_avatarCache.containsKey(trimmed)) return _avatarCache[trimmed];
+
+    Uint8List? bytes;
+    try {
+      final response =
+          await http.get(Uri.parse(trimmed)).timeout(_avatarFetchTimeout);
+      if (response.statusCode == 200 && response.bodyBytes.isNotEmpty) {
+        bytes = response.bodyBytes;
+      }
+    } catch (_) {
+      // Offline, slow CDN, bad URL — the notification simply posts photo-less.
+    }
+
+    if (_avatarCache.length >= _maxCachedAvatars) {
+      _avatarCache.remove(_avatarCache.keys.first);
+    }
+    _avatarCache[trimmed] = bytes;
+    return bytes;
   }
 
   /// Dismisses the notifications for a conversation the user just opened, and
@@ -209,6 +263,10 @@ class LocalNotificationService {
     required String? body,
     required NotificationPayload payload,
     StyleInformation? style,
+    bool isChat = false,
+    Uint8List? largeIcon,
+    int? messageCount,
+    String? ticker,
   }) async {
     try {
       await _plugin.show(
@@ -225,6 +283,16 @@ class LocalNotificationService {
             importance: Importance.high,
             priority: Priority.high,
             styleInformation: style,
+            // The messaging-app treatment: chat notifications are ranked and
+            // rendered as conversations, show the sender's photo on the right
+            // like WhatsApp, and carry the unread count into the launcher
+            // badge and the collapsed banner.
+            category: isChat ? AndroidNotificationCategory.message : null,
+            largeIcon: largeIcon == null
+                ? null
+                : ByteArrayAndroidBitmap(largeIcon),
+            number: messageCount,
+            ticker: ticker,
           ),
           iOS: DarwinNotificationDetails(
             // Groups a conversation's notifications into one thread, the iOS
@@ -244,8 +312,10 @@ class LocalNotificationService {
         ),
         payload: jsonEncode(payload.data),
       );
+      debugPrint('[FCM] ✅ tray notification posted: id=$id title=$title');
       _logger.i('Posted tray notification id=$id title=$title');
     } catch (e, stack) {
+      debugPrint('[FCM] ❌ failed to post tray notification: $e');
       _logger.e(
         'Failed to post tray notification',
         error: e,
