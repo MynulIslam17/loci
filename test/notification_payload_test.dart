@@ -1,7 +1,7 @@
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:loci/core/enums/notification_type.dart';
-import 'package:loci/core/services/notification/notification_payload.dart';
+import 'package:loci/features/push_notification/data/models/notification_payload.dart';
 
 void main() {
   group('NotificationPayload.fromRemoteMessage', () {
