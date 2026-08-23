@@ -1,11 +1,11 @@
 import 'package:get/get.dart';
 import 'package:loci/core/enums/notification_type.dart';
-import 'package:loci/core/services/notification/notification_payload.dart';
 import 'package:loci/features/auth/presentation/controllers/auth_controller.dart';
 import 'package:loci/features/chat/data/models/chat_user_model.dart';
 import 'package:loci/features/chat/presentation/controllers/chat_controller.dart';
 import 'package:loci/features/chat/presentation/controllers/chat_list_controller.dart';
 import 'package:loci/features/notification/data/models/notification_model.dart';
+import 'package:loci/features/push_notification/data/models/notification_payload.dart';
 import 'package:loci/routes/app_routes.dart';
 
 /// Maps each [NotificationType] to the screen the user should open on tap.
@@ -143,11 +143,11 @@ class NotificationNavigation {
     final other = _cachedCounterpart(conversationId, chatList);
     chatList?.clearUnread(conversationId);
 
-    // Land Back on the chat list instead of whatever happened to be showing.
-    if (Get.currentRoute != AppRoutes.chatList) {
-      Get.toNamed(AppRoutes.chatList);
-    }
-
+    // One push, matching exactly what tapping a row in the chat list does.
+    // This used to push the chat list first so Back would land there, but two
+    // pushes issued in the same turn raced: the conversation mounted, joined
+    // the room, and was torn straight back down, leaving the user on the list.
+    // Landing Back wherever they were is a fair price for arriving at all.
     Get.toNamed(
       AppRoutes.message,
       arguments: {

@@ -1,11 +1,11 @@
 import 'package:get/get.dart';
 import 'package:loci/core/di/bindings/app_bindings.dart';
-import 'package:loci/features/auth/data/models/user_model.dart';
-import 'package:loci/features/auth/domain/services/auth_service.dart';
-import 'package:loci/core/services/notification/push_notification_service.dart';
 import 'package:loci/core/services/socket/chat_socket_service.dart';
 import 'package:loci/core/services/stripe/stripe_service.dart';
 import 'package:loci/core/storage/hive_storage_service.dart';
+import 'package:loci/features/auth/data/models/user_model.dart';
+import 'package:loci/features/auth/domain/services/auth_service.dart';
+import 'package:loci/features/push_notification/domain/services/push_notification_service.dart';
 import 'package:loci/routes/app_routes.dart';
 import 'package:loci/shared/widgets/loading_dialog.dart';
 
