@@ -45,7 +45,8 @@ branch_structure.json
 temp_auto_push.bat
 temp_interactive_push.bat
 
-# Firebase config files (contain API keys) - keep out of version control
-android/app/google-services.json
-ios/Runner/GoogleService-Info.plist
-.gitignore
+# Firebase client config files are committed intentionally: CI (Codemagic)
+# builds from a clean clone and the Google Services Gradle plugin / Xcode
+# build both fail without them. They contain public client identifiers that
+# ship inside every APK/IPA anyway — not secrets. Access control lives in
+# Firebase Security Rules, not in hiding these files.

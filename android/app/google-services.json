@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1023108535223",
+    "project_id": "loci-6b0cc",
+    "storage_bucket": "loci-6b0cc.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1023108535223:android:e251f2c9132e2603938e32",
+        "android_client_info": {
+          "package_name": "ui.neatboutique.jacobi"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB8MSoVAu6A_lRmNqgU4otfA2MfXjC3IPs"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
