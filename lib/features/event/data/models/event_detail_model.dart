@@ -40,15 +40,62 @@ class EventDetailsModel {
 
   factory EventDetailsModel.fromJson(Map<String, dynamic> json) {
     final data = json['data'] ?? json;
-    final rawCoords = data['mapCoordinates'];
-    final coordinates = rawCoords is Map ? rawCoords : const <String, dynamic>{};
+
+    // Resolve coordinates from all possible backend shapes
+    double resolvedLat = 0.0;
+    double resolvedLng = 0.0;
+
+    final rawCoords = data['mapCoordinates'] ??
+        data['coordinates'] ??
+        data['locationCoordinates'];
+
+    if (rawCoords is Map) {
+      resolvedLat = _coord(rawCoords['lat'] ?? rawCoords['latitude']);
+      resolvedLng = _coord(rawCoords['lng'] ?? rawCoords['longitude']);
+    } else if (rawCoords is List && rawCoords.length >= 2) {
+      // GeoJSON Point format: [longitude, latitude]
+      resolvedLng = _coord(rawCoords[0]);
+      resolvedLat = _coord(rawCoords[1]);
+    }
+
+    // Check location object if present
+    if (resolvedLat == 0.0 && resolvedLng == 0.0) {
+      final loc = data['location'];
+      if (loc is Map) {
+        resolvedLat = _coord(loc['lat'] ?? loc['latitude']);
+        resolvedLng = _coord(loc['lng'] ?? loc['longitude']);
+        if (resolvedLat == 0.0 && resolvedLng == 0.0 && loc['coordinates'] is List) {
+          final list = loc['coordinates'] as List;
+          if (list.length >= 2) {
+            resolvedLng = _coord(list[0]);
+            resolvedLat = _coord(list[1]);
+          }
+        }
+      }
+    }
+
+    // Direct keys on data root
+    if (resolvedLat == 0.0 && resolvedLng == 0.0) {
+      resolvedLat = _coord(data['lat'] ?? data['latitude']);
+      resolvedLng = _coord(data['lng'] ?? data['longitude']);
+    }
+
+    // Fallback: Extract from mapImage URL (e.g. Google Static Map query parameters)
+    final mapImageUrl = data['mapImage']?.toString() ?? data['url']?.toString();
+    if (resolvedLat == 0.0 && resolvedLng == 0.0 && mapImageUrl != null) {
+      final extracted = _extractCoordinatesFromUrl(mapImageUrl);
+      if (extracted != null) {
+        resolvedLat = extracted.$1;
+        resolvedLng = extracted.$2;
+      }
+    }
 
     return EventDetailsModel(
       // pass data instead of json
       eventModel: EventModel.fromJson(data),
 
-      lat: _coord(coordinates['lat']),
-      lng: _coord(coordinates['lng']),
+      lat: resolvedLat,
+      lng: resolvedLng,
 
       rsvpCount:
           int.tryParse(data['rsvpCount'].toString()) ??
@@ -60,7 +107,7 @@ class EventDetailsModel {
           .map((e) => Rsvp.fromJson(e))
           .toList(),
       mapUrl: data['url'] ?? '',
-      mapImage: data['mapImage']?.toString(),
+      mapImage: mapImageUrl,
 
       checkInCode: data['checkInCode'] ?? '',
       qrCode: data["qrCode"] ?? '',
@@ -103,6 +150,39 @@ class EventDetailsModel {
   static double _coord(dynamic value) {
     if (value is num) return value.toDouble();
     return double.tryParse(value?.toString() ?? '') ?? 0;
+  }
+
+  /// Extracts coordinates from static map URLs (e.g. center=23.79,90.40 or markers=23.79,90.40)
+  static (double, double)? _extractCoordinatesFromUrl(String? url) {
+    if (url == null || url.trim().isEmpty) return null;
+    try {
+      final uri = Uri.tryParse(url.trim());
+      if (uri != null) {
+        final center = uri.queryParameters['center'];
+        if (center != null && center.contains(',')) {
+          final parts = center.split(',');
+          final lat = double.tryParse(parts[0].trim());
+          final lng = double.tryParse(parts[1].trim());
+          if (lat != null && lng != null && (lat != 0 || lng != 0)) {
+            return (lat, lng);
+          }
+        }
+
+        final markers = uri.queryParameters['markers'] ?? uri.queryParameters['marker'];
+        if (markers != null) {
+          final regex = RegExp(r'(-?\d+\.\d+)\s*,\s*(-?\d+\.\d+)');
+          final match = regex.firstMatch(markers);
+          if (match != null) {
+            final lat = double.tryParse(match.group(1)!);
+            final lng = double.tryParse(match.group(2)!);
+            if (lat != null && lng != null && (lat != 0 || lng != 0)) {
+              return (lat, lng);
+            }
+          }
+        }
+      }
+    } catch (_) {}
+    return null;
   }
 }
 

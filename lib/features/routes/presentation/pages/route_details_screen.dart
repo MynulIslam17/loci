@@ -239,6 +239,7 @@ class _RouteDetailsScreenState extends State<RouteDetailsScreen> {
                           latitude: controller.routeDetails?.coordinates.lat,
                           longitude: controller.routeDetails?.coordinates.lng,
                           locationLabel: route?.title,
+                          isLoading: controller.isLoading,
                         ),
                       ),
                     ),

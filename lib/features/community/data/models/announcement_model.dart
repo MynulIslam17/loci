@@ -81,15 +81,38 @@ class AnnouncementModel {
     return details;
   }
 
+  /// True when this announcement should use the home-style poll card
+  /// (mention field + vote UI), even if the API omitted `qtype`.
+  bool get isPollPost =>
+      qType == QuestionType.poll ||
+      (announcementType == AnnouncementType.question &&
+          pollOptions != null &&
+          pollOptions!.isNotEmpty);
+
   factory AnnouncementModel.fromJson(Map<String, dynamic> json) {
     final type = AnnouncementType.fromString(json['type']);
+    final rawQType = (json['qtype'] ??
+        json['qType'] ??
+        json['q_type'] ??
+        (json['type'] == 'poll' ? 'poll' : null)) as String?;
+    final optionsRaw = json['options'] ?? json['pollOptions'];
+    final hasPollOptions = optionsRaw is List && optionsRaw.isNotEmpty;
+    // Some API payloads omit qtype on poll posts that already have options —
+    // without this, the mention field / poll UX never appears (unlike home).
+    final qType = QuestionType.fromString(rawQType) == QuestionType.poll ||
+            (type == AnnouncementType.question &&
+                hasPollOptions &&
+                (rawQType == null || rawQType.toString().isEmpty))
+        ? QuestionType.poll
+        : QuestionType.fromString(rawQType);
+
     return AnnouncementModel(
-      id: json['_id'] ?? '',
+      id: json['_id'] ?? json['id'] ?? '',
       isLiked: json["isLiked"] ?? false,
       announcementType: type,
-      qType: QuestionType.fromString(json['qtype'] as String?),
+      qType: qType,
       communityId: json['communityId'] ?? '',
-      pollCategory: json['pollCategory'],
+      pollCategory: (json['pollCategory'] ?? json['category']) as String?,
       business: json['business'] != null
           ? BusinessModel.fromJson(json['business'])
           : null,
@@ -111,11 +134,19 @@ class AnnouncementModel {
       likeCount: json['likeCount'],
       commentCount: json['commentCount'],
       pollQuestion: type == AnnouncementType.question
-          ? (json['content'] ?? json['question']) as String?
+          ? (json['pollQuestion'] ??
+                  json['content'] ??
+                  json['question'] ??
+                  json['details'])
+              as String?
           : null,
-      pollOptions: json['options'] != null
-          ? (json['options'] as List<dynamic>)
-                .map((e) => PollOption.fromJson(e))
+      pollOptions: optionsRaw != null
+          ? (optionsRaw as List<dynamic>)
+                .map(
+                  (e) => PollOption.fromJson(
+                    e is Map<String, dynamic> ? e : {},
+                  ),
+                )
                 .toList()
           : null,
       maxVotesPerUser: json['maxVotesPerUser'],
@@ -258,14 +289,14 @@ class PollOption {
 
   factory PollOption.fromJson(Map<String, dynamic> json) {
     return PollOption(
-      id: json['optionId']?.toString() ?? json['_id']?.toString() ?? '',
-      text: json['text'] ?? '',
-      image: json['image'],
-      voteCount: json['voteCount'] ?? 0,
-      percentage: (json['percentage'] ?? 0).toDouble(),
+      id: json['optionId']?.toString() ?? json['_id']?.toString() ?? json['id']?.toString() ?? '',
+      text: (json['text'] ?? json['question'] ?? json['option'] ?? '').toString(),
+      image: (json['image'] ?? json['imageUrl'])?.toString(),
+      voteCount: (json['voteCount'] as num?)?.toInt() ?? 0,
+      percentage: ((json['percentage'] as num?) ?? 0).toDouble(),
       voters:
           (json['voters'] as List<dynamic>?)
-              ?.map((v) => Voter.fromJson(v))
+              ?.map((v) => Voter.fromJson(v is Map<String, dynamic> ? v : {}))
               .toList() ??
           [],
     );

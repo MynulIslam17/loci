@@ -44,7 +44,7 @@ class CommunityScreenTabContent extends StatelessWidget {
           ),
           builder: () => FeedTab(
             onCommentTap: (id) => screen.openComments(context, id),
-            onPollTap: (a) => screen.openPollSheet(context, a),
+            onPollTap: (id) => screen.openPollSheet(context, id),
             onLikeTap: screen.toggleLike,
             onMentionSubmit: screen.submitMentionOption,
           ),
