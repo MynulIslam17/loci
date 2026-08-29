@@ -1,5 +1,7 @@
 import 'dart:io';
 
+import 'package:loci/core/enums/announcement_type.dart';
+import 'package:loci/core/enums/question_type.dart';
 import 'package:loci/features/browse_business/data/models/browse_business_response_model.dart';
 import 'package:loci/features/community/data/models/activity_search_response.dart';
 import 'package:loci/features/community/data/models/announcement_model.dart';
@@ -107,7 +109,7 @@ class CommunityService {
     );
   }
 
-  Future<AnnouncementModel> addPollOption({
+  Future<AnnouncementModel?> addPollOption({
     required String announcementId,
     required String text,
     String? imageUrl,
@@ -117,7 +119,31 @@ class CommunityService {
       text: text,
       imageUrl: imageUrl,
     );
-    return AnnouncementModel.fromJson(body['data'] as Map<String, dynamic>);
+    final data = body['data'];
+    if (data is! Map<String, dynamic>) return null;
+
+    // Shape 1: full updated announcement
+    if (data['pollOptions'] != null || data['options'] != null) {
+      return AnnouncementModel.fromJson(data);
+    }
+
+    // Shape 2: single option object
+    if (data['text'] != null || data['question'] != null || data['optionId'] != null || data['_id'] != null) {
+      final opt = PollOption.fromJson(data);
+      return AnnouncementModel(
+        id: announcementId,
+        announcementType: AnnouncementType.question,
+        qType: QuestionType.poll,
+        communityId: '',
+        createdAt: '',
+        updatedAt: '',
+        details: '',
+        isLiked: false,
+        pollOptions: [opt],
+      );
+    }
+
+    return null;
   }
 
   Future<CommunityMemberResponseModel> getCommunityMembers({
