@@ -2,6 +2,35 @@
   "version": "0.2.0",
   "configurations": [
     {
+      "name": "loci",
+      "request": "launch",
+      "type": "dart",
+      "program": "lib/main.dart",
+      "toolArgs": [
+        "--dart-define-from-file=api_keys.json"
+      ]
+    },
+    {
+      "name": "loci (profile)",
+      "request": "launch",
+      "type": "dart",
+      "flutterMode": "profile",
+      "program": "lib/main.dart",
+      "toolArgs": [
+        "--dart-define-from-file=api_keys.json"
+      ]
+    },
+    {
+      "name": "loci (release)",
+      "request": "launch",
+      "type": "dart",
+      "flutterMode": "release",
+      "program": "lib/main.dart",
+      "toolArgs": [
+        "--dart-define-from-file=api_keys.json"
+      ]
+    },
+    {
       "name": "Debug SST",
       "type": "node",
       "request": "launch",

@@ -312,9 +312,21 @@ class AnnouncementController extends GetxController {
     final post = announcementMap[announcementId];
     if (post == null) return;
 
-    final previousOptionId = votedOptionIds[announcementId];
-    final isChangingVote =
-        previousOptionId != null && previousOptionId != newOptionId;
+    // First check local tracking map; if absent, scan voters lists from the server
+    String? previousOptionId = votedOptionIds[announcementId];
+    if (previousOptionId == null && userId.isNotEmpty) {
+      for (final opt in post.pollOptions ?? <PollOption>[]) {
+        if (opt.voters.any((v) => v.userId == userId)) {
+          previousOptionId = opt.id;
+          break;
+        }
+      }
+    }
+
+    // Nothing to do if user is voting for the same option again
+    if (previousOptionId == newOptionId) return;
+
+    final isChangingVote = previousOptionId != null;
     final newVoter = Voter(userId: userId, name: userName, avatar: userAvatar);
 
     final newTotalVotes = isChangingVote
@@ -326,8 +338,10 @@ class AnnouncementController extends GetxController {
       List<Voter> newVoters = opt.voters;
 
       if (opt.id == newOptionId) {
-        newVoteCount = opt.voteCount + 1;
-        newVoters = [...opt.voters, newVoter];
+        if (!newVoters.any((v) => v.userId == userId)) {
+          newVoteCount = opt.voteCount + 1;
+          newVoters = [...opt.voters, newVoter];
+        }
       } else if (isChangingVote && opt.id == previousOptionId) {
         newVoteCount = (opt.voteCount - 1).clamp(0, opt.voteCount);
         newVoters = opt.voters.where((v) => v.userId != userId).toList();
@@ -351,6 +365,12 @@ class AnnouncementController extends GetxController {
     votedOptionIds[announcementId] = newOptionId;
     announcementMap.refresh();
     _bumpAllTabsContaining(announcementId);
+  }
+
+  void replaceAnnouncement(AnnouncementModel updated) {
+    announcementMap[updated.id] = updated;
+    announcementMap.refresh();
+    _bumpAllTabsContaining(updated.id);
   }
 
   void toggleLikeLocally(String announcementId) {

@@ -2,6 +2,7 @@ import Flutter
 import UIKit
 import UserNotifications
 import Stripe
+import GoogleMaps
 
 @main
 @objc class AppDelegate: FlutterAppDelegate {
@@ -9,6 +10,9 @@ import Stripe
     _ application: UIApplication,
     didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?
   ) -> Bool {
+    // Provide Google Maps API Key for native iOS map rendering
+    GMSServices.provideAPIKey("AIzaSyADSf5RMq5EKfYhVHiC-c3xyTLd8nqM_pc")
+
     // Must run BEFORE GeneratedPluginRegistrant. firebase_messaging installs
     // itself as the UNUserNotificationCenter delegate only when it finds the
     // slot empty, and then forwards to whatever it displaced. With the slot

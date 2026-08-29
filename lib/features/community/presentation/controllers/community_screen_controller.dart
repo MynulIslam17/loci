@@ -6,7 +6,6 @@ import 'package:loci/core/enums/question_type.dart';
 import 'package:loci/core/enums/rsvp_status.dart';
 import 'package:loci/core/utils/show_snackbar.dart';
 import 'package:loci/features/auth/presentation/controllers/auth_controller.dart';
-import 'package:loci/features/community/data/models/announcement_model.dart';
 import 'package:loci/features/community/presentation/controllers/announcement_controller.dart';
 import 'package:loci/features/community/presentation/controllers/announcement_like_controller.dart';
 import 'package:loci/features/community/presentation/controllers/my_community_controller.dart';
@@ -148,9 +147,10 @@ class CommunityScreenController extends GetxController {
     );
 
     if (updated != null) {
-      final option = updated.pollOptions?.last;
-      if (option != null) {
-        _announcements.updatePollOption(announcementId, option);
+      if (updated.pollOptions != null && updated.pollOptions!.isNotEmpty) {
+        _announcements.replaceAnnouncement(updated);
+      } else {
+        await _announcements.refreshAnnouncements(AnnouncementType.question);
       }
       return;
     }
@@ -159,10 +159,17 @@ class CommunityScreenController extends GetxController {
         _pollOptions.errorMessage.value ?? 'Failed to add option';
     if (!message.toLowerCase().contains('already')) {
       SnackbarService.error(message);
+    } else {
+      await _announcements.refreshAnnouncements(AnnouncementType.question);
     }
   }
 
-  void openPollSheet(BuildContext context, AnnouncementModel announcement) {
+  /// Opens the same poll bottom sheet as home, using the latest announcement
+  /// from the map (not a stale list snapshot).
+  void openPollSheet(BuildContext context, String announcementId) {
+    final announcement = _announcements.announcementMap[announcementId];
+    if (announcement == null) return;
+
     PollBottomSheet.show(
       context,
       PostCardViewModel.from(
@@ -170,7 +177,7 @@ class CommunityScreenController extends GetxController {
         communityOwnerUserId: _announcements.communityOwnerUserId.value,
       ),
       currentUserId: _auth.userModel?.id,
-      onVote: (optionId) => submitVote(announcement.id, optionId),
+      onVote: (optionId) => submitVote(announcementId, optionId),
     );
   }
 

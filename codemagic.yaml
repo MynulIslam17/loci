@@ -334,17 +334,27 @@ workflows:
         script: |
           set -e
           echo "Building AAB with $APP_BUILD_NAME+$APP_BUILD_NUMBER"
+          DART_DEFINES=()
+          if [ -n "${GOOGLE_MAPS_API_KEY:-}" ]; then
+            DART_DEFINES+=(--dart-define="GOOGLE_MAPS_API_KEY=$GOOGLE_MAPS_API_KEY")
+          fi
           flutter build appbundle --release \
             --build-name="$APP_BUILD_NAME" \
-            --build-number="$APP_BUILD_NUMBER"
+            --build-number="$APP_BUILD_NUMBER" \
+            "${DART_DEFINES[@]}"
       - name: Build iOS IPA
         script: |
           set -e
           echo "Building IPA with $APP_BUILD_NAME+$APP_BUILD_NUMBER"
+          DART_DEFINES=()
+          if [ -n "${GOOGLE_MAPS_API_KEY:-}" ]; then
+            DART_DEFINES+=(--dart-define="GOOGLE_MAPS_API_KEY=$GOOGLE_MAPS_API_KEY")
+          fi
           flutter build ipa --release \
             --build-name="$APP_BUILD_NAME" \
             --build-number="$APP_BUILD_NUMBER" \
-            --export-options-plist=/Users/builder/export_options.plist
+            --export-options-plist=/Users/builder/export_options.plist \
+            "${DART_DEFINES[@]}"
     artifacts:
       - build/app/outputs/bundle/release/*.aab
       - build/ios/ipa/*.ipa

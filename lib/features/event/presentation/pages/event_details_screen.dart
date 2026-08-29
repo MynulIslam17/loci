@@ -239,12 +239,15 @@ class _EventDetailsState extends State<EventDetails> {
 
               const SizedBox(height: 16),
 
-              EventMapPreview(
-                mapImage: controller.eventDetails?.mapImage,
-                lat: controller.eventDetails?.lat,
-                lng: controller.eventDetails?.lng,
-                locationLabel: event?.title,
-              ),
+              Obx(() {
+                return EventMapPreview(
+                  mapImage: controller.eventDetails?.mapImage,
+                  lat: controller.eventDetails?.lat,
+                  lng: controller.eventDetails?.lng,
+                  locationLabel: event?.title,
+                  isLoading: controller.isLoading,
+                );
+              }),
 
               const SizedBox(height: 16),
 

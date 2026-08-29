@@ -5,6 +5,7 @@ import 'package:loci/features/community/presentation/controllers/announcement_co
 import 'package:loci/features/community/presentation/widgets/community_tab_empty_state.dart';
 import 'package:loci/features/community/presentation/widgets/community_tab_shimmers.dart';
 import 'package:loci/features/community/presentation/widgets/community_ui_constants.dart';
+import 'package:loci/features/main_nav/presentation/widgets/ios_glass_bottom_nav_bar.dart';
 import 'package:loci/shared/widgets/adaptive_refresh.dart';
 import 'package:loci/shared/widgets/error_state.dart';
 import 'package:loci/shared/widgets/pagination_loading.dart';
@@ -157,9 +158,12 @@ class _TabScrollContent extends StatelessWidget {
   Widget _buildScrollView(BuildContext context) {
     return AdaptiveRefresh(
       onRefresh: onRefresh,
-      child: NotificationListener<ScrollNotification>(
+        child: NotificationListener<ScrollNotification>(
         onNotification: (notification) {
           if (!isActiveTab) return false;
+          // Ignore nested scrollables (e.g. business mention results list)
+          // so NestedScrollView / feed pagination don't steal the gesture.
+          if (notification.depth > 0) return false;
           if (notification is ScrollEndNotification) {
             final metrics = notification.metrics;
             if (metrics.pixels >= metrics.maxScrollExtent - 200 &&
@@ -214,6 +218,12 @@ class _TabScrollContent extends StatelessWidget {
                     child: PaginationLoader(size: 18, padding: 10),
                   ),
               ],
+              SliverPadding(
+                padding: EdgeInsets.only(
+                  bottom:
+                      IosGlassBottomNavBar.overlayBottomInset(context) + 30,
+                ),
+              ),
             ],
           ),
         ),

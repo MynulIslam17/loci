@@ -39,6 +39,8 @@ static const String scheduleMeeting="/scheduleMeeting";
   //---screens on drawer
   static const String exploreRoutes="/exploreRoutes";
   static const String routeDetails="/routeDetails";
+  static const String liveNavigation = "/liveNavigation";
+  static const String activityRouteNavigation = "/activityRouteNavigation";
   static const String activeRaffles="/activeRaffles";
   static const String  rafflesDetails="/rafflesDetails";
 

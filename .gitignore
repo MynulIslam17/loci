@@ -49,5 +49,9 @@ temp_interactive_push.bat
 # builds from a clean clone and the Google Services Gradle plugin / Xcode
 # build both fail without them. They contain public client identifiers that
 # ship inside every APK/IPA anyway — not secrets. Access control lives in
-# Firebase Security Rules, not in hiding these files.
-.gitignore
+# Compile-time secrets (copy api_keys.json.example → api_keys.json).
+# Never commit real keys. Injected via:
+#   flutter run --dart-define-from-file=api_keys.json
+api_keys.json
+dart_defines.json
+
