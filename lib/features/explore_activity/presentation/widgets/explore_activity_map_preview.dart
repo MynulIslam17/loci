@@ -11,6 +11,7 @@ class ExploreActivityMapPreview extends StatelessWidget {
     this.locationLabel,
     this.height = 160,
     this.borderRadius = 12.0,
+    this.isLoading = false,
   });
 
   final String? mapImage;
@@ -19,6 +20,7 @@ class ExploreActivityMapPreview extends StatelessWidget {
   final String? locationLabel;
   final double height;
   final double borderRadius;
+  final bool isLoading;
 
   @override
   Widget build(BuildContext context) {
@@ -29,6 +31,7 @@ class ExploreActivityMapPreview extends StatelessWidget {
       locationLabel: locationLabel,
       height: height,
       borderRadius: borderRadius,
+      isLoading: isLoading,
     );
   }
 }

@@ -17,10 +17,16 @@ class SearchBusinessController extends GetxController {
 
   final CommunityService _service;
 
-  static const _debounceDelay = Duration(milliseconds: 400);
+  static const _debounceDelay = Duration(milliseconds: 300);
   static const _pageSize = 10;
   static const _defaultErrorMessage =
       'Could not search businesses. Please try again.';
+
+  /// Global session cache for default businesses.
+  /// Persists across multiple bottom sheet openings so default businesses
+  /// are shown INSTANTLY with 0ms delay and 0 network requests after the first load.
+  static final List<BrowseBusinessModel> _cachedDefaultBusinesses = [];
+  static PaginationMeta? _cachedDefaultMeta;
 
   Timer? _debounce;
   final currentQuery = ''.obs;
@@ -52,17 +58,44 @@ class SearchBusinessController extends GetxController {
 
   // ── Public actions ──────────────────────────────────────────────────────
 
+  /// Restores initial/default businesses instantly without network call or shimmer.
+  void restoreDefaults() {
+    _debounce?.cancel();
+    currentQuery.value = '';
+    errorMessage.value = null;
+    if (_cachedDefaultBusinesses.isNotEmpty) {
+      businesses.assignAll(_cachedDefaultBusinesses);
+      _meta.value = _cachedDefaultMeta;
+      status.value = SearchBusinessStatus.success;
+    } else {
+      _runSearch('', page: 1, isInitialDefault: true);
+    }
+  }
+
   /// Debounced entry-point wired to text-field `onChanged`.
-  void onSearchChanged(String query) {
+  void onSearchChanged(String query, {bool immediate = false}) {
     _debounce?.cancel();
 
     final trimmed = query.trim();
     if (trimmed.isEmpty) {
-      _toIdle();
+      if (_cachedDefaultBusinesses.isNotEmpty) {
+        restoreDefaults();
+        return;
+      }
+      _runSearch('', page: 1, isInitialDefault: true);
       return;
     }
 
-    _debounce = Timer(_debounceDelay, () => _runSearch(trimmed, page: 1));
+    // When searching, clear previous results to show shimmer immediately
+    currentQuery.value = trimmed;
+    status.value = SearchBusinessStatus.loading;
+    businesses.clear();
+
+    if (immediate) {
+      _runSearch(trimmed, page: 1);
+    } else {
+      _debounce = Timer(_debounceDelay, () => _runSearch(trimmed, page: 1));
+    }
   }
 
   /// Load the next page of results for the current query.
@@ -79,7 +112,10 @@ class SearchBusinessController extends GetxController {
 
   /// Re-run the last query — useful for an in-UI "Try again" button.
   Future<void> retry() async {
-    if (currentQuery.value.isEmpty) return;
+    if (currentQuery.value.isEmpty) {
+      _runSearch('', page: 1, isInitialDefault: true);
+      return;
+    }
     await _runSearch(currentQuery.value, page: 1);
   }
 
@@ -100,6 +136,7 @@ class SearchBusinessController extends GetxController {
     String query, {
     required int page,
     bool append = false,
+    bool isInitialDefault = false,
   }) async {
     currentQuery.value = query;
     if (!append) {
@@ -123,6 +160,14 @@ class SearchBusinessController extends GetxController {
         businesses.assignAll(response.data);
       }
       _meta.value = response.meta;
+
+      if (isInitialDefault ||
+          (query.isEmpty && _cachedDefaultBusinesses.isEmpty)) {
+        _cachedDefaultBusinesses.clear();
+        _cachedDefaultBusinesses.addAll(response.data);
+        _cachedDefaultMeta = response.meta;
+      }
+
       errorMessage.value = null;
       status.value = SearchBusinessStatus.success;
     } catch (e) {

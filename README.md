@@ -16,6 +16,16 @@ Loci is a dynamic social media ecosystem designed specifically for businesses to
 - Networking Dashboard: Overview of contacts, referrals, and upcoming meetings.
 - Secure Authentication: Robust user and business verification using JWT.
 
+## Local secrets (Maps API key)
+
+Compile-time keys stay out of git. After cloning:
+
+1. `cp api_keys.json.example api_keys.json`
+2. Set `GOOGLE_MAPS_API_KEY` in `api_keys.json`
+3. Run with: `flutter run --dart-define-from-file=api_keys.json`
+
+Read the key in Dart via `AppSecrets.googleMapsApiKey` (`lib/core/config/app_secrets.dart`).
+
 ## Technology Stack
 
 ### Frontend
