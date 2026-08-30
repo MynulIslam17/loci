@@ -26,6 +26,7 @@ class BusinessMentionBottomSheet extends StatefulWidget {
     return showModalBottomSheet<BrowseBusinessModel>(
       context: context,
       isScrollControlled: true,
+      useSafeArea: true,
       backgroundColor: Colors.transparent,
       builder: (_) => const BusinessMentionBottomSheet(),
     ).whenComplete(() => FocusManager.instance.primaryFocus?.unfocus());
@@ -82,27 +83,34 @@ class _BusinessMentionBottomSheetState
   Widget build(BuildContext context) {
     final colors = context.colorScheme;
     final viewInsets = MediaQuery.viewInsetsOf(context);
-    final maxHeight = MediaQuery.sizeOf(context).height * 0.88;
-    final bottomPadding = viewInsets.bottom > 0
-        ? viewInsets.bottom + 12
-        : IosGlassBottomNavBar.overlayBottomInset(context) + 20;
+    final isKeyboardOpen = viewInsets.bottom > 0;
+    final availableHeight = MediaQuery.sizeOf(context).height - viewInsets.bottom;
+    final maxHeight = (isKeyboardOpen
+            ? availableHeight * 0.95
+            : MediaQuery.sizeOf(context).height * 0.88)
+        .clamp(200.0, MediaQuery.sizeOf(context).height * 0.88);
+    final bottomPadding = isKeyboardOpen
+        ? 12.0
+        : IosGlassBottomNavBar.overlayBottomInset(context) + 20.0;
 
-    return Container(
-      constraints: BoxConstraints(maxHeight: maxHeight),
-      decoration: BoxDecoration(
-        color: colors.surface,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.15),
-            blurRadius: 24,
-            offset: const Offset(0, -6),
-          ),
-        ],
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
+    return Padding(
+      padding: EdgeInsets.only(bottom: viewInsets.bottom),
+      child: Container(
+        constraints: BoxConstraints(maxHeight: maxHeight),
+        decoration: BoxDecoration(
+          color: colors.surface,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.15),
+              blurRadius: 24,
+              offset: const Offset(0, -6),
+            ),
+          ],
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
           // ── Drag handle ──
           const SizedBox(height: 12),
           Center(
@@ -245,7 +253,7 @@ class _BusinessMentionBottomSheetState
               // Shimmer during initial load and while searching
               if (status == SearchBusinessStatus.loading &&
                   businesses.isEmpty) {
-                return _buildShimmerList(colors);
+                return _buildShimmerList(colors, bottomPadding);
               }
 
               // Error state
@@ -288,7 +296,7 @@ class _BusinessMentionBottomSheetState
                 final isTyping = query.isNotEmpty;
 
                 return Center(
-                  child: Padding(
+                  child: SingleChildScrollView(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 32,
                       vertical: 24,
@@ -395,12 +403,13 @@ class _BusinessMentionBottomSheetState
           ),
         ],
       ),
-    );
-  }
+    ),
+  );
+}
 
-  Widget _buildShimmerList(ColorScheme colors) {
+  Widget _buildShimmerList(ColorScheme colors, double bottomPadding) {
     return ListView.separated(
-      padding: const EdgeInsets.fromLTRB(16, 6, 16, 20),
+      padding: EdgeInsets.fromLTRB(16, 6, 16, bottomPadding),
       itemCount: 6,
       separatorBuilder: (_, _) => Divider(
         height: 1,

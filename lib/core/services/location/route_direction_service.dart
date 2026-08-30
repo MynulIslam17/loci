@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:http/http.dart' as http;
 import 'package:loci/core/config/app_secrets.dart';
@@ -42,49 +43,102 @@ class RouteDirectionService {
   static final RouteDirectionService instance = RouteDirectionService._();
   final Logger _logger = Logger();
 
-  /// Fetches route directions from origin to destination.
+  /// Fetches route directions from origin to destination using a 3-tier fallback chain:
+  /// 1. Google Routes API (v2 - Modern, High Performance, Two-Wheeler support)
+  /// 2. Google Directions API (v1 - Legacy fallback)
+  /// 3. OSRM (Free OpenStreetMap routing fallback)
+  /// 4. Straight line (Last resort)
   Future<RouteDirectionResult> getDirections({
     required double originLat,
     required double originLng,
     required double destLat,
     required double destLng,
-    String mode = 'driving', // 'driving', 'walking', 'bicycling'
+    String mode = 'driving', // 'driving', 'walking', 'bicycling', 'twoWheeler'
   }) async {
-    // 1. Try Google Directions API if key is present
+    debugPrint('\n┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓');
+    debugPrint('┃          📍 [ROUTE DIRECTION SERVICE]                 ┃');
+    debugPrint('┣━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┫');
+    debugPrint('┃ Origin: ($originLat, $originLng)');
+    debugPrint('┃ Destination: ($destLat, $destLng)');
+    debugPrint('┃ Travel Mode: $mode');
+    debugPrint('┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛');
+
+    // 1. TIER 1: Try Modern Google Routes API (v2) if key is present
     if (AppSecrets.hasGoogleMapsApiKey) {
+      debugPrint('🔑 Google Maps API Key: Present (...${AppSecrets.googleMapsApiKey.length > 5 ? AppSecrets.googleMapsApiKey.substring(AppSecrets.googleMapsApiKey.length - 4) : AppSecrets.googleMapsApiKey})');
+      
       try {
-        final googleResult = await _fetchGoogleDirections(
+        debugPrint('🚀 [Attempting Tier 1]: Google Routes API (v2)...');
+        final routesV2Result = await _fetchGoogleRoutesApi(
           originLat: originLat,
           originLng: originLng,
           destLat: destLat,
           destLng: destLng,
           mode: mode,
         );
-        if (googleResult != null && googleResult.polylinePoints.isNotEmpty) {
-          return googleResult;
+        if (routesV2Result != null && routesV2Result.polylinePoints.isNotEmpty) {
+          debugPrint('\n=========================================================');
+          debugPrint('🎯 [ACTIVE ENGINE]: 🌟 GOOGLE ROUTES API (v2) 🌟');
+          debugPrint('📊 Points: ${routesV2Result.polylinePoints.length} | Distance: ${routesV2Result.distanceInMeters.toStringAsFixed(0)}m | Duration: ${routesV2Result.durationText} | Source: ${routesV2Result.source}');
+          debugPrint('=========================================================\n');
+          return routesV2Result;
         }
-      } catch (e) {
-        _logger.w('Google Directions API failed, falling back to OSRM: $e');
+      } catch (e, st) {
+        debugPrint('⚠️ [Google Routes API v2 Exception]: $e');
+        _logger.w('Google Routes API v2 exception', error: e, stackTrace: st);
       }
+
+      // 2. TIER 2: Fallback to Google Directions API (v1)
+      try {
+        debugPrint('🔄 [Attempting Tier 2]: Google Directions API (v1)...');
+        final directionsV1Result = await _fetchGoogleDirections(
+          originLat: originLat,
+          originLng: originLng,
+          destLat: destLat,
+          destLng: destLng,
+          mode: mode == 'twoWheeler' ? 'bicycling' : mode,
+        );
+        if (directionsV1Result != null && directionsV1Result.polylinePoints.isNotEmpty) {
+          debugPrint('\n=========================================================');
+          debugPrint('🎯 [ACTIVE ENGINE]: 🔹 GOOGLE DIRECTIONS API (v1) 🔹');
+          debugPrint('📊 Points: ${directionsV1Result.polylinePoints.length} | Distance: ${directionsV1Result.distanceInMeters.toStringAsFixed(0)}m | Duration: ${directionsV1Result.durationText} | Source: ${directionsV1Result.source}');
+          debugPrint('=========================================================\n');
+          return directionsV1Result;
+        }
+      } catch (e, st) {
+        debugPrint('⚠️ [Google Directions API v1 Exception]: $e');
+        _logger.w('Google Directions API v1 exception', error: e, stackTrace: st);
+      }
+    } else {
+      debugPrint('⚠️ [Google Maps API Key]: MISSING (AppSecrets.hasGoogleMapsApiKey == false)');
     }
 
-    // 2. Fallback to OSRM (OpenStreetMap Routing)
+    // 3. TIER 3: Fallback to OSRM (OpenStreetMap Free Routing API)
+    debugPrint('🔄 [Attempting Tier 3]: OSRM (OpenStreetMap Free Routing API)...');
     try {
       final osrmResult = await _fetchOsrmDirections(
         originLat: originLat,
         originLng: originLng,
         destLat: destLat,
         destLng: destLng,
-        mode: mode,
+        mode: mode == 'twoWheeler' ? 'bicycling' : mode,
       );
       if (osrmResult != null && osrmResult.polylinePoints.isNotEmpty) {
+        debugPrint('\n=========================================================');
+        debugPrint('🎯 [ACTIVE ENGINE]: 🛡️ OSRM FREE ROUTING ENGINE 🛡️');
+        debugPrint('📊 Points: ${osrmResult.polylinePoints.length} | Distance: ${osrmResult.distanceInMeters.toStringAsFixed(0)}m | Duration: ${osrmResult.durationText} | Source: ${osrmResult.source}');
+        debugPrint('=========================================================\n');
         return osrmResult;
       }
     } catch (e) {
+      debugPrint('❌ [OSRM Exception]: $e');
       _logger.w('OSRM Directions failed: $e');
     }
 
-    // 3. Last-resort fallback: Direct line
+    // 4. TIER 4: Last-resort fallback: Direct line
+    debugPrint('\n=========================================================');
+    debugPrint('⚠️ [ACTIVE ENGINE]: ⚡ STRAIGHT LINE (Emergency Fallback) ⚡');
+    debugPrint('=========================================================\n');
     return RouteDirectionResult(
       polylinePoints: [
         LatLng(originLat, originLng),
@@ -104,6 +158,144 @@ class RouteDirectionService {
     );
   }
 
+  /// Calls Google Routes API (v2) - High-performance computeRoutes
+  Future<RouteDirectionResult?> _fetchGoogleRoutesApi({
+    required double originLat,
+    required double originLng,
+    required double destLat,
+    required double destLng,
+    required String mode,
+  }) async {
+    final apiKey = AppSecrets.googleMapsApiKey;
+    final url = Uri.parse('https://routes.googleapis.com/directions/v2:computeRoutes');
+
+    String travelMode = 'DRIVE';
+    if (mode == 'walking') {
+      travelMode = 'WALK';
+    } else if (mode == 'bicycling') {
+      travelMode = 'BICYCLE';
+    } else if (mode == 'twoWheeler') {
+      travelMode = 'TWO_WHEELER';
+    }
+
+    final headers = {
+      'Content-Type': 'application/json',
+      'X-Goog-Api-Key': apiKey,
+      'X-Goog-FieldMask':
+          'routes.duration,routes.distanceMeters,routes.polyline.encodedPolyline,routes.legs.steps',
+    };
+
+    final body = json.encode({
+      "origin": {
+        "location": {
+          "latLng": {
+            "latitude": originLat,
+            "longitude": originLng,
+          }
+        }
+      },
+      "destination": {
+        "location": {
+          "latLng": {
+            "latitude": destLat,
+            "longitude": destLng,
+          }
+        }
+      },
+      "travelMode": travelMode,
+      "routingPreference": (travelMode == 'DRIVE' || travelMode == 'TWO_WHEELER')
+          ? 'TRAFFIC_AWARE'
+          : 'ROUTING_PREFERENCE_UNSPECIFIED',
+      "computeAlternativeRoutes": false,
+      "languageCode": "en-US",
+      "units": "METRIC",
+    });
+
+    debugPrint('🌐 [Google Routes v2 Request]: $url (travelMode: $travelMode)');
+
+    final response = await http
+        .post(url, headers: headers, body: body)
+        .timeout(const Duration(seconds: 8));
+
+    debugPrint('📡 [Google Routes v2 HTTP Status]: ${response.statusCode}');
+
+    if (response.statusCode == 200) {
+      final data = json.decode(response.body);
+      final routes = data['routes'] as List?;
+
+      if (routes != null && routes.isNotEmpty) {
+        final route = routes[0];
+        final encodedPolyline = route['polyline']?['encodedPolyline'] as String?;
+
+        if (encodedPolyline != null && encodedPolyline.isNotEmpty) {
+          final decodedPoints = decodePolyline(encodedPolyline);
+          final distanceMeters = (route['distanceMeters'] as num?)?.toDouble() ?? 0;
+
+          final durationStr = route['duration']?.toString() ?? '';
+          String? durationText;
+          if (durationStr.endsWith('s')) {
+            final seconds = int.tryParse(durationStr.replaceAll('s', '')) ?? 0;
+            final mins = (seconds / 60).round();
+            if (mins <= 1) {
+              durationText = '1 min';
+            } else if (mins < 60) {
+              durationText = '$mins mins';
+            } else {
+              final hr = mins ~/ 60;
+              final m = mins % 60;
+              durationText = m == 0 ? '$hr hr' : '$hr hr $m min';
+            }
+          }
+
+          List<RouteStep> steps = [];
+          final legs = route['legs'] as List?;
+          if (legs != null && legs.isNotEmpty) {
+            final rawSteps = legs[0]['steps'] as List?;
+            if (rawSteps != null) {
+              for (var s in rawSteps) {
+                final instruction = s['navigationInstruction']?['instructions']?.toString() ??
+                    s['headline']?.toString() ??
+                    'Continue';
+                final maneuver = s['navigationInstruction']?['maneuver']
+                        ?.toString()
+                        .toLowerCase()
+                        .replaceAll('_', '-') ??
+                    'straight';
+                final dist = (s['distanceMeters'] as num?)?.toDouble() ?? 0;
+                final startLoc = s['startLocation']?['latLng'];
+                final startLat = (startLoc?['latitude'] as num?)?.toDouble() ?? 0;
+                final startLng = (startLoc?['longitude'] as num?)?.toDouble() ?? 0;
+
+                steps.add(
+                  RouteStep(
+                    instruction: instruction,
+                    maneuver: maneuver,
+                    distanceMeters: dist,
+                    startLocation: LatLng(startLat, startLng),
+                  ),
+                );
+              }
+            }
+          }
+
+          debugPrint('✅ [Google Routes v2 Success]: Decoded ${decodedPoints.length} points, Distance: ${distanceMeters.toStringAsFixed(0)}m, Duration: $durationText, Steps: ${steps.length}');
+
+          return RouteDirectionResult(
+            polylinePoints: decodedPoints,
+            distanceInMeters: distanceMeters,
+            durationText: durationText,
+            steps: steps,
+            source: 'google_routes_v2',
+          );
+        }
+      }
+      debugPrint('⚠️ [Google Routes v2 Response]: No routes found in response: ${response.body}');
+    } else {
+      debugPrint('❌ [Google Routes v2 Error]: Status ${response.statusCode}, Body: ${response.body}');
+    }
+    return null;
+  }
+
   /// Calls Google Maps Directions API
   Future<RouteDirectionResult?> _fetchGoogleDirections({
     required double originLat,
@@ -121,10 +313,16 @@ class RouteDirectionService {
       '&key=$apiKey',
     );
 
+    debugPrint('🌐 [Google API Request]: $url');
+
     final response = await http.get(url).timeout(const Duration(seconds: 8));
+    debugPrint('📡 [Google API HTTP Status]: ${response.statusCode}');
+
     if (response.statusCode == 200) {
       final data = json.decode(response.body);
-      if (data['status'] == 'OK' && (data['routes'] as List).isNotEmpty) {
+      final status = data['status']?.toString() ?? 'UNKNOWN';
+
+      if (status == 'OK' && (data['routes'] as List).isNotEmpty) {
         final route = data['routes'][0];
         final overviewPolyline = route['overview_polyline']['points'] as String;
         final decodedPoints = decodePolyline(overviewPolyline);
@@ -163,6 +361,8 @@ class RouteDirectionService {
           }
         }
 
+        debugPrint('✅ [Google API Success]: Decoded ${decodedPoints.length} polyline points, Distance: ${distanceMeters.toStringAsFixed(0)}m, Duration: $duration, Steps: ${steps.length}');
+
         return RouteDirectionResult(
           polylinePoints: decodedPoints,
           distanceInMeters: distanceMeters,
@@ -170,7 +370,14 @@ class RouteDirectionService {
           steps: steps,
           source: 'google',
         );
+      } else {
+        final errorMessage = data['error_message'] ?? 'No extra error message provided by Google';
+        debugPrint('❌ [Google API Returned Error Status]: $status');
+        debugPrint('❌ [Google API Error Details]: $errorMessage');
+        debugPrint('   Raw response: ${response.body}');
       }
+    } else {
+      debugPrint('❌ [Google API HTTP Error]: Code ${response.statusCode}, Body: ${response.body}');
     }
     return null;
   }
@@ -190,10 +397,15 @@ class RouteDirectionService {
       '?overview=full&geometries=geojson&steps=true',
     );
 
+    debugPrint('🌐 [OSRM Request]: $url');
+
     final response = await http.get(url).timeout(const Duration(seconds: 8));
+    debugPrint('📡 [OSRM HTTP Status]: ${response.statusCode}');
+
     if (response.statusCode == 200) {
       final data = json.decode(response.body);
-      if (data['code'] == 'Ok' && (data['routes'] as List).isNotEmpty) {
+      final code = data['code']?.toString() ?? '';
+      if (code == 'Ok' && (data['routes'] as List).isNotEmpty) {
         final route = data['routes'][0];
         final coordinates = route['geometry']['coordinates'] as List;
 
@@ -252,6 +464,8 @@ class RouteDirectionService {
           }
         }
 
+        debugPrint('✅ [OSRM Success]: Decoded ${points.length} coordinates, Distance: ${distanceMeters.toStringAsFixed(0)}m, Duration: $durationText, Steps: ${steps.length}');
+
         return RouteDirectionResult(
           polylinePoints: points,
           distanceInMeters: distanceMeters,
@@ -259,7 +473,11 @@ class RouteDirectionService {
           steps: steps,
           source: 'osrm',
         );
+      } else {
+        debugPrint('❌ [OSRM Error]: Code $code, Message: ${data['message'] ?? 'None'}');
       }
+    } else {
+      debugPrint('❌ [OSRM HTTP Error]: Code ${response.statusCode}, Body: ${response.body}');
     }
     return null;
   }

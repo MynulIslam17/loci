@@ -66,7 +66,11 @@
 	<key>NSPhotoLibraryAddUsageDescription</key>
 	<string>This app needs access to save QR codes and images to your photo library.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>This app uses your location to show map previews and help you pick places for events, routes, and businesses.</string>
+	<string>This app uses your location to show live navigation, nearby events, routes, and help you find local spots.</string>
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+	<string>This app uses your location to provide real-time turn-by-turn navigation and update your route while moving.</string>
+	<key>NSLocationAlwaysUsageDescription</key>
+	<string>This app uses your location to provide continuous turn-by-turn navigation and show nearby places.</string>
 
 	<!-- Opens Apple Maps / HTTPS links from map previews (url_launcher). -->
 	<key>LSApplicationQueriesSchemes</key>

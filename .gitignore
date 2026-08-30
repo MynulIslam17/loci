@@ -55,3 +55,4 @@ temp_interactive_push.bat
 api_keys.json
 dart_defines.json
 
+.gitignore

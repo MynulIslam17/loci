@@ -11,7 +11,7 @@ import GoogleMaps
     didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?
   ) -> Bool {
     // Provide Google Maps API Key for native iOS map rendering
-    GMSServices.provideAPIKey("AIzaSyADSf5RMq5EKfYhVHiC-c3xyTLd8nqM_pc")
+    GMSServices.provideAPIKey("***REMOVED***")
 
     // Must run BEFORE GeneratedPluginRegistrant. firebase_messaging installs
     // itself as the UNUserNotificationCenter delegate only when it finds the

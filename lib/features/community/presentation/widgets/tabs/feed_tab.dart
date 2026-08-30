@@ -156,7 +156,7 @@ class _FeedTabState extends State<FeedTab> with AutomaticKeepAliveClientMixin {
           ListView.builder(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
-            padding: const EdgeInsets.symmetric(horizontal: 12),
+            padding: EdgeInsets.zero,
             itemCount: announcements.length,
             itemBuilder: (context, index) {
               final announcement = announcements[index];

@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math' as math;
 import 'dart:typed_data';
 import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
@@ -25,6 +26,8 @@ class LiveNavigationController extends GetxController {
   final isLoading = true.obs;
   final isRouteLoading = false.obs;
   final isNavigating = false.obs; // Active In-App Navigation HUD Mode
+  final isUserPanning = false.obs; // User manually touched/zoomed/panned map during navigation
+  final is3DMode = true.obs; // 2D vs 3D Perspective Toggle
   final selectedTravelMode = 'driving'.obs; // 'driving', 'twoWheeler', 'walking'
   final currentPosition = Rxn<Position>();
   final remainingDistance = ''.obs;
@@ -39,18 +42,22 @@ class LiveNavigationController extends GetxController {
   // Google Map State
   final markers = <Marker>{}.obs;
   final polylines = <Polyline>{}.obs;
+  final circles = <Circle>{}.obs;
   GoogleMapController? mapController;
 
-  // Vehicle Marker Icons
-  BitmapDescriptor? _driveIcon;
-  BitmapDescriptor? _rideIcon;
-  BitmapDescriptor? _walkIcon;
-  BitmapDescriptor? _userDotIcon;
+  // Vehicle & User Marker Icons
+  BitmapDescriptor? _arrowIcon;
+  final List<BitmapDescriptor> _pulsingDotFrames = [];
+  int _currentPulseFrameIndex = 0;
 
   double _currentBearing = 0.0;
+  double _targetBearing = 0.0;
+  double? userPreferredNavZoom;
+  bool _isProgrammaticCameraMove = false;
   Position? _previousPosition;
   DateTime? _lastCameraUpdate;
   bool _hasShownArrivalDialog = false;
+  Timer? _animationTimer;
 
   // Route points & turn steps
   List<LatLng> _fullRoutePoints = [];
@@ -69,6 +76,7 @@ class LiveNavigationController extends GetxController {
     _loadCustomMarkerIcons().then((_) {
       _initializeLocationAndRoute();
       _startHardwareCompassStream();
+      _startAnimationLoop();
     });
   }
 
@@ -77,6 +85,7 @@ class LiveNavigationController extends GetxController {
     _positionSubscription?.cancel();
     _compassSubscription?.cancel();
     _pollTimer?.cancel();
+    _animationTimer?.cancel();
     mapController?.dispose();
     super.onClose();
   }
@@ -96,32 +105,31 @@ class LiveNavigationController extends GetxController {
     }
   }
 
-  /// Pre-generates custom vehicle markers: Existing car SVG for Drive and Ride, Arrow for Walk
+  /// Pre-generates custom vehicle markers:
+  /// - navigation_arrow.svg for all 3 travel modes (Drive, Ride, Walk) when navigating
+  /// - 16 smooth animated pulsing blue dot frames with directional heading cone for preview before starting navigation
   Future<void> _loadCustomMarkerIcons() async {
     try {
-      // 🚗 Use the existing car SVG (assets/icons/nav_car1.svg) for BOTH Drive and Ride modes
-      final carSvgMarker = await _loadCarSvgMarker('assets/icons/nav_car1.svg');
-      _driveIcon = carSvgMarker;
-      _rideIcon = carSvgMarker;
+      // 🧭 1. Load navigation_arrow.svg for all 3 travel modes
+      _arrowIcon = await _loadArrowSvgMarker('assets/icons/navigation_arrow.svg');
 
-      // 🚶 Walk mode: Default navigation direction pointer
-      _walkIcon = await _createModeIconBitmap(
-        iconData: Icons.navigation_rounded,
-        accentColor: const Color(0xFFF59E0B),
-      );
-
-      _userDotIcon = await _createDotBitmap();
+      // 📍 2. Pre-generate 16 smooth animated pulsing blue dot frames with directional beam
+      _pulsingDotFrames.clear();
+      const int frameCount = 16;
+      for (int i = 0; i < frameCount; i++) {
+        final double progress = i / frameCount;
+        final frame = await _createPulsingDotFrame(progress);
+        _pulsingDotFrames.add(frame);
+      }
     } catch (e) {
       _logger.w('Failed to create custom marker bitmaps: $e');
     }
   }
 
-  /// Rasterizes the existing nav_car1.svg to a high-DPI transparent PNG BitmapDescriptor for Google Maps
-  Future<BitmapDescriptor> _loadCarSvgMarker(String svgAssetPath) async {
+  /// Rasterizes navigation_arrow.svg to a high-DPI transparent PNG BitmapDescriptor
+  Future<BitmapDescriptor> _loadArrowSvgMarker(String svgAssetPath) async {
     try {
-      // Sleek, compact standard vehicle proportion for all mobile displays (1 : 2.09 aspect ratio)
-      const double targetWidth = 38.0;
-      const double targetHeight = 79.0;
+      const double targetSize = 56.0;
 
       final pictureInfo = await vg.loadPicture(
         SvgAssetLoader(svgAssetPath),
@@ -131,15 +139,14 @@ class LiveNavigationController extends GetxController {
       final ui.PictureRecorder recorder = ui.PictureRecorder();
       final Canvas canvas = Canvas(recorder);
 
-      // Scale picture cleanly to target dimensions
-      final double scaleX = targetWidth / pictureInfo.size.width;
-      final double scaleY = targetHeight / pictureInfo.size.height;
+      final double scaleX = targetSize / pictureInfo.size.width;
+      final double scaleY = targetSize / pictureInfo.size.height;
       canvas.scale(scaleX, scaleY);
       canvas.drawPicture(pictureInfo.picture);
 
       final ui.Image image = await recorder
           .endRecording()
-          .toImage(targetWidth.toInt(), targetHeight.toInt());
+          .toImage(targetSize.toInt(), targetSize.toInt());
       final ByteData? byteData =
           await image.toByteData(format: ui.ImageByteFormat.png);
 
@@ -147,12 +154,85 @@ class LiveNavigationController extends GetxController {
         return BitmapDescriptor.bytes(byteData.buffer.asUint8List());
       }
     } catch (e) {
-      _logger.w('Failed to rasterize existing car SVG ($svgAssetPath): $e');
+      _logger.w('Failed to rasterize arrow SVG ($svgAssetPath): $e');
     }
     return _createModeIconBitmap(
-      iconData: Icons.directions_car_rounded,
-      accentColor: const Color(0xFF2563EB),
+      iconData: Icons.navigation_rounded,
+      accentColor: const Color(0xFFE21B1B),
     );
+  }
+
+  /// Creates a single frame of the Google Maps pulsing blue dot with directional beam
+  Future<BitmapDescriptor> _createPulsingDotFrame(double t) async {
+    const double size = 120.0;
+    const Offset center = Offset(size / 2, size / 2);
+    final ui.PictureRecorder recorder = ui.PictureRecorder();
+    final Canvas canvas = Canvas(recorder);
+
+    // 1. Soft directional heading beam / cone pointing straight UP (North: -90 degrees)
+    // Spans ~68 degrees angle with smooth radial gradient (matches Google Maps flashlight)
+    final Path beamPath = Path();
+    beamPath.moveTo(center.dx, center.dy);
+    beamPath.arcTo(
+      Rect.fromCircle(center: center, radius: 54.0),
+      -math.pi / 2 - (math.pi * 0.19),
+      math.pi * 0.38,
+      false,
+    );
+    beamPath.close();
+
+    final Paint beamPaint = Paint()
+      ..shader = ui.Gradient.radial(
+        center,
+        54.0,
+        [
+          const Color(0x802563EB), // ~50% blue at origin
+          const Color(0x302563EB), // ~19% blue mid-distance
+          const Color(0x002563EB), // 0% fade at outer edge
+        ],
+        [0.0, 0.65, 1.0],
+      );
+    canvas.drawPath(beamPath, beamPaint);
+
+    // 2. Animated Pulsing Outer Halo Wave (Expands from 12px to 42px and fades out)
+    final double pulseRadius = 12.0 + (t * 30.0);
+    final double pulseOpacity = (1.0 - t) * 0.38;
+    if (pulseOpacity > 0) {
+      final Paint pulsePaint = Paint()
+        ..color = const Color(0xFF2563EB).withValues(alpha: pulseOpacity)
+        ..style = PaintingStyle.fill;
+      canvas.drawCircle(center, pulseRadius, pulsePaint);
+    }
+
+    // 3. Drop Shadow for Core Dot
+    final Paint shadowPaint = Paint()
+      ..color = const Color(0x3A000000)
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 3.5);
+    canvas.drawCircle(center + const Offset(0, 1.5), 11.5, shadowPaint);
+
+    // 4. Solid Crisp White Ring
+    final Paint whiteRingPaint = Paint()
+      ..color = Colors.white
+      ..style = PaintingStyle.fill;
+    canvas.drawCircle(center, 11.0, whiteRingPaint);
+
+    // 5. Solid Crisp Blue Center Core Dot
+    final Paint coreDotPaint = Paint()
+      ..color = const Color(0xFF1D68E8)
+      ..style = PaintingStyle.fill;
+    canvas.drawCircle(center, 7.5, coreDotPaint);
+
+    // 6. Specular Highlight
+    final Paint highlightPaint = Paint()
+      ..color = Colors.white.withValues(alpha: 0.45)
+      ..style = PaintingStyle.fill;
+    canvas.drawCircle(center - const Offset(2.0, 2.0), 2.2, highlightPaint);
+
+    final ui.Image image =
+        await recorder.endRecording().toImage(size.toInt(), size.toInt());
+    final ByteData? byteData =
+        await image.toByteData(format: ui.ImageByteFormat.png);
+    return BitmapDescriptor.bytes(byteData!.buffer.asUint8List());
   }
 
   Future<BitmapDescriptor> _createModeIconBitmap({
@@ -163,13 +243,11 @@ class LiveNavigationController extends GetxController {
     final ui.PictureRecorder recorder = ui.PictureRecorder();
     final Canvas canvas = Canvas(recorder);
 
-    // 1. Soft Outer Halo
     final Paint haloPaint = Paint()
       ..color = accentColor.withValues(alpha: 0.22)
       ..style = PaintingStyle.fill;
     canvas.drawCircle(const Offset(size / 2, size / 2), size / 2, haloPaint);
 
-    // 2. White Base with Drop Shadow
     final Paint shadowPaint = Paint()
       ..color = const Color(0x38000000)
       ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4.5);
@@ -180,14 +258,12 @@ class LiveNavigationController extends GetxController {
       ..style = PaintingStyle.fill;
     canvas.drawCircle(const Offset(size / 2, size / 2), size / 2.7, whiteCirclePaint);
 
-    // 3. Colored Accent Border
     final Paint ringPaint = Paint()
       ..color = accentColor
       ..style = PaintingStyle.stroke
       ..strokeWidth = 2.5;
     canvas.drawCircle(const Offset(size / 2, size / 2), size / 2.7 - 1.25, ringPaint);
 
-    // 4. Vector Icon
     final textPainter = TextPainter(textDirection: TextDirection.ltr);
     textPainter.text = TextSpan(
       text: String.fromCharCode(iconData.codePoint),
@@ -212,42 +288,74 @@ class LiveNavigationController extends GetxController {
     return BitmapDescriptor.bytes(byteData!.buffer.asUint8List());
   }
 
-  Future<BitmapDescriptor> _createDotBitmap() async {
-    const double size = 60.0;
-    final ui.PictureRecorder recorder = ui.PictureRecorder();
-    final Canvas canvas = Canvas(recorder);
+  /// High-rate smooth animation & heading interpolation loop
+  void _startAnimationLoop() {
+    _animationTimer?.cancel();
+    if (_pulsingDotFrames.isEmpty) return;
 
-    final Paint haloPaint = Paint()
-      ..color = const Color(0x352563EB)
-      ..style = PaintingStyle.fill;
-    canvas.drawCircle(const Offset(size / 2, size / 2), size / 2, haloPaint);
+    _animationTimer = Timer.periodic(const Duration(milliseconds: 75), (_) {
+      final pos = currentPosition.value;
+      if (pos == null) return;
 
-    final Paint whiteRingPaint = Paint()
-      ..color = Colors.white
-      ..style = PaintingStyle.fill;
-    canvas.drawCircle(const Offset(size / 2, size / 2), size / 3, whiteRingPaint);
+      // 1. Smoothly interpolate bearing towards target heading using shortest circular angular distance
+      final double diff = (_targetBearing - _currentBearing + 540.0) % 360.0 - 180.0;
+      bool hasRotated = false;
+      if (diff.abs() > 0.4) {
+        _currentBearing = (_currentBearing + diff * 0.25 + 360.0) % 360.0;
+        hasRotated = true;
+      } else if (diff.abs() > 0.05) {
+        _currentBearing = _targetBearing;
+        hasRotated = true;
+      }
 
-    final Paint coreDotPaint = Paint()
-      ..color = const Color(0xFF2563EB)
-      ..style = PaintingStyle.fill;
-    canvas.drawCircle(const Offset(size / 2, size / 2), size / 4.2, coreDotPaint);
+      // 2. Advance pulse frame if in preview mode (before starting navigation)
+      bool frameChanged = false;
+      if (!isNavigating.value && _pulsingDotFrames.isNotEmpty) {
+        _currentPulseFrameIndex =
+            (_currentPulseFrameIndex + 1) % _pulsingDotFrames.length;
+        frameChanged = true;
+      }
 
-    final ui.Image image = await recorder.endRecording().toImage(size.toInt(), size.toInt());
-    final ByteData? byteData = await image.toByteData(format: ui.ImageByteFormat.png);
-    return BitmapDescriptor.bytes(byteData!.buffer.asUint8List());
+      if (hasRotated || frameChanged) {
+        _updateUserMarker(pos);
+
+        if (isNavigating.value && hasRotated && !isUserPanning.value && !_isProgrammaticCameraMove) {
+          final now = DateTime.now();
+          if (_lastCameraUpdate == null ||
+              now.difference(_lastCameraUpdate!).inMilliseconds > 120) {
+            _lastCameraUpdate = now;
+            _followUserInNavigationMode(pos);
+          }
+        }
+      }
+    });
+  }
+
+  /// Called when camera moves started (differentiates between user and programmatic)
+  void onCameraMoveStarted() {
+    if (!_isProgrammaticCameraMove && isNavigating.value) {
+      isUserPanning.value = true;
+    }
+  }
+
+  /// Called continuously as camera position/zoom changes
+  void onCameraMove(CameraPosition position) {
+    if (!_isProgrammaticCameraMove && isNavigating.value && isUserPanning.value) {
+      userPreferredNavZoom = position.zoom;
+    }
   }
 
   BitmapDescriptor _getActiveMarkerIcon() {
-    if (!isNavigating.value) {
-      return _userDotIcon ?? BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueAzure);
+    if (isNavigating.value) {
+      // 🚀 All 3 travel modes (Drive, Ride, Walk) use the new navigation_arrow.svg marker
+      return _arrowIcon ??
+          BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueRed);
     }
-    final mode = selectedTravelMode.value;
-    if (mode == 'walking') {
-      return _walkIcon ?? _userDotIcon ?? BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueAzure);
-    } else {
-      // Both 'driving' and 'twoWheeler' (Ride) use the existing car SVG marker
-      return _driveIcon ?? _rideIcon ?? BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueAzure);
+    // Before starting navigation: Use animated pulsing dot with directional heading cone
+    if (_pulsingDotFrames.isNotEmpty) {
+      return _pulsingDotFrames[_currentPulseFrameIndex];
     }
+    return BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueAzure);
   }
 
   Future<void> _initializeLocationAndRoute() async {
@@ -277,21 +385,8 @@ class LiveNavigationController extends GetxController {
     _compassSubscription?.cancel();
     _compassSubscription = FlutterCompass.events?.listen((event) {
       final heading = event.heading;
-      if (heading == null) return;
-
-      _currentBearing = (heading + 360.0) % 360.0;
-
-      final pos = currentPosition.value;
-      if (pos != null) {
-        _updateUserMarker(pos);
-
-        if (isNavigating.value) {
-          final now = DateTime.now();
-          if (_lastCameraUpdate == null || now.difference(_lastCameraUpdate!).inMilliseconds > 120) {
-            _lastCameraUpdate = now;
-            _followUserInNavigationMode(pos);
-          }
-        }
+      if (heading != null) {
+        _targetBearing = (heading + 360.0) % 360.0;
       }
     });
   }
@@ -331,8 +426,18 @@ class LiveNavigationController extends GetxController {
         endLongitude: newPosition.longitude,
       );
 
-      if (movedMeters >= 1.5 && newPosition.heading > 0) {
-        _currentBearing = newPosition.heading;
+      if (movedMeters >= 0.8) {
+        final calcBearing = Geolocator.bearingBetween(
+          _previousPosition!.latitude,
+          _previousPosition!.longitude,
+          newPosition.latitude,
+          newPosition.longitude,
+        );
+        if (calcBearing != 0.0) {
+          _targetBearing = (calcBearing + 360.0) % 360.0;
+        } else if (newPosition.heading > 0) {
+          _targetBearing = newPosition.heading;
+        }
       }
     }
 
@@ -344,7 +449,7 @@ class LiveNavigationController extends GetxController {
     _updateNextTurnInstruction(newPosition);
     _checkOffRouteAndRecalculate(newPosition);
 
-    if (isNavigating.value) {
+    if (isNavigating.value && !isUserPanning.value) {
       _followUserInNavigationMode(newPosition);
     }
   }
@@ -359,7 +464,7 @@ class LiveNavigationController extends GetxController {
       infoWindow: const InfoWindow(title: 'You are here'),
       anchor: const Offset(0.5, 0.5),
       flat: true,
-      rotation: isNavigating.value ? _currentBearing : 0.0,
+      rotation: _currentBearing,
       zIndexInt: 10,
     );
 
@@ -396,6 +501,11 @@ class LiveNavigationController extends GetxController {
     if (pos != null) {
       _updateUserMarker(pos);
       await _fetchAndDrawRoute(pos);
+      if (isNavigating.value) {
+        _followUserInNavigationMode(pos);
+      } else {
+        fitCameraToBounds();
+      }
     }
   }
 
@@ -420,17 +530,29 @@ class LiveNavigationController extends GetxController {
         _fullRoutePoints = List<LatLng>.from(result.polylinePoints);
         _routeSteps = List<RouteStep>.from(result.steps);
 
-        final polyline = Polyline(
+        final casingPolyline = Polyline(
+          polylineId: const PolylineId('route_polyline_casing'),
+          points: _fullRoutePoints,
+          color: const Color(0xFF1548A6),
+          width: 9,
+          startCap: Cap.roundCap,
+          endCap: Cap.roundCap,
+          jointType: JointType.round,
+          zIndex: 4,
+        );
+
+        final mainPolyline = Polyline(
           polylineId: const PolylineId('route_polyline'),
           points: _fullRoutePoints,
-          color: const Color(0xFF2563EB),
+          color: const Color(0xFF1D68E8),
           width: 6,
           startCap: Cap.roundCap,
           endCap: Cap.roundCap,
           jointType: JointType.round,
+          zIndex: 5,
         );
 
-        polylines.assignAll({polyline});
+        polylines.assignAll({casingPolyline, mainPolyline});
 
         if (_routeSteps.isNotEmpty) {
           currentInstruction.value = _routeSteps[0].instruction;
@@ -466,47 +588,89 @@ class LiveNavigationController extends GetxController {
     }
   }
 
+  /// Orthogonal projection to snap coordinate onto road segment
+  LatLng _projectPointOnSegment(LatLng p, LatLng a, LatLng b) {
+    final dx = b.longitude - a.longitude;
+    final dy = b.latitude - a.latitude;
+    if (dx == 0 && dy == 0) return a;
+
+    final t = ((p.longitude - a.longitude) * dx + (p.latitude - a.latitude) * dy) /
+        (dx * dx + dy * dy);
+    final clampedT = t.clamp(0.0, 1.0);
+
+    return LatLng(
+      a.latitude + clampedT * dy,
+      a.longitude + clampedT * dx,
+    );
+  }
+
   void _trimPolylineFromUserPosition(Position userPos) {
-    if (_fullRoutePoints.isEmpty || (destLat == 0.0 && destLng == 0.0)) return;
+    if (_fullRoutePoints.isEmpty) return;
 
     final userLatLng = LatLng(userPos.latitude, userPos.longitude);
 
-    int closestIndex = 0;
+    int closestSegmentIndex = 0;
     double minDistance = double.infinity;
+    LatLng closestSnappedPoint = _fullRoutePoints.first;
 
-    for (int i = 0; i < _fullRoutePoints.length; i++) {
+    for (int i = 0; i < _fullRoutePoints.length - 1; i++) {
+      final a = _fullRoutePoints[i];
+      final b = _fullRoutePoints[i + 1];
+      final snapped = _projectPointOnSegment(userLatLng, a, b);
       final d = LocationService.instance.distanceBetween(
-        startLatitude: userPos.latitude,
-        startLongitude: userPos.longitude,
-        endLatitude: _fullRoutePoints[i].latitude,
-        endLongitude: _fullRoutePoints[i].longitude,
+        startLatitude: userLatLng.latitude,
+        startLongitude: userLatLng.longitude,
+        endLatitude: snapped.latitude,
+        endLongitude: snapped.longitude,
       );
       if (d < minDistance) {
         minDistance = d;
-        closestIndex = i;
+        closestSegmentIndex = i;
+        closestSnappedPoint = snapped;
       }
     }
 
     List<LatLng> remainingRoute;
-    if (closestIndex >= _fullRoutePoints.length - 1) {
-      remainingRoute = [userLatLng, LatLng(destLat, destLng)];
-    } else {
+    if (minDistance > 35.0) {
+      // User is far off the road
       remainingRoute = [
         userLatLng,
-        ..._fullRoutePoints.sublist(closestIndex + 1),
+        ..._fullRoutePoints.sublist(closestSegmentIndex + 1),
+      ];
+    } else {
+      // Snapped to street segment (prevents line cutting across 3D buildings)
+      remainingRoute = [
+        closestSnappedPoint,
+        ..._fullRoutePoints.sublist(closestSegmentIndex + 1),
       ];
     }
+
+    if (remainingRoute.length < 2) {
+      remainingRoute = [userLatLng, _fullRoutePoints.last];
+    }
+
+    final casingPolyline = Polyline(
+      polylineId: const PolylineId('route_polyline_casing'),
+      points: remainingRoute,
+      color: const Color(0xFF1548A6),
+      width: 9,
+      startCap: Cap.roundCap,
+      endCap: Cap.roundCap,
+      jointType: JointType.round,
+      zIndex: 4,
+    );
 
     final updatedPolyline = Polyline(
       polylineId: const PolylineId('route_polyline'),
       points: remainingRoute,
-      color: const Color(0xFF2563EB),
+      color: const Color(0xFF1D68E8),
       width: 6,
       startCap: Cap.roundCap,
       endCap: Cap.roundCap,
       jointType: JointType.round,
+      zIndex: 5,
     );
-    polylines.assignAll({updatedPolyline});
+    polylines.assignAll({casingPolyline, updatedPolyline});
 
     double roadDistanceMeters = 0;
     for (int i = 0; i < remainingRoute.length - 1; i++) {
@@ -611,9 +775,11 @@ class LiveNavigationController extends GetxController {
     fitCameraToBounds();
   }
 
-  /// Starts In-App Live Navigation Mode
+  /// Starts In-App Live Navigation Mode (smooth 3D swoop zoom-in)
   void startInAppNavigation() {
     isNavigating.value = true;
+    isUserPanning.value = false;
+    userPreferredNavZoom = null;
     _hasShownArrivalDialog = false;
     final pos = currentPosition.value;
     if (pos != null) {
@@ -622,9 +788,11 @@ class LiveNavigationController extends GetxController {
     }
   }
 
-  /// Exits In-App Navigation Mode back to 2D overview
+  /// Exits In-App Navigation Mode back to 2D overview (smooth zoom-out)
   void stopInAppNavigation() {
     isNavigating.value = false;
+    isUserPanning.value = false;
+    userPreferredNavZoom = null;
     final pos = currentPosition.value;
     if (pos != null) {
       _updateUserMarker(pos);
@@ -641,30 +809,92 @@ class LiveNavigationController extends GetxController {
     );
   }
 
+  /// Called when user touches or drags the map
+  void onUserTouchMap() {
+    if (isNavigating.value && !_isProgrammaticCameraMove) {
+      isUserPanning.value = true;
+    }
+  }
+
+  /// Sets Perspective Mode to 2D (tilt 0°) or 3D (tilt 58°)
+  void setPerspectiveMode(bool is3d) {
+    is3DMode.value = is3d;
+    final targetTilt = is3d ? 58.0 : 0.0;
+
+    if (mapController == null) return;
+    final pos = currentPosition.value;
+    final targetLat = pos?.latitude ?? (destLat != 0.0 ? destLat : 23.7808);
+    final targetLng = pos?.longitude ?? (destLng != 0.0 ? destLng : 90.4075);
+    final defaultZoom = selectedTravelMode.value == 'walking' ? 19.2 : 18.2;
+    final targetZoom = userPreferredNavZoom ?? (isNavigating.value ? defaultZoom : 16.5);
+    final targetBearing = is3d ? _currentBearing : 0.0;
+
+    _isProgrammaticCameraMove = true;
+    mapController?.animateCamera(
+      CameraUpdate.newCameraPosition(
+        CameraPosition(
+          target: LatLng(targetLat, targetLng),
+          zoom: targetZoom,
+          tilt: targetTilt,
+          bearing: targetBearing,
+        ),
+      ),
+    );
+    Future.delayed(const Duration(milliseconds: 400), () {
+      _isProgrammaticCameraMove = false;
+    });
+  }
+
+  /// Toggles between 2D Top-Down and 3D Tilted Perspective
+  void toggle2D3DMode() {
+    setPerspectiveMode(!is3DMode.value);
+  }
+
+  /// Smoothly tracks the user in 3D/2D HUD perspective (Google Maps navigation camera)
   void _followUserInNavigationMode(Position pos) {
     if (mapController == null) return;
 
+    final defaultZoom = selectedTravelMode.value == 'walking' ? 19.2 : 18.2;
+    final targetZoom = userPreferredNavZoom ?? defaultZoom;
+    final targetTilt = is3DMode.value ? 58.0 : 0.0;
+
+    _isProgrammaticCameraMove = true;
     mapController?.animateCamera(
       CameraUpdate.newCameraPosition(
         CameraPosition(
           target: LatLng(pos.latitude, pos.longitude),
-          zoom: 18.5,
-          tilt: 58.0,
+          zoom: targetZoom,
+          tilt: targetTilt,
           bearing: _currentBearing,
         ),
       ),
     );
+    Future.delayed(const Duration(milliseconds: 350), () {
+      _isProgrammaticCameraMove = false;
+    });
   }
 
+  /// Smoothly fits origin, route, and destination into 2D overview
   void fitCameraToBounds() {
     if (mapController == null) return;
 
     final pos = currentPosition.value;
     if (pos == null || (destLat == 0.0 && destLng == 0.0)) {
       if (destLat != 0.0 && destLng != 0.0) {
+        _isProgrammaticCameraMove = true;
         mapController?.animateCamera(
-          CameraUpdate.newLatLngZoom(LatLng(destLat, destLng), 15.5),
+          CameraUpdate.newCameraPosition(
+            CameraPosition(
+              target: LatLng(destLat, destLng),
+              zoom: 15.5,
+              tilt: 0.0,
+              bearing: 0.0,
+            ),
+          ),
         );
+        Future.delayed(const Duration(milliseconds: 400), () {
+          _isProgrammaticCameraMove = false;
+        });
       }
       return;
     }
@@ -677,36 +907,92 @@ class LiveNavigationController extends GetxController {
     );
 
     if (distanceMeters > 500000) {
+      _isProgrammaticCameraMove = true;
       mapController?.animateCamera(
-        CameraUpdate.newLatLngZoom(LatLng(destLat, destLng), 15.5),
+        CameraUpdate.newCameraPosition(
+          CameraPosition(
+            target: LatLng(pos.latitude, pos.longitude),
+            zoom: 15.5,
+            tilt: 0.0,
+            bearing: 0.0,
+          ),
+        ),
       );
+      Future.delayed(const Duration(milliseconds: 400), () {
+        _isProgrammaticCameraMove = false;
+      });
       return;
     }
 
-    final southwestLat = pos.latitude < destLat ? pos.latitude : destLat;
-    final southwestLng = pos.longitude < destLng ? pos.longitude : destLng;
-    final northeastLat = pos.latitude > destLat ? pos.latitude : destLat;
-    final northeastLng = pos.longitude > destLng ? pos.longitude : destLng;
+    // Calculate bounding box containing all points on the route (or origin + destination)
+    double minLat = math.min(pos.latitude, destLat);
+    double maxLat = math.max(pos.latitude, destLat);
+    double minLng = math.min(pos.longitude, destLng);
+    double maxLng = math.max(pos.longitude, destLng);
+
+    if (_fullRoutePoints.isNotEmpty) {
+      for (final pt in _fullRoutePoints) {
+        if (pt.latitude < minLat) minLat = pt.latitude;
+        if (pt.latitude > maxLat) maxLat = pt.latitude;
+        if (pt.longitude < minLng) minLng = pt.longitude;
+        if (pt.longitude > maxLng) maxLng = pt.longitude;
+      }
+    }
+
+    // If points are very close (e.g. less than 100m)
+    if ((maxLat - minLat).abs() < 0.001 && (maxLng - minLng).abs() < 0.001) {
+      _isProgrammaticCameraMove = true;
+      mapController?.animateCamera(
+        CameraUpdate.newCameraPosition(
+          CameraPosition(
+            target: LatLng((minLat + maxLat) / 2, (minLng + maxLng) / 2),
+            zoom: 16.5,
+            tilt: 0.0,
+            bearing: 0.0,
+          ),
+        ),
+      );
+      Future.delayed(const Duration(milliseconds: 400), () {
+        _isProgrammaticCameraMove = false;
+      });
+      return;
+    }
 
     final bounds = LatLngBounds(
-      southwest: LatLng(southwestLat, southwestLng),
-      northeast: LatLng(northeastLat, northeastLng),
+      southwest: LatLng(minLat, minLng),
+      northeast: LatLng(maxLat, maxLng),
     );
 
+    _isProgrammaticCameraMove = true;
     mapController?.animateCamera(
-      CameraUpdate.newLatLngBounds(bounds, 80),
+      CameraUpdate.newLatLngBounds(bounds, 65),
     );
+    Future.delayed(const Duration(milliseconds: 450), () {
+      _isProgrammaticCameraMove = false;
+    });
   }
 
   void recenterOnUser() {
+    isUserPanning.value = false;
     final pos = currentPosition.value;
     if (pos != null && mapController != null) {
       if (isNavigating.value) {
         _followUserInNavigationMode(pos);
       } else {
+        _isProgrammaticCameraMove = true;
         mapController?.animateCamera(
-          CameraUpdate.newLatLngZoom(LatLng(pos.latitude, pos.longitude), 16.5),
+          CameraUpdate.newCameraPosition(
+            CameraPosition(
+              target: LatLng(pos.latitude, pos.longitude),
+              zoom: 16.5,
+              tilt: 0.0,
+              bearing: 0.0,
+            ),
+          ),
         );
+        Future.delayed(const Duration(milliseconds: 400), () {
+          _isProgrammaticCameraMove = false;
+        });
       }
     }
   }

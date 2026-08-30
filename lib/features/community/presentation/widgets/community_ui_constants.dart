@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 /// Shared layout tokens for the community hub screen.
 abstract final class CommunityUi {
-  static const horizontalPadding = 16.0;
+  static const horizontalPadding = 12.0;
   static const tabBodyTopPadding = 8.0;
   static const tabBarBottomSpacing = 8.0;
   static const stickyHeaderTop = 12.0;

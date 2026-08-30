@@ -29,30 +29,35 @@ class LiveNavigationScreen extends StatelessWidget {
       body: Stack(
         children: [
           // 1. Google Map View
-          Obx(() {
-            final isNavigating = controller.isNavigating.value;
-            final bottomPadding = isNavigating ? 190.h : 275.h;
-
-            return GoogleMap(
-              initialCameraPosition: CameraPosition(
-                target: LatLng(initialLat, initialLng),
-                zoom: 15.0,
+          Listener(
+            behavior: HitTestBehavior.translucent,
+            onPointerDown: (_) => controller.onUserTouchMap(),
+            onPointerMove: (_) => controller.onUserTouchMap(),
+            child: Obx(
+              () => GoogleMap(
+                initialCameraPosition: CameraPosition(
+                  target: LatLng(initialLat, initialLng),
+                  zoom: 15.0,
+                ),
+                padding: EdgeInsets.only(
+                  top: 105.h,
+                  bottom: 215.h,
+                ),
+                markers: Set<Marker>.of(controller.markers),
+                polylines: Set<Polyline>.of(controller.polylines),
+                circles: Set<Circle>.of(controller.circles),
+                myLocationEnabled: false,
+                myLocationButtonEnabled: false,
+                zoomControlsEnabled: false,
+                compassEnabled: false,
+                buildingsEnabled: true,
+                mapToolbarEnabled: false,
+                onMapCreated: controller.onMapCreated,
+                onCameraMoveStarted: controller.onCameraMoveStarted,
+                onCameraMove: controller.onCameraMove,
               ),
-              padding: EdgeInsets.only(
-                top: 110.h,
-                bottom: bottomPadding,
-              ),
-              markers: Set<Marker>.of(controller.markers),
-              polylines: Set<Polyline>.of(controller.polylines),
-              myLocationEnabled: true,
-              myLocationButtonEnabled: false,
-              zoomControlsEnabled: false,
-              compassEnabled: true,
-              buildingsEnabled: true,
-              mapToolbarEnabled: false,
-              onMapCreated: controller.onMapCreated,
-            );
-          }),
+            ),
+          ),
 
           // 2. Loading Indicator Overlay
           Obx(() {
@@ -123,7 +128,77 @@ class LiveNavigationScreen extends StatelessWidget {
             ),
           ),
 
-          // 4. Floating Action Buttons (Hidden during navigation mode)
+          // 4. Perspective 2D / 3D Toggle Pill (Shown ONLY during Active Navigation)
+          Obx(() {
+            final isNavigating = controller.isNavigating.value;
+            if (!isNavigating) {
+              return const SizedBox.shrink();
+            }
+
+            return Positioned(
+              top: 116.h,
+              right: 16.w,
+              child: _PerspectiveToggleBtn(
+                controller: controller,
+                colors: colors,
+              ),
+            );
+          }),
+
+          // 5. Re-center Pill Button (During Active Navigation when user zooms/pans)
+          Obx(() {
+            final isNavigating = controller.isNavigating.value;
+            final isPanning = controller.isUserPanning.value;
+            if (!isNavigating || !isPanning) {
+              return const SizedBox.shrink();
+            }
+
+            return Positioned(
+              bottom: 175.h,
+              right: 16.w,
+              child: GestureDetector(
+                onTap: controller.recenterOnUser,
+                child: Container(
+                  padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 9.h),
+                  decoration: BoxDecoration(
+                    color: colors.surface,
+                    borderRadius: BorderRadius.circular(24.r),
+                    border: Border.all(
+                      color: colors.primary.withValues(alpha: 0.3),
+                      width: 1.5,
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.16),
+                        blurRadius: 14,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.navigation_rounded,
+                        size: 16.sp,
+                        color: colors.primary,
+                      ),
+                      SizedBox(width: 6.w),
+                      Text(
+                        'Re-center',
+                        style: AppTextStyle.textSm(
+                          color: colors.primary,
+                          weight: FontWeight.w700,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          }),
+
+          // 6. Floating Action Buttons (In Preview mode before starting navigation)
           Obx(() {
             final isNavigating = controller.isNavigating.value;
             if (isNavigating) {
@@ -284,6 +359,110 @@ class _MapActionButton extends StatelessWidget {
                 color: iconColor ?? colors.onSurface,
                 size: 20.sp,
               ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _PerspectiveToggleBtn extends StatelessWidget {
+  const _PerspectiveToggleBtn({
+    required this.controller,
+    required this.colors,
+  });
+
+  final LiveNavigationController controller;
+  final ColorScheme colors;
+
+  @override
+  Widget build(BuildContext context) {
+    return Obx(() {
+      final is3D = controller.is3DMode.value;
+      return Container(
+        height: 28.h,
+        padding: EdgeInsets.all(2.r),
+        decoration: BoxDecoration(
+          color: colors.surface.withValues(alpha: 0.94),
+          borderRadius: BorderRadius.circular(16.r),
+          border: Border.all(
+            color: colors.outline.withValues(alpha: 0.2),
+            width: 1,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.12),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // 2D Segment
+            _PerspectiveSegment(
+              label: '2D',
+              isSelected: !is3D,
+              onTap: () => controller.setPerspectiveMode(false),
+              colors: colors,
+            ),
+            SizedBox(width: 1.w),
+            // 3D Segment
+            _PerspectiveSegment(
+              label: '3D',
+              isSelected: is3D,
+              onTap: () => controller.setPerspectiveMode(true),
+              colors: colors,
+            ),
+          ],
+        ),
+      );
+    });
+  }
+}
+
+class _PerspectiveSegment extends StatelessWidget {
+  final String label;
+  final bool isSelected;
+  final VoidCallback onTap;
+  final ColorScheme colors;
+
+  const _PerspectiveSegment({
+    required this.label,
+    required this.isSelected,
+    required this.onTap,
+    required this.colors,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 180),
+        curve: Curves.easeOutCubic,
+        padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 2.h),
+        decoration: BoxDecoration(
+          color: isSelected ? colors.primary : Colors.transparent,
+          borderRadius: BorderRadius.circular(13.r),
+          boxShadow: isSelected
+              ? [
+                  BoxShadow(
+                    color: colors.primary.withValues(alpha: 0.3),
+                    blurRadius: 4,
+                    offset: const Offset(0, 1),
+                  ),
+                ]
+              : null,
+        ),
+        child: Center(
+          child: Text(
+            label,
+            style: AppTextStyle.textXs(
+              color: isSelected ? Colors.white : colors.onSurface.withValues(alpha: 0.65),
+              weight: isSelected ? FontWeight.w800 : FontWeight.w600,
             ),
           ),
         ),
