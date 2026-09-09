@@ -4,6 +4,7 @@ import 'package:loci/core/constants/app_text_style.dart';
 import 'package:loci/core/theme/theme_extention.dart';
 import 'package:loci/core/utils/validators.dart';
 import 'package:loci/features/profile/presentation/controllers/change_password_controller.dart';
+import 'package:loci/routes/app_routes.dart';
 import 'package:loci/shared/widgets/custom_button.dart';
 import 'package:loci/shared/widgets/custom_text_field.dart';
 import 'package:loci/shared/widgets/custom_appbar.dart';
@@ -96,6 +97,21 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                     isLoading: _controller.isLoading,
                     onPressed: _handleChangePassword,
                   ),
+                ),
+
+                Obx(
+                  () => _controller.canRecoverPassword
+                      ? TextButton(
+                          onPressed: () => Get.toNamed(AppRoutes.forgetPass),
+                          child: Text(
+                            "Set a password instead",
+                            style: AppTextStyle.textSm(
+                              color: colorScheme.primary,
+                              weight: FontWeight.w600,
+                            ),
+                          ),
+                        )
+                      : const SizedBox.shrink(),
                 ),
               ],
             ),

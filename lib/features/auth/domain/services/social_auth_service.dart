@@ -3,9 +3,18 @@ import 'package:flutter/foundation.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 
+/// A completed Sign-In with Apple authorization. [fullName] is null on every
+/// authorization after the user's first one — see [getAppleCredential].
+typedef AppleCredential = ({String identityToken, String? fullName});
+
 /// Handles platform-specific social authentication SDK interactions
 /// for Google Sign-In and Sign-In with Apple.
 class SocialAuthService {
+  /// Sign in with Apple is offered on iOS only. The Services ID needed for the
+  /// browser-redirect flow is deliberately not configured, so Android and web
+  /// would always get a 401 back; Google Sign-In covers them instead.
+  static bool get isAppleSignInSupported => !kIsWeb && Platform.isIOS;
+
   static const String iosClientId =
       '339606588573-nf9lhkj2qo4555mt7j4rmr4hjhllrb34.apps.googleusercontent.com';
   static const String webClientId =
@@ -37,9 +46,13 @@ class SocialAuthService {
     return idToken;
   }
 
-  /// Signs in with Apple and returns the identityToken.
-  /// Returns `null` if the user cancelled.
-  Future<String?> getAppleIdentityToken() async {
+  /// Signs in with Apple. Returns `null` if the user cancelled.
+  ///
+  /// Apple hands over givenName/familyName only on the user's very first
+  /// authorization for this app and never again — not on re-login, not after
+  /// the token expires. Dropping it here makes the backend fall back to the
+  /// email local-part, and that name is then permanently wrong for the user.
+  Future<AppleCredential?> getAppleCredential() async {
     try {
       final credential = await SignInWithApple.getAppleIDCredential(
         scopes: [
@@ -51,7 +64,17 @@ class SocialAuthService {
       if (identityToken == null || identityToken.isEmpty) {
         throw Exception('Failed to retrieve Apple identity token.');
       }
-      return identityToken;
+
+      final fullName = [credential.givenName, credential.familyName]
+          .whereType<String>()
+          .map((part) => part.trim())
+          .where((part) => part.isNotEmpty)
+          .join(' ');
+
+      return (
+        identityToken: identityToken,
+        fullName: fullName.isEmpty ? null : fullName,
+      );
     } on SignInWithAppleAuthorizationException catch (e) {
       if (e.code == AuthorizationErrorCode.canceled) {
         return null; // User cancelled

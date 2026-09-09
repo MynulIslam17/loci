@@ -1,6 +1,7 @@
 import 'package:loci/core/constants/app_url.dart';
 import 'package:loci/core/network/network_caller.dart';
 import 'package:loci/core/storage/local_storage_service.dart';
+import 'package:loci/features/auth/data/auth_api_exception.dart';
 import 'package:loci/features/auth/data/models/user_model.dart';
 
 /// Auth data layer: remote HTTP via [NetworkCaller] + local session persistence.
@@ -43,16 +44,27 @@ class AuthRepository {
     return res.body!;
   }
 
+  /// [fullName] is capped at 100 characters to match the backend DTO, which
+  /// rejects anything longer with a 400.
   Future<Map<String, dynamic>> loginWithApple({
     required String identityToken,
+    String? fullName,
   }) async {
+    final name = fullName?.trim();
     final res = await _network.postRequest(
       url: AppUrl.appleLogin,
       isFromLogin: true,
-      body: {'identityToken': identityToken},
+      body: {
+        'identityToken': identityToken,
+        if (name != null && name.isNotEmpty)
+          'fullName': name.length > 100 ? name.substring(0, 100) : name,
+      },
     );
     if (!res.isSuccess || res.body == null) {
-      throw Exception(res.errorMessage ?? 'Apple login failed');
+      throw AuthApiException(
+        res.statusCode,
+        res.errorMessage ?? 'Apple login failed',
+      );
     }
     return res.body!;
   }

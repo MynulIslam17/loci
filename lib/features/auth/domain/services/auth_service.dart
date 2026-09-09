@@ -25,8 +25,12 @@ class AuthService {
 
   Future<({UserModel user, String token})> loginWithApple({
     required String identityToken,
+    String? fullName,
   }) async {
-    final body = await _repository.loginWithApple(identityToken: identityToken);
+    final body = await _repository.loginWithApple(
+      identityToken: identityToken,
+      fullName: fullName,
+    );
     return _persistAuthResponse(body);
   }
 

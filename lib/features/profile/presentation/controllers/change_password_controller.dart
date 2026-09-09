@@ -11,6 +11,13 @@ class ChangePasswordController extends GetxController {
   final RxBool _isLoading = false.obs;
   bool get isLoading => _isLoading.value;
 
+  /// Set after a failed attempt so the screen can offer the forgot-password
+  /// flow. An account created through Sign in with Apple has no password at
+  /// all, so this endpoint can never succeed for it — those users have to set
+  /// one via the reset flow instead.
+  final RxBool _canRecoverPassword = false.obs;
+  bool get canRecoverPassword => _canRecoverPassword.value;
+
   /// Returns true on success so the screen can pop.
   Future<bool> changePassword({
     required String currentPassword,
@@ -29,6 +36,7 @@ class ChangePasswordController extends GetxController {
       return true;
     } catch (e) {
       SnackbarService.error(e.toString().replaceFirst('Exception: ', ''));
+      _canRecoverPassword.value = true;
       return false;
     } finally {
       _isLoading.value = false;

@@ -1,5 +1,7 @@
 import 'package:get/get.dart';
 import 'package:loci/core/utils/app_error_messages.dart';
+import 'package:loci/features/auth/data/auth_api_exception.dart';
+import 'package:loci/features/auth/data/models/user_model.dart';
 import 'package:loci/features/auth/domain/services/auth_service.dart';
 import 'package:loci/features/auth/domain/services/social_auth_service.dart';
 import 'package:loci/features/auth/presentation/controllers/auth_controller.dart';
@@ -64,12 +66,11 @@ class LoginController extends GetxController {
     errorMessage.value = null;
 
     try {
-      final identityToken = await _socialAuth.getAppleIdentityToken();
-      if (identityToken == null) {
+      final result = await _appleSession();
+      if (result == null) {
         return false; // User cancelled
       }
 
-      final result = await _service.loginWithApple(identityToken: identityToken);
       await _applySession(result);
       return true;
     } catch (e) {
@@ -78,6 +79,29 @@ class LoginController extends GetxController {
     } finally {
       isAppleLoading.value = false;
     }
+  }
+
+  /// Runs the native Apple sheet and exchanges the credential for a session.
+  /// Returns `null` if the user cancelled.
+  ///
+  /// A 401 means the identity token was expired, malformed or issued for the
+  /// wrong audience. Re-running the native flow mints a fresh one, so retry
+  /// once before surfacing the failure.
+  Future<({UserModel user, String token})?> _appleSession() async {
+    for (var attempt = 0; attempt < 2; attempt++) {
+      final credential = await _socialAuth.getAppleCredential();
+      if (credential == null) return null;
+
+      try {
+        return await _service.loginWithApple(
+          identityToken: credential.identityToken,
+          fullName: credential.fullName,
+        );
+      } on AuthApiException catch (e) {
+        if (e.statusCode != 401 || attempt == 1) rethrow;
+      }
+    }
+    return null;
   }
 
   Future<void> _applySession(({dynamic user, String token}) result) async {

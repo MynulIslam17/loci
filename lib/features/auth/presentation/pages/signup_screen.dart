@@ -6,6 +6,7 @@ import 'package:loci/core/theme/theme_extention.dart';
 import 'package:loci/core/utils/date_parser.dart';
 import 'package:loci/core/utils/show_snackbar.dart';
 import 'package:loci/core/utils/validators.dart';
+import 'package:loci/features/auth/domain/services/social_auth_service.dart';
 import 'package:loci/features/auth/presentation/controllers/login_controller.dart';
 import 'package:loci/features/auth/presentation/controllers/signup_controller.dart';
 import 'package:loci/features/auth/presentation/widgets/auth_bottom_link.dart';
@@ -143,6 +144,21 @@ class _SignupScreenState extends State<SignupScreen> {
       SnackbarService.error(
         loginController.errorMessage.value!,
         title: 'Google Sign-In failed',
+      );
+    }
+  }
+
+  void _appleLoginHandler() async {
+    FocusScope.of(context).unfocus();
+    HapticFeedback.lightImpact();
+
+    final isSuccess = await loginController.loginWithApple();
+    if (isSuccess) {
+      Get.offAllNamed(AppRoutes.bottomNav);
+    } else if (loginController.errorMessage.value != null) {
+      SnackbarService.error(
+        loginController.errorMessage.value!,
+        title: 'Sign in with Apple failed',
       );
     }
   }
@@ -447,6 +463,16 @@ class _SignupScreenState extends State<SignupScreen> {
                   onPressed: _googleLoginHandler,
                 ),
               ),
+
+              if (SocialAuthService.isAppleSignInSupported) ...[
+                const SizedBox(height: 12),
+                Obx(
+                  () => AuthSocialButton.apple(
+                    isLoading: loginController.isAppleLoading.value,
+                    onPressed: _appleLoginHandler,
+                  ),
+                ),
+              ],
 
               const SizedBox(height: 28),
               AuthBottomLink(

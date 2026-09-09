@@ -14,5 +14,16 @@
 	     a TestFlight build fails with BadDeviceToken. -->
 	<key>aps-environment</key>
 	<string>development</string>
+
+	<!-- Sign in with Apple. The App ID ui.neatboutique.jacobi must also have
+	     this capability enabled in the developer portal, otherwise the
+	     provisioning profile carries no applesignin entitlement and signing
+	     fails. On a correctly signed build without it the native sheet still
+	     opens but returns AuthorizationErrorCode.unknown (error 1000) with no
+	     message. -->
+	<key>com.apple.developer.applesignin</key>
+	<array>
+		<string>Default</string>
+	</array>
 </dict>
 </plist>
