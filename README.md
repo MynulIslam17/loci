@@ -25,6 +25,15 @@ Compile-time keys stay out of git. After cloning:
 3. Run with: `flutter run --dart-define-from-file=api_keys.json`
 
 Read the key in Dart via `AppSecrets.googleMapsApiKey` (`lib/core/config/app_secrets.dart`).
+Android uses that define for its manifest placeholder, and iOS reads it from
+Flutter's generated Xcode build settings at launch. Run Flutter with the define
+file on both platforms; builds without it will have no Maps key. Keep
+`api_keys.json` local. For platform-restricted production keys, Codemagic accepts
+`GOOGLE_MAPS_ANDROID_API_KEY` and `GOOGLE_MAPS_IOS_API_KEY` as separate secrets;
+the existing `GOOGLE_MAPS_API_KEY` remains a fallback during migration.
+The app also calls Routes and Directions web services directly from Flutter;
+move those calls behind the backend before applying mobile-app restrictions to
+their key. Google recommends separate keys for Android and iOS app restrictions.
 
 ## Technology Stack
 

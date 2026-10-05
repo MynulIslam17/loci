@@ -18,7 +18,7 @@ class AppSecrets {
   /// Google Maps / Places client key baked in at compile time.
   static const String googleMapsApiKey = String.fromEnvironment(
     'GOOGLE_MAPS_API_KEY',
-    defaultValue: '***REMOVED***',
+    defaultValue: '',
   );
 
   static bool get hasGoogleMapsApiKey => googleMapsApiKey.isNotEmpty;

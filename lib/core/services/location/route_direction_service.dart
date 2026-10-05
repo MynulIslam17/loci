@@ -65,7 +65,7 @@ class RouteDirectionService {
 
     // 1. TIER 1: Try Modern Google Routes API (v2) if key is present
     if (AppSecrets.hasGoogleMapsApiKey) {
-      debugPrint('🔑 Google Maps API Key: Present (...${AppSecrets.googleMapsApiKey.length > 5 ? AppSecrets.googleMapsApiKey.substring(AppSecrets.googleMapsApiKey.length - 4) : AppSecrets.googleMapsApiKey})');
+      debugPrint('Google Maps API key configured: ${AppSecrets.hasGoogleMapsApiKey}');
       
       try {
         debugPrint('🚀 [Attempting Tier 1]: Google Routes API (v2)...');
@@ -313,7 +313,7 @@ class RouteDirectionService {
       '&key=$apiKey',
     );
 
-    debugPrint('🌐 [Google API Request]: $url');
+    debugPrint('🌐 [Google API Request]: ${url.origin}${url.path}');
 
     final response = await http.get(url).timeout(const Duration(seconds: 8));
     debugPrint('📡 [Google API HTTP Status]: ${response.statusCode}');

@@ -8,8 +8,6 @@ plugins {
 
 import java.util.Base64
 import java.nio.charset.StandardCharsets
-import groovy.json.JsonSlurper
-import java.io.File
 
 // Extract compile-time dart-defines passed from Flutter (e.g. api_keys.json)
 val dartEnvironmentVariables = mutableMapOf<String, String>()
@@ -31,17 +29,8 @@ if (project.hasProperty("dart-defines")) {
     }
 }
 
-// Ensure key is read either from dart-defines OR directly from api_keys.json
-var googleMapsApiKey = dartEnvironmentVariables["GOOGLE_MAPS_API_KEY"] ?: ""
-if (googleMapsApiKey.isEmpty()) {
-    val apiKeysFile = File(rootProject.projectDir.parentFile, "api_keys.json")
-    if (apiKeysFile.exists()) {
-        try {
-            val jsonMap = JsonSlurper().parse(apiKeysFile) as? Map<*, *>
-            googleMapsApiKey = jsonMap?.get("GOOGLE_MAPS_API_KEY") as? String ?: ""
-        } catch (_: Exception) {}
-    }
-}
+// Use the same Flutter build define as Dart and iOS.
+val googleMapsApiKey = dartEnvironmentVariables["GOOGLE_MAPS_API_KEY"].orEmpty()
 
 android {
     namespace = "ui.neatboutique.jacobi"
@@ -71,7 +60,7 @@ android {
         versionName = flutter.versionName
         multiDexEnabled = true
 
-        // Compile-time Google Maps API key injected from api_keys.json
+        // Compile-time Google Maps API key from the Flutter dart-define.
         manifestPlaceholders["GOOGLE_MAPS_API_KEY"] = googleMapsApiKey
     }
 
