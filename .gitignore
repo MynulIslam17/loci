@@ -54,4 +54,5 @@ temp_interactive_push.bat
 # Never commit real keys. Injected via:
 #   flutter run --dart-define-from-file=api_keys.json
 api_keys.json
+api_keys.*.json
 dart_defines.json

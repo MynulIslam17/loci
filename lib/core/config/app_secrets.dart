@@ -10,8 +10,8 @@
 /// `api_keys.json` is gitignored. Only the `.example` file is committed.
 ///
 /// VS Code / Cursor: use the "loci" launch configs (they pass the same flag).
-/// Codemagic: set `GOOGLE_MAPS_API_KEY` in the env group; builds pass
-/// `--dart-define=GOOGLE_MAPS_API_KEY=...`.
+/// Codemagic: set a platform-specific Maps key in the env group; builds pass
+/// it as `--dart-define=GOOGLE_MAPS_API_KEY=...`.
 class AppSecrets {
   AppSecrets._();
 

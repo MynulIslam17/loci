@@ -20,9 +20,12 @@ Loci is a dynamic social media ecosystem designed specifically for businesses to
 
 Compile-time keys stay out of git. After cloning:
 
-1. `cp api_keys.json.example api_keys.json`
-2. Set `GOOGLE_MAPS_API_KEY` in `api_keys.json`
-3. Run with: `flutter run --dart-define-from-file=api_keys.json`
+1. Copy `api_keys.json.example` to `api_keys.json` for a shared development key,
+   or copy it to `api_keys.android.json` and `api_keys.ios.json` for separate
+   platform-restricted keys.
+2. Set `GOOGLE_MAPS_API_KEY` in each selected file.
+3. Run with `flutter run --dart-define-from-file=api_keys.json`, or pass the
+   matching platform file when using separate keys.
 
 Read the key in Dart via `AppSecrets.googleMapsApiKey` (`lib/core/config/app_secrets.dart`).
 Android uses that define for its manifest placeholder, and iOS reads it from
