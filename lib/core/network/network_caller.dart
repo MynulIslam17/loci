@@ -90,8 +90,12 @@ class NetworkCaller {
   // ===========================================================
   // CENTRAL UNAUTHORIZED + REFRESH TOKEN HANDLER
   // ===========================================================
-  Future<bool> _handle401({required bool hadToken}) async {
-    if (!hadToken) return false;
+  Future<bool> _handle401({required String sentToken}) async {
+    if (sentToken.isEmpty) return false;
+    // A concurrent request may have refreshed the session while this request
+    // was still in flight. Its retry can use the new token immediately.
+    final currentToken = accessToken();
+    if (currentToken.isNotEmpty && currentToken != sentToken) return true;
     if (onRefreshToken != null) {
       final refreshed = await onRefreshToken!();
       if (refreshed) return true;
@@ -155,7 +159,7 @@ class NetworkCaller {
       }
 
       if (response.statusCode == 401 && token.isNotEmpty && !isRetry) {
-        final refreshed = await _handle401(hadToken: true);
+        final refreshed = await _handle401(sentToken: token);
         if (refreshed) {
           return await getRequest(
             url: url,
@@ -193,15 +197,14 @@ class NetworkCaller {
     try {
       final uri = Uri.parse(url);
       final token = accessToken();
-      final headers = {
-        if (token.isNotEmpty) 'Authorization': 'Bearer $token',
-      };
+      final headers = {if (token.isNotEmpty) 'Authorization': 'Bearer $token'};
 
       _logRequest(uri.toString(), null, headers);
 
-      final response = await get(uri, headers: headers).timeout(
-        const Duration(seconds: 30),
-      );
+      final response = await get(
+        uri,
+        headers: headers,
+      ).timeout(const Duration(seconds: 30));
 
       _logResponse(uri.toString(), response);
 
@@ -211,7 +214,7 @@ class NetworkCaller {
 
       final decoded = _tryDecodeBody(response.body);
       if (response.statusCode == 401 && token.isNotEmpty && !isRetry) {
-        final refreshed = await _handle401(hadToken: true);
+        final refreshed = await _handle401(sentToken: token);
         if (refreshed) {
           return await getTextBody(url: url, isRetry: true);
         }
@@ -240,7 +243,10 @@ class NetworkCaller {
     if (offline != null) return offline;
     try {
       final uri = Uri.parse(url);
-      final token = overrideToken ?? accessToken();
+      final sessionToken = accessToken();
+      final token = overrideToken ?? sessionToken;
+      final usesSessionToken =
+          overrideToken == null || overrideToken == sessionToken;
       final headers = {
         'Content-Type': 'application/json',
         if (token.isNotEmpty) 'Authorization': 'Bearer $token',
@@ -267,18 +273,19 @@ class NetworkCaller {
 
       if (response.statusCode == 401 &&
           token.isNotEmpty &&
+          usesSessionToken &&
           !isFromLogin &&
           !isRetry) {
-        final refreshed = await _handle401(hadToken: true);
+        final refreshed = await _handle401(sentToken: token);
         if (refreshed) {
           return await postRequest(
             url: url,
             body: body,
-            overrideToken: overrideToken,
+            // The old explicit session token must not override the new one.
             isRetry: true,
           );
         }
-      } else if (!isFromLogin) {
+      } else if (!isFromLogin && usesSessionToken) {
         _handleAuthErrors(response.statusCode, hadToken: token.isNotEmpty);
       }
 
@@ -297,6 +304,7 @@ class NetworkCaller {
       );
     }
   }
+
   // ===========================================================
   // PATCH REQUEST
   // ===========================================================
@@ -339,7 +347,7 @@ class NetworkCaller {
           token.isNotEmpty &&
           !isFromLogin &&
           !isRetry) {
-        final refreshed = await _handle401(hadToken: true);
+        final refreshed = await _handle401(sentToken: token);
         if (refreshed) {
           return await patchRequest(
             url: url,
@@ -409,7 +417,7 @@ class NetworkCaller {
           token.isNotEmpty &&
           !isFromLogin &&
           !isRetry) {
-        final refreshed = await _handle401(hadToken: true);
+        final refreshed = await _handle401(sentToken: token);
         if (refreshed) {
           return await putRequest(
             url: url,
@@ -479,7 +487,7 @@ class NetworkCaller {
           token.isNotEmpty &&
           !isFromLogin &&
           !isRetry) {
-        final refreshed = await _handle401(hadToken: true);
+        final refreshed = await _handle401(sentToken: token);
         if (refreshed) {
           return await deleteRequest(
             url: url,
@@ -585,7 +593,7 @@ class NetworkCaller {
           token.isNotEmpty &&
           !isFromLogin &&
           !isRetry) {
-        final refreshed = await _handle401(hadToken: true);
+        final refreshed = await _handle401(sentToken: token);
         if (refreshed) {
           return await multipartRequest(
             url: url,
@@ -620,7 +628,10 @@ class NetworkCaller {
   /// Builds a multipart part from bytes so iOS TestFlight can still upload
   /// after the original picker path is no longer readable.
   /// Images are sent as JPEG/PNG; PDFs and docs keep their real type.
-  Future<http.MultipartFile> _buildMultipartFile(String field, File file) async {
+  Future<http.MultipartFile> _buildMultipartFile(
+    String field,
+    File file,
+  ) async {
     var bytes = await file.readAsBytes();
     if (bytes.isEmpty) {
       throw Exception('Selected file could not be read');

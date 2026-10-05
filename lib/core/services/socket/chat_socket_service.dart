@@ -109,6 +109,7 @@ class ChatSocketService extends GetxService with WidgetsBindingObserver {
   String? _socketToken;
 
   StreamSubscription<void>? _connectivitySub;
+  Worker? _authTokenWorker;
 
   /// Android-only: pending disconnect scheduled when the app is backgrounded.
   Timer? _backgroundDisconnectTimer;
@@ -123,9 +124,22 @@ class ChatSocketService extends GetxService with WidgetsBindingObserver {
   void onInit() {
     super.onInit();
     WidgetsBinding.instance.addObserver(this);
+    if (Get.isRegistered<AuthController>()) {
+      _authTokenWorker = ever<String?>(
+        Get.find<AuthController>().accessTokenRx,
+        (newToken) {
+          if (newToken != null &&
+              newToken.isNotEmpty &&
+              newToken != _socketToken) {
+            connect(force: true);
+          }
+        },
+      );
+    }
     if (Get.isRegistered<ConnectivityService>()) {
-      _connectivitySub =
-          Get.find<ConnectivityService>().onReconnect.listen((_) {
+      _connectivitySub = Get.find<ConnectivityService>().onReconnect.listen((
+        _,
+      ) {
         // Network came back OR interface switched (Wi-Fi <-> Mobile Data).
         // Force-reconnect to discard any half-open/zombie socket on the old interface.
         connect(force: true);
@@ -194,7 +208,9 @@ class ChatSocketService extends GetxService with WidgetsBindingObserver {
       return;
     }
 
-    _logger.d('ChatSocket: (re)connecting (force: $force) to ${AppUrl.socketUrl} …');
+    _logger.d(
+      'ChatSocket: (re)connecting (force: $force) to ${AppUrl.socketUrl} …',
+    );
     _socket?.dispose();
     _socket = null;
 
@@ -301,64 +317,80 @@ class ChatSocketService extends GetxService with WidgetsBindingObserver {
 
     _onEvent(ChatSocketEvent.messageDeleted, (data) {
       final map = _asMap(data);
-      _deletedCtrl.add(MessageDeleted(
-        messageId: map['messageId']?.toString() ?? '',
-        conversationId: map['conversationId']?.toString() ?? '',
-        forEveryone: map['forEveryone'] == true,
-      ));
+      _deletedCtrl.add(
+        MessageDeleted(
+          messageId: map['messageId']?.toString() ?? '',
+          conversationId: map['conversationId']?.toString() ?? '',
+          forEveryone: map['forEveryone'] == true,
+        ),
+      );
     });
 
     _onEvent(ChatSocketEvent.messagesRead, (data) {
       final map = _asMap(data);
-      _readCtrl.add(MessagesRead(
-        conversationId: map['conversationId']?.toString() ?? '',
-        userId: map['userId']?.toString() ?? '',
-      ));
+      _readCtrl.add(
+        MessagesRead(
+          conversationId: map['conversationId']?.toString() ?? '',
+          userId: map['userId']?.toString() ?? '',
+        ),
+      );
     });
 
     _onEvent(ChatSocketEvent.messageDelivered, (data) {
       final map = _asMap(data);
-      _deliveredCtrl.add(MessageDelivered(
-        conversationId: map['conversationId']?.toString() ?? '',
-        userId: map['userId']?.toString() ?? '',
-      ));
+      _deliveredCtrl.add(
+        MessageDelivered(
+          conversationId: map['conversationId']?.toString() ?? '',
+          userId: map['userId']?.toString() ?? '',
+        ),
+      );
     });
 
     _onEvent(ChatSocketEvent.messageReactionUpdated, (data) {
       final map = _asMap(data);
       final raw = map['reactions'];
-      _reactionCtrl.add(ReactionUpdate(
-        messageId: map['messageId']?.toString() ?? '',
-        reactions: raw is List
-            ? raw
-                .whereType<Map>()
-                .map((e) =>
-                    ChatReaction.fromJson(Map<String, dynamic>.from(e)))
-                .toList()
-            : const [],
-      ));
+      _reactionCtrl.add(
+        ReactionUpdate(
+          messageId: map['messageId']?.toString() ?? '',
+          reactions: raw is List
+              ? raw
+                    .whereType<Map>()
+                    .map(
+                      (e) =>
+                          ChatReaction.fromJson(Map<String, dynamic>.from(e)),
+                    )
+                    .toList()
+              : const [],
+        ),
+      );
     });
 
     _onEvent(ChatSocketEvent.typing, (data) {
       final map = _asMap(data);
-      _typingCtrl.add(TypingEvent(
-        conversationId: map['conversationId']?.toString() ?? '',
-        userId: map['userId']?.toString() ?? '',
-        isTyping: map['isTyping'] == true,
-      ));
+      _typingCtrl.add(
+        TypingEvent(
+          conversationId: map['conversationId']?.toString() ?? '',
+          userId: map['userId']?.toString() ?? '',
+          isTyping: map['isTyping'] == true,
+        ),
+      );
     });
 
     _onEvent(ChatSocketEvent.userOnline, (data) {
       final map = _asMap(data);
-      _presenceCtrl.add(PresenceEvent(userId: map['userId']?.toString() ?? '', isOnline: true));
+      _presenceCtrl.add(
+        PresenceEvent(userId: map['userId']?.toString() ?? '', isOnline: true),
+      );
     });
     _onEvent(ChatSocketEvent.userOffline, (data) {
       final map = _asMap(data);
-      _presenceCtrl.add(PresenceEvent(
-        userId: map['userId']?.toString() ?? '',
-        isOnline: false,
-        lastSeen: map['lastSeen']?.toString(),
-      ));
+      _presenceCtrl.add(
+        PresenceEvent(
+          userId: map['userId']?.toString() ?? '',
+          isOnline: false,
+          lastSeen: map['lastSeen']?.toString(),
+        ),
+      );
     });
 
     _onEvent(ChatSocketEvent.error, (data) {
@@ -432,19 +464,29 @@ class ChatSocketService extends GetxService with WidgetsBindingObserver {
       _emit(ChatSocketEvent.markRead, {'conversationId': conversationId});
 
   void startTyping(String conversationId) => _emit(
-      ChatSocketEvent.typingStart, {'conversationId': conversationId, 'isTyping': true});
+    ChatSocketEvent.typingStart,
+    {'conversationId': conversationId, 'isTyping': true},
+  );
 
-  void stopTyping(String conversationId) => _emit(
-      ChatSocketEvent.typingStop, {'conversationId': conversationId, 'isTyping': false});
+  void stopTyping(String conversationId) => _emit(ChatSocketEvent.typingStop, {
+    'conversationId': conversationId,
+    'isTyping': false,
+  });
 
-  void editMessage(String messageId, String content) =>
-      _emit(ChatSocketEvent.editMessage, {'messageId': messageId, 'content': content});
+  void editMessage(String messageId, String content) => _emit(
+    ChatSocketEvent.editMessage,
+    {'messageId': messageId, 'content': content},
+  );
 
   void deleteMessage(String messageId, {required bool forEveryone}) => _emit(
-      ChatSocketEvent.deleteMessage, {'messageId': messageId, 'forEveryone': forEveryone});
+    ChatSocketEvent.deleteMessage,
+    {'messageId': messageId, 'forEveryone': forEveryone},
+  );
 
-  void react(String messageId, String emoji) =>
-      _emit(ChatSocketEvent.reactMessage, {'messageId': messageId, 'emoji': emoji});
+  void react(String messageId, String emoji) => _emit(
+    ChatSocketEvent.reactMessage,
+    {'messageId': messageId, 'emoji': emoji},
+  );
 
   void unreact(String messageId) =>
       _emit(ChatSocketEvent.unreactMessage, {'messageId': messageId});
@@ -627,8 +669,12 @@ class ChatSocketService extends GetxService with WidgetsBindingObserver {
   ChatMessageModel? _extractMessage(dynamic data) {
     final map = _asMap(data);
     final raw = map['message'];
-    if (raw is Map) return ChatMessageModel.fromJson(Map<String, dynamic>.from(raw));
-    if (map.containsKey('id') || map.containsKey('_id') || map.containsKey('sender')) {
+    if (raw is Map) {
+      return ChatMessageModel.fromJson(Map<String, dynamic>.from(raw));
+    }
+    if (map.containsKey('id') ||
+        map.containsKey('_id') ||
+        map.containsKey('sender')) {
       try {
         return ChatMessageModel.fromJson(map);
       } catch (_) {}
@@ -641,6 +687,7 @@ class ChatSocketService extends GetxService with WidgetsBindingObserver {
     WidgetsBinding.instance.removeObserver(this);
     _backgroundDisconnectTimer?.cancel();
     _connectivitySub?.cancel();
+    _authTokenWorker?.dispose();
     disconnect();
     _messageCtrl.close();
     _ackCtrl.close();
@@ -700,7 +747,11 @@ class TypingEvent {
   final String conversationId;
   final String userId;
   final bool isTyping;
-  TypingEvent({required this.conversationId, required this.userId, required this.isTyping});
+  TypingEvent({
+    required this.conversationId,
+    required this.userId,
+    required this.isTyping,
+  });
 }
 
 class PresenceEvent {

@@ -44,7 +44,7 @@ class _OtpScreenState extends State<OtpScreen> {
   }
 
   void _onOtpChanged() {
-    isOtpComplete.value = otpTEController.text.trim().length == 6;
+    isOtpComplete.value = RegExp(r'^\d{6}$').hasMatch(otpTEController.text);
   }
 
   @override
@@ -56,10 +56,11 @@ class _OtpScreenState extends State<OtpScreen> {
   }
 
   void _verifyEmailHandler() async {
+    if (verifyEmailController.isLoading.value) return;
     FocusScope.of(context).unfocus();
 
     final otp = otpTEController.text.trim();
-    if (otp.length != 6) {
+    if (!RegExp(r'^\d{6}$').hasMatch(otp)) {
       SnackbarService.warning("OTP must be 6 digits");
       return;
     }
@@ -73,12 +74,14 @@ class _OtpScreenState extends State<OtpScreen> {
 
     if (isVerified) {
       if (type == "signup") {
-        Get.offNamed(AppRoutes.bottomNav);
+        if (verifyEmailController.signedInAfterVerification) {
+          Get.offNamed(AppRoutes.bottomNav);
+        } else {
+          SnackbarService.success('Email verified. Please sign in.');
+          Get.offAllNamed(AppRoutes.login);
+        }
       } else {
-        Get.toNamed(
-          AppRoutes.passReset,
-          arguments: {"email": email},
-        );
+        Get.toNamed(AppRoutes.passReset, arguments: {"email": email});
       }
     } else {
       SnackbarService.error(
@@ -128,9 +131,7 @@ class _OtpScreenState extends State<OtpScreen> {
       decoration: BoxDecoration(
         color: colors.surfaceContainerLow,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(
-          color: colors.outlineVariant.withValues(alpha: 0.6),
-        ),
+        border: Border.all(color: colors.outlineVariant.withValues(alpha: 0.6)),
       ),
     );
 
@@ -144,9 +145,7 @@ class _OtpScreenState extends State<OtpScreen> {
     final submittedPinTheme = defaultPinTheme.copyWith(
       decoration: defaultPinTheme.decoration!.copyWith(
         color: colors.surface,
-        border: Border.all(
-          color: colors.primary.withValues(alpha: 0.5),
-        ),
+        border: Border.all(color: colors.primary.withValues(alpha: 0.5)),
       ),
     );
 
@@ -185,7 +184,9 @@ class _OtpScreenState extends State<OtpScreen> {
                                     text: "We sent a 6-digit code to ",
                                   ),
                                   TextSpan(
-                                    text: email.isNotEmpty ? email : "your email",
+                                    text: email.isNotEmpty
+                                        ? email
+                                        : "your email",
                                     style: AppTextStyle.textSm(
                                       color: colors.onSurface,
                                       weight: FontWeight.w600,
@@ -204,6 +205,9 @@ class _OtpScreenState extends State<OtpScreen> {
                         // OTP Input
                         Pinput(
                           length: 6,
+                          inputFormatters: [
+                            FilteringTextInputFormatter.digitsOnly,
+                          ],
                           controller: otpTEController,
                           focusNode: focusNode,
                           autofillHints: const [AutofillHints.oneTimeCode],

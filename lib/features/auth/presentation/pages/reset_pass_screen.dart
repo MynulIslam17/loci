@@ -49,6 +49,7 @@ class _ResetPassScreenState extends State<ResetPassScreen> {
   }
 
   void _passResetHandler() async {
+    if (passResetController.isLoading.value) return;
     FocusScope.of(context).unfocus();
 
     if (!_formKey.currentState!.validate()) {
@@ -58,7 +59,7 @@ class _ResetPassScreenState extends State<ResetPassScreen> {
     TextInput.finishAutofillContext();
     HapticFeedback.lightImpact();
 
-    final password = confirmPasswordTEController.text.trim();
+    final password = passwordTEController.text;
 
     final success = await passResetController.resetPassword(
       email: email,
@@ -118,10 +119,12 @@ class _ResetPassScreenState extends State<ResetPassScreen> {
                             isObscureText: true,
                             autofillHints: const [AutofillHints.newPassword],
                             textInputAction: TextInputAction.next,
-                            onFieldSubmitted: (_) => FocusScope.of(context)
-                                .requestFocus(confirmPasswordFocus),
-                            borderColor:
-                                colors.outlineVariant.withValues(alpha: 0.6),
+                            onFieldSubmitted: (_) => FocusScope.of(
+                              context,
+                            ).requestFocus(confirmPasswordFocus),
+                            borderColor: colors.outlineVariant.withValues(
+                              alpha: 0.6,
+                            ),
                             textColor: colors.onSurface,
                             titleStyle: AppTextStyle.textSm(
                               color: colors.onSurface,
@@ -142,8 +145,9 @@ class _ResetPassScreenState extends State<ResetPassScreen> {
                             autofillHints: const [AutofillHints.newPassword],
                             textInputAction: TextInputAction.done,
                             onFieldSubmitted: (_) => _passResetHandler(),
-                            borderColor:
-                                colors.outlineVariant.withValues(alpha: 0.6),
+                            borderColor: colors.outlineVariant.withValues(
+                              alpha: 0.6,
+                            ),
                             textColor: colors.onSurface,
                             titleStyle: AppTextStyle.textSm(
                               color: colors.onSurface,

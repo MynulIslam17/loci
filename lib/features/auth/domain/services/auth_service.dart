@@ -34,29 +34,6 @@ class AuthService {
     return _persistAuthResponse(body);
   }
 
-  Future<({String accessToken, String? refreshToken})> refreshToken({
-    required String refreshToken,
-  }) async {
-    final body = await _repository.refreshToken(refreshToken: refreshToken);
-    final inner = body['data'];
-    if (inner is! Map) throw Exception('Invalid refresh token response');
-
-    final token = (inner['accessToken'] ?? inner['token'])?.toString();
-    final newRefreshToken = inner['refreshToken']?.toString();
-    if (token == null || token.isEmpty) {
-      throw Exception('Invalid refresh token response');
-    }
-
-    await _repository.saveTokens(
-      token: token,
-      refreshToken: newRefreshToken ?? refreshToken,
-    );
-    return (
-      accessToken: token,
-      refreshToken: newRefreshToken ?? refreshToken,
-    );
-  }
-
   Future<({UserModel user, String token})> _persistAuthResponse(
     Map<String, dynamic> body,
   ) async {
@@ -105,25 +82,36 @@ class AuthService {
     return body['message']?.toString() ?? '';
   }
 
-  Future<({UserModel? user, String? token, String message})> verifySignupOtp({
-    required String email,
-    required String otp,
-  }) async {
+  Future<
+    ({UserModel? user, String? token, String? refreshToken, String message})
+  >
+  verifySignupOtp({required String email, required String otp}) async {
     final body = await _repository.verifySignupOtp(email: email, otp: otp);
     final message = body['message']?.toString() ?? 'OTP verified successfully';
 
     UserModel? user;
     String? token;
+    String? refreshToken;
     final inner = body['data'];
     if (inner is Map) {
       final userJson = inner['user'];
-      token = inner['accessToken'] as String?;
-      if (userJson != null && token != null) {
+      token = (inner['accessToken'] ?? inner['token'])?.toString();
+      refreshToken = inner['refreshToken']?.toString();
+      if (userJson != null && token != null && token.trim().isNotEmpty) {
         user = UserModel.fromJson(Map<String, dynamic>.from(userJson as Map));
-        await _repository.saveUserData(model: user, token: token);
+        await _repository.saveUserData(
+          model: user,
+          token: token,
+          refreshToken: refreshToken,
+        );
       }
     }
-    return (user: user, token: token, message: message);
+    return (
+      user: user,
+      token: token,
+      refreshToken: refreshToken,
+      message: message,
+    );
   }
 
   Future<String> verifyForgotOtp({
@@ -171,8 +159,16 @@ class AuthService {
     return _repository.loadUserData();
   }
 
-  Future<void> saveSession({required UserModel model, required String token}) {
-    return _repository.saveUserData(model: model, token: token);
+  Future<void> saveSession({
+    required UserModel model,
+    required String token,
+    String? refreshToken,
+  }) {
+    return _repository.saveUserData(
+      model: model,
+      token: token,
+      refreshToken: refreshToken,
+    );
   }
 
   Future<void> updateUser(UserModel user) => _repository.updateUser(user);

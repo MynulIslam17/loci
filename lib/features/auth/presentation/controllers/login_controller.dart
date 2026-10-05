@@ -1,6 +1,6 @@
 import 'package:get/get.dart';
 import 'package:loci/core/utils/app_error_messages.dart';
-import 'package:loci/features/auth/data/auth_api_exception.dart';
+import 'package:loci/features/auth/data/repositories/auth_api_exception.dart';
 import 'package:loci/features/auth/data/models/user_model.dart';
 import 'package:loci/features/auth/domain/services/auth_service.dart';
 import 'package:loci/features/auth/domain/services/social_auth_service.dart';

@@ -9,9 +9,8 @@ import 'package:loci/features/auth/domain/services/social_auth_service.dart';
 import 'package:loci/features/auth/presentation/controllers/login_controller.dart';
 import 'package:loci/features/auth/presentation/widgets/auth_bottom_link.dart';
 import 'package:loci/features/auth/presentation/widgets/auth_divider.dart';
-import 'package:loci/features/auth/presentation/widgets/auth_parallax_header.dart';
+import 'package:loci/features/auth/presentation/widgets/auth_collapsing_scaffold.dart';
 import 'package:loci/features/auth/presentation/widgets/auth_social_button.dart';
-import 'package:loci/gen/assets.gen.dart';
 import 'package:loci/routes/app_routes.dart';
 import 'package:loci/shared/widgets/custom_button.dart';
 import 'package:loci/shared/widgets/custom_rich_text.dart';
@@ -37,6 +36,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final _loginController = Get.find<LoginController>();
 
   void _loginHandler() async {
+    if (_loginController.isLoading.value) return;
     FocusScope.of(context).unfocus();
     if (!_formKey.currentState!.validate()) return;
 
@@ -114,50 +114,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final surfaceColor = context.colorScheme.surface;
-
-    return Scaffold(
-      backgroundColor: surfaceColor,
-      body: ColoredBox(
-        color: surfaceColor,
-        child: CustomScrollView(
-          keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-          slivers: [
-            SliverAppBar(
-              automaticallyImplyLeading: false,
-              backgroundColor: surfaceColor,
-              expandedHeight: 360,
-              toolbarHeight: 0,
-              stretch: true,
-              flexibleSpace: FlexibleSpaceBar(
-                collapseMode: CollapseMode.parallax,
-                stretchModes: const [StretchMode.zoomBackground],
-                background: AuthParallaxHeader(
-                  firstImage: Assets.images.onimg5,
-                  secondImage: Assets.images.onimg6,
-                ),
-              ),
-            ),
-            SliverToBoxAdapter(
-              child: Transform.translate(
-                offset: const Offset(0, -40),
-                child: Container(
-                  padding: const EdgeInsets.only(bottom: 40),
-                  decoration: BoxDecoration(
-                    color: surfaceColor,
-                    borderRadius: const BorderRadius.only(
-                      topLeft: Radius.circular(36),
-                      topRight: Radius.circular(36),
-                    ),
-                  ),
-                  child: _buildLoginForm(),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
+    return AuthCollapsingScaffold(title: 'Sign In', child: _buildLoginForm());
   }
 
   Widget _buildLoginForm() {
@@ -193,9 +150,7 @@ class _LoginScreenState extends State<LoginScreen> {
               const SizedBox(height: 10),
               Text(
                 "Please enter your credential access to your account",
-                style: AppTextStyle.textSm(
-                  color: colors.onSurfaceVariant,
-                ),
+                style: AppTextStyle.textSm(color: colors.onSurfaceVariant),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 32),
@@ -213,7 +168,10 @@ class _LoginScreenState extends State<LoginScreen> {
                 textInputAction: TextInputAction.next,
                 onFieldSubmitted: (_) =>
                     FocusScope.of(context).requestFocus(passwordFocus),
-                autofillHints: const [AutofillHints.email, AutofillHints.username],
+                autofillHints: const [
+                  AutofillHints.email,
+                  AutofillHints.username,
+                ],
                 autoValidateMode: AutovalidateMode.onUnfocus,
                 titleStyle: AppTextStyle.textSm(
                   color: colors.onSurface,

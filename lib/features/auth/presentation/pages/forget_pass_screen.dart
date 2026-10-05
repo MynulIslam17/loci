@@ -33,6 +33,7 @@ class _ForgetPassScreenState extends State<ForgetPassScreen> {
   }
 
   void _emailVerifyHandler() async {
+    if (forgetPassController.isLoading.value) return;
     FocusScope.of(context).unfocus();
 
     if (!_formKey.currentState!.validate()) {
@@ -108,8 +109,9 @@ class _ForgetPassScreenState extends State<ForgetPassScreen> {
                             onFieldSubmitted: (_) => _emailVerifyHandler(),
                             title: "Email",
                             hintText: "example@gmail.com",
-                            borderColor:
-                                colors.outlineVariant.withValues(alpha: 0.6),
+                            borderColor: colors.outlineVariant.withValues(
+                              alpha: 0.6,
+                            ),
                             textColor: colors.onSurface,
                             titleStyle: AppTextStyle.textSm(
                               color: colors.onSurface,

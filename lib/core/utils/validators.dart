@@ -1,5 +1,3 @@
-
-
 import 'package:flutter/services.dart';
 import 'package:intl_phone_field/phone_number.dart';
 
@@ -153,7 +151,6 @@ String? validatePasswordSimple(String? value, {int minLength = 6}) {
     return "Password is required";
   }
 
-
   if (value.length < minLength) {
     return "Password must be at least $minLength characters";
   }
@@ -188,7 +185,7 @@ String? validatePhoneNumber(PhoneNumber? phoneNumber) {
 
 // ==================== DATE VALIDATORS ====================
 
-/// Validates date of birth (must be 18+ years old)
+/// Validates date of birth against the minimum age (13 by default).
 
 String? validateDateOfBirth(String? value, {int minAge = 13}) {
   if (value == null || value.trim().isEmpty) {
@@ -200,9 +197,14 @@ String? validateDateOfBirth(String? value, {int minAge = 13}) {
 
     // ✅ FIRST: Handle ISO format strictly (YYYY-MM-DD)
     if (RegExp(r'^\d{4}-\d{2}-\d{2}$').hasMatch(value)) {
-      date = DateTime.parse(value);
+      final year = int.parse(value.substring(0, 4));
+      final month = int.parse(value.substring(5, 7));
+      final day = int.parse(value.substring(8, 10));
+      date = DateTime(year, month, day);
+      if (date.year != year || date.month != month || date.day != day) {
+        return "Please enter a valid date";
+      }
     }
-
     // ✅ THEN: Handle DD/MM/YYYY or DD-MM-YYYY
     else if (RegExp(r'^\d{2}[/\-]\d{2}[/\-]\d{4}$').hasMatch(value)) {
       final parts = value.split(RegExp(r'[/\-]'));
@@ -211,8 +213,10 @@ String? validateDateOfBirth(String? value, {int minAge = 13}) {
       final year = int.parse(parts[2]);
 
       date = DateTime(year, month, day);
+      if (date.year != year || date.month != month || date.day != day) {
+        return "Please enter a valid date";
+      }
     }
-
     // ❌ Anything else → invalid
     else {
       return "Invalid date format";
@@ -220,9 +224,11 @@ String? validateDateOfBirth(String? value, {int minAge = 13}) {
 
     final now = DateTime.now();
 
-    final age = now.year - date.year -
+    final age =
+        now.year -
+        date.year -
         ((now.month > date.month ||
-            (now.month == date.month && now.day >= date.day))
+                (now.month == date.month && now.day >= date.day))
             ? 0
             : 1);
 
@@ -255,7 +261,11 @@ String? validateDate(String? value, {String? fieldName}) {
 // ==================== USERNAME VALIDATOR ====================
 
 /// Validates username (alphanumeric, underscores, hyphens)
-String? validateUsername(String? value, {int minLength = 3, int maxLength = 20}) {
+String? validateUsername(
+  String? value, {
+  int minLength = 3,
+  int maxLength = 20,
+}) {
   if (value == null || value.trim().isEmpty) {
     return "Username is required";
   }
@@ -334,7 +344,8 @@ String? validateNumber(String? value, {String? fieldName}) {
     return "$name is required";
   }
 
-  if (int.tryParse(value.trim()) == null && double.tryParse(value.trim()) == null) {
+  if (int.tryParse(value.trim()) == null &&
+      double.tryParse(value.trim()) == null) {
     return "$name must be a valid number";
   }
 
@@ -358,11 +369,11 @@ String? validateInteger(String? value, {String? fieldName}) {
 
 /// Validates number in raffles range
 String? validateNumberInRange(
-    String? value,
-    num min,
-    num max, {
-      String? fieldName,
-    }) {
+  String? value,
+  num min,
+  num max, {
+  String? fieldName,
+}) {
   final name = fieldName ?? "This field";
 
   if (value == null || value.trim().isEmpty) {
@@ -407,11 +418,11 @@ String? validateUrl(String? value, {String? fieldName}) {
 
 /// Validates using custom regex pattern
 String? validatePattern(
-    String? value,
-    RegExp pattern, {
-      String? fieldName,
-      String? errorMessage,
-    }) {
+  String? value,
+  RegExp pattern, {
+  String? fieldName,
+  String? errorMessage,
+}) {
   final name = fieldName ?? "This field";
 
   if (value == null || value.trim().isEmpty) {
@@ -443,19 +454,20 @@ String? validatePhoneOptional(PhoneNumber? phoneNumber) {
   return validatePhoneNumber(phoneNumber);
 }
 
-String? validateZipCode(String? value, {int length = 5}) {
+/// Accepts common postal and ZIP code formats when no country is selected.
+String? validateZipCode(String? value) {
   if (value == null || value.trim().isEmpty) {
-    return "Zip code is required";
+    return "Postal code is required";
   }
 
-  final trimmedValue = value.trim();
+  final code = value.trim();
 
-  if (trimmedValue.length < length) {
-    return "Zip code must be at least $length characters";
+  if (code.length < 3 || code.length > 10) {
+    return "Postal code must be 3 to 10 characters";
   }
 
-  if (!RegExp(r'^[a-zA-Z0-9]+$').hasMatch(trimmedValue)) {
-    return "Zip code can only contain letters and numbers";
+  if (!RegExp(r'^[A-Za-z0-9]+(?:[ -]?[A-Za-z0-9]+)*$').hasMatch(code)) {
+    return "Enter a valid postal code";
   }
 
   return null;

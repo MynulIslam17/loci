@@ -11,6 +11,7 @@ class VerifyEmailController extends GetxController {
   final isLoading = false.obs;
   final errorMessage = RxnString();
   final successMessage = RxnString();
+  bool signedInAfterVerification = false;
 
   Future<bool> verifySignupOtp({
     required String email,
@@ -19,15 +20,20 @@ class VerifyEmailController extends GetxController {
     isLoading.value = true;
     errorMessage.value = null;
     successMessage.value = null;
+    signedInAfterVerification = false;
 
     try {
       final result = await _service.verifySignupOtp(email: email, otp: otp);
       successMessage.value = result.message;
-      if (result.user != null && result.token != null) {
+      if (result.user != null &&
+          result.token != null &&
+          result.token!.trim().isNotEmpty) {
         await Get.find<AuthController>().saveUserData(
           model: result.user!,
           token: result.token!,
+          refreshToken: result.refreshToken,
         );
+        signedInAfterVerification = true;
       }
       return true;
     } catch (e) {

@@ -53,8 +53,13 @@ class AuthController extends GetxController {
   Future<void> saveUserData({
     required UserModel model,
     required String token,
+    String? refreshToken,
   }) async {
-    await _service.saveSession(model: model, token: token);
+    await _service.saveSession(
+      model: model,
+      token: token,
+      refreshToken: refreshToken,
+    );
     accessTokenRx.value = token;
     userModelRx.value = model;
     roleRx.value = model.role;

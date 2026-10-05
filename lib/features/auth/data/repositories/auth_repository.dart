@@ -1,7 +1,7 @@
 import 'package:loci/core/constants/app_url.dart';
 import 'package:loci/core/network/network_caller.dart';
 import 'package:loci/core/storage/local_storage_service.dart';
-import 'package:loci/features/auth/data/auth_api_exception.dart';
+import 'package:loci/features/auth/data/repositories/auth_api_exception.dart';
 import 'package:loci/features/auth/data/models/user_model.dart';
 
 /// Auth data layer: remote HTTP via [NetworkCaller] + local session persistence.
@@ -65,20 +65,6 @@ class AuthRepository {
         res.statusCode,
         res.errorMessage ?? 'Apple login failed',
       );
-    }
-    return res.body!;
-  }
-
-  Future<Map<String, dynamic>> refreshToken({
-    required String refreshToken,
-  }) async {
-    final res = await _network.postRequest(
-      url: AppUrl.refreshToken,
-      isFromLogin: true,
-      body: {'refreshToken': refreshToken},
-    );
-    if (!res.isSuccess || res.body == null) {
-      throw Exception(res.errorMessage ?? 'Failed to refresh token');
     }
     return res.body!;
   }
@@ -223,19 +209,6 @@ class AuthRepository {
   Future<({bool remember, String? email})> getRememberMe() async {
     return _storage.getRememberMe();
   }
-
-  Future<void> saveTokens({
-    required String token,
-    String? refreshToken,
-  }) async {
-    await _storage.saveToken(token);
-    if (refreshToken != null && refreshToken.isNotEmpty) {
-      await _storage.saveRefreshToken(refreshToken);
-    }
-  }
-
-  Future<String?> getRefreshToken() => _storage.getRefreshToken();
-  Future<String?> getAccessToken() => _storage.getToken();
 
   Future<void> clearUserData() async {
     await _storage.clearAuthData();

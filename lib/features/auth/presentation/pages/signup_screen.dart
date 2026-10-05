@@ -11,9 +11,8 @@ import 'package:loci/features/auth/presentation/controllers/login_controller.dar
 import 'package:loci/features/auth/presentation/controllers/signup_controller.dart';
 import 'package:loci/features/auth/presentation/widgets/auth_bottom_link.dart';
 import 'package:loci/features/auth/presentation/widgets/auth_divider.dart';
-import 'package:loci/features/auth/presentation/widgets/auth_parallax_header.dart';
+import 'package:loci/features/auth/presentation/widgets/auth_collapsing_scaffold.dart';
 import 'package:loci/features/auth/presentation/widgets/auth_social_button.dart';
-import 'package:loci/gen/assets.gen.dart';
 import 'package:loci/routes/app_routes.dart';
 import 'package:loci/shared/widgets/adaptive_pickers.dart';
 import 'package:loci/shared/widgets/custom_button.dart';
@@ -73,20 +72,22 @@ class _SignupScreenState extends State<SignupScreen> {
 
   void _showCalender() async {
     FocusScope.of(context).unfocus();
+    final today = DateTime.now();
 
     final pickedDate = await showAdaptiveDatePicker(
       context: context,
-      initialDate: DateTime.now().subtract(const Duration(days: 365 * 18)),
-      firstDate: DateTime(1900),
-      lastDate: DateTime.now(),
+      initialDate: DateTime(today.year - 18, today.month, today.day),
+      firstDate: DateTime(today.year - 120, today.month, today.day),
+      lastDate: DateTime(today.year - 13, today.month, today.day),
     );
 
-    if (pickedDate != null) {
+    if (mounted && pickedDate != null) {
       dateTEController.text = DateParserHelper.toApiDate(pickedDate);
     }
   }
 
   void _signupHandler() async {
+    if (signupController.isLoading.value) return;
     FocusScope.of(context).unfocus();
 
     if (!_formKey.currentState!.validate()) {
@@ -169,50 +170,7 @@ class _SignupScreenState extends State<SignupScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final surfaceColor = context.colorScheme.surface;
-
-    return Scaffold(
-      backgroundColor: surfaceColor,
-      body: ColoredBox(
-        color: surfaceColor,
-        child: CustomScrollView(
-          keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-          slivers: [
-            SliverAppBar(
-              automaticallyImplyLeading: false,
-              backgroundColor: surfaceColor,
-              expandedHeight: 360,
-              toolbarHeight: 0,
-              stretch: true,
-              flexibleSpace: FlexibleSpaceBar(
-                collapseMode: CollapseMode.parallax,
-                stretchModes: const [StretchMode.zoomBackground],
-                background: AuthParallaxHeader(
-                  firstImage: Assets.images.onimg5,
-                  secondImage: Assets.images.onimg6,
-                ),
-              ),
-            ),
-            SliverToBoxAdapter(
-              child: Transform.translate(
-                offset: const Offset(0, -40),
-                child: Container(
-                  padding: const EdgeInsets.only(bottom: 40),
-                  decoration: BoxDecoration(
-                    color: surfaceColor,
-                    borderRadius: const BorderRadius.only(
-                      topLeft: Radius.circular(36),
-                      topRight: Radius.circular(36),
-                    ),
-                  ),
-                  child: _buildSignupForm(),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
+    return AuthCollapsingScaffold(title: 'Sign Up', child: _buildSignupForm());
   }
 
   Widget _buildSignupForm() {
@@ -248,9 +206,7 @@ class _SignupScreenState extends State<SignupScreen> {
               const SizedBox(height: 10),
               Text(
                 "Create your loci account by providing necessary info",
-                style: AppTextStyle.textSm(
-                  color: colors.onSurfaceVariant,
-                ),
+                style: AppTextStyle.textSm(color: colors.onSurfaceVariant),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 32),
@@ -303,14 +259,19 @@ class _SignupScreenState extends State<SignupScreen> {
               CustomTextField(
                 controller: zipTEController,
                 focusNode: zipFocus,
-                keyboardType: TextInputType.number,
+                keyboardType: TextInputType.text,
+                textCapitalization: TextCapitalization.characters,
                 autofillHints: const [AutofillHints.postalCode],
                 textInputAction: TextInputAction.next,
-                inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                onFieldSubmitted: (_) => _fieldFocusChange(zipFocus, emailFocus),
+                inputFormatters: [
+                  FilteringTextInputFormatter.allow(RegExp(r'[A-Za-z0-9 -]')),
+                  LengthLimitingTextInputFormatter(10),
+                ],
+                onFieldSubmitted: (_) =>
+                    _fieldFocusChange(zipFocus, emailFocus),
                 borderColor: colors.outlineVariant.withValues(alpha: 0.6),
-                title: "Zip code",
-                hintText: "Enter Zipcode",
+                title: "Postal / ZIP code",
+                hintText: "Enter postal code",
                 textColor: colors.onSurface,
                 titleStyle: AppTextStyle.textSm(
                   color: colors.onSurface,
