@@ -11,6 +11,7 @@ import 'package:loci/features/explore_activity/presentation/widgets/explore_acti
 import 'package:loci/features/explore_activity/presentation/widgets/explore_activity_header.dart';
 import 'package:loci/features/explore_activity/presentation/widgets/explore_activity_raffles_tab.dart';
 import 'package:loci/features/explore_activity/presentation/widgets/explore_activity_routes_tab.dart';
+import 'package:loci/shared/widgets/adaptive_tab_bar.dart';
 import 'package:loci/shared/widgets/custom_appbar.dart';
 import 'package:loci/shared/widgets/custom_text_field.dart';
 
@@ -188,18 +189,11 @@ class _ExploreActivityScreenState extends State<ExploreActivityScreen>
             sliver: SliverPersistentHeader(
               pinned: true,
               delegate: StickyTabBarDelegate(
-                TabBar(
+                AdaptiveTabBar(
                   controller: _tabController,
-                  labelColor: colorScheme.primary,
-                  unselectedLabelColor: colorScheme.onSurface,
-                  indicatorColor: colorScheme.primary,
-                  indicatorSize: TabBarIndicatorSize.label,
-                  dividerColor: Colors.transparent,
-                  tabs: const [
-                    Tab(text: 'Events'),
-                    Tab(text: 'Routes'),
-                    Tab(text: 'Raffles'),
-                  ],
+                  labels: const ['Events', 'Routes', 'Raffles'],
+                  style: AdaptiveTabBarStyle.underline,
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
                 ),
                 color: colorScheme.surface,
               ),

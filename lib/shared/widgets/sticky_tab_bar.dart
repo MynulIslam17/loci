@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 
-import '../../core/constants/app_text_style.dart';
+import 'adaptive_tab_bar.dart';
 
-/// Pins a [TabBar] below a scrollable header inside [NestedScrollView].
+/// Pins a [tabBar] below a scrollable header inside [NestedScrollView].
 class StickyTabBarDelegate extends SliverPersistentHeaderDelegate {
   StickyTabBarDelegate({
     required this.tabBar,
@@ -10,7 +10,7 @@ class StickyTabBarDelegate extends SliverPersistentHeaderDelegate {
     this.height = 52,
   });
 
-  final TabBar tabBar;
+  final Widget tabBar;
   final Color backgroundColor;
   final double height;
 
@@ -42,7 +42,7 @@ class StickyTabBarDelegate extends SliverPersistentHeaderDelegate {
 
 /// Returns a pinned [SliverPersistentHeader] for use in [NestedScrollView].
 SliverPersistentHeader stickyTabBarSliver({
-  required TabBar tabBar,
+  required Widget tabBar,
   required Color backgroundColor,
   double height = 52,
 }) {
@@ -56,24 +56,18 @@ SliverPersistentHeader stickyTabBarSliver({
   );
 }
 
-/// App-wide [TabBar] styling for sticky sent/received (or similar) tabs.
-TabBar appStickyTabBar({
+/// App-wide adaptive tab bar for sticky sent/received (or similar) tabs.
+Widget appStickyTabBar({
   required TabController controller,
   required ColorScheme colorScheme,
   required List<String> labels,
+  bool isScrollable = false,
 }) {
-  return TabBar(
+  return AdaptiveTabBar(
     controller: controller,
-    labelStyle: AppTextStyle.textSm(weight: FontWeight.w600),
-    unselectedLabelStyle: AppTextStyle.textSm(),
-    labelColor: colorScheme.primary,
-    unselectedLabelColor: colorScheme.onSurfaceVariant,
-    indicatorColor: colorScheme.primary,
-    indicatorWeight: 3,
-    indicatorSize: TabBarIndicatorSize.label,
-    dividerColor: Colors.transparent,
-    splashFactory: NoSplash.splashFactory,
-    overlayColor: WidgetStateProperty.all(Colors.transparent),
-    tabs: [for (final label in labels) Tab(text: label)],
+    labels: labels,
+    isScrollable: isScrollable,
+    style: AdaptiveTabBarStyle.underline,
+    padding: const EdgeInsets.symmetric(horizontal: 16),
   );
 }

@@ -78,7 +78,7 @@ class ExploreActivityHeader extends StatelessWidget {
 class StickyTabBarDelegate extends SliverPersistentHeaderDelegate {
   StickyTabBarDelegate(this.tabBar, {required this.color});
 
-  final TabBar tabBar;
+  final PreferredSizeWidget tabBar;
   final Color color;
 
   @override

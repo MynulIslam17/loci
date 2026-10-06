@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:loci/core/constants/app_text_style.dart';
 import 'package:loci/core/theme/theme_extention.dart';
 import 'package:loci/features/community/presentation/widgets/community_ui_constants.dart';
+import 'package:loci/shared/widgets/adaptive_tab_bar.dart';
 
 /// Tab labels for the community hub (Feed, Offers, Notices, Activity).
 class CommunityTabBar extends StatelessWidget {
@@ -24,21 +24,12 @@ class CommunityTabBar extends StatelessWidget {
         padding: const EdgeInsets.only(
           bottom: CommunityUi.tabBarBottomSpacing,
         ),
-        child: TabBar(
+        child: AdaptiveTabBar(
           controller: controller,
+          labels: tabs,
           isScrollable: true,
-          tabAlignment: TabAlignment.start,
-          indicatorSize: TabBarIndicatorSize.label,
-          labelColor: colors.primary,
-          unselectedLabelColor: colors.onSurfaceVariant,
-          indicatorColor: colors.primary,
-          dividerColor: colors.outlineVariant.withValues(alpha: 0.35),
-          labelStyle: AppTextStyle.textSm(weight: FontWeight.w600),
-          unselectedLabelStyle: AppTextStyle.textSm(
-            weight: FontWeight.w500,
-            color: colors.onSurfaceVariant,
-          ),
-          tabs: [for (final label in tabs) Tab(text: label)],
+          style: AdaptiveTabBarStyle.underline,
+          padding: const EdgeInsets.symmetric(horizontal: 16),
         ),
       ),
     );

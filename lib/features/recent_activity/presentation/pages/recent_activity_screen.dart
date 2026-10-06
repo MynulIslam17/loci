@@ -13,6 +13,7 @@ import 'package:loci/features/recent_activity/presentation/widgets/recent_activi
 import 'package:loci/features/recent_activity/presentation/widgets/review_activity_card.dart';
 import 'package:loci/shared/widgets/adaptive_expandable_search_header.dart';
 import 'package:loci/shared/widgets/adaptive_refresh.dart';
+import 'package:loci/shared/widgets/adaptive_tab_bar.dart';
 import 'package:loci/shared/widgets/confirm_dialog.dart';
 import 'package:loci/shared/widgets/custom_appbar.dart';
 import 'package:loci/shared/widgets/empty_state.dart';
@@ -115,20 +116,17 @@ class _RecentActivityState extends State<RecentActivity>
             SliverPersistentHeader(
               pinned: true,
               delegate: _TabBarDelegate(
-                TabBar(
+                AdaptiveTabBar(
                   controller: _tabController,
                   isScrollable: true,
-                  tabAlignment: TabAlignment.start,
-                  labelColor: colorScheme.primary,
-                  unselectedLabelColor: colorScheme.onSurface,
-                  indicatorColor: colorScheme.primary,
-                  dividerColor: Colors.transparent,
-                  tabs: const [
-                    Tab(text: 'Questions'),
-                    Tab(text: 'Answered'),
-                    Tab(text: 'Reviews'),
-                    Tab(text: 'Saved'),
+                  labels: const [
+                    'Questions',
+                    'Answered',
+                    'Reviews',
+                    'Saved',
                   ],
+                  style: AdaptiveTabBarStyle.underline,
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
                 ),
                 color: colorScheme.surface,
               ),
@@ -343,7 +341,7 @@ class _RecentActivityTabState extends State<_RecentActivityTab>
 class _TabBarDelegate extends SliverPersistentHeaderDelegate {
   const _TabBarDelegate(this.tabBar, {required this.color});
 
-  final TabBar tabBar;
+  final PreferredSizeWidget tabBar;
   final Color color;
 
   @override
