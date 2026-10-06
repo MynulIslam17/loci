@@ -1,6 +1,5 @@
 package ui.neatboutique.jacobi
 
-import io.flutter.embedding.android.FlutterFragmentActivity
+import io.flutter.embedding.android.FlutterActivity
 
-// flutter_stripe requires the host activity to extend FlutterFragmentActivity.
-class MainActivity : FlutterFragmentActivity()
+class MainActivity : FlutterActivity()

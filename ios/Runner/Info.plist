@@ -22,7 +22,7 @@
 	<string>????</string>
 	<key>CFBundleVersion</key>
 	<string>$(FLUTTER_BUILD_NUMBER)</string>
-	<!-- Flutter encodes --dart-define values in the generated Xcode build settings. -->
+	<!-- Flutter encodes Dart define values in the generated Xcode build settings. -->
 	<key>FlutterDartDefines</key>
 	<string>$(DART_DEFINES)</string>
 	<key>LSRequiresIPhoneOS</key>
@@ -61,7 +61,7 @@
 	<false/>
 
 	<key>NSCameraUsageDescription</key>
-	<string>This app needs camera access to scan QR codes, take profile photos, and capture payment card details.</string>
+	<string>This app needs camera access to scan QR codes and take profile photos.</string>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>This app needs microphone access when capturing photos or video with the camera.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
@@ -84,20 +84,8 @@
 		<string>comgooglemaps</string>
 	</array>
 
-	<!-- Stripe PaymentSheet return URL (Link / 3DS / bank redirects on iOS).
-	     Must match Stripe.urlScheme + returnURL used in Dart. -->
 	<key>CFBundleURLTypes</key>
 	<array>
-		<dict>
-			<key>CFBundleTypeRole</key>
-			<string>Editor</string>
-			<key>CFBundleURLName</key>
-			<string>io.lociapp.stripe</string>
-			<key>CFBundleURLSchemes</key>
-			<array>
-				<string>loci</string>
-			</array>
-		</dict>
 		<dict>
 			<key>CFBundleTypeRole</key>
 			<string>Editor</string>

@@ -5,14 +5,13 @@ import 'package:loci/features/auth/data/models/user_model.dart';
 import 'package:loci/features/auth/domain/services/auth_service.dart';
 import 'package:loci/features/auth/domain/services/social_auth_service.dart';
 import 'package:loci/features/auth/presentation/controllers/auth_controller.dart';
-import 'package:loci/features/subscription/presentation/controllers/subscription_controller.dart';
 
 class LoginController extends GetxController {
   final AuthService _service;
   final SocialAuthService _socialAuth;
 
   LoginController(this._service, [SocialAuthService? socialAuth])
-      : _socialAuth = socialAuth ?? SocialAuthService();
+    : _socialAuth = socialAuth ?? SocialAuthService();
 
   final isLoading = false.obs;
   final isGoogleLoading = false.obs;
@@ -109,9 +108,6 @@ class LoginController extends GetxController {
       model: result.user,
       token: result.token,
     );
-    if (Get.isRegistered<SubscriptionController>()) {
-      Get.find<SubscriptionController>().initializeStripe();
-    }
   }
 
   Future<({bool remember, String? email})> getRememberedPreference() {

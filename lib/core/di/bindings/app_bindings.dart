@@ -4,7 +4,7 @@ import 'package:loci/core/network/network_caller.dart';
 import 'package:loci/core/network/network_setup.dart';
 import 'package:loci/core/services/connectivity/connectivity_service.dart';
 import 'package:loci/core/services/socket/chat_socket_service.dart';
-import 'package:loci/core/services/stripe/stripe_service.dart';
+import 'package:loci/features/subscription/presentation/controllers/subscription_controller.dart';
 import 'package:loci/core/storage/hive_storage_service.dart';
 import 'package:loci/core/storage/local_storage_service.dart';
 import 'package:loci/core/utils/show_snackbar.dart';
@@ -263,7 +263,7 @@ class AppBindings extends Bindings {
 
     // Shared realtime / payments / nav
     Get.put<NavController>(NavController(), permanent: true);
-    Get.put<StripeService>(StripeService(), permanent: true);
+    Get.put<SubscriptionController>(SubscriptionController(), permanent: true);
 
     Get.lazyPut<ChatListController>(
       () => ChatListController(Get.find<ChatService>()),

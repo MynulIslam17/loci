@@ -1,55 +1,39 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:loci/core/constants/app_text_style.dart';
 import 'package:loci/core/theme/theme_extention.dart';
-import 'package:loci/features/subscription/presentation/controllers/plans_controller.dart';
-import 'package:loci/features/subscription/presentation/widgets/billing_toggle_header.dart';
-import 'package:loci/features/subscription/presentation/widgets/plans_section.dart';
-import 'package:loci/features/subscription/presentation/widgets/subscription_header.dart';
-import 'package:loci/shared/widgets/adaptive_refresh.dart';
-import 'package:loci/shared/widgets/custom_appbar.dart';
+import 'package:loci/features/subscription/presentation/controllers/subscription_controller.dart';
+import 'package:loci/features/subscription/presentation/pages/subscription_details_screen.dart';
+import 'package:loci/features/subscription/presentation/widgets/subscription_selection_view.dart';
+import 'package:loci/shared/widgets/adaptive_progress.dart';
 
-class SubscriptionScreen extends StatefulWidget {
-  const SubscriptionScreen({super.key});
-
-  @override
-  State<SubscriptionScreen> createState() => _SubscriptionScreenState();
-}
-
-class _SubscriptionScreenState extends State<SubscriptionScreen> {
-  @override
-  void initState() {
-    super.initState();
-    Get.find<PlansController>().resetToMonthly();
-  }
+/// First page of the business subscription flow.
+class SubscriptionPlanScreen extends GetView<SubscriptionController> {
+  const SubscriptionPlanScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final ColorScheme colorScheme = context.colorScheme;
-    final PlansController controller = Get.find<PlansController>();
-
     return Scaffold(
-      backgroundColor: colorScheme.surface,
-      appBar: const CustomAppbar(title: "Subscription Plan"),
-      body: AdaptiveRefresh(
-        onRefresh: controller.refreshPlans,
-        // A single CustomScrollView so the banner scrolls away above the plan
-        // list while the billing toggle stays pinned. Reactivity is scoped to
-        // the individual sections (toggle / plans) rather than the whole tree,
-        // so switching billing period doesn't rebuild the pinned toggle.
-        child: CustomScrollView(
-          physics: const AlwaysScrollableScrollPhysics(),
-          slivers: [
-            const SliverToBoxAdapter(child: SubscriptionHeader()),
-            SliverPersistentHeader(
-              pinned: true,
-              delegate: BillingTogglePinnedHeader(
-                backgroundColor: colorScheme.surface,
-              ),
-            ),
-            const SliverToBoxAdapter(child: PlansSection()),
-          ],
+      backgroundColor: context.colorScheme.surface,
+      appBar: AppBar(
+        backgroundColor: context.colorScheme.surface,
+        centerTitle: true,
+        title: Text(
+          'Loci Business',
+          style: AppTextStyle.textLg(weight: FontWeight.w800),
         ),
       ),
+      body: Obx(() {
+        if (controller.isLoading.value) {
+          return const Center(child: AdaptiveProgress());
+        }
+        return SubscriptionSelectionView(
+          controller: controller,
+          onContinue: () {
+            Get.to<void>(() => const SubscriptionDetailsScreen());
+          },
+        );
+      }),
     );
   }
 }

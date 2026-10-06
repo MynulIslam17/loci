@@ -1,232 +1,169 @@
-import 'package:flutter/foundation.dart';
-import 'package:flutter/material.dart';
-import 'package:flutter_stripe/flutter_stripe.dart';
+import 'dart:async';
+
 import 'package:get/get.dart';
-import 'package:loci/core/services/stripe/stripe_service.dart';
-import 'package:loci/core/utils/show_snackbar.dart';
-import 'package:loci/features/my_business/data/models/my_business_list_model.dart';
-import 'package:loci/features/auth/presentation/controllers/auth_controller.dart';
-import 'package:loci/features/subscription/data/models/checkout_response_model.dart';
-import 'package:loci/features/subscription/data/models/my_subscription_model.dart';
-import 'package:loci/features/subscription/data/models/plan_response_model.dart';
-import 'package:loci/features/subscription/domain/services/subscription_service.dart';
+import 'package:in_app_purchase/in_app_purchase.dart';
+import 'package:loci/core/iap/iap.dart';
+import 'package:loci/features/subscription/data/config/loci_iap_products.dart';
+import 'package:loci/features/subscription/data/models/store_subscription_plan.dart';
 
-/// Handles the Stripe subscription flow described in PAYMENT_FLOW.pdf:
-/// config → plans → checkout → PaymentSheet → poll /subscriptions/my.
 class SubscriptionController extends GetxController {
-  SubscriptionController(this._service);
+  late final IapService _iapService;
+  StreamSubscription<IapEvent>? _iapEvents;
+  Completer<bool>? _purchaseResult;
+  String? _pendingProductId;
 
-  final SubscriptionService _service;
+  final Rxn<ProductDetails> monthlyProduct = Rxn<ProductDetails>();
+  final Rxn<ProductDetails> yearlyProduct = Rxn<ProductDetails>();
+  final RxBool isLoading = true.obs;
+  final RxBool isPurchasing = false.obs;
+  final RxnString errorMessage = RxnString();
+  // Local transaction feedback only; account entitlement is backend-owned.
+  final RxnString lastProcessedPlan = RxnString();
+  final RxList<StoreSubscriptionPlan> plans = <StoreSubscriptionPlan>[].obs;
+  final Rxn<StoreSubscriptionPlan> selectedPlan = Rxn<StoreSubscriptionPlan>();
 
-  final RxBool _isInitializingStripe = false.obs;
-  final RxBool _isLoadingSubscription = false.obs;
-  final RxBool _isProcessingPurchase = false.obs;
-  final RxBool _isCancelling = false.obs;
-
-  final Rxn<String> _errorMessage = Rxn<String>();
-  final Rxn<MySubscriptionModel> _mySubscription = Rxn<MySubscriptionModel>();
-  bool _stripeConfigured = false;
-  String? _stripeInitError;
-
-  bool get isInitializingStripe => _isInitializingStripe.value;
-  bool get isLoadingSubscription => _isLoadingSubscription.value;
-  bool get isProcessingPurchase => _isProcessingPurchase.value;
-  bool get isCancelling => _isCancelling.value;
-  String? get errorMessage => _errorMessage.value;
-  MySubscriptionModel? get mySubscription => _mySubscription.value;
-
-  bool get hasActiveSubscription => mySubscription?.isActive == true;
+  ProductDetails? productFor(String? productId) =>
+      productId == LociIapProducts.monthly
+      ? monthlyProduct.value
+      : productId == LociIapProducts.yearly
+      ? yearlyProduct.value
+      : null;
 
   @override
   void onInit() {
     super.onInit();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      initializeStripe();
-    });
-  }
-
-  Future<void> initializeStripe() async {
-    if (kIsWeb || defaultTargetPlatform == TargetPlatform.windows) return;
-
-    final AuthController auth = Get.find<AuthController>();
-    if (!auth.isLoggedIn) return;
-
-    _isInitializingStripe.value = true;
-    _stripeInitError = null;
-    try {
-      final service = Get.find<StripeService>();
-      await service.init();
-      _stripeConfigured = service.isReady;
-      if (!_stripeConfigured) {
-        _stripeInitError = service.lastError ??
-            'Could not connect to payment service. Check your connection and try again.';
-      }
-    } catch (e) {
-      _stripeConfigured = false;
-      _stripeInitError = e.toString();
-      debugPrint('Stripe init failed: $e');
-    } finally {
-      _isInitializingStripe.value = false;
-    }
-  }
-
-  Future<void> fetchMySubscription(String businessId) async {
-    _isLoadingSubscription.value = true;
-    _errorMessage.value = null;
-
-    try {
-      _mySubscription.value = await _service.getMySubscription(businessId);
-    } catch (e) {
-      _errorMessage.value = e.toString().replaceFirst('Exception: ', '');
-    } finally {
-      _isLoadingSubscription.value = false;
-    }
-  }
-
-  Future<void> subscribeToPlan(PlanModel plan) async {
-    if (isProcessingPurchase) return;
-
-    _isProcessingPurchase.value = true;
-
-    try {
-      await initializeStripe();
-
-      if (!_stripeConfigured) {
-        SnackbarService.error(
-          _stripeInitError ??
-              'Could not connect to payment service. Check your connection and try again.',
-        );
-        return;
-      }
-
-      final String? businessId = await _resolveBusinessId();
-      if (businessId == null) {
-        _isProcessingPurchase.value = false;
-        return;
-      }
-
-      final CheckoutModel checkout = await _service.checkout(
-        planId: plan.id,
-        businessId: businessId,
-      );
-
-      if (checkout.isFree) {
-        SnackbarService.success('Plan activated');
-        await fetchMySubscription(businessId);
-        return;
-      }
-
-      if (!checkout.canPresentSheet) {
-        SnackbarService.error('Could not start checkout. Please try again.');
-        return;
-      }
-
-      try {
-        await Get.find<StripeService>().presentCheckoutSheet(checkout);
-      } on StripeException catch (e) {
-        if (e.error.code == FailureCode.Canceled) return;
-        SnackbarService.error(
-          e.error.localizedMessage ?? 'Payment failed. Please try another card.',
-        );
-        return;
-      }
-
-      final bool activated = await _waitForActive(businessId);
-      if (activated) {
-        SnackbarService.success('Subscription activated');
-        await fetchMySubscription(businessId);
-      } else {
-        SnackbarService.info(
-          'Payment received — your plan should activate shortly.',
-          title: 'Almost there',
-        );
-        await fetchMySubscription(businessId);
-      }
-    } on StripeException catch (e) {
-      final String message = e.error.localizedMessage ?? 'Payment cancelled';
-      if (e.error.code != FailureCode.Canceled) {
-        SnackbarService.error(message);
-      }
-    } catch (e) {
-      SnackbarService.error(e.toString().replaceFirst('Exception: ', ''));
-    } finally {
-      _isProcessingPurchase.value = false;
-    }
-  }
-
-  Future<void> cancelSubscription() async {
-    if (isCancelling) return;
-
-    _isCancelling.value = true;
-
-    try {
-      final String? businessId = await _resolveBusinessId();
-      if (businessId == null) return; // _resolveBusinessId already toasted why
-      await _service.cancelSubscription(businessId);
-      // Cancellation is immediate now — `/my` returns null right after, so clear
-      // the plan and confirm.
-      _mySubscription.value = null;
-      SnackbarService.success('Subscription cancelled');
-    } catch (e) {
-      SnackbarService.error(e.toString().replaceFirst('Exception: ', ''));
-    } finally {
-      _isCancelling.value = false;
-    }
-  }
-
-  Future<String?> _resolveBusinessId() async {
-    try {
-      final List<BusinessModel> businesses = await _service.getMyBusinesses();
-
-      if (businesses.isEmpty) {
-        SnackbarService.error(
-          'Create or claim a business first, then come back to subscribe.',
-        );
-        return null;
-      }
-
-      if (businesses.length == 1) return businesses.first.id;
-
-      final BusinessModel? selected = await Get.dialog<BusinessModel>(
-        AlertDialog(
-          title: const Text('Choose a business'),
-          content: SizedBox(
-            width: double.maxFinite,
-            child: ListView.builder(
-              shrinkWrap: true,
-              itemCount: businesses.length,
-              itemBuilder: (BuildContext context, int index) {
-                final BusinessModel business = businesses[index];
-                return ListTile(
-                  title: Text(business.name),
-                  onTap: () => Get.back(result: business),
-                );
-              },
-            ),
-          ),
-        ),
-      );
-
-      return selected?.id;
-    } catch (e) {
-      SnackbarService.error(e.toString().replaceFirst('Exception: ', ''));
-      return null;
-    }
-  }
-
-  Future<bool> _waitForActive(String businessId, {int attempts = 8}) async {
-    for (int i = 0; i < attempts; i++) {
-      try {
-        final MySubscriptionModel? sub = await _service.getMySubscription(
-          businessId,
-        );
-        if (sub?.isActive == true) {
-          _mySubscription.value = sub;
-          return true;
+    plans.assignAll(StoreSubscriptionPlan.catalog);
+    selectedPlan.value = plans.firstWhere(
+      (StoreSubscriptionPlan plan) => plan.type == StorePlanType.monthly,
+    );
+    _iapService = IapService(
+      config: const IapConfig(productIds: LociIapProducts.all),
+      // TestFlight only. Replace with server verification before release.
+      verifyPurchase: (PurchaseDetails purchase) async => true,
+      onEntitlementGranted: (PurchaseDetails purchase) async {
+        if (purchase.productID == LociIapProducts.monthly) {
+          lastProcessedPlan.value = 'monthly';
+        } else if (purchase.productID == LociIapProducts.yearly) {
+          lastProcessedPlan.value = 'yearly';
         }
-      } catch (_) {}
-      await Future.delayed(const Duration(seconds: 1));
+      },
+    );
+    _iapEvents = _iapService.events.listen(_handleEvent);
+    initialize();
+  }
+
+  void selectPlan(StoreSubscriptionPlan plan) => selectedPlan.value = plan;
+
+  Future<bool> subscribe() async {
+    final StoreSubscriptionPlan? plan = selectedPlan.value;
+    if (plan == null) return false;
+    if (!plan.isPaid) return false;
+    return purchase(plan.productId!);
+  }
+
+  Future<void> initialize() async {
+    try {
+      isLoading.value = true;
+      errorMessage.value = null;
+      await _iapService.initialize();
+      if (!_iapService.isAvailable) {
+        errorMessage.value = 'In-app purchases are not available.';
+      }
+      _updateProducts();
+    } catch (error) {
+      errorMessage.value = error.toString();
+    } finally {
+      isLoading.value = false;
     }
-    return false;
+  }
+
+  void _updateProducts() {
+    monthlyProduct.value = _iapService.productById(LociIapProducts.monthly);
+    yearlyProduct.value = _iapService.productById(LociIapProducts.yearly);
+  }
+
+  void _handleEvent(IapEvent event) {
+    switch (event.type) {
+      case IapEventType.productsLoaded:
+        _updateProducts();
+        isLoading.value = false;
+        errorMessage.value = event.message;
+      case IapEventType.purchasePending:
+        if (event.productId == _pendingProductId) isPurchasing.value = true;
+      case IapEventType.purchaseCompleted:
+      case IapEventType.purchaseRestored:
+        _finishPurchase(true, productId: event.productId);
+      case IapEventType.purchaseCanceled:
+        _finishPurchase(false, productId: event.productId);
+      case IapEventType.purchaseFailed:
+        if (event.productId == _pendingProductId) {
+          errorMessage.value = event.message ?? 'Purchase failed.';
+        }
+        _finishPurchase(false, productId: event.productId);
+      case IapEventType.verificationFailed:
+      case IapEventType.error:
+        if (event.productId == null || event.productId == _pendingProductId) {
+          errorMessage.value = event.message ?? 'Something went wrong.';
+        }
+        _finishPurchase(false, productId: event.productId);
+      case IapEventType.storeUnavailable:
+        errorMessage.value = event.message;
+      default:
+        break;
+    }
+  }
+
+  Future<bool> purchase(String productId) async {
+    if (isPurchasing.value || productFor(productId) == null) return false;
+    try {
+      errorMessage.value = null;
+      isPurchasing.value = true;
+      final Completer<bool> result = Completer<bool>();
+      _purchaseResult = result;
+      _pendingProductId = productId;
+      final bool started = await _iapService.purchase(productId);
+      if (!started) _finishPurchase(false);
+      return await result.future.timeout(
+        const Duration(minutes: 2),
+        onTimeout: () {
+          isPurchasing.value = false;
+          _purchaseResult = null;
+          _pendingProductId = null;
+          errorMessage.value =
+              'Purchase is still pending. Check your store account.';
+          return false;
+        },
+      );
+    } catch (error) {
+      isPurchasing.value = false;
+      _finishPurchase(false);
+      errorMessage.value = error.toString();
+      return false;
+    }
+  }
+
+  void _finishPurchase(bool successful, {String? productId}) {
+    if (productId != null && productId != _pendingProductId) return;
+    final Completer<bool>? result = _purchaseResult;
+    _purchaseResult = null;
+    _pendingProductId = null;
+    isPurchasing.value = false;
+    if (result != null && !result.isCompleted) result.complete(successful);
+  }
+
+  Future<void> restorePurchases() async {
+    try {
+      errorMessage.value = null;
+      await _iapService.restorePurchases();
+    } catch (error) {
+      errorMessage.value = error.toString();
+    }
+  }
+
+  @override
+  void onClose() {
+    _iapEvents?.cancel();
+    _iapService.dispose();
+    super.onClose();
   }
 }

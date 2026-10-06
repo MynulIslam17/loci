@@ -4,7 +4,6 @@ import 'package:loci/features/checkin/presentation/bindings/checkin_binding.dart
 import 'package:loci/features/main_nav/presentation/bindings/bottom_nav_binding.dart';
 import 'package:loci/features/browse_business/presentation/bindings/browse_business_binding.dart';
 import 'package:loci/features/community/presentation/bindings/community_binding.dart';
-import 'package:loci/features/main_nav/presentation/bindings/drawer_binding.dart';
 import 'package:loci/features/event/presentation/bindings/event_binding.dart';
 import 'package:loci/features/my_business/presentation/bindings/create_ad_binding.dart';
 import 'package:loci/features/my_business/presentation/bindings/my_business_binding.dart';
@@ -63,7 +62,7 @@ import 'package:loci/features/raffles/presentation/pages/raffles_details_screen.
 import 'package:loci/features/splash/presentation/pages/splash_screen.dart';
 import 'package:loci/features/subscription/presentation/pages/subscription_screen.dart';
 import 'package:loci/features/subscription/presentation/pages/my_subscription_screen.dart';
-import 'package:loci/features/subscription/presentation/bindings/my_subscription_binding.dart';
+import 'package:loci/features/subscription/presentation/bindings/subscription_binding.dart';
 import 'package:loci/features/main_nav/presentation/pages/main_bottom_nav_screen.dart';
 import 'package:loci/routes/app_routes.dart';
 
@@ -358,13 +357,12 @@ abstract class AppPages {
 
     GetPage(
       name: AppRoutes.subscription,
-      page: () => SubscriptionScreen(),
-      binding: DrawerBindings(),
+      page: () => const SubscriptionPlanScreen(),
     ),
     GetPage(
       name: AppRoutes.mySubscription,
       page: () => const MySubscriptionScreen(),
-      binding: MySubscriptionBinding(),
+      binding: SubscriptionBinding(),
     ),
     GetPage(
       name: AppRoutes.liveNavigation,

@@ -1,7 +1,6 @@
 import 'package:get/get.dart';
 import 'package:loci/core/di/bindings/app_bindings.dart';
 import 'package:loci/core/services/socket/chat_socket_service.dart';
-import 'package:loci/core/services/stripe/stripe_service.dart';
 import 'package:loci/core/storage/hive_storage_service.dart';
 import 'package:loci/features/auth/data/models/user_model.dart';
 import 'package:loci/features/auth/domain/services/auth_service.dart';
@@ -168,9 +167,6 @@ class AuthController extends GetxController {
   void _onAuthenticated() {
     if (Get.isRegistered<ChatSocketService>()) {
       Get.find<ChatSocketService>().connect();
-    }
-    if (Get.isRegistered<StripeService>()) {
-      Get.find<StripeService>().init();
     }
     if (Get.isRegistered<PushNotificationService>()) {
       Get.find<PushNotificationService>().syncPushToken(force: true);

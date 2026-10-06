@@ -121,9 +121,6 @@ abstract class AppUrl {
   static const String recentActivity="$baseUrl/users/me/recent-activity";
 
   //------subscription
-  static const String subscriptionPlans="$baseUrl/subscriptions/plans";
-  static const String subscriptionConfig="$baseUrl/subscriptions/config";
-  static const String subscriptionCheckout="$baseUrl/subscriptions/checkout";
   static const String mySubscription="$baseUrl/subscriptions/my"; // GET current + DELETE to cancel; both require ?businessId=
 
   //------chat / messaging

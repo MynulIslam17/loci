@@ -1,7 +1,6 @@
 import Flutter
 import UIKit
 import UserNotifications
-import Stripe
 import GoogleMaps
 
 @main
@@ -55,33 +54,4 @@ import GoogleMaps
     return nil
   }
 
-  /// Custom URL scheme returns from Stripe (3DS / Link / bank apps).
-  override func application(
-    _ app: UIApplication,
-    open url: URL,
-    options: [UIApplication.OpenURLOptionsKey: Any] = [:]
-  ) -> Bool {
-    if StripeAPI.handleURLCallback(with: url) {
-      return true
-    }
-    return super.application(app, open: url, options: options)
-  }
-
-  /// Universal-link style returns (Safari View Controller / ASWebAuthentication).
-  override func application(
-    _ application: UIApplication,
-    continue userActivity: NSUserActivity,
-    restorationHandler: @escaping ([UIUserActivityRestoring]?) -> Void
-  ) -> Bool {
-    if userActivity.activityType == NSUserActivityTypeBrowsingWeb,
-       let url = userActivity.webpageURL,
-       StripeAPI.handleURLCallback(with: url) {
-      return true
-    }
-    return super.application(
-      application,
-      continue: userActivity,
-      restorationHandler: restorationHandler
-    )
-  }
 }
