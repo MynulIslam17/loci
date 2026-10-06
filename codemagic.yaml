@@ -336,9 +336,11 @@ workflows:
           echo "Building AAB with $APP_BUILD_NAME+$APP_BUILD_NUMBER"
           DART_DEFINES=()
           MAPS_KEY="${GOOGLE_MAPS_ANDROID_API_KEY:-${GOOGLE_MAPS_API_KEY:-}}"
-          if [ -n "$MAPS_KEY" ]; then
-            DART_DEFINES+=(--dart-define="GOOGLE_MAPS_API_KEY=$MAPS_KEY")
+          if [ -z "$MAPS_KEY" ] || [[ "$MAPS_KEY" == YOUR_* ]]; then
+            echo "A valid Google Maps Android API key is required to build the app."
+            exit 1
           fi
+          DART_DEFINES+=(--dart-define="GOOGLE_MAPS_API_KEY=$MAPS_KEY")
           flutter build appbundle --release \
             --build-name="$APP_BUILD_NAME" \
             --build-number="$APP_BUILD_NUMBER" \
@@ -349,9 +351,11 @@ workflows:
           echo "Building IPA with $APP_BUILD_NAME+$APP_BUILD_NUMBER"
           DART_DEFINES=()
           MAPS_KEY="${GOOGLE_MAPS_IOS_API_KEY:-${GOOGLE_MAPS_API_KEY:-}}"
-          if [ -n "$MAPS_KEY" ]; then
-            DART_DEFINES+=(--dart-define="GOOGLE_MAPS_API_KEY=$MAPS_KEY")
+          if [ -z "$MAPS_KEY" ] || [[ "$MAPS_KEY" == YOUR_* ]]; then
+            echo "A valid Google Maps iOS API key is required to build the app."
+            exit 1
           fi
+          DART_DEFINES+=(--dart-define="GOOGLE_MAPS_API_KEY=$MAPS_KEY")
           flutter build ipa --release \
             --build-name="$APP_BUILD_NAME" \
             --build-number="$APP_BUILD_NUMBER" \

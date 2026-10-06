@@ -41,8 +41,8 @@ import 'package:loci/features/explore_activity/presentation/pages/total_rsvp_scr
 import 'package:loci/features/explore_activity/presentation/pages/view_activity_screen.dart';
 import 'package:loci/features/routes/presentation/pages/explore_routes_screen.dart';
 import 'package:loci/features/routes/presentation/pages/route_details_screen.dart';
-import 'package:loci/features/navigation/presentation/bindings/live_navigation_binding.dart';
-import 'package:loci/features/navigation/presentation/pages/live_navigation_screen.dart';
+import 'package:loci/features/location/presentation/bindings/live_navigation_binding.dart';
+import 'package:loci/features/location/presentation/pages/live_navigation_screen.dart';
 import 'package:loci/features/chat/presentation/pages/chat_list_screen.dart';
 import 'package:loci/features/chat/presentation/pages/message_screen.dart';
 import 'package:loci/features/qr_code/presentation/bindings/qr_code_binding.dart';

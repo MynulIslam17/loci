@@ -21,5 +21,7 @@ class AppSecrets {
     defaultValue: '',
   );
 
-  static bool get hasGoogleMapsApiKey => googleMapsApiKey.isNotEmpty;
+  static bool get hasGoogleMapsApiKey =>
+      googleMapsApiKey.trim().isNotEmpty &&
+      !googleMapsApiKey.startsWith('YOUR_');
 }

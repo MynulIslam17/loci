@@ -12,7 +12,7 @@ import 'package:loci/features/explore_activity/data/models/update_event_request_
 import 'package:loci/features/explore_activity/domain/services/explore_activity_service.dart';
 import 'package:loci/features/explore_activity/presentation/controllers/business_event_details_controller.dart';
 import 'package:loci/features/explore_activity/presentation/controllers/explore_activity_edit_form.dart';
-import 'package:loci/features/places/data/models/place_models.dart';
+import 'package:loci/features/location/data/models/picked_location_model.dart';
 
 class EventEditController extends GetxController {
   EventEditController(this._service);
@@ -138,7 +138,10 @@ class EventEditController extends GetxController {
     formVersion.value;
     if (_initialData == null) return false;
 
-    return editFieldChanged(titleController.text, _initialData!['title'] as String) ||
+    return editFieldChanged(
+          titleController.text,
+          _initialData!['title'] as String,
+        ) ||
         editFieldChanged(
           detailsController.text,
           _initialData!['details'] as String,
@@ -147,7 +150,10 @@ class EventEditController extends GetxController {
           locationController.text,
           _initialData!['location'] as String,
         ) ||
-        editFieldChanged(mapUrlController.text, _initialData!['mapUrl'] as String) ||
+        editFieldChanged(
+          mapUrlController.text,
+          _initialData!['mapUrl'] as String,
+        ) ||
         editFieldChanged(
           personController.text,
           _initialData!['maxParticipants'] as String,
@@ -218,8 +224,7 @@ class EventEditController extends GetxController {
     final mapUrl = mapUrlController.text.trim();
     final maxParticipants = personController.text.trim();
 
-    final hasBanner =
-        bannerImage.value != null || event.coverImage.isNotEmpty;
+    final hasBanner = bannerImage.value != null || event.coverImage.isNotEmpty;
 
     if (!ActivityValidator.reportEditValidationFailure(
       ActivityValidator.validateEventEdit(
@@ -263,10 +268,11 @@ class EventEditController extends GetxController {
       url: editFieldChanged(mapUrl, _initialData!['mapUrl'] as String)
           ? mapUrl
           : null,
-      maxParticipants: editFieldChanged(
-        maxParticipants,
-        _initialData!['maxParticipants'] as String,
-      )
+      maxParticipants:
+          editFieldChanged(
+            maxParticipants,
+            _initialData!['maxParticipants'] as String,
+          )
           ? int.tryParse(maxParticipants)
           : null,
       isPublic: isPublic.value != (_initialData!['isPublic'] as bool)

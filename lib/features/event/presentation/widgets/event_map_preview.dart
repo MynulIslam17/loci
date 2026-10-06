@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:loci/shared/widgets/authenticated_map_image.dart';
+import 'package:loci/features/location/presentation/widgets/authenticated_map_image.dart';
 
 /// Relevant map preview widget for Event feature using [AuthenticatedMapImage].
 class EventMapPreview extends StatelessWidget {

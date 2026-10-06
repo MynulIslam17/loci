@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:loci/shared/widgets/authenticated_map_image.dart';
+import 'package:loci/features/location/presentation/widgets/authenticated_map_image.dart';
 
 /// Map preview widget for Explore Activity screens using [AuthenticatedMapImage].
 class ExploreActivityMapPreview extends StatelessWidget {

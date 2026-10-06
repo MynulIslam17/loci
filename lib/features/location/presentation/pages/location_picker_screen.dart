@@ -5,6 +5,7 @@ import 'package:get/get.dart';
 import 'package:loci/core/constants/app_text_style.dart';
 import 'package:loci/core/theme/theme_extention.dart';
 import 'package:loci/features/places/data/models/place_models.dart';
+import 'package:loci/features/location/data/models/picked_location_model.dart';
 import 'package:loci/features/places/domain/services/places_service.dart';
 import 'package:loci/shared/widgets/custom_appbar.dart';
 import 'package:loci/shared/widgets/custom_text_field.dart';
@@ -136,8 +137,9 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
                       title: 'Something went wrong',
                       subtitle: _session.errorMessage.value!,
                       iconColor: colorScheme.error,
-                      iconBackground: colorScheme.errorContainer
-                          .withValues(alpha: 0.45),
+                      iconBackground: colorScheme.errorContainer.withValues(
+                        alpha: 0.45,
+                      ),
                     );
                   }
                   if (!_session.hasQuery) {
@@ -148,8 +150,9 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
                           ? 'Enter at least 3 characters to see matching places.'
                           : 'Keep typing — at least 3 characters needed.',
                       iconColor: colorScheme.primary,
-                      iconBackground:
-                          colorScheme.primary.withValues(alpha: 0.1),
+                      iconBackground: colorScheme.primary.withValues(
+                        alpha: 0.1,
+                      ),
                     );
                   }
                   if (_session.results.isEmpty) {
@@ -159,8 +162,9 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
                       subtitle:
                           'Try a different spelling, a nearby landmark, or a full street address.',
                       iconColor: colorScheme.primary,
-                      iconBackground:
-                          colorScheme.primary.withValues(alpha: 0.1),
+                      iconBackground: colorScheme.primary.withValues(
+                        alpha: 0.1,
+                      ),
                     );
                   }
 
@@ -252,10 +256,7 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
 }
 
 class _PlaceResultTile extends StatelessWidget {
-  const _PlaceResultTile({
-    required this.prediction,
-    required this.onTap,
-  });
+  const _PlaceResultTile({required this.prediction, required this.onTap});
 
   final PlacePrediction prediction;
   final VoidCallback onTap;

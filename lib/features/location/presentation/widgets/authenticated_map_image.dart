@@ -2,7 +2,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:loci/core/constants/app_text_style.dart';
 import 'package:loci/core/theme/theme_extention.dart';
-import 'package:loci/features/navigation/utils/live_navigation_launcher.dart';
+import 'package:loci/features/location/utils/live_navigation_launcher.dart';
 
 /// Loads a static map preview and opens In-App Live Route Navigation on tap.
 ///
@@ -77,7 +77,8 @@ class AuthenticatedMapImage extends StatelessWidget {
           }
         }
 
-        final markers = uri.queryParameters['markers'] ?? uri.queryParameters['marker'];
+        final markers =
+            uri.queryParameters['markers'] ?? uri.queryParameters['marker'];
         if (markers != null) {
           final regex = RegExp(r'(-?\d+\.\d+)\s*,\s*(-?\d+\.\d+)');
           final match = regex.firstMatch(markers);
@@ -122,10 +123,8 @@ class AuthenticatedMapImage extends StatelessWidget {
         width: effectiveWidth,
         fit: fit,
         fadeInDuration: const Duration(milliseconds: 250),
-        placeholder: (_, _) => _MapLoadingSkeleton(
-          colors: colors,
-          locationLabel: locationLabel,
-        ),
+        placeholder: (_, _) =>
+            _MapLoadingSkeleton(colors: colors, locationLabel: locationLabel),
         errorWidget: (_, _, _) => _MapFallbackCard(
           icon: fallbackIcon,
           title: locationLabel?.trim().isNotEmpty == true
@@ -165,18 +164,11 @@ class AuthenticatedMapImage extends StatelessWidget {
         borderRadius: BorderRadius.circular(borderRadius),
         side: BorderSide(color: colors.outlineVariant.withValues(alpha: 0.7)),
       ),
-      child: SizedBox(
-        height: height,
-        width: effectiveWidth,
-        child: content,
-      ),
+      child: SizedBox(height: height, width: effectiveWidth, child: content),
     );
 
     if (_hasCoordinates) {
-      result = GestureDetector(
-        onTap: _openInMaps,
-        child: result,
-      );
+      result = GestureDetector(onTap: _openInMaps, child: result);
     }
 
     return result;
@@ -185,10 +177,7 @@ class AuthenticatedMapImage extends StatelessWidget {
 
 /// Modern Animated Loading Skeleton for Map Preview
 class _MapLoadingSkeleton extends StatefulWidget {
-  const _MapLoadingSkeleton({
-    required this.colors,
-    this.locationLabel,
-  });
+  const _MapLoadingSkeleton({required this.colors, this.locationLabel});
 
   final ColorScheme colors;
   final String? locationLabel;
@@ -210,9 +199,10 @@ class _MapLoadingSkeletonState extends State<_MapLoadingSkeleton>
       duration: const Duration(milliseconds: 1400),
     )..repeat(reverse: true);
 
-    _pulseAnimation = Tween<double>(begin: 0.85, end: 1.15).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
-    );
+    _pulseAnimation = Tween<double>(
+      begin: 0.85,
+      end: 1.15,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
   }
 
   @override
@@ -252,7 +242,9 @@ class _MapLoadingSkeletonState extends State<_MapLoadingSkeleton>
               // Subtle background map road grid lines
               CustomPaint(
                 painter: _MapGridPatternPainter(
-                  color: colors.onSurface.withValues(alpha: 0.05 + (shimmerValue * 0.03)),
+                  color: colors.onSurface.withValues(
+                    alpha: 0.05 + (shimmerValue * 0.03),
+                  ),
                 ),
               ),
 
@@ -272,7 +264,9 @@ class _MapLoadingSkeletonState extends State<_MapLoadingSkeleton>
                             height: 52,
                             decoration: BoxDecoration(
                               shape: BoxShape.circle,
-                              color: colors.primary.withValues(alpha: 0.18 * (1.2 - shimmerValue)),
+                              color: colors.primary.withValues(
+                                alpha: 0.18 * (1.2 - shimmerValue),
+                              ),
                             ),
                           ),
                         ),
@@ -302,7 +296,10 @@ class _MapLoadingSkeletonState extends State<_MapLoadingSkeleton>
                     const SizedBox(height: 10),
                     // Loading Badge with micro spinner
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 5,
+                      ),
                       decoration: BoxDecoration(
                         color: colors.surface.withValues(alpha: 0.88),
                         borderRadius: BorderRadius.circular(20),
@@ -494,7 +491,10 @@ class _MapFallbackCard extends StatelessWidget {
               if (subtitle != null) ...[
                 const SizedBox(height: 6),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 4,
+                  ),
                   decoration: BoxDecoration(
                     color: colors.primary.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(12),
@@ -502,7 +502,11 @@ class _MapFallbackCard extends StatelessWidget {
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(Icons.navigation_rounded, size: 12, color: colors.primary),
+                      Icon(
+                        Icons.navigation_rounded,
+                        size: 12,
+                        color: colors.primary,
+                      ),
                       const SizedBox(width: 4),
                       Text(
                         subtitle!,

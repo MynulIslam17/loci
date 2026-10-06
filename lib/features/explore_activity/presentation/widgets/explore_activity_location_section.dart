@@ -4,9 +4,9 @@ import 'package:loci/core/utils/acitvity_validator.dart';
 import 'package:loci/features/explore_activity/presentation/widgets/explore_activity_field_icon.dart';
 import 'package:loci/features/explore_activity/presentation/widgets/explore_activity_map_preview.dart';
 import 'package:loci/features/explore_activity/presentation/widgets/explore_activity_section.dart';
-import 'package:loci/features/places/data/models/place_models.dart';
+import 'package:loci/features/location/data/models/picked_location_model.dart';
 import 'package:loci/shared/widgets/custom_text_field.dart';
-import 'package:loci/shared/widgets/picked_location_field.dart';
+import 'package:loci/features/location/presentation/widgets/picked_location_field.dart';
 
 /// Location picker + optional website for activity create/edit forms.
 class ExploreActivityLocationInputs extends StatelessWidget {

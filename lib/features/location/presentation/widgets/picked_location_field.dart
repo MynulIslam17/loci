@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:loci/core/theme/theme_extention.dart';
-import 'package:loci/features/places/data/models/place_models.dart';
-import 'package:loci/features/places/presentation/pages/location_picker_screen.dart';
+import 'package:loci/features/location/data/models/picked_location_model.dart';
+import 'package:loci/features/location/presentation/pages/location_picker_screen.dart';
 import 'package:loci/shared/widgets/custom_text_field.dart';
 
 /// Reusable form field for picking a place.

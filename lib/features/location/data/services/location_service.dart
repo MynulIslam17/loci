@@ -38,7 +38,11 @@ class LocationService {
 
       return true;
     } catch (e, stack) {
-      _logger.e('Error checking location permission', error: e, stackTrace: stack);
+      _logger.e(
+        'Error checking location permission',
+        error: e,
+        stackTrace: stack,
+      );
       return false;
     }
   }
@@ -56,13 +60,18 @@ class LocationService {
         ),
       );
     } catch (e) {
-      _logger.w('Failed to get high accuracy position, falling back to last known position: $e');
+      _logger.w(
+        'Failed to get high accuracy position, falling back to last known position: $e',
+      );
       return await Geolocator.getLastKnownPosition();
     }
   }
 
   /// Subscribes to real-time user position changes as they move (Continuous high-frequency navigation stream).
-  Stream<Position> getPositionStream({int distanceFilterInMeters = 0}) {
+  Stream<Position> getPositionStream({
+    int distanceFilterInMeters = 0,
+    String travelMode = 'walking',
+  }) {
     late LocationSettings locationSettings;
 
     if (Platform.isAndroid) {
@@ -76,7 +85,9 @@ class LocationService {
     } else if (Platform.isIOS || Platform.isMacOS) {
       locationSettings = AppleSettings(
         accuracy: LocationAccuracy.bestForNavigation,
-        activityType: ActivityType.automotiveNavigation,
+        activityType: travelMode == 'walking'
+            ? ActivityType.fitness
+            : ActivityType.otherNavigation,
         distanceFilter: distanceFilterInMeters,
         pauseLocationUpdatesAutomatically: false,
         allowBackgroundLocationUpdates: false,

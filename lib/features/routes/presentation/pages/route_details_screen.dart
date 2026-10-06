@@ -10,7 +10,7 @@ import 'package:loci/core/enums/checkin_status.dart';
 import 'package:loci/features/routes/presentation/controllers/route_details_controller.dart';
 import 'package:loci/features/routes/presentation/widgets/route_details_skeleton.dart';
 import 'package:loci/shared/widgets/company_info_card.dart';
-import 'package:loci/shared/widgets/authenticated_map_image.dart';
+import 'package:loci/features/location/presentation/widgets/authenticated_map_image.dart';
 import 'package:loci/shared/widgets/custom_image_container.dart';
 import 'package:loci/shared/widgets/persistent_action_bar.dart';
 

@@ -43,19 +43,3 @@ class PlaceDetails {
     );
   }
 }
-
-/// What the picker returns to a form: display address plus coordinates.
-class PickedLocation {
-  const PickedLocation({
-    required this.address,
-    required this.lat,
-    required this.lng,
-  });
-
-  final String address;
-  final double lat;
-  final double lng;
-
-  @override
-  String toString() => 'PickedLocation($address, $lat, $lng)';
-}

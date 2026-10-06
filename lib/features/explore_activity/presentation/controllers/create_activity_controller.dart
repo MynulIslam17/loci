@@ -16,7 +16,7 @@ import 'package:loci/features/explore_activity/presentation/controllers/business
 import 'package:loci/features/explore_activity/presentation/controllers/business_route_list_controller.dart';
 import 'package:loci/features/explore_activity/domain/services/explore_activity_service.dart';
 import 'package:loci/features/explore_activity/presentation/widgets/create_activity_task_sheet.dart';
-import 'package:loci/features/places/data/models/place_models.dart';
+import 'package:loci/features/location/data/models/picked_location_model.dart';
 import 'package:loci/shared/widgets/adaptive_pickers.dart';
 import 'package:loci/shared/widgets/app_image_picker.dart';
 

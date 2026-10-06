@@ -13,7 +13,7 @@ import 'package:loci/features/explore_activity/presentation/controllers/business
 import 'package:loci/features/explore_activity/presentation/controllers/explore_activity_edit_form.dart';
 import 'package:loci/features/routes/data/models/route_detail_model.dart';
 import 'package:loci/features/routes/data/models/route_list_model.dart';
-import 'package:loci/features/places/data/models/place_models.dart';
+import 'package:loci/features/location/data/models/picked_location_model.dart';
 
 class RouteEditController extends GetxController {
   RouteEditController(this._service);
@@ -129,7 +129,10 @@ class RouteEditController extends GetxController {
     formVersion.value;
     if (_initialData == null) return false;
 
-    return editFieldChanged(titleController.text, _initialData!['title'] as String) ||
+    return editFieldChanged(
+          titleController.text,
+          _initialData!['title'] as String,
+        ) ||
         editFieldChanged(
           detailsController.text,
           _initialData!['details'] as String,
@@ -138,7 +141,10 @@ class RouteEditController extends GetxController {
           locationController.text,
           _initialData!['location'] as String,
         ) ||
-        editFieldChanged(mapUrlController.text, _initialData!['mapUrl'] as String) ||
+        editFieldChanged(
+          mapUrlController.text,
+          _initialData!['mapUrl'] as String,
+        ) ||
         isPublic.value != _initialData!['isPublic'] ||
         availabilityType.value != _initialData!['availabilityType'] ||
         timeController.text != _initialData!['time'] ||
