@@ -34,9 +34,31 @@ file on both platforms; builds without it will have no Maps key. Keep
 `api_keys.json` local. For platform-restricted production keys, Codemagic accepts
 `GOOGLE_MAPS_ANDROID_API_KEY` and `GOOGLE_MAPS_IOS_API_KEY` as separate secrets;
 the existing `GOOGLE_MAPS_API_KEY` remains a fallback during migration.
-The app also calls Routes and Directions web services directly from Flutter;
-move those calls behind the backend before applying mobile-app restrictions to
-their key. Google recommends separate keys for Android and iOS app restrictions.
+
+### Codemagic release setup
+
+The `release` workflow imports the Codemagic variable group `HireHub Ja`. In
+Codemagic, add these variables to that group and mark each one **Secret**:
+
+| Variable | Value |
+| --- | --- |
+| `GOOGLE_MAPS_ANDROID_API_KEY` | Android Maps key from Google Cloud |
+| `GOOGLE_MAPS_IOS_API_KEY` | iOS Maps key from Google Cloud |
+
+Use the key value alone, without quotes or a `GOOGLE_MAPS_API_KEY=` prefix.
+`GOOGLE_MAPS_API_KEY` is accepted as a temporary fallback for either platform.
+Local `api_keys*.json` files are ignored by git and are not available in
+Codemagic. The workflow checks both release keys before versioning and signing;
+it reports missing variable names without printing key values.
+
+Restrict each key in Google Cloud to its platform and the APIs it needs. For an
+Android release distributed through Google Play, use the Play app signing
+certificate fingerprint with the Android package name. The app currently calls
+the Routes API directly from Flutter in `navigation_directions_service.dart`
+using the compiled Maps key. A Codemagic secret does not hide that key in the
+installed app. Move this request behind an authenticated backend endpoint
+before relying on mobile app restrictions for routing. The backend is not part
+of this repository.
 
 ## Technology Stack
 

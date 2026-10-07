@@ -9,6 +9,29 @@ definitions:
     bundle_identifier: ui.neatboutique.jacobi
 
   scripts:
+    - &check_maps_keys
+      name: Check Google Maps release keys
+      script: |
+        #!/usr/bin/env bash
+        set -euo pipefail
+
+        android_key="${GOOGLE_MAPS_ANDROID_API_KEY:-${GOOGLE_MAPS_API_KEY:-}}"
+        ios_key="${GOOGLE_MAPS_IOS_API_KEY:-${GOOGLE_MAPS_API_KEY:-}}"
+        missing=0
+        if [[ -z "${android_key//[[:space:]]/}" || "$android_key" == YOUR_* ]]; then
+          echo "Missing GOOGLE_MAPS_ANDROID_API_KEY (or GOOGLE_MAPS_API_KEY fallback)."
+          missing=1
+        fi
+        if [[ -z "${ios_key//[[:space:]]/}" || "$ios_key" == YOUR_* ]]; then
+          echo "Missing GOOGLE_MAPS_IOS_API_KEY (or GOOGLE_MAPS_API_KEY fallback)."
+          missing=1
+        fi
+        if [[ "$missing" -ne 0 ]]; then
+          echo "Add the keys as Secret variables in the Codemagic 'HireHub Ja' group."
+          exit 1
+        fi
+        echo "Google Maps release keys are configured."
+
     - &get_flutter_deps
       name: Get Flutter packages
       script: |
@@ -325,6 +348,7 @@ workflows:
         - pattern: main
           include: true
     scripts:
+      - *check_maps_keys
       - *get_flutter_deps
       - *analyze_project
       - *set_next_version_from_asc
