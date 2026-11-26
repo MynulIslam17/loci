@@ -143,7 +143,9 @@ class _NetworkScreenState extends State<NetworkScreen> {
               color: colors.surfaceContainerHigh,
               borderRadius: BorderRadius.circular(10),
               border: Border.all(
-                color: colors.outlineVariant.withValues(alpha: isDark ? 0.3 : 0.4),
+                color: colors.outlineVariant.withValues(
+                  alpha: isDark ? 0.3 : 0.4,
+                ),
                 width: 0.6,
               ),
               boxShadow: [
@@ -310,7 +312,9 @@ class _NetworkScreenState extends State<NetworkScreen> {
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(14),
               border: Border.all(
-                color: colors.outlineVariant.withValues(alpha: isDark ? 0.3 : 0.45),
+                color: colors.outlineVariant.withValues(
+                  alpha: isDark ? 0.3 : 0.45,
+                ),
                 width: 0.6,
               ),
             ),
@@ -322,7 +326,9 @@ class _NetworkScreenState extends State<NetworkScreen> {
                   width: 28,
                   height: 28,
                   decoration: BoxDecoration(
-                    color: colors.primary.withValues(alpha: isDark ? 0.18 : 0.10),
+                    color: colors.primary.withValues(
+                      alpha: isDark ? 0.18 : 0.10,
+                    ),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Center(
@@ -351,10 +357,7 @@ class _NetworkScreenState extends State<NetworkScreen> {
                     style: AppTextStyle.textXs(
                       color: colors.onSurfaceVariant,
                       weight: FontWeight.w600,
-                    ).copyWith(
-                      fontSize: 10.5,
-                      letterSpacing: -0.1,
-                    ),
+                    ).copyWith(fontSize: 10.5, letterSpacing: -0.1),
                   ),
                 ),
               ],
@@ -381,7 +384,11 @@ class _NetworkScreenState extends State<NetworkScreen> {
         const SizedBox(height: 6),
         ElevatedButton.icon(
           onPressed: () => Get.toNamed(AppRoutes.checkIn),
-          icon: Icon(Icons.qr_code_scanner_rounded, color: colors.onPrimary, size: 18),
+          icon: Icon(
+            Icons.qr_code_scanner_rounded,
+            color: colors.onPrimary,
+            size: 18,
+          ),
           label: Text(
             'Check In',
             style: AppTextStyle.textSm(

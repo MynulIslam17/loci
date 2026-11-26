@@ -55,8 +55,18 @@ class EventCard extends StatelessWidget {
       final parsed = DateTime.tryParse(rawDate!);
       if (parsed != null) {
         const months = [
-          'JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN',
-          'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'
+          'JAN',
+          'FEB',
+          'MAR',
+          'APR',
+          'MAY',
+          'JUN',
+          'JUL',
+          'AUG',
+          'SEP',
+          'OCT',
+          'NOV',
+          'DEC',
         ];
         return (months[parsed.month - 1], parsed.day.toString());
       }
@@ -74,8 +84,18 @@ class EventCard extends StatelessWidget {
     final fallbackDt = DateTime.tryParse(date);
     if (fallbackDt != null) {
       const months = [
-        'JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN',
-        'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'
+        'JAN',
+        'FEB',
+        'MAR',
+        'APR',
+        'MAY',
+        'JUN',
+        'JUL',
+        'AUG',
+        'SEP',
+        'OCT',
+        'NOV',
+        'DEC',
       ];
       return (months[fallbackDt.month - 1], fallbackDt.day.toString());
     }
@@ -180,8 +200,9 @@ class EventCard extends StatelessWidget {
                               borderRadius: BorderRadius.circular(16),
                               boxShadow: [
                                 BoxShadow(
-                                  color: const Color(0xFF10B981)
-                                      .withValues(alpha: 0.35),
+                                  color: const Color(
+                                    0xFF10B981,
+                                  ).withValues(alpha: 0.35),
                                   blurRadius: 6,
                                   offset: const Offset(0, 2),
                                 ),
@@ -208,29 +229,31 @@ class EventCard extends StatelessWidget {
                             ),
                           )
                         : (isPublic == true
-                            ? Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 8,
-                                  vertical: 3,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: Colors.black.withValues(alpha: 0.6),
-                                  borderRadius: BorderRadius.circular(16),
-                                  border: Border.all(
-                                    color: Colors.white.withValues(alpha: 0.25),
-                                    width: 0.8,
+                              ? Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 8,
+                                    vertical: 3,
                                   ),
-                                ),
-                                child: const Text(
-                                  "Public",
-                                  style: TextStyle(
-                                    fontSize: 10,
-                                    fontWeight: FontWeight.w600,
-                                    color: Colors.white,
+                                  decoration: BoxDecoration(
+                                    color: Colors.black.withValues(alpha: 0.6),
+                                    borderRadius: BorderRadius.circular(16),
+                                    border: Border.all(
+                                      color: Colors.white.withValues(
+                                        alpha: 0.25,
+                                      ),
+                                      width: 0.8,
+                                    ),
                                   ),
-                                ),
-                              )
-                            : const SizedBox.shrink()),
+                                  child: const Text(
+                                    "Public",
+                                    style: TextStyle(
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.w600,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                )
+                              : const SizedBox.shrink()),
                   ),
                 ],
               ),
@@ -350,8 +373,9 @@ class EventCard extends StatelessWidget {
                           child: LinearProgressIndicator(
                             value: capacityRatio,
                             minHeight: 4,
-                            backgroundColor:
-                                colors.outline.withValues(alpha: 0.15),
+                            backgroundColor: colors.outline.withValues(
+                              alpha: 0.15,
+                            ),
                             valueColor: AlwaysStoppedAnimation<Color>(
                               capacityRatio >= 0.9
                                   ? Colors.amber.shade700
@@ -394,15 +418,17 @@ class EventCard extends StatelessWidget {
                               ),
                               style: OutlinedButton.styleFrom(
                                 side: BorderSide(
-                                  color: const Color(0xFF10B981)
-                                      .withValues(alpha: 0.45),
+                                  color: const Color(
+                                    0xFF10B981,
+                                  ).withValues(alpha: 0.45),
                                   width: 1.2,
                                 ),
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(10),
                                 ),
-                                backgroundColor: const Color(0xFF10B981)
-                                    .withValues(alpha: 0.08),
+                                backgroundColor: const Color(
+                                  0xFF10B981,
+                                ).withValues(alpha: 0.08),
                               ),
                             )
                           : CustomButton(
@@ -540,5 +566,3 @@ class IconTextRow extends StatelessWidget {
     );
   }
 }
-
-

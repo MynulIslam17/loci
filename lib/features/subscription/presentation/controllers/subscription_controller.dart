@@ -1,10 +1,12 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
 
-import 'package:flutter/services.dart' show PlatformException;
+import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 import 'package:get/get.dart';
 import 'package:in_app_purchase/in_app_purchase.dart';
+import 'package:intl/intl.dart';
 import 'package:in_app_purchase_android/in_app_purchase_android.dart';
 import 'package:in_app_purchase_storekit/in_app_purchase_storekit.dart'
     show SK2PurchaseDetails;
@@ -17,6 +19,7 @@ import 'package:loci/features/subscription/data/models/store_subscription_plan.d
 import 'package:loci/features/subscription/data/models/verify_result.dart';
 import 'package:loci/features/subscription/data/storage/pending_verification_queue.dart';
 import 'package:loci/features/subscription/domain/services/subscription_service.dart';
+import 'package:loci/features/subscription/presentation/subscription_messages.dart';
 
 /// Result of a user-initiated purchase, as decided by the backend.
 enum PurchaseOutcome {
@@ -34,6 +37,45 @@ enum PurchaseOutcome {
 
   /// The user dismissed the store sheet.
   cancelled,
+
+  /// The store accepted a plan change that starts at the next renewal
+  /// (e.g. an App Store downgrade/crossgrade). The current plan stays active
+  /// until then; nothing new is unlocked now.
+  scheduled,
+}
+
+/// Result of Restore Purchases, for the UI to explain.
+enum RestoreOutcome {
+  /// At least one purchase was verified by the backend.
+  restored,
+
+  /// The store returned nothing for this Apple ID / Google account.
+  nothing,
+
+  /// A purchase was found but the backend says it's no longer active (or it
+  /// belongs to another Loci account) — see [SubscriptionController.errorMessage].
+  inactive,
+
+  /// Found, but activation is still pending / will be retried.
+  pending,
+
+  /// The restore itself failed (store / network) — see errorMessage.
+  failed,
+}
+
+/// Copy for a plan change the store applies at the next renewal. Pure for
+/// testing.
+String scheduledSwitchMessage({
+  required String newPlan,
+  required String currentPlan,
+  DateTime? startsAt,
+  DateFormat? format,
+}) {
+  final String when = startsAt == null
+      ? 'when your current billing period ends'
+      : 'on ${(format ?? DateFormat('MMM d, yyyy')).format(startsAt.toLocal())}';
+  return 'Your switch to $newPlan is scheduled. You keep $currentPlan until '
+      'it renews $when, then $newPlan starts.';
 }
 
 /// Owns the store purchase stream (from app start), the verify → complete
@@ -56,7 +98,11 @@ class SubscriptionController extends GetxController
     Duration purchaseTimeout = const Duration(minutes: 3),
     Duration restoreQuietPeriod = const Duration(seconds: 2),
     Future<List<PurchaseDetails>> Function()? unfinishedTransactions,
+    DateTime Function()? clock,
+    QueueStore? switchStore,
   }) : _serviceOverride = service,
+       _switchStore = switchStore ?? SecureQueueStore(),
+       _now = clock ?? DateTime.now,
        _unfinishedOverride = unfinishedTransactions,
        _queue = queue ?? PendingVerificationQueue(),
        _store = store,
@@ -81,7 +127,11 @@ class SubscriptionController extends GetxController
   final Duration _purchaseTimeout;
   final Duration _restoreQuietPeriod;
   final Future<List<PurchaseDetails>> Function()? _unfinishedOverride;
+  final DateTime Function() _now;
+  final QueueStore _switchStore;
   bool _recovering = false;
+
+  static const String _switchKey = 'loci.iap.scheduled_switch.v1';
 
   SubscriptionService get _service =>
       _serviceOverride ?? Get.find<SubscriptionService>();
@@ -93,15 +143,29 @@ class SubscriptionController extends GetxController
   }
 
   late final IapService _iapService;
-  final List<StreamSubscription<Object?>> _subs = <StreamSubscription<Object?>>[];
+  final List<StreamSubscription<Object?>> _subs =
+      <StreamSubscription<Object?>>[];
 
   Completer<PurchaseOutcome>? _purchaseResult;
   String? _pendingProductId;
   bool _processingQueue = false;
 
+  /// One in-flight verify per transaction: an app-resume queue retry must not
+  /// send the same purchase again while the first request is still open.
+  final Map<String, Future<VerifyResult>> _inFlightVerify =
+      <String, Future<VerifyResult>>{};
+
+  /// When the current store purchase began (to recognise the store handing
+  /// back an existing transaction for a scheduled plan change).
+  DateTime? _purchaseStartedAt;
+
   // Restore bookkeeping.
   bool _restoring = false;
   int _restoredOk = 0;
+
+  /// Restored transactions still waiting for the backend's answer. Restore
+  /// can't conclude "nothing to restore" while any are in flight.
+  int _restoreInFlight = 0;
   String? _restoreError;
   Timer? _restoreQuietTimer;
 
@@ -113,6 +177,14 @@ class SubscriptionController extends GetxController
 
   /// Store reported the payment as pending ("Waiting for approval…").
   final RxBool isAwaitingApproval = false.obs;
+
+  /// Product the store has already scheduled as the next plan. Kept on the
+  /// device (per account, until the current period ends) so a relaunch still
+  /// shows "Switch scheduled". Buying it again is blocked until it starts.
+  final RxnString scheduledSwitchProductId = RxnString();
+
+  bool isSwitchScheduled(String? productId) =>
+      productId != null && scheduledSwitchProductId.value == productId;
   final RxnString errorMessage = RxnString();
 
   /// Neutral feedback (pending, deferred activation, restore result).
@@ -150,12 +222,15 @@ class SubscriptionController extends GetxController
           : null,
     );
     _subs.add(_iapService.events.listen(_handleEvent));
+    unawaited(_loadScheduledSwitch());
     if (_observeLifecycle) WidgetsBinding.instance.addObserver(this);
 
     final Stream<Object?>? session = _sessionChanges;
     if (session != null) {
       _subs.add(
         session.listen((_) {
+          scheduledSwitchProductId.value = null;
+          unawaited(_loadScheduledSwitch());
           unawaited(processPendingQueue(ignoreBackoff: true));
           unawaited(recoverUnfinishedTransactions());
         }),
@@ -248,7 +323,18 @@ class SubscriptionController extends GetxController
     return true;
   }
 
-  void selectPlan(StoreSubscriptionPlan plan) => selectedPlan.value = plan;
+  void selectPlan(StoreSubscriptionPlan plan) {
+    selectedPlan.value = plan;
+    clearMessages();
+  }
+
+  /// Drops feedback from an earlier action (e.g. a finished restore) so it
+  /// isn't shown on the next screen.
+  void clearMessages() {
+    if (isPurchasing.value || _restoring) return;
+    errorMessage.value = null;
+    infoMessage.value = null;
+  }
 
   Future<PurchaseOutcome> subscribe() async {
     final StoreSubscriptionPlan? plan = selectedPlan.value;
@@ -259,7 +345,7 @@ class SubscriptionController extends GetxController
   Future<void> initialize() async {
     if (!isSupportedPlatform) {
       isLoading.value = false;
-      errorMessage.value = 'Subscriptions are not available on this device.';
+      errorMessage.value = SubscriptionMessages.storeUnavailable;
       return;
     }
     try {
@@ -267,11 +353,15 @@ class SubscriptionController extends GetxController
       errorMessage.value = null;
       await _iapService.initialize();
       if (!_iapService.isAvailable) {
-        errorMessage.value = 'In-app purchases are not available.';
+        errorMessage.value = SubscriptionMessages.storeUnavailable;
       }
       _updateProducts();
     } catch (error) {
-      errorMessage.value = _friendly(error);
+      logSubscriptionError('initialize', error);
+      errorMessage.value = friendlySubscriptionError(
+        error,
+        fallback: SubscriptionMessages.plansUnavailable,
+      );
     } finally {
       isLoading.value = false;
     }
@@ -304,22 +394,53 @@ class SubscriptionController extends GetxController
     if (!hasVerifiableEvidence(body)) {
       return const IapVerificationResult(
         IapVerification.rejected,
-        message: 'This purchase could not be verified.',
+        message: SubscriptionMessages.purchaseUnverified,
+      );
+    }
+
+    if (kDebugMode) {
+      debugPrint(
+        '[subscription] store ${purchase.status.name}: '
+        '${describeAppleTransaction(purchase.verificationData.serverVerificationData) ?? purchase.productID}',
       );
     }
 
     // Survive crash / restart between purchase and verify.
     await _queue.save(userId, body);
     final VerifyResult result = await _verifyBody(userId, body);
+    if (kDebugMode) {
+      debugPrint('[subscription] verify → ${result.kind.name}');
+    }
+    if (result.kind != VerifyResultKind.success) {
+      logSubscriptionError('verify ${result.kind.name}', result.message);
+    }
     return IapVerificationResult(
       _toIapVerification(result.kind),
-      message: result.message,
+      // Backend text is shown only when it's written for users; JWS /
+      // certificate validation details go to the log.
+      message: result.kind == VerifyResultKind.invalid
+          ? userFacingOr(
+              result.message,
+              purchase.status == PurchaseStatus.restored
+                  ? SubscriptionMessages.restoredInactive
+                  : SubscriptionMessages.purchaseUnverified,
+            )
+          : null,
     );
   }
 
   /// Sends one body and updates the queue per spec §5. Refreshes status after
   /// a `200` (before the caller shows any success UI).
-  Future<VerifyResult> _verifyBody(
+  Future<VerifyResult> _verifyBody(String userId, Map<String, dynamic> body) {
+    final String key = '$userId|${verifyBodyKey(body)}';
+    return _inFlightVerify[key] ??= _sendVerify(userId, body).whenComplete(() {
+      // Block body: returning the removed future would make whenComplete
+      // wait on itself.
+      _inFlightVerify.remove(key);
+    });
+  }
+
+  Future<VerifyResult> _sendVerify(
     String userId,
     Map<String, dynamic> body,
   ) async {
@@ -327,10 +448,8 @@ class SubscriptionController extends GetxController
     try {
       result = await _service.verifyPurchase(body);
     } catch (error) {
-      result = VerifyResult(
-        VerifyResultKind.retryable,
-        message: _friendly(error),
-      );
+      logSubscriptionError('verify request', error);
+      result = const VerifyResult(VerifyResultKind.retryable);
     }
 
     switch (result.kind) {
@@ -398,18 +517,35 @@ class SubscriptionController extends GetxController
       case IapEventType.productsLoaded:
         _updateProducts();
         isLoading.value = false;
-        errorMessage.value = event.message;
+        logSubscriptionError('products', event.message);
+        errorMessage.value = event.products.isEmpty
+            ? SubscriptionMessages.plansUnavailable
+            : null;
       case IapEventType.purchasePending:
         if (_isCurrent(event.productId)) {
           isAwaitingApproval.value = true;
           infoMessage.value = 'Waiting for approval…';
         }
+      case IapEventType.verificationStarted:
+        if (_restoring) {
+          _restoreInFlight++;
+          _restoreQuietTimer?.cancel();
+        }
       case IapEventType.purchaseCompleted:
       case IapEventType.purchaseRestored:
+        _restoreVerificationDone();
         if (_restoring) _restoredOk++;
-        _finishPurchase(PurchaseOutcome.success, productId: event.productId);
+        final String? switchMessage = _scheduledSwitchMessageFor(event);
+        if (switchMessage != null) {
+          infoMessage.value = switchMessage;
+          _rememberScheduledSwitch(_pendingProductId, _expiresOf(event));
+          _finishPurchase(PurchaseOutcome.scheduled);
+        } else {
+          _finishPurchase(PurchaseOutcome.success, productId: event.productId);
+        }
         if (_restoring) _bumpRestoreQuietTimer();
       case IapEventType.verificationPending:
+        _restoreVerificationDone();
         _setInfoIfCurrent(
           event.productId,
           'Your payment is pending. We\'ll activate your plan as soon as it completes.',
@@ -417,42 +553,182 @@ class SubscriptionController extends GetxController
         _finishPurchase(PurchaseOutcome.pending, productId: event.productId);
         if (_restoring) _bumpRestoreQuietTimer();
       case IapEventType.verificationDeferred:
-        _setInfoIfCurrent(
-          event.productId,
-          'We\'ll finish activating your plan shortly.',
+        _restoreVerificationDone();
+        final bool existingReply = _isExistingSubscriptionReply(event);
+        if (existingReply) {
+          infoMessage.value = 'We\'ll finish activating your plan shortly.';
+        } else {
+          _setInfoIfCurrent(
+            event.productId,
+            'We\'ll finish activating your plan shortly.',
+          );
+        }
+        _finishPurchase(
+          PurchaseOutcome.deferred,
+          productId: existingReply ? null : event.productId,
         );
-        _finishPurchase(PurchaseOutcome.deferred, productId: event.productId);
         if (_restoring) _bumpRestoreQuietTimer();
       case IapEventType.verificationFailed:
-        final String message =
-            event.message ?? 'This purchase could not be verified.';
+        _restoreVerificationDone();
+        final bool existingReply = _isExistingSubscriptionReply(event);
+        String message =
+            event.message ?? SubscriptionMessages.purchaseUnverified;
+        if (existingReply &&
+            RegExp(
+              r'(another|different).*account',
+              caseSensitive: false,
+            ).hasMatch(message)) {
+          message = SubscriptionMessages.storeAccountUsedElsewhere(
+            isIOS: _platform == StorePlatform.apple,
+          );
+        }
         if (_restoring) {
           _restoreError = message;
           _bumpRestoreQuietTimer();
         }
-        if (_isCurrent(event.productId) || _restoring) {
+        if (_isCurrent(event.productId) || _restoring || existingReply) {
           errorMessage.value = message;
         }
-        _finishPurchase(PurchaseOutcome.failed, productId: event.productId);
+        _finishPurchase(
+          PurchaseOutcome.failed,
+          productId: existingReply ? null : event.productId,
+        );
       case IapEventType.purchaseCanceled:
         _finishPurchase(PurchaseOutcome.cancelled, productId: event.productId);
       case IapEventType.purchaseFailed:
+        logSubscriptionError('purchase failed', event.error ?? event.message);
         if (_isCurrent(event.productId)) {
-          errorMessage.value = event.message ?? 'Purchase failed.';
+          errorMessage.value = friendlySubscriptionError(
+            event.error,
+            fallback: SubscriptionMessages.storeFailed,
+          );
         }
         _finishPurchase(PurchaseOutcome.failed, productId: event.productId);
       case IapEventType.error:
-        if (event.productId != null && _isCurrent(event.productId)) {
-          errorMessage.value = event.message ?? 'Something went wrong.';
-          _finishPurchase(PurchaseOutcome.failed, productId: event.productId);
-        }
+        // Internal store problems (e.g. finishing an already-verified
+        // transaction) are retried by the store; the verification outcome
+        // event that follows decides what the user sees. Never fail a
+        // purchase or show raw text here.
+        logSubscriptionError('store', event.error ?? event.message);
       case IapEventType.storeUnavailable:
-        errorMessage.value = event.message;
+        errorMessage.value = SubscriptionMessages.storeUnavailable;
       case IapEventType.restoreFinished:
         if (_restoring) _bumpRestoreQuietTimer();
       default:
         break;
     }
+  }
+
+  /// While buying plan B, the App Store may answer with the *existing*
+  /// plan-A transaction: the change is scheduled for the next renewal
+  /// (downgrade / crossgrade in the subscription group). Recognised by a
+  /// verified, same-group, different-product transaction that was purchased
+  /// before this purchase started. Returns the copy to show, else null.
+  String? _scheduledSwitchMessageFor(IapEvent event) {
+    final String? pending = _pendingProductId;
+    if (event.type != IapEventType.purchaseCompleted ||
+        pending == null ||
+        !_isExistingSubscriptionReply(event)) {
+      return null;
+    }
+    final Map<String, dynamic>? payload = jwsPayload(
+      event.purchase!.verificationData.serverVerificationData,
+    );
+    final int? expiresMs = (payload?['expiresDate'] as num?)?.toInt();
+    return scheduledSwitchMessage(
+      newPlan: _planName(pending),
+      currentPlan: _planName(event.productId),
+      startsAt: expiresMs == null
+          ? null
+          : DateTime.fromMillisecondsSinceEpoch(expiresMs, isUtc: true),
+    );
+  }
+
+  /// True when the store answered the purchase in progress with the
+  /// subscription this store account ALREADY has (another product of the
+  /// same group, bought before this purchase started) — StoreKit 2 does this
+  /// for "You're currently subscribed" and for scheduled plan changes.
+  /// Whatever the backend says about that transaction is the answer to the
+  /// current purchase; waiting for the requested product would only time out.
+  bool _isExistingSubscriptionReply(IapEvent event) {
+    final String? pending = _pendingProductId;
+    final PurchaseDetails? purchase = event.purchase;
+    final DateTime? startedAt = _purchaseStartedAt;
+    if (pending == null ||
+        purchase == null ||
+        startedAt == null ||
+        event.productId == pending ||
+        !LociIapProducts.all.contains(event.productId)) {
+      return false;
+    }
+    final Map<String, dynamic>? payload = jwsPayload(
+      purchase.verificationData.serverVerificationData,
+    );
+    final int? purchasedMs =
+        (payload?['purchaseDate'] as num?)?.toInt() ??
+        int.tryParse(purchase.transactionDate ?? '');
+    // A transaction created after the purchase started is genuinely new
+    // (e.g. a renewal), not the store's reply.
+    return purchasedMs != null &&
+        DateTime.fromMillisecondsSinceEpoch(
+          purchasedMs,
+        ).isBefore(startedAt.subtract(const Duration(seconds: 5)));
+  }
+
+  static DateTime? _expiresOf(IapEvent event) {
+    final Map<String, dynamic>? payload = jwsPayload(
+      event.purchase?.verificationData.serverVerificationData ?? '',
+    );
+    final int? ms = (payload?['expiresDate'] as num?)?.toInt();
+    return ms == null ? null : DateTime.fromMillisecondsSinceEpoch(ms);
+  }
+
+  void _rememberScheduledSwitch(String? productId, DateTime? until) {
+    scheduledSwitchProductId.value = productId;
+    final String? user = _currentUserId();
+    if (productId == null || user == null) return;
+    // Without an expiry, fall back to the longest monthly period.
+    final DateTime end = until ?? _now().add(const Duration(days: 31));
+    unawaited(
+      _switchStore
+          .write(
+            _switchKey,
+            jsonEncode(<String, Object>{
+              'user': user,
+              'product': productId,
+              'until': end.toUtc().toIso8601String(),
+            }),
+          )
+          .catchError((Object e) => logSubscriptionError('save switch', e)),
+    );
+  }
+
+  /// Restores a store-scheduled plan change for the signed-in account; a
+  /// record for another account or a past period is dropped.
+  Future<void> _loadScheduledSwitch() async {
+    try {
+      final String? raw = await _switchStore.read(_switchKey);
+      if (raw == null) return;
+      final Object? json = jsonDecode(raw);
+      final String? user = _currentUserId();
+      if (json is! Map || user == null || json['user'] != user) return;
+      final DateTime? until = DateTime.tryParse('${json['until']}');
+      final Object? product = json['product'];
+      if (until == null || !until.isAfter(_now()) || product is! String) {
+        await _switchStore.delete(_switchKey);
+        return;
+      }
+      scheduledSwitchProductId.value ??= product;
+    } catch (e) {
+      logSubscriptionError('load switch', e);
+    }
+  }
+
+  static String _planName(String? productId) {
+    for (final StoreSubscriptionPlan plan in StoreSubscriptionPlan.catalog) {
+      if (plan.productId == productId) return plan.name;
+    }
+    return 'your new plan';
   }
 
   bool _isCurrent(String? productId) =>
@@ -466,7 +742,7 @@ class SubscriptionController extends GetxController
 
   Future<PurchaseOutcome> purchase(String productId) async {
     if (!isSupportedPlatform) {
-      errorMessage.value = 'Subscriptions are not available on this device.';
+      errorMessage.value = SubscriptionMessages.storeUnavailable;
       return PurchaseOutcome.failed;
     }
     if (isPurchasing.value || productFor(productId) == null) {
@@ -485,6 +761,7 @@ class SubscriptionController extends GetxController
     final Completer<PurchaseOutcome> result = Completer<PurchaseOutcome>();
     _purchaseResult = result;
     _pendingProductId = productId;
+    _purchaseStartedAt = _now();
 
     try {
       final String? token = await _accountToken(userId);
@@ -494,7 +771,11 @@ class SubscriptionController extends GetxController
       );
       if (!started) _finishPurchase(PurchaseOutcome.failed);
     } catch (error) {
-      errorMessage.value = _friendly(error);
+      logSubscriptionError('purchase', error);
+      errorMessage.value = friendlySubscriptionError(
+        error,
+        fallback: SubscriptionMessages.storeFailed,
+      );
       _finishPurchase(PurchaseOutcome.failed);
     }
 
@@ -532,31 +813,45 @@ class SubscriptionController extends GetxController
 
   // ── Restore ──────────────────────────────────────────────────────────────
 
-  Future<void> restorePurchases() async {
-    if (_restoring) return;
+  Completer<RestoreOutcome>? _restoreResult;
+
+  /// Restores store purchases and completes once the backend has answered
+  /// for every restored transaction.
+  Future<RestoreOutcome> restorePurchases() async {
+    if (_restoring) {
+      return _restoreResult?.future ?? Future.value(RestoreOutcome.failed);
+    }
     if (!isSupportedPlatform) {
-      errorMessage.value = 'Subscriptions are not available on this device.';
-      return;
+      errorMessage.value = SubscriptionMessages.storeUnavailable;
+      return RestoreOutcome.failed;
     }
     final String userId = _currentUserId() ?? '';
     if (userId.isEmpty) {
       errorMessage.value = 'Sign in to restore purchases.';
-      return;
+      return RestoreOutcome.failed;
     }
+    final Completer<RestoreOutcome> result = Completer<RestoreOutcome>();
+    _restoreResult = result;
     errorMessage.value = null;
     infoMessage.value = null;
     _restoring = true;
     isRestoring.value = true;
     _restoredOk = 0;
+    _restoreInFlight = 0;
     _restoreError = null;
     try {
       final String? token = await _accountToken(userId);
       await _iapService.restorePurchases(applicationUserName: token);
       _bumpRestoreQuietTimer();
     } catch (error) {
-      errorMessage.value = _friendly(error);
-      _endRestore();
+      logSubscriptionError('restore', error);
+      errorMessage.value = friendlySubscriptionError(
+        error,
+        fallback: SubscriptionMessages.restoreFailed,
+      );
+      _endRestore(RestoreOutcome.failed);
     }
+    return result.future;
   }
 
   /// Restored items arrive on the purchase stream; finish once it has been
@@ -564,24 +859,74 @@ class SubscriptionController extends GetxController
   void _bumpRestoreQuietTimer() {
     _restoreQuietTimer?.cancel();
     _restoreQuietTimer = Timer(_restoreQuietPeriod, () async {
+      // Still waiting on the backend for a restored transaction; its outcome
+      // event re-arms this timer.
+      if (_restoreInFlight > 0) return;
       await _safeRefreshStatus();
+      final RestoreOutcome outcome;
       if (_restoredOk > 0) {
         errorMessage.value = null;
         infoMessage.value = 'Your purchases have been restored.';
+        outcome = RestoreOutcome.restored;
       } else if (_restoreError != null) {
         errorMessage.value = _restoreError;
+        outcome = RestoreOutcome.inactive;
       } else if (infoMessage.value == null) {
         infoMessage.value = 'No purchases to restore.';
+        outcome = RestoreOutcome.nothing;
+      } else {
+        // Pending / deferred activation message already set.
+        outcome = RestoreOutcome.pending;
       }
-      _endRestore();
+      _endRestore(outcome);
     });
   }
 
-  void _endRestore() {
+  void _restoreVerificationDone() {
+    if (_restoreInFlight > 0) _restoreInFlight--;
+  }
+
+  void _endRestore(RestoreOutcome outcome) {
     _restoreQuietTimer?.cancel();
     _restoreQuietTimer = null;
     _restoring = false;
     isRestoring.value = false;
+    final Completer<RestoreOutcome>? result = _restoreResult;
+    _restoreResult = null;
+    if (result != null && !result.isCompleted) result.complete(outcome);
+  }
+
+  // ── Plans retry ──────────────────────────────────────────────────────────
+
+  /// No store product loaded (offline, store hiccup) — the plans screen
+  /// offers "Try again".
+  bool get plansUnavailable =>
+      monthlyProduct.value == null && yearlyProduct.value == null;
+
+  Future<void> retryLoadingPlans() async {
+    if (isLoading.value || !isSupportedPlatform) return;
+    isLoading.value = true;
+    errorMessage.value = null;
+    try {
+      await _iapService.initialize();
+      if (!_iapService.isAvailable) {
+        errorMessage.value = SubscriptionMessages.storeUnavailable;
+        return;
+      }
+      if (plansUnavailable) await _iapService.reloadProducts();
+      _updateProducts();
+      errorMessage.value = plansUnavailable
+          ? SubscriptionMessages.plansUnavailable
+          : null;
+    } catch (error) {
+      logSubscriptionError('reload plans', error);
+      errorMessage.value = friendlySubscriptionError(
+        error,
+        fallback: SubscriptionMessages.plansUnavailable,
+      );
+    } finally {
+      isLoading.value = false;
+    }
   }
 
   /// User-facing text for an error. Never shows a raw platform exception or
@@ -590,22 +935,10 @@ class SubscriptionController extends GetxController
   @visibleForTesting
   static String friendlyError(Object error) => _friendly(error);
 
-  static String _friendly(Object error) {
-    if (error is PlatformException) {
-      final String code = error.code.toLowerCase();
-      if (code.contains('cancel')) return 'Purchase cancelled.';
-      if (code.contains('network')) {
-        return 'Couldn\'t reach the App Store. Check your connection and try again.';
-      }
-      return 'The store couldn\'t complete the purchase. If you\'re already '
-          'subscribed with this Apple ID / Google account, tap Restore Purchases.';
-    }
-    final String text = error.toString();
-    return text
-        .replaceFirst('Exception: ', '')
-        .replaceFirst('Bad state: ', '')
-        .replaceFirst('Invalid argument(s): ', '');
-  }
+  static String _friendly(Object error) => friendlySubscriptionError(
+    error,
+    fallback: SubscriptionMessages.storeFailed,
+  );
 
   @override
   void onClose() {

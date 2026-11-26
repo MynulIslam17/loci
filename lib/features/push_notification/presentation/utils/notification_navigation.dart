@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:get/get.dart';
 import 'package:loci/core/enums/notification_type.dart';
 import 'package:loci/features/auth/presentation/controllers/auth_controller.dart';
@@ -18,7 +20,8 @@ class NotificationNavigation {
   static void openFromPayload(NotificationPayload payload) {
     final data = payload.data;
     final notification = NotificationModel(
-      id: (data['notificationId'] ?? data['_id'] ?? data['id'] ?? '').toString(),
+      id: (data['notificationId'] ?? data['_id'] ?? data['id'] ?? '')
+          .toString(),
       recipient: (data['recipient'] ?? '').toString(),
       type: (data['type'] ?? '').toString(),
       title: payload.title ?? '',
@@ -91,7 +94,14 @@ class NotificationNavigation {
         }
         break;
       case NotificationType.businessClaimSubmitted:
+        Get.toNamed(AppRoutes.searchBusiness);
+        break;
       case NotificationType.businessClaimApproved:
+        // Approval makes the user a business owner — pick up the new role
+        // (drawer, subscriptions) without a re-login.
+        if (Get.isRegistered<AuthController>()) {
+          unawaited(Get.find<AuthController>().refreshUser());
+        }
         Get.toNamed(AppRoutes.searchBusiness);
         break;
       case NotificationType.questionAnswered:

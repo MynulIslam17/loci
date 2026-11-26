@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:get/get.dart';
@@ -5,6 +7,7 @@ import 'package:loci/core/constants/app_text_style.dart';
 import 'package:loci/core/theme/theme_extention.dart';
 import 'package:loci/features/auth/presentation/controllers/auth_controller.dart';
 import 'package:loci/features/main_nav/presentation/controllers/nav_controller.dart';
+import 'package:loci/features/subscription/presentation/subscription_entry.dart';
 import 'package:loci/features/raffles/presentation/pages/active_raffles_screen.dart';
 import 'package:loci/features/routes/presentation/pages/explore_routes_screen.dart';
 import 'package:loci/features/chat/presentation/widgets/chat_avatar.dart';
@@ -17,6 +20,9 @@ import 'package:loci/shared/widgets/confirm_dialog.dart';
 /// - Top: Modern elevated profile header with avatar, name, email, and role badge.
 /// - Middle: Scrollable list of sleek navigation cards with category icons.
 /// - Bottom: Pinned Sign Out action and app version label.
+export 'package:loci/features/subscription/presentation/subscription_entry.dart'
+    show subscriptionRouteFor;
+
 class AppNavigationDrawer extends StatelessWidget {
   const AppNavigationDrawer({super.key});
 
@@ -40,16 +46,11 @@ class AppNavigationDrawer extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = context.colorScheme;
 
-    // Members (role `user`) can't use subscriptions — hide that entry until a
-    // business claim promotes them to business_owner.
-    final canSubscribe = Get.find<AuthController>().canAccessSubscription;
-
     /// Everything except the pinned danger action (Sign Out) scrolls.
+    /// Subscription is listed for everyone — locked for members until their
+    /// business claim is approved (see [_buildTile]).
     final scrollableItems = _menuItems
         .where((item) => item['isDanger'] != true)
-        .where(
-          (item) => item['requiresSubscription'] != true || canSubscribe,
-        )
         .toList();
     final pinnedItems = _menuItems
         .where((item) => item['isDanger'] == true)
@@ -122,8 +123,9 @@ class AppNavigationDrawer extends StatelessWidget {
 
     return Obx(() {
       final user = authController.userModel;
-      final userName =
-          (user?.name ?? '').trim().isNotEmpty ? user!.name : 'Guest User';
+      final userName = (user?.name ?? '').trim().isNotEmpty
+          ? user!.name
+          : 'Guest User';
       final userEmail = (user?.email ?? '').trim();
       final role = user?.role;
 
@@ -223,11 +225,36 @@ class AppNavigationDrawer extends StatelessWidget {
 
   /// Single drawer row with modern rounded card hover styling.
   Widget _buildTile(BuildContext context, Map<String, dynamic> item) {
+    final isSubscription = item['title'] == 'Subscription';
+    if (isSubscription) {
+      // Reactive: unlocks the moment the role becomes business_owner.
+      return Obx(() {
+        final bool locked = subscriptionLocked(Get.find<AuthController>());
+        return _buildTileBody(context, item, subscriptionLocked: locked);
+      });
+    }
+    return _buildTileBody(context, item);
+  }
+
+  Widget _buildTileBody(
+    BuildContext context,
+    Map<String, dynamic> item, {
+    bool? subscriptionLocked,
+  }) {
     final colors = context.colorScheme;
     final isDanger = item['isDanger'] ?? false;
-    final isSubscription = item['title'] == 'Subscription';
-    final Color textColor = isDanger ? Colors.red : colors.onSurface;
-    final Color iconColor = isDanger ? Colors.red : colors.primary;
+    final bool isSubscription = subscriptionLocked != null;
+    final bool locked = subscriptionLocked ?? false;
+    final Color textColor = isDanger
+        ? Colors.red
+        : locked
+        ? colors.onSurfaceVariant
+        : colors.onSurface;
+    final Color iconColor = isDanger
+        ? Colors.red
+        : locked
+        ? colors.onSurfaceVariant
+        : colors.primary;
 
     return Material(
       color: Colors.transparent,
@@ -271,8 +298,18 @@ class AppNavigationDrawer extends StatelessWidget {
                 ),
               ),
 
-              /// Pro / Crown Badge for Subscription
-              if (isSubscription)
+              /// Locked for members; Pro / Crown badge for owners.
+              if (locked)
+                Padding(
+                  padding: const EdgeInsets.only(right: 6),
+                  child: Icon(
+                    Icons.lock_outline_rounded,
+                    size: 18,
+                    color: colors.onSurfaceVariant,
+                    semanticLabel: 'Locked',
+                  ),
+                )
+              else if (isSubscription)
                 Container(
                   margin: const EdgeInsets.only(right: 6),
                   padding: const EdgeInsets.symmetric(
@@ -374,7 +411,7 @@ class AppNavigationDrawer extends StatelessWidget {
         break;
 
       case "Subscription":
-        Get.toNamed(AppRoutes.subscription);
+        unawaited(openSubscription());
         break;
 
       case "Sign Out":

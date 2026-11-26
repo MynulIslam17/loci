@@ -69,8 +69,7 @@ class _MessageScreenState extends State<MessageScreen> {
   /// In the reversed list, maxScrollExtent is the visual top (oldest side).
   void _onScroll() {
     if (!_scroll.hasClients) return;
-    if (_scroll.position.pixels >=
-        _scroll.position.maxScrollExtent - 200) {
+    if (_scroll.position.pixels >= _scroll.position.maxScrollExtent - 200) {
       controller.loadOlderMessages();
     }
   }
@@ -250,66 +249,68 @@ class _MessageScreenState extends State<MessageScreen> {
                   );
                 }
 
-              final count = ctrl.messages.length;
-              final showTopLoader = ctrl.isLoadingMore.value;
-              // Reverse list: index 0 is the bottom, where the typing
-              // bubble sits while the other person is typing.
-              final showTyping = ctrl.otherIsTyping.value;
-              final typingOffset = showTyping ? 1 : 0;
+                final count = ctrl.messages.length;
+                final showTopLoader = ctrl.isLoadingMore.value;
+                // Reverse list: index 0 is the bottom, where the typing
+                // bubble sits while the other person is typing.
+                final showTyping = ctrl.otherIsTyping.value;
+                final typingOffset = showTyping ? 1 : 0;
 
-              return ListView.builder(
-                controller: _scroll,
-                reverse: true,
-                keyboardDismissBehavior:
-                    ScrollViewKeyboardDismissBehavior.onDrag,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 20,
-                ),
-                itemCount: count + typingOffset + (showTopLoader ? 1 : 0),
-                itemBuilder: (context, index) {
-                  if (showTyping && index == 0) {
-                    return _TypingBubble(
-                      otherName: _other.name,
-                      otherAvatar: _other.avatar,
-                    );
-                  }
-                  final msgIndex = index - typingOffset;
-                  if (msgIndex >= count) {
-                    return const Padding(
-                      padding: EdgeInsets.symmetric(vertical: 12),
-                      child: Center(
-                        child: SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: CircularProgressIndicator(strokeWidth: 2),
+                return ListView.builder(
+                  controller: _scroll,
+                  reverse: true,
+                  keyboardDismissBehavior:
+                      ScrollViewKeyboardDismissBehavior.onDrag,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 20,
+                  ),
+                  itemCount: count + typingOffset + (showTopLoader ? 1 : 0),
+                  itemBuilder: (context, index) {
+                    if (showTyping && index == 0) {
+                      return _TypingBubble(
+                        otherName: _other.name,
+                        otherAvatar: _other.avatar,
+                      );
+                    }
+                    final msgIndex = index - typingOffset;
+                    if (msgIndex >= count) {
+                      return const Padding(
+                        padding: EdgeInsets.symmetric(vertical: 12),
+                        child: Center(
+                          child: SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          ),
                         ),
-                      ),
+                      );
+                    }
+                    final msg = ctrl.messages[count - 1 - msgIndex];
+                    final actionable =
+                        !msg.isDeleted &&
+                        msg.status != 'sending' &&
+                        msg.status != 'failed';
+                    return _MessageBubble(
+                      message: msg,
+                      isMe: ctrl.isMine(msg),
+                      otherAvatar: _other.avatar,
+                      otherName: _other.name,
+                      myReaction: msg.myReaction(ctrl.myId),
+                      onLongPress: () => _showMessageActions(msg),
+                      onRetry: () => ctrl.retryMessage(msg),
+                      onDoubleTap: actionable
+                          ? () => ctrl.toggleReaction(msg, '❤️')
+                          : null,
+                      // Tap a chip: same emoji removes my reaction, a
+                      // different one switches to it.
+                      onToggleReaction: actionable
+                          ? (emoji) => ctrl.toggleReaction(msg, emoji)
+                          : null,
                     );
-                  }
-                  final msg = ctrl.messages[count - 1 - msgIndex];
-                  final actionable =
-                      !msg.isDeleted && msg.status != 'sending' && msg.status != 'failed';
-                  return _MessageBubble(
-                    message: msg,
-                    isMe: ctrl.isMine(msg),
-                    otherAvatar: _other.avatar,
-                    otherName: _other.name,
-                    myReaction: msg.myReaction(ctrl.myId),
-                    onLongPress: () => _showMessageActions(msg),
-                    onRetry: () => ctrl.retryMessage(msg),
-                    onDoubleTap: actionable
-                        ? () => ctrl.toggleReaction(msg, '❤️')
-                        : null,
-                    // Tap a chip: same emoji removes my reaction, a
-                    // different one switches to it.
-                    onToggleReaction: actionable
-                        ? (emoji) => ctrl.toggleReaction(msg, emoji)
-                        : null,
-                  );
-                },
-              );
-            }),
+                  },
+                );
+              }),
             ),
           ),
           _buildInput(context),
@@ -344,10 +345,7 @@ class _MessageScreenState extends State<MessageScreen> {
               const SizedBox(height: 12),
               if (isMe && failed)
                 ListTile(
-                  leading: Icon(
-                    Icons.refresh,
-                    color: colorScheme.primary,
-                  ),
+                  leading: Icon(Icons.refresh, color: colorScheme.primary),
                   title: const Text('Retry sending'),
                   onTap: () {
                     Navigator.pop(sheetContext);
@@ -635,93 +633,99 @@ class _MessageBubble extends StatelessWidget {
                         onLongPress: onLongPress,
                         onDoubleTap: onDoubleTap,
                         child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 14,
-                      vertical: 10,
-                    ),
-                    decoration: BoxDecoration(
-                      color: isMe
-                          ? (message.status == 'failed'
-                              ? colorScheme.primary.withValues(alpha: 0.8)
-                              : colorScheme.primary)
-                          : colorScheme.onSurface.withValues(alpha: 0.08),
-                      borderRadius: BorderRadius.only(
-                        topLeft: const Radius.circular(16),
-                        topRight: const Radius.circular(16),
-                        bottomLeft: Radius.circular(isMe ? 16 : 2),
-                        bottomRight: Radius.circular(isMe ? 2 : 16),
-                      ),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        if (!deleted && reply != null) ...[
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 8,
-                              vertical: 6,
-                            ),
-                            decoration: BoxDecoration(
-                              color: (isMe ? Colors.white : colorScheme.primary)
-                                  .withValues(alpha: 0.12),
-                              borderRadius: BorderRadius.circular(8),
-                              border: Border(
-                                left: BorderSide(
-                                  color: isMe
-                                      ? Colors.white70
-                                      : colorScheme.primary,
-                                  width: 3,
-                                ),
-                              ),
-                            ),
-                            child: Text(
-                              // Null content on a non-deleted quote means I
-                              // removed the original from my own history.
-                              (reply.content ?? '').isNotEmpty
-                                  ? reply.content!
-                                  : 'Original message unavailable',
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
-                              style:
-                                  AppTextStyle.textXs(
-                                    color: isMe
-                                        ? Colors.white70
-                                        : colorScheme.onSurfaceVariant,
-                                  ).copyWith(
-                                    fontStyle: (reply.content ?? '').isEmpty
-                                        ? FontStyle.italic
-                                        : FontStyle.normal,
-                                  ),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 14,
+                            vertical: 10,
+                          ),
+                          decoration: BoxDecoration(
+                            color: isMe
+                                ? (message.status == 'failed'
+                                      ? colorScheme.primary.withValues(
+                                          alpha: 0.8,
+                                        )
+                                      : colorScheme.primary)
+                                : colorScheme.onSurface.withValues(alpha: 0.08),
+                            borderRadius: BorderRadius.only(
+                              topLeft: const Radius.circular(16),
+                              topRight: const Radius.circular(16),
+                              bottomLeft: Radius.circular(isMe ? 16 : 2),
+                              bottomRight: Radius.circular(isMe ? 2 : 16),
                             ),
                           ),
-                          const SizedBox(height: 6),
-                        ],
-                        Text(
-                          // Messenger-style tombstone: the row stays visible.
-                          deleted
-                              ? (isMe
-                                    ? 'You unsent a message'
-                                    : '${otherName.isEmpty ? 'They' : otherName} unsent a message')
-                              : (message.content ?? ''),
-                          style:
-                              AppTextStyle.textSm(
-                                color: deleted
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              if (!deleted && reply != null) ...[
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 8,
+                                    vertical: 6,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color:
+                                        (isMe
+                                                ? Colors.white
+                                                : colorScheme.primary)
+                                            .withValues(alpha: 0.12),
+                                    borderRadius: BorderRadius.circular(8),
+                                    border: Border(
+                                      left: BorderSide(
+                                        color: isMe
+                                            ? Colors.white70
+                                            : colorScheme.primary,
+                                        width: 3,
+                                      ),
+                                    ),
+                                  ),
+                                  child: Text(
+                                    // Null content on a non-deleted quote means I
+                                    // removed the original from my own history.
+                                    (reply.content ?? '').isNotEmpty
+                                        ? reply.content!
+                                        : 'Original message unavailable',
+                                    maxLines: 2,
+                                    overflow: TextOverflow.ellipsis,
+                                    style:
+                                        AppTextStyle.textXs(
+                                          color: isMe
+                                              ? Colors.white70
+                                              : colorScheme.onSurfaceVariant,
+                                        ).copyWith(
+                                          fontStyle:
+                                              (reply.content ?? '').isEmpty
+                                              ? FontStyle.italic
+                                              : FontStyle.normal,
+                                        ),
+                                  ),
+                                ),
+                                const SizedBox(height: 6),
+                              ],
+                              Text(
+                                // Messenger-style tombstone: the row stays visible.
+                                deleted
                                     ? (isMe
-                                          ? Colors.white70
-                                          : colorScheme.onSurfaceVariant)
-                                    : (isMe
-                                          ? Colors.white
-                                          : colorScheme.onSurface),
-                              ).copyWith(
-                                fontStyle: deleted
-                                    ? FontStyle.italic
-                                    : FontStyle.normal,
+                                          ? 'You unsent a message'
+                                          : '${otherName.isEmpty ? 'They' : otherName} unsent a message')
+                                    : (message.content ?? ''),
+                                style:
+                                    AppTextStyle.textSm(
+                                      color: deleted
+                                          ? (isMe
+                                                ? Colors.white70
+                                                : colorScheme.onSurfaceVariant)
+                                          : (isMe
+                                                ? Colors.white
+                                                : colorScheme.onSurface),
+                                    ).copyWith(
+                                      fontStyle: deleted
+                                          ? FontStyle.italic
+                                          : FontStyle.normal,
+                                    ),
                               ),
+                            ],
+                          ),
                         ),
-                      ],
-                    ),
-                  ),
                       ),
                     ),
                     if (hasReactions)
@@ -738,11 +742,7 @@ class _MessageBubble extends StatelessWidget {
                   ],
                 ),
                 const SizedBox(height: 2),
-                _MetaRow(
-                  message: message,
-                  isMe: isMe,
-                  onRetry: onRetry,
-                ),
+                _MetaRow(message: message, isMe: isMe, onRetry: onRetry),
               ],
             ),
           ),
@@ -802,10 +802,7 @@ class _ReactionChips extends StatelessWidget {
               children: [
                 // No color on the emoji span: forcing a color makes ❤️ fall
                 // back to the monochrome (black) text glyph.
-                TextSpan(
-                  text: entry.key,
-                  style: const TextStyle(fontSize: 12),
-                ),
+                TextSpan(text: entry.key, style: const TextStyle(fontSize: 12)),
                 if (entry.value > 1)
                   TextSpan(
                     text: ' ${entry.value}',
@@ -816,10 +813,7 @@ class _ReactionChips extends StatelessWidget {
           ),
         );
         if (onToggle == null) return chip;
-        return GestureDetector(
-          onTap: () => onToggle!(entry.key),
-          child: chip,
-        );
+        return GestureDetector(onTap: () => onToggle!(entry.key), child: chip);
       }).toList(),
     );
   }
@@ -829,11 +823,7 @@ class _MetaRow extends StatelessWidget {
   final ChatMessageModel message;
   final bool isMe;
   final VoidCallback? onRetry;
-  const _MetaRow({
-    required this.message,
-    required this.isMe,
-    this.onRetry,
-  });
+  const _MetaRow({required this.message, required this.isMe, this.onRetry});
 
   @override
   Widget build(BuildContext context) {
@@ -867,11 +857,7 @@ class _MetaRow extends StatelessWidget {
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(
-                    Icons.error_outline,
-                    size: 13,
-                    color: colorScheme.error,
-                  ),
+                  Icon(Icons.error_outline, size: 13, color: colorScheme.error),
                   const SizedBox(width: 2),
                   Text(
                     'Retry',
@@ -896,11 +882,7 @@ class _MetaRow extends StatelessWidget {
   /// WhatsApp flow: clock while sending, ! failed, ✓ sent, ✓✓ delivered, blue ✓✓ read.
   Widget _statusIcon(ColorScheme colorScheme) {
     if (message.status == 'failed') {
-      return Icon(
-        Icons.error_outline,
-        size: 14,
-        color: colorScheme.error,
-      );
+      return Icon(Icons.error_outline, size: 14, color: colorScheme.error);
     }
     if (message.status == 'sending') {
       return Icon(

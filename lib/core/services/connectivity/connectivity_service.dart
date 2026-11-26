@@ -7,8 +7,8 @@ import 'package:get/get.dart';
 class ConnectivityService extends GetxService {
   static ConnectivityService get instance =>
       Get.isRegistered<ConnectivityService>()
-          ? Get.find<ConnectivityService>()
-          : Get.put(ConnectivityService(), permanent: true);
+      ? Get.find<ConnectivityService>()
+      : Get.put(ConnectivityService(), permanent: true);
 
   static bool get isCurrentOnline {
     if (!Get.isRegistered<ConnectivityService>()) return true;
@@ -37,7 +37,9 @@ class ConnectivityService extends GetxService {
   void onInit() {
     super.onInit();
     _checkInitial();
-    _subscription = _connectivity.onConnectivityChanged.listen(_onConnectivityChanged);
+    _subscription = _connectivity.onConnectivityChanged.listen(
+      _onConnectivityChanged,
+    );
   }
 
   Future<void> _checkInitial() async {
@@ -58,7 +60,8 @@ class ConnectivityService extends GetxService {
 
   Future<void> _processResults(List<ConnectivityResult> results) async {
     final currentSet = results.toSet();
-    final hasNoConnection = results.contains(ConnectivityResult.none) && results.length == 1;
+    final hasNoConnection =
+        results.contains(ConnectivityResult.none) && results.length == 1;
     final nowOffline = hasNoConnection || results.isEmpty;
 
     if (nowOffline) {
@@ -83,7 +86,8 @@ class ConnectivityService extends GetxService {
 
   void _setOnline(Set<ConnectivityResult> currentSet) {
     final wasOffline = isOffline.value;
-    final interfaceChanged = _previousResults.isNotEmpty &&
+    final interfaceChanged =
+        _previousResults.isNotEmpty &&
         !_previousResults.contains(ConnectivityResult.none) &&
         !_setEquals(_previousResults, currentSet);
 
@@ -109,8 +113,9 @@ class ConnectivityService extends GetxService {
 
   Future<bool> _quickInternetCheck() async {
     try {
-      final lookup = await InternetAddress.lookup('google.com')
-          .timeout(const Duration(milliseconds: 1500));
+      final lookup = await InternetAddress.lookup(
+        'google.com',
+      ).timeout(const Duration(milliseconds: 1500));
       return lookup.isNotEmpty && lookup[0].rawAddress.isNotEmpty;
     } catch (_) {
       return false;

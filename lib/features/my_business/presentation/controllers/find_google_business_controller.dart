@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:loci/features/my_business/data/models/find_business_response.dart';
@@ -21,6 +23,15 @@ class FindGoogleBusinessController extends GetxController {
 
   final ScrollController scrollController = ScrollController();
 
+  /// Wait for a pause in typing before searching (one request, not one per
+  /// keystroke).
+  static const Duration searchDebounce = Duration(milliseconds: 350);
+  Timer? _debounce;
+
+  /// Bumped on every new search / selection so a slow, older response can't
+  /// overwrite newer results (or reopen the list after a selection).
+  int _generation = 0;
+
   bool get hasNextPage => meta.value?.hasNextPage ?? false;
   int get currentPage => meta.value?.page ?? 1;
 
@@ -32,6 +43,7 @@ class FindGoogleBusinessController extends GetxController {
 
   @override
   void onClose() {
+    _debounce?.cancel();
     scrollController.dispose();
     super.onClose();
   }
@@ -56,6 +68,7 @@ class FindGoogleBusinessController extends GetxController {
   }
 
   Future<void> fetchPage({int page = 1}) async {
+    final int generation = _generation;
     errorMessage.value = null;
     _setLoading(true);
 
@@ -65,14 +78,28 @@ class FindGoogleBusinessController extends GetxController {
         limit: 10,
         search: search.value,
       );
+      if (generation != _generation) return;
       items.assignAll(result.data);
       meta.value = result.meta;
     } catch (e) {
-      errorMessage.value = e.toString().replaceFirst('Exception: ', '');
+      if (generation != _generation) return;
+      errorMessage.value = _friendlyError(e);
       items.clear();
     } finally {
-      _setLoading(false);
+      if (generation == _generation) _setLoading(false);
     }
+  }
+
+  static String _friendlyError(Object e) {
+    final String text = e.toString().replaceFirst('Exception: ', '').trim();
+    final bool technical =
+        text.isEmpty ||
+        text.length > 160 ||
+        RegExp(
+          r'error:|exception|null|socket|[{}<>]|status ?code',
+          caseSensitive: false,
+        ).hasMatch(text);
+    return technical ? 'Couldn\'t search businesses. Please try again.' : text;
   }
 
   Future<void> loadMore() async {
@@ -80,16 +107,19 @@ class FindGoogleBusinessController extends GetxController {
 
     _setLoadingMore(true);
 
+    final int generation = _generation;
     try {
       final result = await _service.findGoogleBusinesses(
         page: currentPage + 1,
         limit: 10,
         search: search.value,
       );
+      if (generation != _generation) return;
       items.addAll(result.data);
       meta.value = result.meta;
     } catch (e) {
-      errorMessage.value = e.toString().replaceFirst('Exception: ', '');
+      if (generation != _generation) return;
+      errorMessage.value = _friendlyError(e);
     } finally {
       _setLoadingMore(false);
     }
@@ -97,6 +127,8 @@ class FindGoogleBusinessController extends GetxController {
 
   void searchBusinesses(String query) {
     final trimmed = query.trim();
+    _debounce?.cancel();
+    _generation++;
 
     if (trimmed.isEmpty) {
       search.value = null;
@@ -114,10 +146,14 @@ class FindGoogleBusinessController extends GetxController {
 
     search.value = trimmed;
     showResults.value = true;
-    fetchPage();
+    isLoading.value = true; // show the spinner while the user is typing
+    _debounce = Timer(searchDebounce, fetchPage);
   }
 
   void selectBusiness(Business business) {
+    _debounce?.cancel();
+    _generation++;
+    isLoading.value = false;
     selectedBusiness.value = business;
     search.value = null;
     items.clear();
@@ -127,6 +163,10 @@ class FindGoogleBusinessController extends GetxController {
   }
 
   void clearSelectedBusiness() {
+    _debounce?.cancel();
+    _generation++;
+    isLoading.value = false;
+    isLoadingMore.value = false;
     selectedBusiness.value = null;
     search.value = null;
     items.clear();

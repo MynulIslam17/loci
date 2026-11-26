@@ -1,3 +1,4 @@
+import 'package:loci/core/enums/notification_type.dart';
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io' show Platform;
@@ -49,7 +50,9 @@ Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   // it. Data-only payloads are displayed by nobody, and used to disappear
   // silently — those are the ones we have to render ourselves.
   if (message.notification != null) {
-    debugPrint('[FCM] OS already displayed this push (notification block); done.');
+    debugPrint(
+      '[FCM] OS already displayed this push (notification block); done.',
+    );
     return;
   }
 
@@ -87,11 +90,16 @@ class PushNotificationService extends GetxService {
     try {
       await Firebase.initializeApp();
       FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
-      debugPrint('[FCM] ✅ Firebase initialised; background handler registered.');
+      debugPrint(
+        '[FCM] ✅ Firebase initialised; background handler registered.',
+      );
     } catch (e, stack) {
       debugPrint('[FCM] ❌ Firebase setup failed: $e');
-      Logger().e('Firebase setup failed; push notifications are unavailable',
-          error: e, stackTrace: stack);
+      Logger().e(
+        'Firebase setup failed; push notifications are unavailable',
+        error: e,
+        stackTrace: stack,
+      );
     }
   }
 
@@ -156,9 +164,7 @@ class PushNotificationService extends GetxService {
         'Notification permission: ${settings.authorizationStatus.name} '
         '(alert=${settings.alert.name} sound=${settings.sound.name})',
       );
-      debugPrint(
-        '[FCM] permission: ${settings.authorizationStatus.name}',
-      );
+      debugPrint('[FCM] permission: ${settings.authorizationStatus.name}');
       if (settings.authorizationStatus != AuthorizationStatus.authorized &&
           settings.authorizationStatus != AuthorizationStatus.provisional) {
         _logger.w(
@@ -216,7 +222,9 @@ class PushNotificationService extends GetxService {
     try {
       final token = customToken ?? await _resolveToken();
       if (token == null || token.trim().isEmpty) {
-        debugPrint('[FCM] ❌ no device token available; cannot register for pushes.');
+        debugPrint(
+          '[FCM] ❌ no device token available; cannot register for pushes.',
+        );
         return;
       }
 
@@ -344,10 +352,17 @@ class PushNotificationService extends GetxService {
       'route=${Get.currentRoute} data=${message.data}',
     );
 
+    final payload = NotificationPayload.fromRemoteMessage(message);
+
+    // A claim approved while the app is open: the user is now a business
+    // owner — update the role right away (drawer, subscriptions, screens).
+    if (payload.type == NotificationType.businessClaimApproved &&
+        Get.isRegistered<AuthController>()) {
+      unawaited(Get.find<AuthController>().refreshUser());
+    }
+
     // iOS already displayed this push itself; only Android needs us to post.
     if (!Platform.isAndroid) return;
-
-    final payload = NotificationPayload.fromRemoteMessage(message);
 
     // The thread on screen renders its own messages over the socket.
     if (NotificationNavigation.isConversationOnScreen(payload)) {

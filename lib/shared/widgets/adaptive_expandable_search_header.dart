@@ -79,8 +79,8 @@ class AdaptiveExpandableSearchHeader extends StatelessWidget {
         },
         child: isExpanded
             ? (isIOS
-                ? _buildIOSGlassSearchBar(context, colors, isDark)
-                : _buildAndroidSearchBar(context, colors, isDark))
+                  ? _buildIOSGlassSearchBar(context, colors, isDark)
+                  : _buildAndroidSearchBar(context, colors, isDark))
             : _buildCollapsedHeader(context, colors, isDark, isIOS),
       ),
     );
@@ -98,7 +98,8 @@ class AdaptiveExpandableSearchHeader extends StatelessWidget {
       key: const ValueKey('collapsed_header'),
       children: [
         Expanded(
-          child: titleWidget ??
+          child:
+              titleWidget ??
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -126,10 +127,7 @@ class AdaptiveExpandableSearchHeader extends StatelessWidget {
                 ],
               ),
         ),
-        if (trailing != null) ...[
-          const SizedBox(width: 8),
-          trailing!,
-        ],
+        if (trailing != null) ...[const SizedBox(width: 8), trailing!],
         const SizedBox(width: 8),
         _buildCornerSearchButton(context, colors, isDark, isIOS),
       ],
@@ -172,11 +170,7 @@ class AdaptiveExpandableSearchHeader extends StatelessWidget {
               width: 0.8,
             ),
           ),
-          child: Icon(
-            CupertinoIcons.search,
-            size: 20,
-            color: colors.primary,
-          ),
+          child: Icon(CupertinoIcons.search, size: 20, color: colors.primary),
         ),
       );
     }
@@ -201,11 +195,7 @@ class AdaptiveExpandableSearchHeader extends StatelessWidget {
               width: 0.8,
             ),
           ),
-          child: Icon(
-            Icons.search_rounded,
-            size: 22,
-            color: colors.primary,
-          ),
+          child: Icon(Icons.search_rounded, size: 22, color: colors.primary),
         ),
       ),
     );
@@ -419,10 +409,7 @@ class AdaptivePinnedSearchDelegate extends SliverPersistentHeaderDelegate {
   final Widget child;
   final double height;
 
-  const AdaptivePinnedSearchDelegate({
-    required this.child,
-    this.height = 70.0,
-  });
+  const AdaptivePinnedSearchDelegate({required this.child, this.height = 70.0});
 
   @override
   double get minExtent => height;
@@ -446,8 +433,8 @@ class AdaptivePinnedSearchDelegate extends SliverPersistentHeaderDelegate {
         child: Container(
           decoration: BoxDecoration(
             color: colors.surface.withValues(
-                  alpha: isScrolled ? (isDark ? 0.88 : 0.92) : 1.0,
-                ),
+              alpha: isScrolled ? (isDark ? 0.88 : 0.92) : 1.0,
+            ),
             boxShadow: isScrolled
                 ? [
                     BoxShadow(

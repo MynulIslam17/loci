@@ -9,10 +9,11 @@ import 'package:loci/features/my_business/data/models/ad_item_model.dart';
 
 class AdListController extends GetxController {
   AdListController(this._service, [HiveStorageService? storage])
-      : _storage = storage ??
-            (Get.isRegistered<HiveStorageService>()
-                ? Get.find<HiveStorageService>()
-                : (HiveStorageService.isInitialized
+    : _storage =
+          storage ??
+          (Get.isRegistered<HiveStorageService>()
+              ? Get.find<HiveStorageService>()
+              : (HiveStorageService.isInitialized
                     ? HiveStorageService.instance
                     : null));
 
@@ -38,9 +39,7 @@ class AdListController extends GetxController {
     if (_storage != null) {
       final cached = _storage.getFeedList('home_feed_ads');
       if (cached.isNotEmpty) {
-        ads.assignAll(
-          cached.map((e) => AdItemModel.fromJson(e)).toList(),
-        );
+        ads.assignAll(cached.map((e) => AdItemModel.fromJson(e)).toList());
         _fetch.endFirstPage(markFetched: true);
       }
     }
@@ -60,7 +59,10 @@ class AdListController extends GetxController {
     super.onClose();
   }
 
-  Future<void> fetchAds({bool showErrorToast = true, bool isRefresh = false}) async {
+  Future<void> fetchAds({
+    bool showErrorToast = true,
+    bool isRefresh = false,
+  }) async {
     if (isInitialLoading || isRefreshing) return;
 
     // Fast Offline Guard: short-circuit immediately if offline

@@ -74,15 +74,11 @@ class _RouteDetailsScreenState extends State<RouteDetailsScreen> {
   }
 
   Future<void> _openCheckIn() async {
-    final openRouteId =
-        controller.routeDetails?.routeModel.routeId ?? routeId;
+    final openRouteId = controller.routeDetails?.routeModel.routeId ?? routeId;
 
     final result = await Get.toNamed(
       AppRoutes.checkIn,
-      arguments: {
-        'type': 'route',
-        'entityId': openRouteId,
-      },
+      arguments: {'type': 'route', 'entityId': openRouteId},
     );
 
     if (result is Map && result['checkedIn'] == true) {
@@ -108,7 +104,8 @@ class _RouteDetailsScreenState extends State<RouteDetailsScreen> {
         _popWithResult();
       },
       child: Obx(() {
-        final bool showBottomBar = !controller.isLoading &&
+        final bool showBottomBar =
+            !controller.isLoading &&
             controller.errorMessage == null &&
             controller.routeDetails != null;
 
@@ -145,8 +142,9 @@ class _RouteDetailsScreenState extends State<RouteDetailsScreen> {
                         foregroundColor: isCheckedIn
                             ? const Color(0xFF10B981)
                             : colorScheme.onPrimary,
-                        disabledBackgroundColor:
-                            const Color(0xFF10B981).withValues(alpha: 0.15),
+                        disabledBackgroundColor: const Color(
+                          0xFF10B981,
+                        ).withValues(alpha: 0.15),
                         disabledForegroundColor: const Color(0xFF10B981),
                         elevation: isCheckedIn ? 0 : 2,
                         shape: RoundedRectangleBorder(
@@ -224,53 +222,55 @@ class _RouteDetailsScreenState extends State<RouteDetailsScreen> {
                         ),
                         const SizedBox(height: 16),
 
-                    // 3. Interactive Map Section
-                    Card(
-                      color: colorScheme.surfaceContainerHigh,
-                      elevation: 2,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      child: Padding(
-                        padding: const EdgeInsets.all(8.0),
-                        child: AuthenticatedMapImage(
-                          imageUrl: controller.routeDetails?.mapImage,
-                          height: 180,
-                          latitude: controller.routeDetails?.coordinates.lat,
-                          longitude: controller.routeDetails?.coordinates.lng,
-                          locationLabel: route?.title,
-                          isLoading: controller.isLoading,
+                        // 3. Interactive Map Section
+                        Card(
+                          color: colorScheme.surfaceContainerHigh,
+                          elevation: 2,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          child: Padding(
+                            padding: const EdgeInsets.all(8.0),
+                            child: AuthenticatedMapImage(
+                              imageUrl: controller.routeDetails?.mapImage,
+                              height: 180,
+                              latitude:
+                                  controller.routeDetails?.coordinates.lat,
+                              longitude:
+                                  controller.routeDetails?.coordinates.lng,
+                              locationLabel: route?.title,
+                              isLoading: controller.isLoading,
+                            ),
+                          ),
                         ),
-                      ),
-                    ),
 
-                    const SizedBox(height: 24),
+                        const SizedBox(height: 24),
 
-                    // 4. Owner Section
-                    Text(
-                      "Owner",
-                      style: AppTextStyle.textMd(
-                        weight: FontWeight.bold,
-                        color: colorScheme.onSurface,
-                      ),
+                        // 4. Owner Section
+                        Text(
+                          "Owner",
+                          style: AppTextStyle.textMd(
+                            weight: FontWeight.bold,
+                            color: colorScheme.onSurface,
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        CompanyInfoCard(
+                          title: business?.name ?? "",
+                          description: business?.description ?? "",
+                          imagePath: business?.logo ?? "",
+                        ),
+                      ],
                     ),
-                    const SizedBox(height: 12),
-                    CompanyInfoCard(
-                      title: business?.name ?? "",
-                      description: business?.description ?? "",
-                      imagePath: business?.logo ?? "",
-                    ),
-                  ],
-                ),
+                  ),
+                ],
               ),
-            ],
-          ),
+            );
+          }(),
         );
-      }(),
+      }),
     );
-  }),
-);
-}
+  }
 
   Widget _buildInfoRow(
     ColorScheme colorScheme,
@@ -294,11 +294,7 @@ class _RouteDetailsScreenState extends State<RouteDetailsScreen> {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Icon(
-          icon,
-          size: 18,
-          color: const Color(0xFF66B9AD),
-        ),
+        Icon(icon, size: 18, color: const Color(0xFF66B9AD)),
         const SizedBox(width: 8),
         Expanded(
           child: Text(

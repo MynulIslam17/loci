@@ -6,6 +6,8 @@ import 'package:loci/core/utils/show_snackbar.dart';
 import 'package:loci/features/subscription/data/config/loci_iap_products.dart';
 import 'package:loci/features/subscription/data/models/my_subscription_model.dart';
 import 'package:loci/features/subscription/domain/services/subscription_service.dart';
+import 'package:loci/features/subscription/presentation/subscription_messages.dart';
+import 'package:loci/features/subscription/presentation/controllers/subscription_controller.dart';
 import 'package:loci/features/subscription/presentation/controllers/subscription_status_controller.dart';
 
 /// "My Subscription" screen. Reads the app-wide, server-authoritative
@@ -41,9 +43,30 @@ class MySubscriptionController extends GetxController {
 
   Future<void> fetchSubscription({bool isRefresh = false}) => _status.reload();
 
+  /// Price shown for the active plan: the store's localized price (what the
+  /// user is actually billed), falling back to the server's amount only when
+  /// the store product isn't loaded. Pure for testing.
+  static String displayPrice(MySubscriptionModel sub, {String? storePrice}) {
+    if (sub.isStoreManaged && (storePrice?.isNotEmpty ?? false)) {
+      return storePrice!;
+    }
+    return sub.formattedAmount;
+  }
+
+  String priceFor(MySubscriptionModel sub) {
+    final String? productId = productIdFor(sub);
+    final String? storePrice =
+        productId != null && Get.isRegistered<SubscriptionController>()
+        ? Get.find<SubscriptionController>().productFor(productId)?.price
+        : null;
+    return displayPrice(sub, storePrice: storePrice);
+  }
+
   /// Store product id for the current plan (used for the Play deep link).
   static String? productIdFor(MySubscriptionModel? sub) {
-    final String plan = '${sub?.planId ?? ''} ${sub?.billingType ?? ''}'
+    // "free" plans say billingType monthly — never map them to Monthly.
+    if (sub == null || sub.isFreePlan) return null;
+    final String plan = '${sub.planId ?? ''} ${sub.billingType ?? ''}'
         .toLowerCase();
     if (plan.contains('year') || plan.contains('annual')) {
       return LociIapProducts.yearly;
@@ -52,10 +75,20 @@ class MySubscriptionController extends GetxController {
     return null;
   }
 
-  static Uri manageSubscriptionUri({
-    required bool isIOS,
-    String? productId,
-  }) {
+  /// Store product the backend says the subscription switches to at the
+  /// next renewal (`pendingPlanId`), or null when no switch is pending.
+  static String? pendingProductIdFor(MySubscriptionModel? sub) {
+    final String plan =
+        '${sub?.pendingPlanId ?? ''} ${sub?.pendingPlanName ?? ''}'
+            .toLowerCase();
+    if (plan.contains('year') || plan.contains('annual')) {
+      return LociIapProducts.yearly;
+    }
+    if (plan.contains('month')) return LociIapProducts.monthly;
+    return null;
+  }
+
+  static Uri manageSubscriptionUri({required bool isIOS, String? productId}) {
     if (isIOS) return Uri.parse('https://apps.apple.com/account/subscriptions');
     return Uri.https('play.google.com', '/store/account/subscriptions', {
       'sku': ?productId,
@@ -74,10 +107,11 @@ class MySubscriptionController extends GetxController {
         productId: productIdFor(subscription),
       );
       if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
-        throw Exception('Could not open subscription management.');
+        SnackbarService.error(SubscriptionMessages.openStoreFailed);
       }
     } catch (e) {
-      SnackbarService.error(e.toString().replaceFirst('Exception: ', ''));
+      logSubscriptionError('manage', e);
+      SnackbarService.error(SubscriptionMessages.openStoreFailed);
     } finally {
       _isOpeningStore.value = false;
     }
@@ -93,7 +127,13 @@ class MySubscriptionController extends GetxController {
     try {
       await _service.cancelSubscription(businessId);
     } catch (e) {
-      SnackbarService.error(e.toString().replaceFirst('Exception: ', ''));
+      logSubscriptionError('cancel', e);
+      SnackbarService.error(
+        friendlySubscriptionError(
+          e,
+          fallback: SubscriptionMessages.cancelFailed,
+        ),
+      );
     } finally {
       _isCancelling.value = false;
       // Don't clear locally — the server decides what remains.

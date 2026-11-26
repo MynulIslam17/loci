@@ -26,10 +26,7 @@ import 'package:loci/shared/widgets/task_card.dart';
 
 /// Type-specific sections for [ViewActivityScreen].
 class ViewActivityDetailContent extends StatelessWidget {
-  const ViewActivityDetailContent({
-    super.key,
-    required this.activityType,
-  });
+  const ViewActivityDetailContent({super.key, required this.activityType});
 
   final ActivityType activityType;
 
@@ -48,9 +45,8 @@ class _EventDetailContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final eventDetails = Get.find<BusinessEventDetailsController>()
-        .eventDetails
-        .value!;
+    final eventDetails =
+        Get.find<BusinessEventDetailsController>().eventDetails.value!;
     final event = eventDetails.eventModel;
     final organization = eventDetails.organizerBusiness;
     final eventDateLabel = _formatEventDate(event.date);
@@ -95,8 +91,7 @@ class _EventDetailContent extends StatelessWidget {
               const SizedBox(height: 10),
               ExploreActivityInfoRow(
                 icon: Icons.groups_outlined,
-                text:
-                    '${event.goingCount}/${event.maxAttendees} participants',
+                text: '${event.goingCount}/${event.maxAttendees} participants',
               ),
             ],
           ),
@@ -191,10 +186,7 @@ String _formatEventDate(String raw) {
   return raw.isNotEmpty ? raw : 'N/A';
 }
 
-Widget _activityStatusBadges({
-  required String status,
-  required bool isPublic,
-}) {
+Widget _activityStatusBadges({required String status, required bool isPublic}) {
   return Wrap(
     spacing: 8,
     runSpacing: 6,
@@ -214,8 +206,9 @@ class _RouteDetailContent extends StatelessWidget {
         Get.find<BusinessRouteDetailsController>().routeDetails.value!;
     final route = routeDetails.routeModel;
     final organizer = routeDetails.organizerBusiness;
-    final availabilityLabel =
-        RouteType.fromString(route.availabilityType).label;
+    final availabilityLabel = RouteType.fromString(
+      route.availabilityType,
+    ).label;
 
     return ExploreActivityDetailScroll(
       children: [
@@ -491,12 +484,12 @@ class _RaffleDetailContent extends StatelessWidget {
                       title: (activity?.title.trim().isNotEmpty ?? false)
                           ? activity!.title
                           : (task.isRouteTask
-                              ? 'Route requirement'
-                              : 'Event requirement'),
+                                ? 'Route requirement'
+                                : 'Event requirement'),
                       description:
                           (activity?.details.trim().isNotEmpty ?? false)
-                              ? activity!.details
-                              : 'Tap to open linked activity',
+                          ? activity!.details
+                          : 'Tap to open linked activity',
                       imageUrl: activity?.banner ?? '',
                       typeLabel: task.isRouteTask ? 'Route' : 'Event',
                       onTap: () => _openLinkedActivity(task),

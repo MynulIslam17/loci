@@ -92,10 +92,7 @@ class _EventDetailsState extends State<EventDetails> {
 
     final result = await Get.toNamed(
       AppRoutes.checkIn,
-      arguments: {
-        'type': 'event',
-        'entityId': openEventId,
-      },
+      arguments: {'type': 'event', 'entityId': openEventId},
     );
 
     if (result is Map && result['checkedIn'] == true) {
@@ -120,170 +117,170 @@ class _EventDetailsState extends State<EventDetails> {
         _popWithResult();
       },
       child: Scaffold(
-      appBar: const CustomAppbar(title: 'Event Details'),
-      body: Obx(() {
-        final controller = eventDetailsController;
-        // --- Loading state
-        if (controller.isLoading) {
-          return const EventDetailsSkeleton();
-        }
+        appBar: const CustomAppbar(title: 'Event Details'),
+        body: Obx(() {
+          final controller = eventDetailsController;
+          // --- Loading state
+          if (controller.isLoading) {
+            return const EventDetailsSkeleton();
+          }
 
-        // --- Error state
-        if (controller.errorMessage != null) {
-          return ErrorStateWidget(
-            message: controller.errorMessage!,
-            onRetry: () => controller.fetchEventDetails(eventId),
-          );
-        }
+          // --- Error state
+          if (controller.errorMessage != null) {
+            return ErrorStateWidget(
+              message: controller.errorMessage!,
+              onRetry: () => controller.fetchEventDetails(eventId),
+            );
+          }
 
-        // --- Content state
-        final event = controller.eventDetails?.eventModel;
-        final business = controller.eventDetails?.organizerBusiness;
+          // --- Content state
+          final event = controller.eventDetails?.eventModel;
+          final business = controller.eventDetails?.organizerBusiness;
 
-        return SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 12),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              //--- top image--
-              ClipRRect(
-                borderRadius: BorderRadius.circular(12),
-                child: CustomCachedImage(
-                  imageUrl: event?.coverImage,
-                  height: 200,
-                  width: double.infinity,
-                  borderRadius: 10,
-                ),
-              ),
-
-              const SizedBox(height: 16),
-              // ---- header section----
-              _buildEventHeader(
-                title: event?.title ?? "__",
-                description: event?.description ?? "__",
-              ),
-              const SizedBox(height: 16),
-
-              //--- event Info Rows
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(
-                    child: Column(
-                      children: [
-                        IconTextRow(
-                          icon: Icons.calendar_today_outlined,
-                          text: event?.dateLabel ?? "__",
-                          iconColor: context.colorScheme.primary,
-                        ),
-                        const SizedBox(height: 8),
-                        IconTextRow(
-                          icon: Icons.location_on_outlined,
-                          text: (event?.location.trim().isNotEmpty ?? false)
-                              ? event!.location
-                              : "__",
-                          iconColor: context.colorScheme.primary,
-                        ),
-                        const SizedBox(height: 8),
-                        IconTextRow(
-                          icon: Icons.people_outline,
-                          text:
-                              "${event?.goingCount.toString()} going / ${event?.maxAttendees} max",
-                          iconColor: context.colorScheme.primary,
-                        ),
-                      ],
-                    ),
+          return SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                //--- top image--
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(12),
+                  child: CustomCachedImage(
+                    imageUrl: event?.coverImage,
+                    height: 200,
+                    width: double.infinity,
+                    borderRadius: 10,
                   ),
-                  const SizedBox(width: 8),
-                  Obx(() {
-                    final controller = eventDetailsController;
-                    final checkInStatus =
-                        controller.eventDetails?.myCheckInStatus;
-                    final isCheckedIn =
-                        checkInStatus == CheckInStatus.checkedIn;
+                ),
 
-                    return ConstrainedBox(
-                      constraints: const BoxConstraints(maxWidth: 140),
-                      child: ElevatedButton.icon(
-                        icon: Icon(
-                          isCheckedIn ? Icons.check_circle : Icons.qr_code,
-                          size: 18,
-                          color: context.colorScheme.onSurface,
-                        ),
-                        onPressed: isCheckedIn ? null : _openCheckIn,
-                        style: ElevatedButton.styleFrom(
-                          foregroundColor: context.colorScheme.onSurface,
-                          backgroundColor: isCheckedIn
-                              ? context.colorScheme.surfaceContainerHigh
-                              : context.colorScheme.primary,
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 10,
-                            vertical: 10,
+                const SizedBox(height: 16),
+                // ---- header section----
+                _buildEventHeader(
+                  title: event?.title ?? "__",
+                  description: event?.description ?? "__",
+                ),
+                const SizedBox(height: 16),
+
+                //--- event Info Rows
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      child: Column(
+                        children: [
+                          IconTextRow(
+                            icon: Icons.calendar_today_outlined,
+                            text: event?.dateLabel ?? "__",
+                            iconColor: context.colorScheme.primary,
                           ),
-                          visualDensity: VisualDensity.compact,
-                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(6),
+                          const SizedBox(height: 8),
+                          IconTextRow(
+                            icon: Icons.location_on_outlined,
+                            text: (event?.location.trim().isNotEmpty ?? false)
+                                ? event!.location
+                                : "__",
+                            iconColor: context.colorScheme.primary,
                           ),
-                        ),
-                        label: Text(
-                          checkInStatus?.label ?? 'Check In',
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
+                          const SizedBox(height: 8),
+                          IconTextRow(
+                            icon: Icons.people_outline,
+                            text:
+                                "${event?.goingCount.toString()} going / ${event?.maxAttendees} max",
+                            iconColor: context.colorScheme.primary,
+                          ),
+                        ],
                       ),
-                    );
-                  }),
-                ],
-              ),
+                    ),
+                    const SizedBox(width: 8),
+                    Obx(() {
+                      final controller = eventDetailsController;
+                      final checkInStatus =
+                          controller.eventDetails?.myCheckInStatus;
+                      final isCheckedIn =
+                          checkInStatus == CheckInStatus.checkedIn;
 
-              const SizedBox(height: 16),
+                      return ConstrainedBox(
+                        constraints: const BoxConstraints(maxWidth: 140),
+                        child: ElevatedButton.icon(
+                          icon: Icon(
+                            isCheckedIn ? Icons.check_circle : Icons.qr_code,
+                            size: 18,
+                            color: context.colorScheme.onSurface,
+                          ),
+                          onPressed: isCheckedIn ? null : _openCheckIn,
+                          style: ElevatedButton.styleFrom(
+                            foregroundColor: context.colorScheme.onSurface,
+                            backgroundColor: isCheckedIn
+                                ? context.colorScheme.surfaceContainerHigh
+                                : context.colorScheme.primary,
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 10,
+                            ),
+                            visualDensity: VisualDensity.compact,
+                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                          ),
+                          label: Text(
+                            checkInStatus?.label ?? 'Check In',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      );
+                    }),
+                  ],
+                ),
 
-              Obx(() {
-                return EventMapPreview(
-                  mapImage: controller.eventDetails?.mapImage,
-                  lat: controller.eventDetails?.lat,
-                  lng: controller.eventDetails?.lng,
-                  locationLabel: event?.title,
-                  isLoading: controller.isLoading,
-                );
-              }),
+                const SizedBox(height: 16),
 
-              const SizedBox(height: 16),
+                Obx(() {
+                  return EventMapPreview(
+                    mapImage: controller.eventDetails?.mapImage,
+                    lat: controller.eventDetails?.lat,
+                    lng: controller.eventDetails?.lng,
+                    locationLabel: event?.title,
+                    isLoading: controller.isLoading,
+                  );
+                }),
 
-              Text(
-                "Owner",
-                style: AppTextStyle.textMd(weight: FontWeight.w700),
-              ),
+                const SizedBox(height: 16),
 
-              const SizedBox(height: 10),
+                Text(
+                  "Owner",
+                  style: AppTextStyle.textMd(weight: FontWeight.w700),
+                ),
 
-              CompanyInfoCard(
-                title: business?.name ?? "___",
-                description: business?.description ?? "___",
-                imagePath: business?.logo ?? "_",
-              ),
+                const SizedBox(height: 10),
 
-              const SizedBox(height: 10),
+                CompanyInfoCard(
+                  title: business?.name ?? "___",
+                  description: business?.description ?? "___",
+                  imagePath: business?.logo ?? "_",
+                ),
 
-              Obx(() {
-                final controller = rsvpController;
-                final isThisLoading =
-                    controller.isLoading &&
-                    controller.loadingEventId == eventId;
+                const SizedBox(height: 10),
 
-                return CustomButton(
-                  isLoading: isThisLoading,
-                  text: event?.myRsvpStatus.label,
-                  onPressed: event?.myRsvpStatus == RsvpStatus.going
-                      ? null
-                      : () => _rsvpOnTapHandler(eventId),
-                );
-              }),
-            ],
-          ),
-        );
-      }),
+                Obx(() {
+                  final controller = rsvpController;
+                  final isThisLoading =
+                      controller.isLoading &&
+                      controller.loadingEventId == eventId;
+
+                  return CustomButton(
+                    isLoading: isThisLoading,
+                    text: event?.myRsvpStatus.label,
+                    onPressed: event?.myRsvpStatus == RsvpStatus.going
+                        ? null
+                        : () => _rsvpOnTapHandler(eventId),
+                  );
+                }),
+              ],
+            ),
+          );
+        }),
       ),
     );
   }

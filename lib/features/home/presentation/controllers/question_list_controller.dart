@@ -12,10 +12,11 @@ import 'package:loci/features/home/domain/services/home_service.dart';
 
 class QuestionListController extends GetxController {
   QuestionListController(this._service, [HiveStorageService? storage])
-      : _storage = storage ??
-            (Get.isRegistered<HiveStorageService>()
-                ? Get.find<HiveStorageService>()
-                : null);
+    : _storage =
+          storage ??
+          (Get.isRegistered<HiveStorageService>()
+              ? Get.find<HiveStorageService>()
+              : null);
 
   final HomeService _service;
   final HiveStorageService? _storage;
@@ -136,7 +137,10 @@ class QuestionListController extends GetxController {
   }
 
   Future<void> fetchMore() async {
-    if (!hasMore || isPaginationLoading.value || isInitialLoading || isRefreshing) {
+    if (!hasMore ||
+        isPaginationLoading.value ||
+        isInitialLoading ||
+        isRefreshing) {
       return;
     }
 

@@ -20,6 +20,7 @@ class CustomTextField extends StatefulWidget {
   final double? contentPaddingVertical;
   final int? maxLine;
   final double? fontSize;
+  final FontWeight? fontWeight;
   final Widget? suffixIcon;
   final FormFieldValidator<String>? validator;
   final bool isPassword;
@@ -66,6 +67,7 @@ class CustomTextField extends StatefulWidget {
     this.obscuringCharacter = '•',
     this.fillColor,
     this.fontSize,
+    this.fontWeight,
     this.labelText,
     this.isPassword = false,
     this.readOnly = false,
@@ -174,6 +176,7 @@ class _CustomTextFieldState extends State<CustomTextField> {
       style: TextStyle(
         color: widget.textColor ?? themeColors.onSurface,
         fontSize: widget.fontSize ?? 14,
+        fontWeight: widget.fontWeight,
       ),
       decoration: InputDecoration(
         isDense: !isMultiline,
@@ -183,7 +186,8 @@ class _CustomTextFieldState extends State<CustomTextField> {
           vertical: widget.contentPaddingVertical ?? (isMultiline ? 12 : 14),
         ),
         filled: true,
-        fillColor: widget.fillColor ??
+        fillColor:
+            widget.fillColor ??
             themeColors.surfaceContainerHighest.withValues(alpha: 0.3),
         prefixIcon: isMultiline ? null : widget.prefixIcon,
         prefixIconConstraints: const BoxConstraints(
@@ -202,14 +206,13 @@ class _CustomTextFieldState extends State<CustomTextField> {
           fontSize: widget.fontSize ?? 14,
         ),
         floatingLabelStyle: TextStyle(color: themeColors.primary),
-        hintStyle: TextStyle(
-          color: hintColor,
-          fontSize: widget.fontSize ?? 14,
+        hintStyle: TextStyle(color: hintColor, fontSize: widget.fontSize ?? 14),
+        focusedBorder: _buildBorder(
+          widget.focusBorderColor ?? themeColors.primary,
         ),
-        focusedBorder:
-            _buildBorder(widget.focusBorderColor ?? themeColors.primary),
-        enabledBorder:
-            _buildBorder(widget.borderColor ?? themeColors.outlineVariant),
+        enabledBorder: _buildBorder(
+          widget.borderColor ?? themeColors.outlineVariant,
+        ),
         errorBorder: _buildBorder(themeColors.error),
         focusedErrorBorder: _buildBorder(themeColors.error),
         errorText: widget.errorText,
@@ -230,14 +233,12 @@ class _CustomTextFieldState extends State<CustomTextField> {
       children: [
         if (widget.title != null) ...[
           if (widget.isRequired != null)
-            FormFieldLabel(
-              label: widget.title!,
-              isRequired: widget.isRequired!,
-            )
+            FormFieldLabel(label: widget.title!, isRequired: widget.isRequired!)
           else
             Text(
               widget.title!,
-              style: widget.titleStyle ??
+              style:
+                  widget.titleStyle ??
                   TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w500,
@@ -268,9 +269,7 @@ class _CustomTextFieldState extends State<CustomTextField> {
       return IconButton(
         onPressed: _toggleObscureText,
         icon: Icon(
-          obscure
-              ? Icons.visibility_off_outlined
-              : Icons.visibility_outlined,
+          obscure ? Icons.visibility_off_outlined : Icons.visibility_outlined,
           size: 20,
         ),
       );

@@ -10,10 +10,11 @@ import 'package:loci/features/browse_business/domain/services/browse_business_se
 
 class BrowseBusinessController extends GetxController {
   BrowseBusinessController(this._service, [HiveStorageService? storage])
-      : _storage = storage ??
-            (Get.isRegistered<HiveStorageService>()
-                ? Get.find<HiveStorageService>()
-                : null);
+    : _storage =
+          storage ??
+          (Get.isRegistered<HiveStorageService>()
+              ? Get.find<HiveStorageService>()
+              : null);
 
   final BrowseBusinessService _service;
   final HiveStorageService? _storage;
@@ -22,7 +23,8 @@ class BrowseBusinessController extends GetxController {
 
   final errorMessage = RxnString();
   final businesses = <BrowseBusinessModel>[].obs;
-  final List<BrowseBusinessModel> _unfilteredBusinesses = <BrowseBusinessModel>[];
+  final List<BrowseBusinessModel> _unfilteredBusinesses =
+      <BrowseBusinessModel>[];
   bool _unfilteredHasNextPage = true;
   final selectedCategory = Rxn<BusinessCategory>();
 
@@ -58,8 +60,9 @@ class BrowseBusinessController extends GetxController {
       final cached = _storage.getFeedList('browse_business_feed');
       if (cached.isNotEmpty) {
         final parsed = cached
-            .map((e) =>
-                BrowseBusinessModel.fromJson(Map<String, dynamic>.from(e)))
+            .map(
+              (e) => BrowseBusinessModel.fromJson(Map<String, dynamic>.from(e)),
+            )
             .toList();
         businesses.assignAll(parsed);
         _unfilteredBusinesses.assignAll(parsed);

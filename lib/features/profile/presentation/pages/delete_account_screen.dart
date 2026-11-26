@@ -19,7 +19,8 @@ class _DeleteAccountScreenState extends State<DeleteAccountScreen> {
   final TextEditingController _passwordController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
 
-  final DeleteAccountController _controller = Get.find<DeleteAccountController>();
+  final DeleteAccountController _controller =
+      Get.find<DeleteAccountController>();
 
   @override
   void dispose() {

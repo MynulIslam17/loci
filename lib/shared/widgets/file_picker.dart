@@ -52,7 +52,8 @@ class AppFilePicker {
           : null,
     );
 
-    final files = result?.files
+    final files =
+        result?.files
             .where((f) => f.path != null)
             .map((f) => File(f.path!))
             .toList() ??

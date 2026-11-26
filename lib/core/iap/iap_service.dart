@@ -17,7 +17,8 @@ typedef GooglePastPurchasesLoader =
 /// Finishes a transaction the plugin can't address (StoreKit 2 transaction
 /// id 0 arrives with a null `purchaseID`, and the plugin's `completePurchase`
 /// would throw). Returns false when it can't finish it either.
-typedef IapTransactionFinisher = Future<bool> Function(PurchaseDetails purchase);
+typedef IapTransactionFinisher =
+    Future<bool> Function(PurchaseDetails purchase);
 
 /// Thin wrapper around [InAppPurchase] that owns the purchase stream and
 /// enforces "verify, then complete — never the other way round".
@@ -126,7 +127,11 @@ class IapService {
     if (response.error != null) {
       final IAPError error = response.error!;
       _emit(
-        IapEvent(type: IapEventType.error, message: error.message, error: error),
+        IapEvent(
+          type: IapEventType.error,
+          message: error.message,
+          error: error,
+        ),
       );
       throw StateError(error.message);
     }
@@ -307,6 +312,13 @@ class IapService {
     final String key = _purchaseKey(purchase);
     if (!_processingPurchases.add(key)) return;
 
+    _emit(
+      IapEvent(
+        type: IapEventType.verificationStarted,
+        productId: purchase.productID,
+        purchase: purchase,
+      ),
+    );
     try {
       IapVerificationResult result;
       try {

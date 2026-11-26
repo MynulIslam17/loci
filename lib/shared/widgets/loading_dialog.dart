@@ -65,7 +65,8 @@ void showLoadingDialog({
                         fontSize: 13,
                         fontWeight: FontWeight.w600,
                         decoration: TextDecoration.none,
-                        color: Theme.of(dialogContext).brightness ==
+                        color:
+                            Theme.of(dialogContext).brightness ==
                                 Brightness.dark
                             ? Colors.white
                             : Colors.black87,

@@ -20,8 +20,7 @@ Map<String, dynamic> buildVerifyBody(
     return <String, dynamic>{
       'platform': 'apple',
       'productId': purchase.productID,
-      'transactionId':
-          appleTransactionId(purchase) ?? '',
+      'transactionId': appleTransactionId(purchase) ?? '',
       if (looksLikeJws(evidence)) 'signedTransactionJws': evidence,
     };
   }
@@ -41,20 +40,39 @@ String? appleTransactionId(PurchaseDetails purchase) {
   return transactionIdFromJws(purchase.verificationData.serverVerificationData);
 }
 
-/// Reads `transactionId` from a JWS payload WITHOUT verifying it — only used
-/// to address the transaction; the server verifies the signature.
-String? transactionIdFromJws(String jws) {
+/// Decodes a JWS payload WITHOUT verifying it — only used to address the
+/// transaction and for debug diagnostics; the server verifies the signature.
+Map<String, dynamic>? jwsPayload(String jws) {
   if (!looksLikeJws(jws)) return null;
   try {
     final Object? payload = jsonDecode(
       utf8.decode(base64Url.decode(base64Url.normalize(jws.split('.')[1]))),
     );
-    if (payload is! Map) return null;
-    final Object? id = payload['transactionId'];
-    return id?.toString();
+    return payload is Map ? Map<String, dynamic>.from(payload) : null;
   } catch (_) {
     return null;
   }
+}
+
+String? transactionIdFromJws(String jws) =>
+    jwsPayload(jws)?['transactionId']?.toString();
+
+/// One-line, token-free summary of an Apple transaction for debug logs:
+/// ids, product, environment, purchase/expiry times.
+String? describeAppleTransaction(String jws) {
+  final Map<String, dynamic>? p = jwsPayload(jws);
+  if (p == null) return null;
+  String time(Object? ms) => ms is num
+      ? DateTime.fromMillisecondsSinceEpoch(
+          ms.toInt(),
+          isUtc: true,
+        ).toIso8601String()
+      : '-';
+  return 'tx=${p['transactionId']} original=${p['originalTransactionId']} '
+      'product=${p['productId']} env=${p['environment']} '
+      'type=${p['transactionReason'] ?? p['type']} '
+      'purchased=${time(p['purchaseDate'])} expires=${time(p['expiresDate'])} '
+      'revoked=${p['revocationDate'] != null}';
 }
 
 /// A compact JWS: base64url JSON header (`eyJ…`) and exactly 3 dot parts.

@@ -61,6 +61,17 @@ class MySubscriptionModel {
 
   bool get isActive => status == 'active';
 
+  /// The backend's placeholder for owners without a paid plan
+  /// (`planId: "free"`, `amount: 0` — it still says `billingType: monthly`).
+  /// Not a subscription: no store product, no credits, nothing to manage.
+  bool get isFreePlan {
+    final String id = (planId ?? '').trim().toLowerCase();
+    final String name = (planName ?? '').trim().toLowerCase();
+    // Matched on the plan only — guessing from amount/provider could hide a
+    // real subscription whose record is incomplete.
+    return id == 'free' || name == 'free';
+  }
+
   /// Store subscriptions can only be cancelled in the App Store / Google Play.
   bool get isStoreManaged => provider == 'apple' || provider == 'google';
 

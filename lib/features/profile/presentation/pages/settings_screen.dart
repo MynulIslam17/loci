@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
+import 'package:loci/features/subscription/presentation/subscription_entry.dart';
 import 'package:loci/core/constants/app_text_style.dart';
 import 'package:loci/core/theme/theme_extention.dart';
 import 'package:loci/features/auth/presentation/controllers/auth_controller.dart';
@@ -58,7 +59,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   void _onItemTap(String title) {
     switch (title) {
       case "My Subscription":
-        Get.toNamed(AppRoutes.mySubscription);
+        openSubscription(context);
         break;
       case "Change Password":
         Get.toNamed(AppRoutes.changePassword);
@@ -85,13 +86,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
     return Scaffold(
       appBar: const CustomAppbar(title: "Settings"),
-      // Reactive so the "My Subscription" row appears the moment the user's
-      // role is promoted (e.g. right after claiming a business).
+      // Reactive so the "My Subscription" row unlocks the moment the user's
+      // role is promoted (e.g. a business claim is approved). Members see it
+      // locked.
       body: Obx(() {
-        final canSubscribe = Get.find<AuthController>().canAccessSubscription;
-        final items = _settingsItems
-            .where((item) => !item.requiresSubscription || canSubscribe)
-            .toList();
+        final bool locked = subscriptionLocked(Get.find<AuthController>());
+        final items = _settingsItems;
 
         return ListView.separated(
           padding: const EdgeInsets.all(16),
@@ -104,7 +104,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
             // in Obx. Wrapping a non-toggle row would give Obx nothing to
             // observe and throw "improper use of GetX".
             if (!item.hasToggle) {
-              return _buildTile(colorScheme, item, enabled: false);
+              return _buildTile(
+                colorScheme,
+                item,
+                enabled: false,
+                locked: item.requiresSubscription && locked,
+              );
             }
             return Obx(
               () => _buildTile(
@@ -123,6 +128,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     ColorScheme colorScheme,
     _SettingsItem item, {
     required bool enabled,
+    bool locked = false,
   }) {
     return Container(
       decoration: BoxDecoration(
@@ -140,7 +146,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
               horizontal: 16,
               vertical: 4,
             ),
-            leading: Icon(item.icon, color: colorScheme.onSurface, size: 22),
+            leading: Icon(
+              item.icon,
+              color: locked
+                  ? colorScheme.onSurfaceVariant
+                  : colorScheme.onSurface,
+              size: 22,
+            ),
             title: RichText(
               text: TextSpan(
                 text: item.title,
@@ -169,9 +181,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     },
                   )
                 : Icon(
-                    Icons.arrow_forward_ios,
-                    size: 16,
+                    locked
+                        ? Icons.lock_outline_rounded
+                        : Icons.arrow_forward_ios,
+                    size: locked ? 18 : 16,
                     color: colorScheme.onSurfaceVariant,
+                    semanticLabel: locked ? 'Locked' : null,
                   ),
           ),
         ),
@@ -185,7 +200,8 @@ class _SettingsItem {
   final String title;
   final bool hasToggle;
 
-  /// Only visible to roles that can use subscriptions (business owners/admins).
+  /// Locked for roles that can't use subscriptions (members) — shown, not
+  /// hidden, so members know the feature exists.
   final bool requiresSubscription;
 
   const _SettingsItem({

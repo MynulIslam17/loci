@@ -74,14 +74,8 @@ class _RafflesDetailsScreenState extends State<RafflesDetailsScreen> {
     final result = await Get.toNamed(
       task.isRouteTask ? AppRoutes.routeDetails : AppRoutes.eventDetails,
       arguments: task.isRouteTask
-          ? {
-              'routeName': activity.title,
-              'routeId': activity.id,
-            }
-          : {
-              'eventTitle': activity.title,
-              'eventId': activity.id,
-            },
+          ? {'routeName': activity.title, 'routeId': activity.id}
+          : {'eventTitle': activity.title, 'eventId': activity.id},
     );
 
     if (result is Map && result['checkedIn'] == true) {
@@ -96,7 +90,8 @@ class _RafflesDetailsScreenState extends State<RafflesDetailsScreen> {
 
     return Obx(() {
       final details = _controller.raffleDetails;
-      final bool showBottomCta = !_controller.isLoading &&
+      final bool showBottomCta =
+          !_controller.isLoading &&
           _controller.errorMessage == null &&
           details != null;
 
@@ -106,8 +101,9 @@ class _RafflesDetailsScreenState extends State<RafflesDetailsScreen> {
 
       return Scaffold(
         backgroundColor: colorScheme.surface,
-        appBar:
-            _showAppBar ? const CustomAppbar(title: 'Raffle Details') : null,
+        appBar: _showAppBar
+            ? const CustomAppbar(title: 'Raffle Details')
+            : null,
         body: () {
           if (_controller.isLoading) {
             return const RafflesDetailsShimmer();
@@ -146,8 +142,9 @@ class _RafflesDetailsScreenState extends State<RafflesDetailsScreen> {
                           isLoading: _controller.isJoining,
                           backgroundColor: colorScheme.primary,
                           textColor: colorScheme.onPrimary,
-                          textStyle:
-                              AppTextStyle.textSm(weight: FontWeight.w700),
+                          textStyle: AppTextStyle.textSm(
+                            weight: FontWeight.w700,
+                          ),
                           onPressed: () =>
                               _controller.joinRaffle(_activeRaffleId),
                         ),
@@ -159,12 +156,14 @@ class _RafflesDetailsScreenState extends State<RafflesDetailsScreen> {
                           vertical: 10,
                         ),
                         decoration: BoxDecoration(
-                          color:
-                              const Color(0xFF10B981).withValues(alpha: 0.12),
+                          color: const Color(
+                            0xFF10B981,
+                          ).withValues(alpha: 0.12),
                           borderRadius: BorderRadius.circular(12),
                           border: Border.all(
-                            color:
-                                const Color(0xFF10B981).withValues(alpha: 0.35),
+                            color: const Color(
+                              0xFF10B981,
+                            ).withValues(alpha: 0.35),
                           ),
                         ),
                         child: Row(
@@ -238,7 +237,9 @@ class _RaffleDetailsContent extends StatelessWidget {
               color: colorScheme.surfaceContainerHigh,
               borderRadius: BorderRadius.circular(16),
               border: Border.all(
-                color: colorScheme.outline.withValues(alpha: isDark ? 0.25 : 0.12),
+                color: colorScheme.outline.withValues(
+                  alpha: isDark ? 0.25 : 0.12,
+                ),
               ),
             ),
             clipBehavior: Clip.antiAlias,
@@ -281,8 +282,12 @@ class _RaffleDetailsContent extends StatelessWidget {
                             spacing: 6,
                             children: [
                               if (details.status.isNotEmpty)
-                                ExploreActivityStatusBadge(status: details.status),
-                              ExploreActivityVisibilityBadge(isPublic: details.isPublic),
+                                ExploreActivityStatusBadge(
+                                  status: details.status,
+                                ),
+                              ExploreActivityVisibilityBadge(
+                                isPublic: details.isPublic,
+                              ),
                             ],
                           ),
                           if (details.isParticipating)
@@ -296,8 +301,9 @@ class _RaffleDetailsContent extends StatelessWidget {
                                 borderRadius: BorderRadius.circular(12),
                                 boxShadow: [
                                   BoxShadow(
-                                    color: const Color(0xFF10B981)
-                                        .withValues(alpha: 0.4),
+                                    color: const Color(
+                                      0xFF10B981,
+                                    ).withValues(alpha: 0.4),
                                     blurRadius: 6,
                                     offset: const Offset(0, 2),
                                   ),
@@ -411,7 +417,9 @@ class _RaffleDetailsContent extends StatelessWidget {
               color: colorScheme.surfaceContainerHigh,
               borderRadius: BorderRadius.circular(14),
               border: Border.all(
-                color: colorScheme.outline.withValues(alpha: isDark ? 0.2 : 0.1),
+                color: colorScheme.outline.withValues(
+                  alpha: isDark ? 0.2 : 0.1,
+                ),
               ),
             ),
             child: Column(
@@ -441,7 +449,9 @@ class _RaffleDetailsContent extends StatelessWidget {
                   lineHeight: 8,
                   percent: progressValue.clamp(0.0, 1.0),
                   backgroundColor: colorScheme.outline.withValues(alpha: 0.2),
-                  progressColor: isAllCompleted ? const Color(0xFF10B981) : colorScheme.primary,
+                  progressColor: isAllCompleted
+                      ? const Color(0xFF10B981)
+                      : colorScheme.primary,
                   barRadius: const Radius.circular(8),
                   padding: EdgeInsets.zero,
                 ),
@@ -464,9 +474,7 @@ class _RaffleDetailsContent extends StatelessWidget {
             details.isParticipating
                 ? 'Complete each task to enter the raffle draw'
                 : 'Enter the raffle below to unlock tasks',
-            style: AppTextStyle.textXs(
-              color: colorScheme.onSurfaceVariant,
-            ),
+            style: AppTextStyle.textXs(color: colorScheme.onSurfaceVariant),
           ),
           const SizedBox(height: 8),
 
@@ -524,15 +532,14 @@ class _RaffleDetailsContent extends StatelessWidget {
                 color: colorScheme.surfaceContainerHigh,
                 borderRadius: BorderRadius.circular(14),
                 border: Border.all(
-                  color: colorScheme.outline.withValues(alpha: isDark ? 0.2 : 0.1),
+                  color: colorScheme.outline.withValues(
+                    alpha: isDark ? 0.2 : 0.1,
+                  ),
                 ),
               ),
               child: Row(
                 children: [
-                  BusinessAvatar(
-                    imageUrl: sponsor.logo,
-                    size: 36,
-                  ),
+                  BusinessAvatar(imageUrl: sponsor.logo, size: 36),
                   const SizedBox(width: 10),
                   Expanded(
                     child: Column(
@@ -621,11 +628,11 @@ class _CompactPrizeSectionState extends State<_CompactPrizeSection> {
 
     try {
       await GalleryImageDownloader.saveNetworkImage(imgUrl);
-      SnackbarService.success('Prize image saved to your gallery successfully.');
-    } catch (e) {
-      SnackbarService.error(
-        e.toString().replaceFirst('Exception: ', ''),
+      SnackbarService.success(
+        'Prize image saved to your gallery successfully.',
       );
+    } catch (e) {
+      SnackbarService.error(e.toString().replaceFirst('Exception: ', ''));
     } finally {
       if (mounted) {
         setState(() => _isSavingToGallery = false);
@@ -706,7 +713,9 @@ class _CompactPrizeSectionState extends State<_CompactPrizeSection> {
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      widget.prizeName.isNotEmpty ? widget.prizeName : 'Raffle Prize',
+                      widget.prizeName.isNotEmpty
+                          ? widget.prizeName
+                          : 'Raffle Prize',
                       style: AppTextStyle.textMd(
                         weight: FontWeight.w700,
                         color: colorScheme.onSurface,
@@ -761,7 +770,11 @@ class _CompactPrizeSectionState extends State<_CompactPrizeSection> {
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(Icons.copy_rounded, size: 14, color: colorScheme.primary),
+                          Icon(
+                            Icons.copy_rounded,
+                            size: 14,
+                            color: colorScheme.primary,
+                          ),
                           const SizedBox(width: 4),
                           Text(
                             'Copy',
@@ -799,24 +812,32 @@ class _CompactPrizeSectionState extends State<_CompactPrizeSection> {
                       ),
                     )
                   : Icon(
-                      canDownload ? Icons.download_rounded : Icons.lock_outline_rounded,
+                      canDownload
+                          ? Icons.download_rounded
+                          : Icons.lock_outline_rounded,
                       size: 16,
                     ),
               label: Text(
                 _isSavingToGallery
                     ? 'Saving Prize Image...'
                     : (canDownload
-                        ? 'Download Prize Image'
-                        : (widget.isParticipating
-                            ? 'Complete all tasks to download'
-                            : 'Enter raffle to unlock prize')),
+                          ? 'Download Prize Image'
+                          : (widget.isParticipating
+                                ? 'Complete all tasks to download'
+                                : 'Enter raffle to unlock prize')),
                 style: AppTextStyle.textXs(weight: FontWeight.w700),
               ),
               style: ElevatedButton.styleFrom(
-                backgroundColor: canDownload ? const Color(0xFF10B981) : colorScheme.surfaceContainerHighest,
-                foregroundColor: canDownload ? Colors.white : colorScheme.onSurfaceVariant,
-                disabledBackgroundColor: colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
-                disabledForegroundColor: colorScheme.onSurfaceVariant.withValues(alpha: 0.6),
+                backgroundColor: canDownload
+                    ? const Color(0xFF10B981)
+                    : colorScheme.surfaceContainerHighest,
+                foregroundColor: canDownload
+                    ? Colors.white
+                    : colorScheme.onSurfaceVariant,
+                disabledBackgroundColor: colorScheme.surfaceContainerHighest
+                    .withValues(alpha: 0.5),
+                disabledForegroundColor: colorScheme.onSurfaceVariant
+                    .withValues(alpha: 0.6),
                 elevation: canDownload ? 2 : 0,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(10),
@@ -864,7 +885,9 @@ class _CompactTaskTile extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.all(10),
           decoration: BoxDecoration(
-            color: colorScheme.surfaceContainerHigh.withValues(alpha: isLocked ? 0.65 : 1.0),
+            color: colorScheme.surfaceContainerHigh.withValues(
+              alpha: isLocked ? 0.65 : 1.0,
+            ),
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
               color: isCompleted
@@ -882,23 +905,31 @@ class _CompactTaskTile extends StatelessWidget {
                   color: isCompleted
                       ? const Color(0xFF10B981)
                       : (isLocked
-                          ? colorScheme.outline.withValues(alpha: 0.2)
-                          : colorScheme.primaryContainer),
+                            ? colorScheme.outline.withValues(alpha: 0.2)
+                            : colorScheme.primaryContainer),
                   shape: BoxShape.circle,
                 ),
                 child: Center(
                   child: isCompleted
-                      ? const Icon(Icons.check_rounded, size: 16, color: Colors.white)
+                      ? const Icon(
+                          Icons.check_rounded,
+                          size: 16,
+                          color: Colors.white,
+                        )
                       : (isLocked
-                          ? Icon(Icons.lock_rounded, size: 13, color: colorScheme.onSurfaceVariant)
-                          : Text(
-                              '$step',
-                              style: TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w700,
-                                color: colorScheme.primary,
-                              ),
-                            )),
+                            ? Icon(
+                                Icons.lock_rounded,
+                                size: 13,
+                                color: colorScheme.onSurfaceVariant,
+                              )
+                            : Text(
+                                '$step',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w700,
+                                  color: colorScheme.primary,
+                                ),
+                              )),
                 ),
               ),
               const SizedBox(width: 10),
@@ -923,7 +954,10 @@ class _CompactTaskTile extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 6,
+                        vertical: 2,
+                      ),
                       decoration: BoxDecoration(
                         color: colorScheme.primary.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(4),

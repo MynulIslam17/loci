@@ -30,6 +30,7 @@ class SubscriptionPlanScreen extends GetView<SubscriptionController> {
         return SubscriptionSelectionView(
           controller: controller,
           onContinue: () {
+            controller.clearMessages();
             Get.to<void>(() => const SubscriptionDetailsScreen());
           },
         );

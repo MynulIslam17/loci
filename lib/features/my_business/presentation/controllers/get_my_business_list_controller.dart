@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:get/get.dart';
 import 'package:loci/core/utils/paginated_list_fetch_state.dart';
 import 'package:loci/features/my_business/data/models/business_profile_model.dart';
@@ -6,9 +8,13 @@ import 'package:loci/features/auth/presentation/controllers/auth_controller.dart
 import 'package:loci/features/my_business/domain/services/my_business_service.dart';
 
 class GetMyBusinessController extends GetxController {
-  GetMyBusinessController(this._service);
+  GetMyBusinessController(this._service, {AuthController? auth})
+    : _authOverride = auth;
 
   final MyBusinessService _service;
+  final AuthController? _authOverride;
+  late final AuthController _auth;
+  Worker? _roleWorker;
   final PaginatedListFetchState _fetch = PaginatedListFetchState();
 
   final RxnString errorMessage = RxnString();
@@ -37,12 +43,20 @@ class GetMyBusinessController extends GetxController {
       _fetch.beginFirstPage(isRefresh: isRefresh);
     }
     errorMessage.value = null;
+    // Pull-to-refresh also re-checks the role (an approval may have landed).
+    if (isRefresh) unawaited(_auth.refreshUser());
 
     try {
       businessList.assignAll(
         await _service.getMyBusinesses(category: category),
       );
       _fetch.endFirstPage();
+      // Owning a business is proof enough to show it, even before the stored
+      // role catches up — and a reason to refresh that role now.
+      if (businessList.isNotEmpty && !isBusinessOwner.value) {
+        isBusinessOwner.value = true;
+        if (!_auth.isBusinessOwner) unawaited(_auth.refreshUser());
+      }
     } catch (e) {
       errorMessage.value = e.toString().replaceFirst('Exception: ', '');
       if (!hasFetched) businessList.clear();
@@ -66,13 +80,30 @@ class GetMyBusinessController extends GetxController {
   @override
   void onInit() {
     super.onInit();
+    _auth = _authOverride ?? Get.find<AuthController>();
+    isBusinessOwner.value = _auth.isBusinessOwner;
 
-    final authController = Get.find<AuthController>();
+    // React to role changes while the screen is open (claim approved).
+    _roleWorker = ever<String?>(_auth.roleRx, (String? role) {
+      if (role == 'business_owner') {
+        if (!isBusinessOwner.value) {
+          isBusinessOwner.value = true;
+          getMyBusinesses();
+        }
+      } else if (businessList.isEmpty) {
+        isBusinessOwner.value = false;
+      }
+    });
 
-    isBusinessOwner.value = authController.userModel?.role == 'business_owner';
+    // Load for everyone: a member whose claim was just approved still has a
+    // stale role locally, but the server already lists their business.
+    getMyBusinesses();
+    unawaited(_auth.refreshUser());
+  }
 
-    if (isBusinessOwner.value) {
-      getMyBusinesses();
-    }
+  @override
+  void onClose() {
+    _roleWorker?.dispose();
+    super.onClose();
   }
 }

@@ -25,7 +25,10 @@ class SubscriptionService {
   Future<VerifyResult> verifyPurchase(Map<String, dynamic> body) =>
       _repository.verify(body);
 
-  /// `null` = 200 with `data: null` → free plan. Throws on network errors.
+  /// `null` = no paid plan: either `data: null` or the backend's Free
+  /// placeholder record (see [MySubscriptionModel.isFreePlan]) — every screen
+  /// then shows the plans instead of a fake "Free · ACTIVE" subscription.
+  /// Throws on network errors.
   Future<MySubscriptionModel?> getMySubscription(String businessId) async {
     final Map<String, dynamic>? body = await _repository.getMySubscription(
       businessId,
@@ -33,7 +36,8 @@ class SubscriptionService {
     if (body == null) return null;
     final dynamic data = body['data'];
     if (data is Map<String, dynamic>) {
-      return MySubscriptionModel.fromJson(data);
+      final MySubscriptionModel sub = MySubscriptionModel.fromJson(data);
+      return sub.isFreePlan ? null : sub;
     }
     return null;
   }

@@ -10,7 +10,11 @@ Future<DateTime?> showAdaptiveDatePicker({
   required DateTime lastDate,
   DateTime? initialDate,
 }) {
-  final initial = _clampDate(initialDate ?? DateTime.now(), firstDate, lastDate);
+  final initial = _clampDate(
+    initialDate ?? DateTime.now(),
+    firstDate,
+    lastDate,
+  );
   if (!context.isCupertino) {
     return showDatePicker(
       context: context,
@@ -141,8 +145,9 @@ Future<DateTime?> _showCupertinoDateTime({
               color: isDark
                   ? colors.surface.withValues(alpha: 0.85)
                   : colors.surface.withValues(alpha: 0.88),
-              borderRadius:
-                  const BorderRadius.vertical(top: Radius.circular(22)),
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(22),
+              ),
               border: Border(
                 top: BorderSide(
                   color: colors.outlineVariant.withValues(

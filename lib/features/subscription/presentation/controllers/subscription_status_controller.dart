@@ -4,6 +4,7 @@ import 'package:flutter/widgets.dart';
 import 'package:get/get.dart';
 import 'package:loci/features/subscription/data/models/my_subscription_model.dart';
 import 'package:loci/features/subscription/domain/services/subscription_service.dart';
+import 'package:loci/features/subscription/presentation/subscription_messages.dart';
 
 /// App-wide, server-authoritative subscription state
 /// (`GET /subscriptions/my`). The single place the UI reads entitlement from.
@@ -51,8 +52,8 @@ class SubscriptionStatusController extends GetxController
 
   /// UX pre-check only — the server stays the authority (§8).
   bool get canCreatePaidContent => subscription.value != null;
-  bool get canSubmitSpotlight => (subscription.value?.remainingCredits ?? 0) >=
-      spotlightCost;
+  bool get canSubmitSpotlight =>
+      (subscription.value?.remainingCredits ?? 0) >= spotlightCost;
 
   static const int spotlightCost = 10;
 
@@ -116,7 +117,11 @@ class SubscriptionStatusController extends GetxController
       errorMessage.value = null;
     } catch (e) {
       // Network error ≠ free plan: keep the last known status.
-      errorMessage.value = e.toString().replaceFirst('Exception: ', '');
+      logSubscriptionError('status', e);
+      errorMessage.value = friendlySubscriptionError(
+        e,
+        fallback: SubscriptionMessages.statusUnavailable,
+      );
     } finally {
       isLoading.value = false;
     }

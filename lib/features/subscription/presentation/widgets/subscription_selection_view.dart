@@ -1,11 +1,51 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:loci/core/constants/app_text_style.dart';
 import 'package:loci/core/theme/theme_extention.dart';
 import 'package:loci/features/subscription/data/models/store_subscription_plan.dart';
+import 'package:loci/features/subscription/data/models/my_subscription_model.dart';
+import 'package:loci/features/subscription/presentation/controllers/my_subscription_controller.dart';
 import 'package:loci/features/subscription/presentation/controllers/subscription_controller.dart';
+import 'package:loci/features/subscription/presentation/controllers/subscription_status_controller.dart';
 import 'package:loci/features/subscription/presentation/widgets/subscription_plan_card.dart';
+import 'package:loci/features/subscription/presentation/widgets/subscription_dialogs.dart';
+import 'package:loci/routes/app_routes.dart';
 import 'package:loci/shared/widgets/custom_button.dart';
+
+/// Label and enabled state of the plans screen's main button, given the
+/// selected plan and the user's current server-side subscription. Pure for
+/// testing.
+({String label, bool enabled}) planButtonState({
+  required String? selectedName,
+  required String? selectedProductId,
+  required bool selectedIsPaid,
+  required MySubscriptionModel? current,
+  String? scheduledProductId,
+}) {
+  if (selectedName == null) return (label: 'Choose a plan', enabled: false);
+  if (current != null) {
+    final String? currentProduct = MySubscriptionController.productIdFor(
+      current,
+    );
+    if (selectedProductId != null && selectedProductId == currentProduct) {
+      return (label: 'Your current plan', enabled: false);
+    }
+    if (!selectedIsPaid) {
+      return (label: 'Included in your plan', enabled: false);
+    }
+    // Scheduled per the backend (pendingPlanId) or this device's store reply.
+    if (selectedProductId != null &&
+        (selectedProductId == scheduledProductId ||
+            selectedProductId ==
+                MySubscriptionController.pendingProductIdFor(current))) {
+      return (label: 'Switch scheduled', enabled: false);
+    }
+    return (label: 'Switch to $selectedName', enabled: true);
+  }
+  return (label: 'Continue with $selectedName', enabled: true);
+}
 
 class SubscriptionSelectionView extends StatelessWidget {
   const SubscriptionSelectionView({
@@ -16,6 +56,41 @@ class SubscriptionSelectionView extends StatelessWidget {
 
   final SubscriptionController controller;
   final VoidCallback onContinue;
+
+  Future<void> _restore(BuildContext context) async {
+    final RestoreOutcome outcome = await controller.restorePurchases();
+    if (!context.mounted) return;
+    final DialogCopy copy = restoreResultCopy(
+      outcome,
+      info: controller.infoMessage.value,
+      error: controller.errorMessage.value,
+      isIOS: Platform.isIOS,
+    );
+    if (outcome == RestoreOutcome.restored) {
+      final bool viewPlan = await confirmSubscriptionAction(
+        context,
+        copy,
+        confirmText: 'View my plan',
+        cancelText: 'Close',
+        icon: Icons.check_circle_outline_rounded,
+      );
+      controller.clearMessages();
+      if (!viewPlan) return;
+      if (Get.previousRoute == AppRoutes.mySubscription) {
+        Get.back<void>();
+      } else {
+        Get.offNamed<void>(AppRoutes.mySubscription);
+      }
+      return;
+    }
+    await showSubscriptionInfo(context, copy);
+    controller.clearMessages();
+  }
+
+  MySubscriptionModel? get _current =>
+      Get.isRegistered<SubscriptionStatusController>()
+      ? Get.find<SubscriptionStatusController>().subscription.value
+      : null;
 
   @override
   Widget build(BuildContext context) {
@@ -30,8 +105,10 @@ class SubscriptionSelectionView extends StatelessWidget {
               children: <Widget>[
                 const _BusinessPlanHero(),
                 const SizedBox(height: 26),
-                Obx(
-                  () => Column(
+                Obx(() {
+                  final String? currentProduct =
+                      MySubscriptionController.productIdFor(_current);
+                  return Column(
                     children: controller.plans
                         .map(
                           (StoreSubscriptionPlan plan) => Padding(
@@ -44,12 +121,15 @@ class SubscriptionSelectionView extends StatelessWidget {
                               storePrice: controller
                                   .productFor(plan.productId)
                                   ?.price,
+                              isCurrent:
+                                  plan.productId != null &&
+                                  plan.productId == currentProduct,
                             ),
                           ),
                         )
                         .toList(),
-                  ),
-                ),
+                  );
+                }),
               ],
             ),
           ),
@@ -63,15 +143,21 @@ class SubscriptionSelectionView extends StatelessWidget {
               child: Obx(() {
                 final StoreSubscriptionPlan? plan =
                     controller.selectedPlan.value;
+                final ({String label, bool enabled}) button = planButtonState(
+                  selectedName: plan?.name,
+                  selectedProductId: plan?.productId,
+                  selectedIsPaid: plan?.isPaid ?? false,
+                  current: _current,
+                  scheduledProductId: controller.scheduledSwitchProductId.value,
+                );
                 return Column(
                   mainAxisSize: MainAxisSize.min,
                   children: <Widget>[
                     CustomButton(
-                      text: plan == null
-                          ? 'Choose a plan'
-                          : 'Continue with ${plan.name}',
+                      text: button.label,
                       onPressed:
                           plan == null ||
+                              !button.enabled ||
                               (plan.isPaid &&
                                   (controller.productFor(plan.productId) ==
                                           null ||
@@ -87,20 +173,27 @@ class SubscriptionSelectionView extends StatelessWidget {
                               controller.isRestoring.value ||
                               controller.isPurchasing.value
                           ? null
-                          : controller.restorePurchases,
+                          : () => _restore(context),
                       child: Text(
                         controller.isRestoring.value
                             ? 'Restoring…'
                             : 'Restore Purchases',
                       ),
                     ),
-                    if (controller.errorMessage.value != null)
+                    if (controller.errorMessage.value != null) ...<Widget>[
                       Text(
                         controller.errorMessage.value!,
                         textAlign: TextAlign.center,
                         style: AppTextStyle.textXs(color: colors.error),
-                      )
-                    else if (controller.infoMessage.value != null)
+                      ),
+                      if (controller.plansUnavailable &&
+                          !controller.isLoading.value)
+                        TextButton.icon(
+                          onPressed: controller.retryLoadingPlans,
+                          icon: const Icon(Icons.refresh_rounded, size: 18),
+                          label: const Text('Try again'),
+                        ),
+                    ] else if (controller.infoMessage.value != null)
                       Text(
                         controller.infoMessage.value!,
                         textAlign: TextAlign.center,

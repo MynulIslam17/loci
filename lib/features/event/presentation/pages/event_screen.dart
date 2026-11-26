@@ -146,7 +146,8 @@ class _EventScreenState extends State<EventScreen> {
           slivers: [
             // ── 1. Floating Quick-Return Search Header (iOS Glass / Android M3) ─
             SliverPersistentHeader(
-              pinned: _isSearchExpanded || eventController.searchQuery.isNotEmpty,
+              pinned:
+                  _isSearchExpanded || eventController.searchQuery.isNotEmpty,
               floating:
                   !_isSearchExpanded && eventController.searchQuery.isEmpty,
               delegate: AdaptivePinnedSearchDelegate(
@@ -155,14 +156,14 @@ class _EventScreenState extends State<EventScreen> {
                   subtitle: 'RSVP to events you are interested in',
                   searchController: _searchController,
                   searchFocus: _searchFocus,
-                  isExpanded: _isSearchExpanded ||
+                  isExpanded:
+                      _isSearchExpanded ||
                       eventController.searchQuery.isNotEmpty,
                   onToggleExpand: (expanded) {
                     setState(() => _isSearchExpanded = expanded);
                   },
                   onSearchChanged: eventController.onSearchChanged,
-                  onSearchSubmitted: (v) =>
-                      eventController.submitSearch(v),
+                  onSearchSubmitted: (v) => eventController.submitSearch(v),
                   onClear: () {
                     eventController.clearSearch();
                   },
@@ -254,10 +255,8 @@ class _EventScreenState extends State<EventScreen> {
 
                           return EventCard(
                             rsvpButtonText: event.myRsvpStatus.label,
-                            onTapCard: () => _eventOnTapHandler(
-                              event.id,
-                              event.title,
-                            ),
+                            onTapCard: () =>
+                                _eventOnTapHandler(event.id, event.title),
                             imageUrl: event.coverImage,
                             title: event.title,
                             description: event.description,
@@ -292,8 +291,6 @@ class _EventScreenState extends State<EventScreen> {
   }
 }
 
-
-
 /// Modern illustrated empty state
 class _ModernEmptyState extends StatelessWidget {
   final bool hasSearch;
@@ -318,8 +315,9 @@ class _ModernEmptyState extends StatelessWidget {
         : "Stay tuned! New community events will appear here soon";
     final buttonText = hasSearch ? "Clear Search" : "Refresh";
     final onButtonTap = hasSearch ? onResetSearch : onRefresh;
-    final icon =
-        hasSearch ? Icons.search_off_rounded : Icons.calendar_today_rounded;
+    final icon = hasSearch
+        ? Icons.search_off_rounded
+        : Icons.calendar_today_rounded;
 
     return Center(
       child: Padding(
@@ -352,9 +350,7 @@ class _ModernEmptyState extends StatelessWidget {
             const SizedBox(height: 6),
             Text(
               subtitle,
-              style: AppTextStyle.textSm(
-                color: colors.onSurfaceVariant,
-              ),
+              style: AppTextStyle.textSm(color: colors.onSurfaceVariant),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 20),
@@ -383,7 +379,3 @@ class _ModernEmptyState extends StatelessWidget {
     );
   }
 }
-
-
-
-

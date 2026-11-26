@@ -49,7 +49,10 @@ class MySubscriptionScreen extends StatelessWidget {
               padding: const EdgeInsets.all(16),
               children: [
                 if (controller.errorMessage != null)
-                  _RetryBanner(controller: controller, colorScheme: colorScheme),
+                  _RetryBanner(
+                    controller: controller,
+                    colorScheme: colorScheme,
+                  ),
                 SizedBox(
                   height: MediaQuery.sizeOf(context).height * 0.6,
                   child: _NoSubscription(colorScheme: colorScheme),
@@ -92,7 +95,24 @@ class MySubscriptionScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 12),
               ],
-              _PlanCard(sub: sub, colorScheme: colorScheme),
+              if (!sub.cancelAtPeriodEnd &&
+                  (sub.pendingPlanName?.isNotEmpty ?? false)) ...[
+                _NoticeBanner(
+                  icon: Icons.swap_horiz_rounded,
+                  color: colorScheme.primary,
+                  colorScheme: colorScheme,
+                  text: _formatDate(sub.currentPeriodEnd) == null
+                      ? 'Switching to ${sub.pendingPlanName} at your next renewal.'
+                      : 'Switching to ${sub.pendingPlanName} on '
+                            '${_formatDate(sub.currentPeriodEnd)}.',
+                ),
+                const SizedBox(height: 12),
+              ],
+              _PlanCard(
+                sub: sub,
+                price: controller.priceFor(sub),
+                colorScheme: colorScheme,
+              ),
               if (sub.credits != null) ...[
                 const SizedBox(height: 16),
                 _CreditsCard(
@@ -109,6 +129,16 @@ class MySubscriptionScreen extends StatelessWidget {
                 sub: sub,
                 colorScheme: colorScheme,
               ),
+              if (sub.isStoreManaged) ...[
+                const SizedBox(height: 4),
+                SizedBox(
+                  width: double.infinity,
+                  child: TextButton(
+                    onPressed: () => Get.toNamed(AppRoutes.subscription),
+                    child: const Text('Change plan or restore purchases'),
+                  ),
+                ),
+              ],
             ],
           ),
         );
@@ -120,9 +150,14 @@ class MySubscriptionScreen extends StatelessWidget {
 // ── Plan header ─────────────────────────────────────────────────────────────
 class _PlanCard extends StatelessWidget {
   final MySubscriptionModel sub;
+  final String price;
   final ColorScheme colorScheme;
 
-  const _PlanCard({required this.sub, required this.colorScheme});
+  const _PlanCard({
+    required this.sub,
+    required this.price,
+    required this.colorScheme,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -177,14 +212,14 @@ class _PlanCard extends StatelessWidget {
               ),
             ],
           ),
-          if (sub.formattedAmount.isNotEmpty) ...[
+          if (price.isNotEmpty) ...[
             const SizedBox(height: 18),
             Row(
               crossAxisAlignment: CrossAxisAlignment.baseline,
               textBaseline: TextBaseline.alphabetic,
               children: [
                 Text(
-                  sub.formattedAmount,
+                  price,
                   style: AppTextStyle.textXl(
                     color: colorScheme.onSurface,
                     weight: FontWeight.w700,
@@ -286,7 +321,9 @@ class _BillingCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     // A cancelled store plan stays active until the paid-through date.
-    final String renewLabel = sub.cancelAtPeriodEnd ? 'Access ends' : 'Renews on';
+    final String renewLabel = sub.cancelAtPeriodEnd
+        ? 'Access ends'
+        : 'Renews on';
     final String? endDate = _formatDate(
       sub.cancelAtPeriodEnd ? sub.accessEndsAt : sub.currentPeriodEnd,
     );
@@ -464,7 +501,11 @@ class _RetryBanner extends StatelessWidget {
       ),
       child: Row(
         children: [
-          Icon(Icons.cloud_off_rounded, size: 18, color: colorScheme.onSurfaceVariant),
+          Icon(
+            Icons.cloud_off_rounded,
+            size: 18,
+            color: colorScheme.onSurfaceVariant,
+          ),
           const SizedBox(width: 10),
           Expanded(
             child: Text(
@@ -473,7 +514,9 @@ class _RetryBanner extends StatelessWidget {
             ),
           ),
           TextButton(
-            onPressed: controller.isLoading ? null : controller.fetchSubscription,
+            onPressed: controller.isLoading
+                ? null
+                : controller.fetchSubscription,
             child: const Text('Retry'),
           ),
         ],

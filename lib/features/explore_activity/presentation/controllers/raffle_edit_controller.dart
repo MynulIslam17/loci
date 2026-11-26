@@ -144,10 +144,7 @@ class RaffleEditController extends GetxController {
         endDate.value?.day != initialEnd?.day;
 
     return editFieldChanged(titleController.text, _initialRaffle!.title) ||
-        editFieldChanged(
-          detailsController.text,
-          _initialRaffle!.description,
-        ) ||
+        editFieldChanged(detailsController.text, _initialRaffle!.description) ||
         editFieldChanged(
           maxSupplyController.text,
           _initialRaffle!.maxSupply.toString(),
@@ -308,7 +305,8 @@ class RaffleEditController extends GetxController {
         ? existingStart
         : today;
 
-    final hasRange = startDate.value != null &&
+    final hasRange =
+        startDate.value != null &&
         endDate.value != null &&
         !startDate.value!.isBefore(firstDate);
 
@@ -335,7 +333,8 @@ class RaffleEditController extends GetxController {
 
   void openAddTaskSheet(BuildContext context) {
     final args = Get.arguments as Map<String, dynamic>? ?? {};
-    final businessId = args['businessId']?.toString() ??
+    final businessId =
+        args['businessId']?.toString() ??
         _details.raffleDetails.value?.sponsor.id ??
         '';
     showCreateActivityTaskSheet(

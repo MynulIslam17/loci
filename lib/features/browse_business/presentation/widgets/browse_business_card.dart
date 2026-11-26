@@ -220,7 +220,10 @@ class BrowseBusinessCard extends StatelessWidget {
                               Obx(() {
                                 final ctrl = Get.find<SaveBusinessController>();
                                 final loading = ctrl.isLoading(item.id);
-                                final saved = ctrl.isSaved(item.id, item.isSaved);
+                                final saved = ctrl.isSaved(
+                                  item.id,
+                                  item.isSaved,
+                                );
 
                                 if (loading) {
                                   return OutlinedButton.icon(

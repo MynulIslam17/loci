@@ -9,11 +9,7 @@ class PersistentActionBar extends StatelessWidget {
   final Widget child;
   final EdgeInsetsGeometry? padding;
 
-  const PersistentActionBar({
-    super.key,
-    required this.child,
-    this.padding,
-  });
+  const PersistentActionBar({super.key, required this.child, this.padding});
 
   @override
   Widget build(BuildContext context) {
@@ -24,8 +20,7 @@ class PersistentActionBar extends StatelessWidget {
     final content = SafeArea(
       top: false,
       child: Padding(
-        padding: padding ??
-            const EdgeInsets.fromLTRB(16, 10, 16, 12),
+        padding: padding ?? const EdgeInsets.fromLTRB(16, 10, 16, 12),
         child: child,
       ),
     );

@@ -119,12 +119,7 @@ class _RecentActivityState extends State<RecentActivity>
                 AdaptiveTabBar(
                   controller: _tabController,
                   isScrollable: true,
-                  labels: const [
-                    'Questions',
-                    'Answered',
-                    'Reviews',
-                    'Saved',
-                  ],
+                  labels: const ['Questions', 'Answered', 'Reviews', 'Saved'],
                   style: AdaptiveTabBarStyle.underline,
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                 ),
@@ -255,7 +250,8 @@ class _RecentActivityTab extends StatefulWidget {
 
 class _RecentActivityTabState extends State<_RecentActivityTab>
     with AutomaticKeepAliveClientMixin {
-  late final RecentActivityController _ctrl = Get.find<RecentActivityController>();
+  late final RecentActivityController _ctrl =
+      Get.find<RecentActivityController>();
   late final RemoveSavedBusinessController _removeCtrl =
       Get.find<RemoveSavedBusinessController>();
 

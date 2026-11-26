@@ -25,14 +25,15 @@ class LocalStorageService {
   LocalStorageService({
     SharedPreferences? prefs,
     FlutterSecureStorage? secureStorage,
-  })  : _prefs = prefs,
-        _secureStorage = secureStorage ??
-            const FlutterSecureStorage(
-              aOptions: AndroidOptions(encryptedSharedPreferences: true),
-              iOptions: IOSOptions(
-                accessibility: KeychainAccessibility.first_unlock,
-              ),
-            );
+  }) : _prefs = prefs,
+       _secureStorage =
+           secureStorage ??
+           const FlutterSecureStorage(
+             aOptions: AndroidOptions(encryptedSharedPreferences: true),
+             iOptions: IOSOptions(
+               accessibility: KeychainAccessibility.first_unlock,
+             ),
+           );
 
   Future<SharedPreferences> _getPrefs() async {
     if (_prefs != null) return _prefs;

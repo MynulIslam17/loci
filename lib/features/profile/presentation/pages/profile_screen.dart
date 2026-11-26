@@ -32,7 +32,8 @@ class ProfileScreen extends StatelessWidget {
 
   void _onAvatarTap(BuildContext context, ProfileController c) {
     HapticFeedback.lightImpact();
-    final hasImage = c.profileImage != null ||
+    final hasImage =
+        c.profileImage != null ||
         (c.profileImageUrl != null && c.profileImageUrl!.trim().isNotEmpty);
 
     if (hasImage) {
@@ -114,9 +115,7 @@ class ProfileScreen extends StatelessWidget {
                 Text(
                   'You haven\'t uploaded a profile picture yet. Choose a photo to personalize your profile.',
                   textAlign: TextAlign.center,
-                  style: AppTextStyle.textSm(
-                    color: colors.onSurfaceVariant,
-                  ),
+                  style: AppTextStyle.textSm(color: colors.onSurfaceVariant),
                 ),
                 const SizedBox(height: 20),
                 CustomButton(
@@ -152,7 +151,8 @@ class ProfileScreen extends StatelessWidget {
           Obx(() {
             final c = _controller;
             final user = authController.userModel;
-            final hasImage = c.profileImage != null ||
+            final hasImage =
+                c.profileImage != null ||
                 (c.profileImageUrl != null &&
                     c.profileImageUrl!.trim().isNotEmpty);
 
@@ -218,13 +218,16 @@ class ProfileScreen extends StatelessWidget {
                                     gradient: LinearGradient(
                                       colors: [
                                         colorScheme.primary,
-                                        colorScheme.primary.withValues(alpha: 0.5),
+                                        colorScheme.primary.withValues(
+                                          alpha: 0.5,
+                                        ),
                                       ],
                                     ),
                                     boxShadow: [
                                       BoxShadow(
-                                        color: colorScheme.primary
-                                            .withValues(alpha: 0.25),
+                                        color: colorScheme.primary.withValues(
+                                          alpha: 0.25,
+                                        ),
                                         blurRadius: 16,
                                         offset: const Offset(0, 6),
                                       ),
@@ -309,7 +312,9 @@ class ProfileScreen extends StatelessWidget {
                             children: [
                               Flexible(
                                 child: Text(
-                                  c.userName.isNotEmpty ? c.userName : 'Loci User',
+                                  c.userName.isNotEmpty
+                                      ? c.userName
+                                      : 'Loci User',
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
                                   textAlign: TextAlign.center,
@@ -362,12 +367,14 @@ class ProfileScreen extends StatelessWidget {
                                     vertical: 3.5,
                                   ),
                                   decoration: BoxDecoration(
-                                    color: colorScheme.primary
-                                        .withValues(alpha: 0.14),
+                                    color: colorScheme.primary.withValues(
+                                      alpha: 0.14,
+                                    ),
                                     borderRadius: BorderRadius.circular(20),
                                     border: Border.all(
-                                      color: colorScheme.primary
-                                          .withValues(alpha: 0.3),
+                                      color: colorScheme.primary.withValues(
+                                        alpha: 0.3,
+                                      ),
                                       width: 0.8,
                                     ),
                                   ),
@@ -375,8 +382,8 @@ class ProfileScreen extends StatelessWidget {
                                     user!.role == 'business_owner'
                                         ? 'Business Owner'
                                         : (user.role == 'admin'
-                                            ? 'Admin'
-                                            : 'Member'),
+                                              ? 'Admin'
+                                              : 'Member'),
                                     style: AppTextStyle.textXs(
                                       color: colorScheme.primary,
                                       weight: FontWeight.w700,
@@ -460,7 +467,9 @@ class ProfileScreen extends StatelessWidget {
                         color: colorScheme.surfaceContainerHigh,
                         borderRadius: BorderRadius.circular(20),
                         border: Border.all(
-                          color: colorScheme.outlineVariant.withValues(alpha: 0.4),
+                          color: colorScheme.outlineVariant.withValues(
+                            alpha: 0.4,
+                          ),
                           width: 1,
                         ),
                       ),
@@ -481,7 +490,8 @@ class ProfileScreen extends StatelessWidget {
                                 onTap: () => _showEditBottomSheet(
                                   context: context,
                                   title: "Edit About Me",
-                                  hintText: "Tell others a little about yourself...",
+                                  hintText:
+                                      "Tell others a little about yourself...",
                                   initialValue: c.about,
                                   maxLines: 4,
                                   onSave: c.updateAbout,
@@ -496,8 +506,12 @@ class ProfileScreen extends StatelessWidget {
                                 : "No bio added yet. Tap the edit button to add a short bio about yourself.",
                             style: AppTextStyle.textSm(
                               color: c.about.isNotEmpty
-                                  ? colorScheme.onSurfaceVariant.withValues(alpha: 0.88)
-                                  : colorScheme.onSurfaceVariant.withValues(alpha: 0.6),
+                                  ? colorScheme.onSurfaceVariant.withValues(
+                                      alpha: 0.88,
+                                    )
+                                  : colorScheme.onSurfaceVariant.withValues(
+                                      alpha: 0.6,
+                                    ),
                               height: 1.55,
                             ),
                           ),
@@ -513,7 +527,9 @@ class ProfileScreen extends StatelessWidget {
                         color: colorScheme.surfaceContainerHigh,
                         borderRadius: BorderRadius.circular(20),
                         border: Border.all(
-                          color: colorScheme.outlineVariant.withValues(alpha: 0.4),
+                          color: colorScheme.outlineVariant.withValues(
+                            alpha: 0.4,
+                          ),
                           width: 1,
                         ),
                       ),

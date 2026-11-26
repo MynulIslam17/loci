@@ -11,12 +11,16 @@ class SubscriptionPlanCard extends StatelessWidget {
     required this.isSelected,
     required this.onTap,
     this.storePrice,
+    this.isCurrent = false,
   });
 
   final StoreSubscriptionPlan plan;
   final bool isSelected;
   final VoidCallback onTap;
   final String? storePrice;
+
+  /// The plan the user is subscribed to right now (server status).
+  final bool isCurrent;
 
   Color _accent(ColorScheme colors) {
     return switch (plan.type) {
@@ -70,10 +74,13 @@ class SubscriptionPlanCard extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: <Widget>[
-                  if (plan.badge != null) ...<Widget>[
+                  if (isCurrent || plan.badge != null) ...<Widget>[
                     Align(
                       alignment: Alignment.centerRight,
-                      child: _PlanBadge(label: plan.badge!, color: accent),
+                      child: _PlanBadge(
+                        label: isCurrent ? 'Current plan' : plan.badge!,
+                        color: accent,
+                      ),
                     ),
                     const SizedBox(height: 4),
                   ],

@@ -39,71 +39,99 @@ void main() {
 
   for (final MapEntry<IapVerification, (bool, IapEventType)> row
       in table.entries) {
-    test('${row.key} → completes: ${row.value.$1}, emits ${row.value.$2}', () async {
-      final (IapService service, FakeStore store, List<IapEvent> events) =
-          await setUpService((_) => IapVerificationResult(row.key, message: 'm'));
-      store.updates.add(<PurchaseDetails>[storePurchase(PurchaseStatus.purchased)]);
-      await pumpEventQueue();
-      expect(store.completed.length, row.value.$1 ? 1 : 0);
-      expect(events.last.type, row.value.$2);
-      expect(events.last.message, 'm');
-      await service.dispose();
-    });
-  }
-
-  test('a purchase without purchaseID is finished through the fallback, not the plugin', () async {
-    final FakeStore store = FakeStore();
-    final List<PurchaseDetails> finishedById = <PurchaseDetails>[];
-    final IapService service = IapService(
-      config: const IapConfig(productIds: LociIapProducts.all),
-      store: store,
-      verifyPurchase: (_) async =>
-          const IapVerificationResult(IapVerification.rejected),
-      finishWithoutPurchaseId: (PurchaseDetails p) async {
-        finishedById.add(p);
-        return true;
+    test(
+      '${row.key} → completes: ${row.value.$1}, emits ${row.value.$2}',
+      () async {
+        final (
+          IapService service,
+          FakeStore store,
+          List<IapEvent> events,
+        ) = await setUpService(
+          (_) => IapVerificationResult(row.key, message: 'm'),
+        );
+        store.updates.add(<PurchaseDetails>[
+          storePurchase(PurchaseStatus.purchased),
+        ]);
+        await pumpEventQueue();
+        expect(store.completed.length, row.value.$1 ? 1 : 0);
+        expect(events.last.type, row.value.$2);
+        expect(events.last.message, 'm');
+        await service.dispose();
       },
     );
-    final List<IapEvent> events = <IapEvent>[];
-    service.events.listen(events.add);
-    await service.initialize();
-    store.updates.add(<PurchaseDetails>[
-      storePurchase(PurchaseStatus.purchased, purchaseId: null),
-    ]);
-    await pumpEventQueue();
-    expect(finishedById.length, 1);
-    expect(store.completed, isEmpty);
-    expect(events.any((IapEvent e) => e.type == IapEventType.error), isFalse);
-    expect(events.last.type, IapEventType.verificationFailed);
-    await service.dispose();
-  });
+  }
+
+  test(
+    'a purchase without purchaseID is finished through the fallback, not the plugin',
+    () async {
+      final FakeStore store = FakeStore();
+      final List<PurchaseDetails> finishedById = <PurchaseDetails>[];
+      final IapService service = IapService(
+        config: const IapConfig(productIds: LociIapProducts.all),
+        store: store,
+        verifyPurchase: (_) async =>
+            const IapVerificationResult(IapVerification.rejected),
+        finishWithoutPurchaseId: (PurchaseDetails p) async {
+          finishedById.add(p);
+          return true;
+        },
+      );
+      final List<IapEvent> events = <IapEvent>[];
+      service.events.listen(events.add);
+      await service.initialize();
+      store.updates.add(<PurchaseDetails>[
+        storePurchase(PurchaseStatus.purchased, purchaseId: null),
+      ]);
+      await pumpEventQueue();
+      expect(finishedById.length, 1);
+      expect(store.completed, isEmpty);
+      expect(events.any((IapEvent e) => e.type == IapEventType.error), isFalse);
+      expect(events.last.type, IapEventType.verificationFailed);
+      await service.dispose();
+    },
+  );
 
   test('restored + verified emits purchaseRestored', () async {
-    final (IapService service, FakeStore store, List<IapEvent> events) =
-        await setUpService((_) => const IapVerificationResult(IapVerification.verified));
-    store.updates.add(<PurchaseDetails>[storePurchase(PurchaseStatus.restored)]);
+    final (
+      IapService service,
+      FakeStore store,
+      List<IapEvent> events,
+    ) = await setUpService(
+      (_) => const IapVerificationResult(IapVerification.verified),
+    );
+    store.updates.add(<PurchaseDetails>[
+      storePurchase(PurchaseStatus.restored),
+    ]);
     await pumpEventQueue();
     expect(events.last.type, IapEventType.purchaseRestored);
     await service.dispose();
   });
 
-  test('a throwing verifier is treated as retry-later (never completes)', () async {
-    final (IapService service, FakeStore store, List<IapEvent> events) =
-        await setUpService((_) => throw Exception('boom'));
-    store.updates.add(<PurchaseDetails>[storePurchase(PurchaseStatus.purchased)]);
-    await pumpEventQueue();
-    expect(store.completed, isEmpty);
-    expect(events.last.type, IapEventType.verificationDeferred);
-    await service.dispose();
-  });
+  test(
+    'a throwing verifier is treated as retry-later (never completes)',
+    () async {
+      final (IapService service, FakeStore store, List<IapEvent> events) =
+          await setUpService((_) => throw Exception('boom'));
+      store.updates.add(<PurchaseDetails>[
+        storePurchase(PurchaseStatus.purchased),
+      ]);
+      await pumpEventQueue();
+      expect(store.completed, isEmpty);
+      expect(events.last.type, IapEventType.verificationDeferred);
+      await service.dispose();
+    },
+  );
 
   test('store pending is never verified nor completed', () async {
     int calls = 0;
-    final (IapService service, FakeStore store, List<IapEvent> events) =
-        await setUpService((_) {
-          calls++;
-          return const IapVerificationResult(IapVerification.verified);
-        });
+    final (
+      IapService service,
+      FakeStore store,
+      List<IapEvent> events,
+    ) = await setUpService((_) {
+      calls++;
+      return const IapVerificationResult(IapVerification.verified);
+    });
     store.updates.add(<PurchaseDetails>[storePurchase(PurchaseStatus.pending)]);
     await pumpEventQueue();
     expect(calls, 0);
@@ -112,18 +140,21 @@ void main() {
     await service.dispose();
   });
 
-  test('canceled / error purchases are finished without verification', () async {
-    final (IapService service, FakeStore store, _) = await setUpService(
-      (_) => throw StateError('should not verify'),
-    );
-    store.updates.add(<PurchaseDetails>[
-      storePurchase(PurchaseStatus.canceled),
-      storePurchase(PurchaseStatus.error, purchaseId: 'other'),
-    ]);
-    await pumpEventQueue();
-    expect(store.completed.length, 2);
-    await service.dispose();
-  });
+  test(
+    'canceled / error purchases are finished without verification',
+    () async {
+      final (IapService service, FakeStore store, _) = await setUpService(
+        (_) => throw StateError('should not verify'),
+      );
+      store.updates.add(<PurchaseDetails>[
+        storePurchase(PurchaseStatus.canceled),
+        storePurchase(PurchaseStatus.error, purchaseId: 'other'),
+      ]);
+      await pumpEventQueue();
+      expect(store.completed.length, 2);
+      await service.dispose();
+    },
+  );
 
   test('unknown products are finished, not verified', () async {
     final (IapService service, FakeStore store, _) = await setUpService(

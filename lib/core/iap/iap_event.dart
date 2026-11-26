@@ -24,6 +24,11 @@ enum IapEventType {
 
   /// Temporary failure — will retry; the transaction stays open.
   verificationDeferred,
+
+  /// A purchased/restored transaction was handed to the backend verifier.
+  /// Exactly one of purchaseCompleted / purchaseRestored / verification*
+  /// follows for the same transaction.
+  verificationStarted,
   restoreStarted,
   restoreFinished,
   error,

@@ -32,6 +32,12 @@ class FakeStore implements InAppPurchase {
   final List<String?> restoredWith = <String?>[];
   bool available = true;
 
+  /// Makes `completePurchase` (finishing the transaction) fail.
+  Object? completeError;
+
+  /// Product ids the store reports as not found.
+  Set<String> notFound = <String>{};
+
   /// Purchases emitted when [restorePurchases] is called.
   List<PurchaseDetails> restoreResult = <PurchaseDetails>[];
 
@@ -44,12 +50,17 @@ class FakeStore implements InAppPurchase {
   @override
   Future<ProductDetailsResponse> queryProductDetails(Set<String> ids) async =>
       ProductDetailsResponse(
-        productDetails: ids.map(product).toList(),
-        notFoundIDs: const <String>[],
+        productDetails: ids
+            .where((String id) => !notFound.contains(id))
+            .map(product)
+            .toList(),
+        notFoundIDs: ids.where(notFound.contains).toList(),
       );
 
   @override
   Future<void> completePurchase(PurchaseDetails purchase) async {
+    final Object? error = completeError;
+    if (error != null) throw error;
     completed.add(purchase);
     purchase.pendingCompletePurchase = false;
   }
@@ -127,6 +138,9 @@ class FakeSubscriptionService extends SubscriptionService {
   final List<Map<String, dynamic>> verified = <Map<String, dynamic>>[];
   final List<VerifyResult> verifyResults = <VerifyResult>[];
   VerifyResult defaultVerify = const VerifyResult(VerifyResultKind.success);
+
+  /// Simulated backend latency for `POST /subscriptions/verify`.
+  Duration verifyDelay = Duration.zero;
   String accountToken = '6f1c3a8e-2b4d-4c1e-9a7f-0e5d2c8b1a34';
   bool tokenFails = false;
   int tokenCalls = 0;
@@ -146,6 +160,7 @@ class FakeSubscriptionService extends SubscriptionService {
   @override
   Future<VerifyResult> verifyPurchase(Map<String, dynamic> body) async {
     verified.add(Map<String, dynamic>.from(body));
+    if (verifyDelay > Duration.zero) await Future<void>.delayed(verifyDelay);
     if (verifyResults.isNotEmpty) return verifyResults.removeAt(0);
     return defaultVerify;
   }
@@ -160,6 +175,12 @@ class FakeSubscriptionService extends SubscriptionService {
 
   @override
   Future<List<BusinessModel>> getMyBusinesses() async => businessIds
-      .map((String id) => BusinessModel.fromJson(<String, dynamic>{'_id': id, 'id': id, 'name': id}))
+      .map(
+        (String id) => BusinessModel.fromJson(<String, dynamic>{
+          '_id': id,
+          'id': id,
+          'name': id,
+        }),
+      )
       .toList();
 }

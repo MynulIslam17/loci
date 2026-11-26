@@ -71,8 +71,10 @@ class NetworkCaller {
 
   String _resolveErrorMessage(int statusCode, Map<String, dynamic>? decoded) {
     final code = decoded?['code'];
-    if (code == 'SUBSCRIPTION_REQUIRED') return 'An active subscription is required for this action.';
-    if (code == 'INSUFFICIENT_SPOTLIGHT_CREDITS') return 'Insufficient Spotlight credits.';
+    if (code == 'SUBSCRIPTION_REQUIRED')
+      return 'An active subscription is required for this action.';
+    if (code == 'INSUFFICIENT_SPOTLIGHT_CREDITS')
+      return 'Insufficient Spotlight credits.';
     final fieldErrors = _extractFieldErrors(decoded);
     if (fieldErrors != null) return fieldErrors;
 
@@ -278,7 +280,11 @@ class NetworkCaller {
         if (token.isNotEmpty) 'Authorization': 'Bearer $token',
       };
 
-      _logRequest(url, url.endsWith('/subscriptions/verify') ? '[redacted]' : body, headers);
+      _logRequest(
+        url,
+        url.endsWith('/subscriptions/verify') ? '[redacted]' : body,
+        headers,
+      );
       final response = await post(
         uri,
         headers: headers,

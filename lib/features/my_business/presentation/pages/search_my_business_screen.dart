@@ -11,7 +11,9 @@ import 'package:loci/features/my_business/presentation/widgets/business_search_r
 import 'package:loci/features/my_business/presentation/widgets/expandable_business_card.dart';
 import 'package:loci/features/my_business/presentation/widgets/manual_add_business_card.dart';
 import 'package:loci/shared/widgets/adaptive_refresh.dart';
+import 'package:loci/core/constants/app_text_style.dart';
 import 'package:loci/shared/widgets/custom_text_field.dart';
+import 'package:loci/shared/widgets/keyboard_done_area.dart';
 import 'package:loci/shared/widgets/modern_category_dropdown.dart';
 import 'package:loci/routes/app_routes.dart';
 
@@ -39,11 +41,16 @@ class _SearchMyBusinessState extends State<SearchMyBusiness> {
   bool get _canAdd =>
       findGoogleBusinessController.selectedBusiness.value != null;
 
+  String get _selectedLocation =>
+      findGoogleBusinessController.selectedBusiness.value?.location.trim() ??
+      '';
+
   void _onSearchChanged(String value) {
     findGoogleBusinessController.searchBusinesses(value);
   }
 
   void _onBusinessSelected(Business business) {
+    hideKeyboard();
     _searchTEController.text = business.name;
     findGoogleBusinessController.selectBusiness(business);
   }
@@ -54,6 +61,7 @@ class _SearchMyBusinessState extends State<SearchMyBusiness> {
   }
 
   Future<void> _onAddPressed() async {
+    hideKeyboard();
     final business = findGoogleBusinessController.selectedBusiness.value;
     if (business == null) return;
 
@@ -166,20 +174,23 @@ class _SearchMyBusinessState extends State<SearchMyBusiness> {
         // wouldn't rebuild until another observable changed (e.g. a refresh).
         final currentExpandedIndex = expandedIndex.value;
 
-        return AdaptiveRefresh(
-          onRefresh: () => myBusinessController.getMyBusinesses(
-            category: selectedCategory.value?.label,
-            isRefresh: true,
-          ),
-          child: CustomScrollView(
-            physics: const AlwaysScrollableScrollPhysics(),
-            slivers: [
-              SliverToBoxAdapter(child: _buildHeader(colorScheme)),
-              if (showFilter)
-                SliverToBoxAdapter(child: _buildCategoryFilter(colorScheme)),
+        return KeyboardDoneArea(
+          child: AdaptiveRefresh(
+            onRefresh: () => myBusinessController.getMyBusinesses(
+              category: selectedCategory.value?.label,
+              isRefresh: true,
+            ),
+            child: CustomScrollView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+              slivers: [
+                SliverToBoxAdapter(child: _buildHeader(colorScheme)),
+                if (showFilter)
+                  SliverToBoxAdapter(child: _buildCategoryFilter(colorScheme)),
 
-              _buildBody(controller, colorScheme, currentExpandedIndex),
-            ],
+                _buildBody(controller, colorScheme, currentExpandedIndex),
+              ],
+            ),
           ),
         );
       }),
@@ -204,17 +215,39 @@ class _SearchMyBusinessState extends State<SearchMyBusiness> {
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
+                    // Once a business is picked the field is highlighted
+                    // (tinted, primary border, check icon, bold name) so it's
+                    // obvious which business "Add" will claim.
                     CustomTextField(
+                      key: const Key('claim_search_field'),
                       controller: _searchTEController,
                       hintText: 'Claim your Business',
-                      borderColor: colorScheme.outline,
+                      borderColor: _canAdd
+                          ? colorScheme.primary
+                          : colorScheme.outline,
+                      fillColor: _canAdd
+                          ? colorScheme.primary.withValues(alpha: 0.08)
+                          : null,
                       fontSize: 14,
-                      textColor: colorScheme.onSurface,
+                      fontWeight: _canAdd ? FontWeight.w600 : null,
+                      textColor: _canAdd
+                          ? colorScheme.primary
+                          : colorScheme.onSurface,
                       hintTextColor: colorScheme.onSurfaceVariant,
                       readOnly: _canAdd,
+                      textInputAction: TextInputAction.search,
+                      onFieldSubmitted: (_) => hideKeyboard(),
                       onChanged: _onSearchChanged,
+                      prefixIcon: _canAdd
+                          ? Icon(
+                              Icons.check_circle_rounded,
+                              color: colorScheme.primary,
+                              size: 20,
+                            )
+                          : null,
                       suffixIcon: _canAdd
                           ? IconButton(
+                              tooltip: 'Clear selection',
                               icon: Icon(
                                 Icons.clear,
                                 color: colorScheme.onSurfaceVariant,
@@ -226,6 +259,17 @@ class _SearchMyBusinessState extends State<SearchMyBusiness> {
                               color: colorScheme.onSurfaceVariant,
                             ),
                     ),
+                    if (_canAdd) ...[
+                      const SizedBox(height: 6),
+                      Text(
+                        _selectedLocation.isEmpty
+                            ? 'Selected — tap Add to claim it'
+                            : '$_selectedLocation · tap Add to claim it',
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: AppTextStyle.textXs(color: colorScheme.primary),
+                      ),
+                    ],
                     const SizedBox(height: 4),
                     BusinessSearchResultWidget(onSelect: _onBusinessSelected),
                   ],
@@ -263,6 +307,7 @@ class _SearchMyBusinessState extends State<SearchMyBusiness> {
           /// MANUAL ADD CARD
           ManualAddBusinessCard(
             onTap: () async {
+              hideKeyboard();
               final result = await Get.toNamed(AppRoutes.manualClaimBusiness);
               _handleClaimResult(result);
             },
@@ -361,8 +406,9 @@ class _SearchMyBusinessState extends State<SearchMyBusiness> {
           category: business.category,
           imagePath: business.logo ?? "",
           description: business.description ?? "",
-          onTap: () =>
-              expandedIndex.value = (expandedIndex.value == index) ? null : index,
+          onTap: () => expandedIndex.value = (expandedIndex.value == index)
+              ? null
+              : index,
           onViewPage: () => _onViewPageHandler(
             businessId: business.id,
             businessName: business.name,

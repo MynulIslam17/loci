@@ -10,11 +10,7 @@ class CustomQrCode extends StatelessWidget {
   final String data;
   final double size;
 
-  const CustomQrCode({
-    super.key,
-    required this.data,
-    this.size = 200,
-  });
+  const CustomQrCode({super.key, required this.data, this.size = 200});
 
   @override
   Widget build(BuildContext context) {
@@ -30,12 +26,12 @@ class CustomQrCode extends StatelessWidget {
   /// SHOW BOTTOM SHEET
   /// ===============================
   static void show(
-      BuildContext context, {
-        required String data,
-        required String title,
-        String? subtitle,
-        String? appName,
-      }) {
+    BuildContext context, {
+    required String data,
+    required String title,
+    String? subtitle,
+    String? appName,
+  }) {
     showModalBottomSheet(
       context: context,
       useRootNavigator: true,
@@ -152,10 +148,7 @@ class CustomQrCode extends StatelessWidget {
               Text(
                 subtitle ?? 'Scan this QR to check-in to this activity',
                 textAlign: TextAlign.center,
-                style: const TextStyle(
-                  fontSize: 13,
-                  color: Colors.black54,
-                ),
+                style: const TextStyle(fontSize: 13, color: Colors.black54),
               ),
               const SizedBox(height: 16),
               const Divider(color: Colors.black12),
@@ -295,10 +288,7 @@ class _QrBottomSheetState extends State<_QrBottomSheet> {
               border: Border.all(color: Colors.black12),
               borderRadius: BorderRadius.circular(12),
             ),
-            child: CustomQrCode(
-              data: widget.data,
-              size: 200,
-            ),
+            child: CustomQrCode(data: widget.data, size: 200),
           ),
 
           const SizedBox(height: 24),

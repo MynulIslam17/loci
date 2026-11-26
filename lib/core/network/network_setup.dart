@@ -28,11 +28,19 @@ String _readAccessToken() {
 
 Completer<bool>? _refreshCompleter;
 
+/// Gets a fresh access token from the saved refresh token. Used after the
+/// user's role changes on the server (e.g. a business claim is approved), so
+/// the token no longer carries the old role. Concurrent calls share one
+/// request.
+Future<bool> refreshAccessToken() => _handleRefreshToken();
+
 /// Attempt to refresh token using saved refreshToken.
 /// Uses a Completer so concurrent 401s queue behind a single network call.
 Future<bool> _handleRefreshToken() async {
   if (_refreshCompleter != null) {
-    _logger.i('🔄 Concurrent 401 detected — waiting for active token refresh...');
+    _logger.i(
+      '🔄 Concurrent 401 detected — waiting for active token refresh...',
+    );
     return _refreshCompleter!.future;
   }
 
@@ -62,11 +70,13 @@ TOKEN   : ${refreshToken.substring(0, refreshToken.length > 20 ? 20 : refreshTok
 
     // Direct HTTP POST to avoid recursing into NetworkCaller
     final url = Uri.parse(AppUrl.refreshToken);
-    final response = await http.post(
-      url,
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({'refreshToken': refreshToken.trim()}),
-    ).timeout(const Duration(seconds: 15));
+    final response = await http
+        .post(
+          url,
+          headers: {'Content-Type': 'application/json'},
+          body: jsonEncode({'refreshToken': refreshToken.trim()}),
+        )
+        .timeout(const Duration(seconds: 15));
 
     _logger.i('''
 ================== REFRESH TOKEN RESPONSE ==========
@@ -78,8 +88,8 @@ BODY    : ${response.body}
       final decoded = jsonDecode(response.body);
       final data = decoded['data'];
       if (data is Map) {
-        final newAccessToken =
-            (data['accessToken'] ?? data['token'])?.toString();
+        final newAccessToken = (data['accessToken'] ?? data['token'])
+            ?.toString();
         final newRefreshToken = data['refreshToken']?.toString();
 
         if (newAccessToken != null && newAccessToken.isNotEmpty) {
@@ -90,7 +100,9 @@ BODY    : ${response.body}
           if (Get.isRegistered<AuthController>()) {
             Get.find<AuthController>().accessTokenRx.value = newAccessToken;
           }
-          _logger.i('✅ Token refreshed successfully! New access token applied.');
+          _logger.i(
+            '✅ Token refreshed successfully! New access token applied.',
+          );
           _refreshCompleter!.complete(true);
           return true;
         }

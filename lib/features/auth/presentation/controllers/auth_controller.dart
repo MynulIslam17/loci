@@ -1,4 +1,9 @@
+import 'dart:async';
+import 'dart:convert';
+
+import 'package:flutter/widgets.dart';
 import 'package:get/get.dart';
+import 'package:loci/core/network/network_setup.dart' as network;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:loci/core/services/connectivity/connectivity_service.dart';
 import 'package:loci/core/di/bindings/app_bindings.dart';
@@ -14,7 +19,26 @@ import 'package:loci/shared/widgets/loading_dialog.dart';
 class AuthController extends GetxController {
   final AuthService _service;
 
-  AuthController(this._service);
+  AuthController(
+    this._service, {
+    Future<bool> Function()? refreshAccessToken,
+    DateTime Function()? clock,
+    this.observeLifecycle = true,
+  }) : _refreshAccessToken = refreshAccessToken ?? network.refreshAccessToken,
+       _now = clock ?? DateTime.now;
+
+  final Future<bool> Function() _refreshAccessToken;
+  final DateTime Function() _now;
+
+  /// Re-check the role whenever the app comes back to the foreground.
+  final bool observeLifecycle;
+  AppLifecycleListener? _lifecycle;
+  Future<bool>? _userRefresh;
+  DateTime? _lastUserRefresh;
+
+  /// A role change made on the server (e.g. an admin approving a business
+  /// claim) is picked up at most this long after the app is resumed.
+  static const Duration resumeRefreshInterval = Duration(seconds: 30);
 
   /// Reactive fields. Getters preserve the existing public API used outside
   /// this feature (core / other features read `.accessToken`, `.userModel`, etc.).
@@ -49,6 +73,21 @@ class AuthController extends GetxController {
   void onInit() {
     super.onInit();
     loadUserData();
+    if (observeLifecycle) {
+      try {
+        _lifecycle = AppLifecycleListener(
+          onResume: () => unawaited(refreshUser(force: false)),
+        );
+      } catch (_) {
+        // No widgets binding (plain unit tests).
+      }
+    }
+  }
+
+  @override
+  void onClose() {
+    _lifecycle?.dispose();
+    super.onClose();
   }
 
   Future<void> saveUserData({
@@ -75,6 +114,9 @@ class AuthController extends GetxController {
       roleRx.value = data.role;
       if (accessToken != null && accessToken!.trim().isNotEmpty) {
         _onAuthenticated();
+        // The stored role can be stale (e.g. a claim was approved while the
+        // app was closed) — confirm it with the server.
+        unawaited(refreshUser());
       }
     } catch (e) {
       // Non-fatal exception handling during session initialization
@@ -93,16 +135,69 @@ class AuthController extends GetxController {
   /// Bump when the avatar file at the same URL was replaced (cache bust).
   void bumpAvatarRevision() => avatarRevision.value++;
 
-  /// Re-fetches the current user from the backend and updates the session.
-  /// Call after actions that can change the role — e.g. claiming a business
-  /// promotes a member to business_owner, unlocking subscriptions.
-  Future<void> refreshUser() async {
+  /// Re-fetches the current user from the backend and updates the session
+  /// (persisted, so it survives a restart). Returns true when the role
+  /// changed. Called on launch, on resume, when the business screens open and
+  /// when a claim-approved notification arrives — an admin approves a claim
+  /// long after it was submitted, so checking only after submitting is not
+  /// enough.
+  ///
+  /// [force] false skips the call if the user was refreshed recently.
+  /// Concurrent calls share one request.
+  Future<bool> refreshUser({bool force = true}) {
+    if (!isLoggedIn) return Future<bool>.value(false);
+    final DateTime? last = _lastUserRefresh;
+    if (!force &&
+        last != null &&
+        _now().difference(last) < resumeRefreshInterval) {
+      return Future<bool>.value(false);
+    }
+    return _userRefresh ??= _refreshUserNow().whenComplete(() {
+      _userRefresh = null;
+    });
+  }
+
+  Future<bool> _refreshUserNow() async {
     try {
       final user = await _service.getMe();
-      userModelRx.value = user;
-      roleRx.value = user.role;
+      _lastUserRefresh = _now();
+      final String? previousRole = role;
+      // The access token embeds the role it was issued with; replace it
+      // FIRST, so screens reacting to the new role (subscription status,
+      // business list) already call the API with a token carrying that role.
+      final String? tokenRole = jwtRole(accessToken);
+      if (tokenRole != null && tokenRole != user.role) {
+        await _refreshAccessToken();
+      }
+      // Only publish real changes: every user/role emission is a "session
+      // change" that clears and reloads the subscription state — doing that
+      // on each resume (e.g. returning from the App Store sheet mid-purchase)
+      // makes screens flicker and races the purchase.
+      final UserModel? current = userModel;
+      if (current == null ||
+          jsonEncode(current.toJson()) != jsonEncode(user.toJson())) {
+        userModelRx.value = user;
+      }
+      if (role != user.role) roleRx.value = user.role;
+      return previousRole != user.role;
     } catch (_) {
       // Non-fatal — keep the existing session on failure.
+      return false;
+    }
+  }
+
+  /// The `role` claim of a JWT, or null when it can't be read.
+  static String? jwtRole(String? token) {
+    final List<String> parts = (token ?? '').split('.');
+    if (parts.length != 3) return null;
+    try {
+      final Object? payload = jsonDecode(
+        utf8.decode(base64Url.decode(base64Url.normalize(parts[1]))),
+      );
+      final Object? role = payload is Map ? payload['role'] : null;
+      return role is String ? role : null;
+    } catch (_) {
+      return null;
     }
   }
 

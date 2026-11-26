@@ -131,7 +131,9 @@ class RaffleCard extends StatelessWidget {
                           borderRadius: BorderRadius.circular(12),
                           boxShadow: [
                             BoxShadow(
-                              color: const Color(0xFF10B981).withValues(alpha: 0.4),
+                              color: const Color(
+                                0xFF10B981,
+                              ).withValues(alpha: 0.4),
                               blurRadius: 6,
                               offset: const Offset(0, 2),
                             ),
@@ -209,9 +211,14 @@ class RaffleCard extends StatelessWidget {
                     if (raffle.bundleName.isNotEmpty) ...[
                       Container(
                         width: double.infinity,
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 7,
+                        ),
                         decoration: BoxDecoration(
-                          color: colorScheme.primaryContainer.withValues(alpha: isDark ? 0.3 : 0.55),
+                          color: colorScheme.primaryContainer.withValues(
+                            alpha: isDark ? 0.3 : 0.55,
+                          ),
                           borderRadius: BorderRadius.circular(10),
                           border: Border.all(
                             color: colorScheme.primary.withValues(alpha: 0.25),
@@ -236,7 +243,9 @@ class RaffleCard extends StatelessWidget {
                               Container(
                                 padding: const EdgeInsets.all(4),
                                 decoration: BoxDecoration(
-                                  color: colorScheme.primary.withValues(alpha: 0.15),
+                                  color: colorScheme.primary.withValues(
+                                    alpha: 0.15,
+                                  ),
                                   borderRadius: BorderRadius.circular(6),
                                 ),
                                 child: Icon(

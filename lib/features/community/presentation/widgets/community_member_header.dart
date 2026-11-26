@@ -24,8 +24,7 @@ class CommunityMemberHeader extends StatelessWidget {
 
       final community = controller.community.value;
       final business = community?.business;
-      final businessName =
-          business?.name.trim().isNotEmpty == true
+      final businessName = business?.name.trim().isNotEmpty == true
           ? business!.name
           : (fallbackName?.trim().isNotEmpty == true
                 ? fallbackName!.trim()
@@ -48,8 +47,9 @@ class CommunityMemberHeader extends StatelessWidget {
             LinearProgressIndicator(
               minHeight: 2,
               color: Theme.of(context).colorScheme.primary,
-              backgroundColor:
-                  Theme.of(context).colorScheme.surfaceContainerHighest,
+              backgroundColor: Theme.of(
+                context,
+              ).colorScheme.surfaceContainerHighest,
             ),
           CommunityHeaderIdentity(
             community: community,

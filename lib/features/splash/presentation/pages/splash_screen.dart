@@ -193,7 +193,9 @@ class _SplashScreenState extends State<SplashScreen>
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
                             color: isDark
-                                ? const Color(0xFF1E1E1E).withValues(alpha: 0.85)
+                                ? const Color(
+                                    0xFF1E1E1E,
+                                  ).withValues(alpha: 0.85)
                                 : Colors.white.withValues(alpha: 0.9),
                             border: Border.all(
                               color: primaryTeal.withValues(
@@ -242,4 +244,3 @@ class _SplashScreenState extends State<SplashScreen>
     );
   }
 }
-

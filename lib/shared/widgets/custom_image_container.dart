@@ -41,7 +41,8 @@ class CustomCachedImage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final effectiveRadius = customBorderRadius ??
+    final effectiveRadius =
+        customBorderRadius ??
         BorderRadius.circular(isCircle ? 1000 : borderRadius);
 
     // 1. FILE
@@ -60,10 +61,7 @@ class CustomCachedImage extends StatelessWidget {
 
     // 2. EMPTY URL
     if (imageUrl == null || imageUrl!.isEmpty) {
-      return ClipRRect(
-        borderRadius: effectiveRadius,
-        child: _buildFallback(),
-      );
+      return ClipRRect(borderRadius: effectiveRadius, child: _buildFallback());
     }
 
     final url = imageUrl!;
@@ -139,11 +137,7 @@ class CustomCachedImage extends StatelessWidget {
       baseColor: Colors.grey[300]!,
       highlightColor: Colors.grey[100]!,
       direction: ShimmerDirection.rtl,
-      child: Container(
-        height: height,
-        width: width,
-        color: Colors.white,
-      ),
+      child: Container(height: height, width: width, color: Colors.white),
     );
   }
 

@@ -85,10 +85,7 @@ class _ExploreRoutesPageState extends State<ExploreRoutesPage> {
     _resetSearchToDefault();
     Get.toNamed(
       AppRoutes.routeDetails,
-      arguments: {
-        'routeId': routeId,
-        'routeName': routeName,
-      },
+      arguments: {'routeId': routeId, 'routeName': routeName},
     );
   }
 
@@ -128,18 +125,20 @@ class _ExploreRoutesPageState extends State<ExploreRoutesPage> {
           slivers: [
             // ── 1. Floating Quick-Return Search Header (iOS Glass / Android M3) ─
             SliverPersistentHeader(
-              pinned: _isSearchExpanded ||
-                  routeController.searchQuery.isNotEmpty,
-              floating: !_isSearchExpanded &&
-                  routeController.searchQuery.isEmpty,
+              pinned:
+                  _isSearchExpanded || routeController.searchQuery.isNotEmpty,
+              floating:
+                  !_isSearchExpanded && routeController.searchQuery.isEmpty,
               delegate: AdaptivePinnedSearchDelegate(
                 child: AdaptiveExpandableSearchHeader(
                   title: 'Explore Routes',
-                  subtitle: 'Discover pub crawls, shop hopping, and scavenger hunts',
+                  subtitle:
+                      'Discover pub crawls, shop hopping, and scavenger hunts',
                   hintText: 'Search routes by name or place...',
                   searchController: _searchController,
                   searchFocus: _searchFocus,
-                  isExpanded: _isSearchExpanded ||
+                  isExpanded:
+                      _isSearchExpanded ||
                       routeController.searchQuery.isNotEmpty,
                   onToggleExpand: (expanded) {
                     setState(() => _isSearchExpanded = expanded);
@@ -207,7 +206,9 @@ class _ExploreRoutesPageState extends State<ExploreRoutesPage> {
                               color: colorScheme.primary.withValues(alpha: 0.1),
                               shape: BoxShape.circle,
                               border: Border.all(
-                                color: colorScheme.primary.withValues(alpha: 0.2),
+                                color: colorScheme.primary.withValues(
+                                  alpha: 0.2,
+                                ),
                                 width: 1.5,
                               ),
                             ),
@@ -221,7 +222,9 @@ class _ExploreRoutesPageState extends State<ExploreRoutesPage> {
                           ),
                           const SizedBox(height: 18),
                           Text(
-                            hasSearch ? "No routes found" : "No Routes Available",
+                            hasSearch
+                                ? "No routes found"
+                                : "No Routes Available",
                             style: AppTextStyle.textLg(
                               color: colorScheme.onSurface,
                               weight: FontWeight.w700,
@@ -262,7 +265,9 @@ class _ExploreRoutesPageState extends State<ExploreRoutesPage> {
                             ),
                             child: Text(
                               hasSearch ? "Clear Search" : "Refresh",
-                              style: const TextStyle(fontWeight: FontWeight.w600),
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w600,
+                              ),
                             ),
                           ),
                         ],
@@ -293,10 +298,7 @@ class _ExploreRoutesPageState extends State<ExploreRoutesPage> {
                           availabilityType: route.availabilityType,
                           imageUrl: route.banner,
                           onTap: () {
-                            _onTapRouteHandler(
-                              route.routeId,
-                              route.title,
-                            );
+                            _onTapRouteHandler(route.routeId, route.title);
                           },
                         ),
                       );

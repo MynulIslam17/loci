@@ -43,8 +43,8 @@ class CustomAppbar extends StatelessWidget implements PreferredSizeWidget {
       scrolledUnderElevation: isIOS ? 0 : 2.5,
       backgroundColor: isIOS
           ? (isDark
-              ? colors.surface.withValues(alpha: 0.82)
-              : colors.surface.withValues(alpha: 0.85))
+                ? colors.surface.withValues(alpha: 0.82)
+                : colors.surface.withValues(alpha: 0.85))
           : null,
       flexibleSpace: isIOS
           ? ClipRect(
@@ -73,4 +73,3 @@ class CustomAppbar extends StatelessWidget implements PreferredSizeWidget {
   Size get preferredSize =>
       Size.fromHeight(kToolbarHeight + (bottom?.preferredSize.height ?? 0.0));
 }
-

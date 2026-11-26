@@ -15,6 +15,7 @@ import 'package:loci/shared/widgets/custom_dropdown.dart';
 import 'package:loci/shared/widgets/custom_image_container.dart';
 import 'package:loci/shared/widgets/custom_text_field.dart';
 import 'package:loci/shared/widgets/file_picker.dart';
+import 'package:loci/shared/widgets/keyboard_done_area.dart';
 
 import 'package:loci/core/theme/app_colors.dart';
 
@@ -63,7 +64,8 @@ class _ClamMyBusinessState extends State<ClamMyBusiness> {
 
   Future<void> _handleClaimBusiness() async {
     // Dismiss the keyboard so it doesn't linger after navigating back.
-    FocusManager.instance.primaryFocus?.unfocus();
+    hideKeyboard();
+    if (claimController.isLoading.value) return; // no double submit
 
     if (!_formKey.currentState!.validate()) return;
 
@@ -129,6 +131,7 @@ class _ClamMyBusinessState extends State<ClamMyBusiness> {
   }
 
   Future<void> _pickProof() async {
+    hideKeyboard();
     try {
       final file = await AppFilePicker.pickSingle();
       if (file != null) proofFiles.add(file);
@@ -150,39 +153,43 @@ class _ClamMyBusinessState extends State<ClamMyBusiness> {
           style: AppTextStyle.textLg(weight: FontWeight.w600),
         ),
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _buildBusinessCard(colorScheme, brandColor),
-              const SizedBox(height: 24),
-              _buildCategoryDropdown(colorScheme),
-              if (_isGoogleClaim) ...[
+      body: KeyboardDoneArea(
+        child: SingleChildScrollView(
+          keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+          padding: const EdgeInsets.all(16),
+          child: Form(
+            key: _formKey,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildBusinessCard(colorScheme, brandColor),
                 const SizedBox(height: 24),
-                CustomTextField(
-                  controller: _messageController,
-                  title: 'Message (optional)',
-                  hintText: 'I am the owner of this establishment',
-                  maxLine: 3,
-                  maxLength: 500,
-                  borderColor: colorScheme.outline,
-                  textColor: colorScheme.onSurface,
-                  hintTextColor: colorScheme.onSurfaceVariant,
-                  fontSize: 14,
-                ),
+                _buildCategoryDropdown(colorScheme),
+                if (_isGoogleClaim) ...[
+                  const SizedBox(height: 24),
+                  CustomTextField(
+                    controller: _messageController,
+                    title: 'Message (optional)',
+                    hintText: 'I am the owner of this establishment',
+                    maxLine: 3,
+                    maxLength: 500,
+                    textCapitalization: TextCapitalization.sentences,
+                    borderColor: colorScheme.outline,
+                    textColor: colorScheme.onSurface,
+                    hintTextColor: colorScheme.onSurfaceVariant,
+                    fontSize: 14,
+                  ),
+                ],
+                const SizedBox(height: 24),
+                _buildProofHeader(colorScheme, brandColor),
+                const SizedBox(height: 12),
+                _buildProofList(colorScheme),
+                const SizedBox(height: 16),
+                _buildAddProofButton(colorScheme),
+                const SizedBox(height: 40),
+                _buildClaimButton(colorScheme),
               ],
-              const SizedBox(height: 24),
-              _buildProofHeader(colorScheme, brandColor),
-              const SizedBox(height: 12),
-              _buildProofList(colorScheme),
-              const SizedBox(height: 16),
-              _buildAddProofButton(colorScheme),
-              const SizedBox(height: 40),
-              _buildClaimButton(colorScheme),
-            ],
+            ),
           ),
         ),
       ),
@@ -298,7 +305,10 @@ class _ClamMyBusinessState extends State<ClamMyBusiness> {
           hintFontSize: 14,
           hintColor: scheme.onSurfaceVariant,
           textColor: scheme.onSurface,
-          onChanged: (value) => selectedCategory.value = value,
+          onChanged: (value) {
+            hideKeyboard();
+            selectedCategory.value = value;
+          },
           items: BusinessCategory.values
               .map((e) => DropdownMenuItem(value: e, child: Text(e.label)))
               .toList(),
