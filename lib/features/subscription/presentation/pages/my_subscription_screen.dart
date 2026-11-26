@@ -31,7 +31,9 @@ class MySubscriptionScreen extends StatelessWidget {
           return const MySubscriptionShimmer();
         }
 
-        if (controller.errorMessage != null) {
+        // Network error ≠ free plan: only show the error page when there is
+        // no known status yet; otherwise keep the last one with a retry.
+        if (controller.errorMessage != null && !controller.hasLoaded) {
           return ErrorStateWidget(
             message: controller.errorMessage!,
             onRetry: controller.fetchSubscription,
@@ -40,7 +42,21 @@ class MySubscriptionScreen extends StatelessWidget {
 
         final MySubscriptionModel? sub = controller.subscription;
         if (sub == null) {
-          return _NoSubscription(colorScheme: colorScheme);
+          return AdaptiveRefresh(
+            onRefresh: () => controller.fetchSubscription(isRefresh: true),
+            child: ListView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              padding: const EdgeInsets.all(16),
+              children: [
+                if (controller.errorMessage != null)
+                  _RetryBanner(controller: controller, colorScheme: colorScheme),
+                SizedBox(
+                  height: MediaQuery.sizeOf(context).height * 0.6,
+                  child: _NoSubscription(colorScheme: colorScheme),
+                ),
+              ],
+            ),
+          );
         }
 
         return AdaptiveRefresh(
@@ -49,19 +65,50 @@ class MySubscriptionScreen extends StatelessWidget {
             physics: const AlwaysScrollableScrollPhysics(),
             padding: const EdgeInsets.all(16),
             children: [
+              if (controller.errorMessage != null) ...[
+                _RetryBanner(controller: controller, colorScheme: colorScheme),
+                const SizedBox(height: 12),
+              ],
+              if (sub.inGracePeriod) ...[
+                _NoticeBanner(
+                  icon: Icons.warning_amber_rounded,
+                  color: colorScheme.error,
+                  colorScheme: colorScheme,
+                  text:
+                      'Payment problem — update your payment method in the '
+                      '${_storeName(sub)} to keep your plan.',
+                ),
+                const SizedBox(height: 12),
+              ],
+              if (sub.cancelAtPeriodEnd &&
+                  _formatDate(sub.accessEndsAt) != null) ...[
+                _NoticeBanner(
+                  icon: Icons.event_busy_rounded,
+                  color: colorScheme.primary,
+                  colorScheme: colorScheme,
+                  text:
+                      'Your plan ends on ${_formatDate(sub.accessEndsAt)}. '
+                      'You keep all paid features until then.',
+                ),
+                const SizedBox(height: 12),
+              ],
               _PlanCard(sub: sub, colorScheme: colorScheme),
               if (sub.credits != null) ...[
                 const SizedBox(height: 16),
-                _CreditsCard(credits: sub.credits!, colorScheme: colorScheme),
+                _CreditsCard(
+                  credits: sub.credits!,
+                  resetsOn: _formatDate(sub.creditsExpireAt),
+                  colorScheme: colorScheme,
+                ),
               ],
               const SizedBox(height: 16),
               _BillingCard(sub: sub, colorScheme: colorScheme),
-              // Offer cancel for any active plan (free included). Cancellation
-              // is immediate — no grace period.
-              if (sub.isActive) ...[
-                const SizedBox(height: 24),
-                _CancelButton(controller: controller, colorScheme: colorScheme),
-              ],
+              const SizedBox(height: 24),
+              _ManageButton(
+                controller: controller,
+                sub: sub,
+                colorScheme: colorScheme,
+              ),
             ],
           ),
         );
@@ -162,9 +209,14 @@ class _PlanCard extends StatelessWidget {
 // ── Credits usage ───────────────────────────────────────────────────────────
 class _CreditsCard extends StatelessWidget {
   final SubscriptionCredits credits;
+  final String? resetsOn;
   final ColorScheme colorScheme;
 
-  const _CreditsCard({required this.credits, required this.colorScheme});
+  const _CreditsCard({
+    required this.credits,
+    required this.colorScheme,
+    this.resetsOn,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -211,6 +263,13 @@ class _CreditsCard extends StatelessWidget {
             '${credits.used} used · ${credits.remaining} remaining',
             style: AppTextStyle.textXs(color: colorScheme.onSurfaceVariant),
           ),
+          if (resetsOn != null) ...[
+            const SizedBox(height: 4),
+            Text(
+              'Credits reset on $resetsOn · unused credits don\'t roll over',
+              style: AppTextStyle.textXs(color: colorScheme.onSurfaceVariant),
+            ),
+          ],
         ],
       ),
     );
@@ -226,8 +285,11 @@ class _BillingCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Cancellation is immediate now, so an active recurring plan always renews.
-    const String renewLabel = 'Renews on';
+    // A cancelled store plan stays active until the paid-through date.
+    final String renewLabel = sub.cancelAtPeriodEnd ? 'Access ends' : 'Renews on';
+    final String? endDate = _formatDate(
+      sub.cancelAtPeriodEnd ? sub.accessEndsAt : sub.currentPeriodEnd,
+    );
 
     return _SectionCard(
       colorScheme: colorScheme,
@@ -240,12 +302,12 @@ class _BillingCard extends StatelessWidget {
               value: _billingLabel(sub.billingType!),
               colorScheme: colorScheme,
             ),
-          if (_formatDate(sub.currentPeriodEnd) != null) ...[
+          if (endDate != null) ...[
             if (sub.billingType?.isNotEmpty == true) const _RowDivider(),
             _InfoRow(
               icon: Icons.event_repeat_rounded,
               label: renewLabel,
-              value: _formatDate(sub.currentPeriodEnd)!,
+              value: endDate,
               colorScheme: colorScheme,
             ),
           ],
@@ -264,50 +326,66 @@ class _BillingCard extends StatelessWidget {
   }
 }
 
-class _CancelButton extends StatelessWidget {
+/// Store plans can't be cancelled in-app: "Manage subscription" opens the
+/// App Store / Google Play page. Legacy Stripe plans keep the old cancel.
+class _ManageButton extends StatelessWidget {
   final MySubscriptionController controller;
+  final MySubscriptionModel sub;
   final ColorScheme colorScheme;
 
-  const _CancelButton({required this.controller, required this.colorScheme});
+  const _ManageButton({
+    required this.controller,
+    required this.sub,
+    required this.colorScheme,
+  });
 
   @override
   Widget build(BuildContext context) {
-    // Own Obx so tapping cancel rebuilds *this* button (the screen's outer Obx
-    // doesn't read isCancelling, so without this the loader never shows).
+    final bool legacy = sub.provider != null && !sub.isStoreManaged;
     return Obx(() {
-      final bool isCancelling = controller.isCancelling;
+      final bool busy = controller.isOpeningStore || controller.isCancelling;
+      final String label = legacy
+          ? 'Cancel subscription'
+          : sub.cancelAtPeriodEnd
+          ? 'Resubscribe'
+          : 'Manage subscription';
       return SizedBox(
         width: double.infinity,
         height: 48,
         child: OutlinedButton(
           style: OutlinedButton.styleFrom(
-            foregroundColor: colorScheme.error,
-            side: BorderSide(color: colorScheme.error.withValues(alpha: 0.4)),
+            foregroundColor: legacy ? colorScheme.error : colorScheme.primary,
+            side: BorderSide(
+              color: (legacy ? colorScheme.error : colorScheme.primary)
+                  .withValues(alpha: 0.4),
+            ),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(12),
             ),
           ),
-          onPressed: isCancelling ? null : () => _confirmCancel(context),
-          child: isCancelling
+          onPressed: busy
+              ? null
+              : legacy
+              ? () => _confirmLegacyCancel(context)
+              : controller.manageSubscription,
+          child: busy
               ? const SizedBox(
                   height: 20,
                   width: 20,
                   child: CircularProgressIndicator(strokeWidth: 2),
                 )
-              : const Text('Cancel subscription'),
+              : Text(label),
         ),
       );
     });
   }
 
-  void _confirmCancel(BuildContext context) {
+  void _confirmLegacyCancel(BuildContext context) {
     Get.dialog(
       AlertDialog(
         title: const Text('Cancel subscription?'),
         content: const Text(
-          'Your plan will be cancelled immediately and you\'ll lose access to '
-          'paid features right away. Remaining paid days aren\'t refunded. You '
-          'can resubscribe anytime.',
+          'Your plan will stop renewing. Access continues through the current paid period.',
         ),
         actions: [
           TextButton(
@@ -320,9 +398,83 @@ class _CancelButton extends StatelessWidget {
             ),
             onPressed: () {
               Get.back();
-              controller.cancelSubscription();
+              controller.cancelLegacySubscription();
             },
             child: const Text('Cancel it'),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _NoticeBanner extends StatelessWidget {
+  final IconData icon;
+  final Color color;
+  final String text;
+  final ColorScheme colorScheme;
+
+  const _NoticeBanner({
+    required this.icon,
+    required this.color,
+    required this.text,
+    required this.colorScheme,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: color.withValues(alpha: 0.3)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon, size: 20, color: color),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              text,
+              style: AppTextStyle.textSm(color: colorScheme.onSurface),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _RetryBanner extends StatelessWidget {
+  final MySubscriptionController controller;
+  final ColorScheme colorScheme;
+
+  const _RetryBanner({required this.controller, required this.colorScheme});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(14, 8, 8, 8),
+      decoration: BoxDecoration(
+        color: colorScheme.surfaceContainerHigh,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: colorScheme.outline),
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.cloud_off_rounded, size: 18, color: colorScheme.onSurfaceVariant),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              'Couldn\'t refresh your plan. Showing the last known status.',
+              style: AppTextStyle.textXs(color: colorScheme.onSurfaceVariant),
+            ),
+          ),
+          TextButton(
+            onPressed: controller.isLoading ? null : controller.fetchSubscription,
+            child: const Text('Retry'),
           ),
         ],
       ),
@@ -492,6 +644,9 @@ String _statusLabel(String status) {
       return status.toUpperCase();
   }
 }
+
+String _storeName(MySubscriptionModel sub) =>
+    sub.provider == 'google' ? 'Google Play Store' : 'App Store';
 
 String _billingLabel(String billingType) {
   switch (billingType.toLowerCase()) {

@@ -3,8 +3,20 @@ import UIKit
 import UserNotifications
 import GoogleMaps
 
+#if canImport(Stripe)
+import Stripe
+#endif
+
+#if canImport(FirebaseMessaging)
+import FirebaseMessaging
+#endif
+
+#if canImport(GoogleSignIn)
+import GoogleSignIn
+#endif
+
 @main
-@objc class AppDelegate: FlutterAppDelegate {
+@objc class AppDelegate: FlutterAppDelegate, FlutterImplicitEngineDelegate {
   override func application(
     _ application: UIApplication,
     didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?
@@ -14,7 +26,7 @@ import GoogleMaps
       GMSServices.provideAPIKey(mapsKey)
     }
 
-    // Must run BEFORE GeneratedPluginRegistrant. firebase_messaging installs
+    // Must run BEFORE plugin registration. firebase_messaging installs
     // itself as the UNUserNotificationCenter delegate only when it finds the
     // slot empty, and then forwards to whatever it displaced. With the slot
     // nil it captures nothing, becomes the sole delegate, and drops every
@@ -29,8 +41,72 @@ import GoogleMaps
       UNUserNotificationCenter.current().delegate = self
     }
 
-    GeneratedPluginRegistrant.register(with: self)
+    application.registerForRemoteNotifications()
+
     return super.application(application, didFinishLaunchingWithOptions: launchOptions)
+  }
+
+  func didInitializeImplicitFlutterEngine(_ engineBridge: FlutterImplicitEngineBridge) {
+    GeneratedPluginRegistrant.register(with: engineBridge.pluginRegistry)
+  }
+
+  override func application(
+    _ application: UIApplication,
+    didRegisterForRemoteNotificationsWithDeviceToken deviceToken: Data
+  ) {
+    let token = deviceToken.map { String(format: "%02.2hhx", $0) }.joined()
+    print("[FCM Native] ✅ APNs token received: \(token)")
+    #if canImport(FirebaseMessaging)
+    Messaging.messaging().apnsToken = deviceToken
+    #endif
+    super.application(application, didRegisterForRemoteNotificationsWithDeviceToken: deviceToken)
+  }
+
+  override func application(
+    _ application: UIApplication,
+    didFailToRegisterForRemoteNotificationsWithError error: Error
+  ) {
+    print("[FCM Native] ❌ APNs registration failed: \(error.localizedDescription)")
+    super.application(application, didFailToRegisterForRemoteNotificationsWithError: error)
+  }
+
+  /// Custom URL scheme returns from Stripe (3DS / Link / bank apps).
+  override func application(
+    _ app: UIApplication,
+    open url: URL,
+    options: [UIApplication.OpenURLOptionsKey: Any] = [:]
+  ) -> Bool {
+    #if canImport(GoogleSignIn)
+    if GIDSignIn.sharedInstance.handle(url) {
+      return true
+    }
+    #endif
+    #if canImport(Stripe)
+    if StripeAPI.handleURLCallback(with: url) {
+      return true
+    }
+    #endif
+    return super.application(app, open: url, options: options)
+  }
+
+  /// Universal-link style returns (Safari View Controller / ASWebAuthentication).
+  override func application(
+    _ application: UIApplication,
+    continue userActivity: NSUserActivity,
+    restorationHandler: @escaping ([UIUserActivityRestoring]?) -> Void
+  ) -> Bool {
+    #if canImport(Stripe)
+    if userActivity.activityType == NSUserActivityTypeBrowsingWeb,
+       let url = userActivity.webpageURL,
+       StripeAPI.handleURLCallback(with: url) {
+      return true
+    }
+    #endif
+    return super.application(
+      application,
+      continue: userActivity,
+      restorationHandler: restorationHandler
+    )
   }
 
   private func googleMapsAPIKeyFromDartDefines() -> String? {

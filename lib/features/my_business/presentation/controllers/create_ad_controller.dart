@@ -1,9 +1,12 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:loci/features/my_business/data/models/submit_ad_request_model.dart';
 import 'package:loci/features/my_business/domain/services/my_business_service.dart';
+import 'package:loci/features/subscription/presentation/controllers/subscription_status_controller.dart';
+import 'package:uuid/uuid.dart';
 
 class CreateAdController extends GetxController {
   CreateAdController(this._service);
@@ -42,6 +45,25 @@ class CreateAdController extends GetxController {
   final RxBool isLoading = false.obs;
   final RxnString errorMessage = RxnString();
   final RxnString successMessage = RxnString();
+
+  /// `Idempotency-Key` for the current submission. Reused while the user
+  /// retries the exact same form (network error / timeout / double tap), so
+  /// the server returns the same ad and charges 10 credits once. Any edit
+  /// produces a new key.
+  String? _idempotencyKey;
+  String? _idempotencyFingerprint;
+
+  String idempotencyKeyFor(SubmitAdRequestModel request) {
+    final String fingerprint = jsonEncode(<String, String>{
+      ...request.toFields(),
+      '_image': request.image.path,
+    });
+    if (_idempotencyKey == null || fingerprint != _idempotencyFingerprint) {
+      _idempotencyKey = const Uuid().v4();
+      _idempotencyFingerprint = fingerprint;
+    }
+    return _idempotencyKey!;
+  }
 
   @override
   void onInit() {
@@ -195,6 +217,14 @@ class CreateAdController extends GetxController {
       return false;
     }
 
+    // The ad (and its 10 credits) must belong to a specific business.
+    if (_businessId == null || _businessId!.isEmpty) {
+      errorMessage.value = 'Choose the business this ad is for.';
+      return false;
+    }
+    // Ignore double taps while a submission is in flight.
+    if (isLoading.value) return false;
+
     final end = _combinedEnd()!;
     final start = _combinedStart();
 
@@ -206,17 +236,26 @@ class CreateAdController extends GetxController {
       errorMessage.value = null;
       successMessage.value = null;
 
-      successMessage.value = await _service.submitAd(
-        SubmitAdRequestModel(
-          title: titleController.text.trim(),
-          businessId: _businessId,
-          businessName: businessName.isEmpty ? null : businessName,
-          location: location.isEmpty ? null : location,
-          startDate: start,
-          endDate: end,
-          image: adBanner.value!,
-        ),
+      final request = SubmitAdRequestModel(
+        title: titleController.text.trim(),
+        businessId: _businessId,
+        businessName: businessName.isEmpty ? null : businessName,
+        location: location.isEmpty ? null : location,
+        startDate: start,
+        endDate: end,
+        image: adBanner.value!,
       );
+      successMessage.value = await _service.submitAd(
+        request,
+        idempotencyKey: idempotencyKeyFor(request),
+      );
+      // Submission done — the next one is a new submission with a new key.
+      _idempotencyKey = null;
+      _idempotencyFingerprint = null;
+      // 10 credits were charged; refresh the shared balance.
+      if (Get.isRegistered<SubscriptionStatusController>()) {
+        Get.find<SubscriptionStatusController>().reload();
+      }
       return true;
     } catch (e) {
       errorMessage.value = e.toString().replaceFirst('Exception: ', '');

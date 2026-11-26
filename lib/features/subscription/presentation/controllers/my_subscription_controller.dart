@@ -1,35 +1,37 @@
+import 'dart:io';
+
 import 'package:get/get.dart';
-import 'package:loci/core/utils/paginated_list_fetch_state.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:loci/core/utils/show_snackbar.dart';
+import 'package:loci/features/subscription/data/config/loci_iap_products.dart';
 import 'package:loci/features/subscription/data/models/my_subscription_model.dart';
 import 'package:loci/features/subscription/domain/services/subscription_service.dart';
+import 'package:loci/features/subscription/presentation/controllers/subscription_status_controller.dart';
 
-/// Read-only view of the user's current subscription (`GET /subscriptions/my`)
-/// for the "My Subscription" screen, plus cancellation. Intentionally light —
-/// it does not touch Stripe init (that belongs to the purchase flow).
+/// "My Subscription" screen. Reads the app-wide, server-authoritative
+/// [SubscriptionStatusController]; never edits the subscription locally.
 class MySubscriptionController extends GetxController {
-  MySubscriptionController(this._service);
+  MySubscriptionController(this._status, this._service);
 
+  final SubscriptionStatusController _status;
   final SubscriptionService _service;
-  final PaginatedListFetchState _fetch = PaginatedListFetchState();
 
+  static const String androidPackage = 'ui.neatboutique.jacobi';
+
+  final RxBool _isOpeningStore = false.obs;
   final RxBool _isCancelling = false.obs;
-  final RxnString _errorMessage = RxnString();
-  final Rxn<MySubscriptionModel> _subscription = Rxn<MySubscriptionModel>();
 
-  // Subscriptions are per-business; both `GET /my` and `DELETE /my` now need
-  // it. This screen isn't scoped to a specific business, so we act on the
-  // caller's first business — the same one checkout defaults to.
-  String? _businessId;
-
-  bool get isInitialLoading => _fetch.initialLoading.value;
-  bool get isRefreshing => _fetch.refreshing.value;
-  bool get showInitialShimmer => _fetch.showInitialShimmer;
-  bool get hasFetched => _fetch.hasFetched.value;
-  bool get isLoading => isInitialLoading;
+  bool get isLoading => _status.isLoading.value;
+  bool get hasLoaded => _status.hasLoaded.value;
+  bool get showInitialShimmer => isLoading && !hasLoaded;
+  bool get hasNoBusiness => _status.hasNoBusiness.value;
+  bool get isOpeningStore => _isOpeningStore.value;
   bool get isCancelling => _isCancelling.value;
-  String? get errorMessage => _errorMessage.value;
-  MySubscriptionModel? get subscription => _subscription.value;
+
+  /// Error of the last refresh. With a known status it's shown as a retry
+  /// banner — never as the paywall.
+  String? get errorMessage => _status.errorMessage.value;
+  MySubscriptionModel? get subscription => _status.subscription.value;
 
   @override
   void onInit() {
@@ -37,59 +39,65 @@ class MySubscriptionController extends GetxController {
     fetchSubscription();
   }
 
-  Future<void> fetchSubscription({bool isRefresh = false}) async {
-    if (isInitialLoading || isRefreshing) return;
+  Future<void> fetchSubscription({bool isRefresh = false}) => _status.reload();
 
-    _fetch.beginFirstPage(isRefresh: isRefresh);
-    _errorMessage.value = null;
+  /// Store product id for the current plan (used for the Play deep link).
+  static String? productIdFor(MySubscriptionModel? sub) {
+    final String plan = '${sub?.planId ?? ''} ${sub?.billingType ?? ''}'
+        .toLowerCase();
+    if (plan.contains('year') || plan.contains('annual')) {
+      return LociIapProducts.yearly;
+    }
+    if (plan.contains('month')) return LociIapProducts.monthly;
+    return null;
+  }
 
+  static Uri manageSubscriptionUri({
+    required bool isIOS,
+    String? productId,
+  }) {
+    if (isIOS) return Uri.parse('https://apps.apple.com/account/subscriptions');
+    return Uri.https('play.google.com', '/store/account/subscriptions', {
+      'sku': ?productId,
+      'package': androidPackage,
+    });
+  }
+
+  /// The app cannot cancel a store subscription — open the store's
+  /// management page. Status refreshes when the app resumes.
+  Future<void> manageSubscription() async {
+    if (_isOpeningStore.value) return;
+    _isOpeningStore.value = true;
     try {
-      final String? businessId = await _resolveBusinessId();
-      if (businessId == null) {
-        _errorMessage.value =
-            'You need a business before viewing a subscription.';
-        _fetch.endFirstPage();
-        return;
+      final Uri uri = manageSubscriptionUri(
+        isIOS: Platform.isIOS,
+        productId: productIdFor(subscription),
+      );
+      if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
+        throw Exception('Could not open subscription management.');
       }
-      _subscription.value = await _service.getMySubscription(businessId);
-      _fetch.endFirstPage();
     } catch (e) {
-      _errorMessage.value = e.toString().replaceFirst('Exception: ', '');
-      _fetch.endFirstPage(markFetched: hasFetched);
+      SnackbarService.error(e.toString().replaceFirst('Exception: ', ''));
+    } finally {
+      _isOpeningStore.value = false;
     }
   }
 
-  Future<void> cancelSubscription() async {
-    if (_isCancelling.value) return;
+  /// Legacy Stripe plans only. Never called for `apple` / `google`
+  /// (the server answers `STORE_CANCEL_REQUIRED`).
+  Future<void> cancelLegacySubscription() async {
+    final String? businessId = _status.businessId;
+    if (_isCancelling.value || businessId == null) return;
+    if (subscription?.isStoreManaged ?? true) return manageSubscription();
     _isCancelling.value = true;
     try {
-      final String? businessId = await _resolveBusinessId();
-      if (businessId == null) {
-        SnackbarService.error(
-          'You need a business before managing a subscription.',
-        );
-        return;
-      }
       await _service.cancelSubscription(businessId);
-      // Cancellation is immediate — `/my` now returns null right after, so drop
-      // the plan and let the screen fall back to the "no subscription" state.
-      _subscription.value = null;
     } catch (e) {
       SnackbarService.error(e.toString().replaceFirst('Exception: ', ''));
     } finally {
       _isCancelling.value = false;
-    }
-  }
-
-  Future<String?> _resolveBusinessId() async {
-    if (_businessId != null && _businessId!.isNotEmpty) return _businessId;
-    try {
-      final businesses = await _service.getMyBusinesses();
-      if (businesses.isEmpty) return null;
-      _businessId = businesses.first.id;
-      return _businessId;
-    } catch (_) {
-      return null;
+      // Don't clear locally — the server decides what remains.
+      await _status.reload();
     }
   }
 }

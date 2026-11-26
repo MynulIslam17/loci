@@ -1,4 +1,6 @@
 import 'package:get/get.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:loci/core/services/connectivity/connectivity_service.dart';
 import 'package:loci/core/di/bindings/app_bindings.dart';
 import 'package:loci/core/services/socket/chat_socket_service.dart';
 import 'package:loci/core/storage/hive_storage_service.dart';
@@ -155,7 +157,21 @@ class AuthController extends GetxController {
     //     visit, so their onInit refetches for the new user;
     //   - stateless repos/services are re-wired to the fresh NetworkCaller.
     // Done BEFORE navigating so the login route's binding resolves fresh deps.
+    final prefs = Get.isRegistered<SharedPreferences>()
+        ? Get.find<SharedPreferences>()
+        : null;
+    final connectivity = Get.isRegistered<ConnectivityService>()
+        ? Get.find<ConnectivityService>()
+        : null;
+
     Get.deleteAll(force: true);
+
+    if (prefs != null) {
+      Get.put<SharedPreferences>(prefs, permanent: true);
+    }
+    if (connectivity != null) {
+      Get.put<ConnectivityService>(connectivity, permanent: true);
+    }
     AppBindings().dependencies();
 
     // 5. Reset navigation to the login screen (fresh dependency graph in place).

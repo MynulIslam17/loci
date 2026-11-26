@@ -55,6 +55,9 @@ import 'package:loci/features/routes/domain/services/routes_service.dart';
 import 'package:loci/features/subscription/data/repositories/subscription_repository.dart';
 import 'package:loci/features/subscription/domain/services/subscription_service.dart';
 import 'package:loci/features/subscription/presentation/widgets/upgrade_required_sheet.dart';
+import 'package:loci/features/subscription/presentation/controllers/subscription_status_controller.dart';
+import 'package:loci/features/subscription/presentation/session_changes.dart'
+    as subscription_session;
 
 /// App-wide permanent dependencies.
 ///
@@ -66,6 +69,8 @@ class AppBindings extends Bindings {
     // Plan-entitlement errors (create event/route/raffle without the right
     // plan, credit limits…) open the upgrade paywall instead of a snackbar.
     SnackbarService.errorInterceptor = UpgradeRequiredSheet.maybeIntercept;
+    // Primary routing: by the structured error `code`, in the network layer.
+    NetworkCaller.onErrorCode = UpgradeRequiredSheet.handleErrorCode;
 
     // Storage & Connectivity
     final prefs = Get.isRegistered<SharedPreferences>()
@@ -263,7 +268,7 @@ class AppBindings extends Bindings {
 
     // Shared realtime / payments / nav
     Get.put<NavController>(NavController(), permanent: true);
-    Get.put<SubscriptionController>(SubscriptionController(), permanent: true);
+    _registerSubscription();
 
     Get.lazyPut<ChatListController>(
       () => ChatListController(Get.find<ChatService>()),
@@ -299,6 +304,48 @@ class AppBindings extends Bindings {
     Get.lazyPut<NotificationController>(
       () => NotificationController(Get.find<NotificationService>()),
       fenix: true,
+    );
+  }
+
+  /// Subscription state is app-wide: the status store (server-authoritative
+  /// entitlement) and the purchase controller, which listens to the store's
+  /// purchase stream from app start and retries pending verifications.
+  void _registerSubscription() {
+    final auth = Get.find<AuthController>();
+    // One stream per listener (Rx streams are single-subscription). Fires on
+    // user OR role change, read after both settle.
+    Stream<Object?> sessionChanges() => subscription_session.sessionChanges(
+      triggers: <Stream<Object?>>[
+        auth.userModelRx.stream,
+        auth.roleRx.stream,
+        auth.accessTokenRx.stream,
+      ],
+      userId: () => auth.isLoggedIn ? auth.userModel?.id : null,
+      role: () => auth.role,
+    );
+
+    Get.put<SubscriptionStatusController>(
+      SubscriptionStatusController(
+        Get.find<SubscriptionService>(),
+        canAccess: () => auth.isLoggedIn && auth.canAccessSubscription,
+        sessionChanges: sessionChanges(),
+      ),
+      permanent: true,
+    );
+
+    final connectivity = Get.isRegistered<ConnectivityService>()
+        ? Get.find<ConnectivityService>()
+        : null;
+    Get.put<SubscriptionController>(
+      SubscriptionController(
+        currentUserId: () => auth.isLoggedIn ? auth.userModel?.id : null,
+        refreshStatus: () => Get.find<SubscriptionStatusController>().reload(),
+        sessionChanges: sessionChanges(),
+        connectivityRestored: connectivity?.isOffline.stream.map(
+          (offline) => !offline,
+        ),
+      ),
+      permanent: true,
     );
   }
 }

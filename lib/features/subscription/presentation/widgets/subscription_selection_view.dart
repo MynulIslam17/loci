@@ -82,16 +82,29 @@ class SubscriptionSelectionView extends StatelessWidget {
                     ),
                     const SizedBox(height: 8),
                     TextButton(
-                      onPressed: controller.isLoading.value
+                      onPressed:
+                          controller.isLoading.value ||
+                              controller.isRestoring.value ||
+                              controller.isPurchasing.value
                           ? null
                           : controller.restorePurchases,
-                      child: const Text('Restore Purchases'),
+                      child: Text(
+                        controller.isRestoring.value
+                            ? 'Restoring…'
+                            : 'Restore Purchases',
+                      ),
                     ),
                     if (controller.errorMessage.value != null)
                       Text(
                         controller.errorMessage.value!,
                         textAlign: TextAlign.center,
                         style: AppTextStyle.textXs(color: colors.error),
+                      )
+                    else if (controller.infoMessage.value != null)
+                      Text(
+                        controller.infoMessage.value!,
+                        textAlign: TextAlign.center,
+                        style: AppTextStyle.textXs(color: colors.primary),
                       ),
                     Text(
                       'You can change or cancel your subscription anytime from the App Store or Google Play.',

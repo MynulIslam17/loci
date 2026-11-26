@@ -20,8 +20,12 @@ class SubscriptionDetailsScreen extends GetView<SubscriptionController> {
       Get.offAllNamed<void>(AppRoutes.bottomNav);
       return;
     }
-    final bool success = await controller.subscribe();
-    if (success) Get.off<void>(() => const SubscriptionSuccessScreen());
+    // Success screen only after the backend verified (200) and the status
+    // was refreshed — never on the store callback alone.
+    final PurchaseOutcome outcome = await controller.subscribe();
+    if (outcome == PurchaseOutcome.success) {
+      Get.off<void>(() => const SubscriptionSuccessScreen());
+    }
   }
 
   @override
@@ -108,6 +112,7 @@ class SubscriptionDetailsScreen extends GetView<SubscriptionController> {
                     ? 'Subscribe for ${iap.productFor(plan.productId)?.price ?? 'unavailable'}'
                     : 'Continue with Free',
                 isLoading: controller.isPurchasing.value,
+                // Pending / deferred / restore feedback.
                 onPressed: plan.isPaid && iap.productFor(plan.productId) == null
                     ? null
                     : _subscribe,
@@ -126,6 +131,12 @@ class SubscriptionDetailsScreen extends GetView<SubscriptionController> {
                   iap.errorMessage.value!,
                   textAlign: TextAlign.center,
                   style: AppTextStyle.textXs(color: colors.error),
+                )
+              else if (iap.infoMessage.value != null)
+                Text(
+                  iap.infoMessage.value!,
+                  textAlign: TextAlign.center,
+                  style: AppTextStyle.textXs(color: colors.primary),
                 ),
             ],
           ),

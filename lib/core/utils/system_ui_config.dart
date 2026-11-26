@@ -24,6 +24,12 @@ class SystemUiConfig {
         mediaQuery.textScaler.scale(1.0).clamp(0.85, 1.15);
     final clampedMediaQuery = mediaQuery.copyWith(
       textScaler: TextScaler.linear(textScaleFactor),
+      // Use Flutter's own text selection toolbar instead of the native iOS
+      // SystemContextMenu. The native one only allows a single visible
+      // instance and asserts ("Attempted to show while another instance was
+      // still visible") when a field on a new route builds its menu before
+      // the previous route's menu has been hidden (e.g. login -> signup).
+      supportsShowingSystemContextMenu: false,
     );
 
     final theme = Theme.of(context);

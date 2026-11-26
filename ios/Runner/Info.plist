@@ -25,6 +25,27 @@
 	<!-- Flutter encodes Dart define values in the generated Xcode build settings. -->
 	<key>FlutterDartDefines</key>
 	<string>$(DART_DEFINES)</string>
+	<key>UIApplicationSceneManifest</key>
+	<dict>
+		<key>UIApplicationSupportsMultipleScenes</key>
+		<false/>
+		<key>UISceneConfigurations</key>
+		<dict>
+			<key>UIWindowSceneSessionRoleApplication</key>
+			<array>
+				<dict>
+					<key>UISceneClassName</key>
+					<string>UIWindowScene</string>
+					<key>UISceneConfigurationName</key>
+					<string>flutter</string>
+					<key>UISceneDelegateClassName</key>
+					<string>$(PRODUCT_MODULE_NAME).SceneDelegate</string>
+					<key>UISceneStoryboardFile</key>
+					<string>Main</string>
+				</dict>
+			</array>
+		</dict>
+	</dict>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>UILaunchStoryboardName</key>
@@ -75,6 +96,14 @@
 	<key>NSLocationAlwaysUsageDescription</key>
 	<string>This app uses your location to provide continuous turn-by-turn navigation and show nearby places.</string>
 
+	<!-- Flutter debugging and Hot Reload on local network (iOS 14+) -->
+	<key>NSBonjourServices</key>
+	<array>
+		<string>_dartVmService._tcp</string>
+	</array>
+	<key>NSLocalNetworkUsageDescription</key>
+	<string>Flutter tooling uses the local network to connect to development tools and enable debugging.</string>
+
 	<!-- Opens Apple Maps / HTTPS links from map previews (url_launcher). -->
 	<key>LSApplicationQueriesSchemes</key>
 	<array>
@@ -95,5 +124,7 @@
 			</array>
 		</dict>
 	</array>
+	<key>GIDClientID</key>
+	<string>339606588573-nf9lhkj2qo4555mt7j4rmr4hjhllrb34.apps.googleusercontent.com</string>
 </dict>
 </plist>

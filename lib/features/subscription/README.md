@@ -1,21 +1,20 @@
 # Subscription feature
 
-The purchase route uses `SubscriptionController` for plan selection, store
-products, purchase events, and restore. The local plan catalog is in
-`data/models/store_subscription_plan.dart`; paid prices are read
-only from `in_app_purchase`, using IDs in `data/config/loci_iap_products.dart`. The
-Free option returns to the app without creating a store transaction.
-The same IDs are queried on Android; Google Play must have matching products
-before paid Android purchases can work.
+Golden rule: the store says "a purchase happened"; only the backend says
+"this account has access". Nothing unlocks from a store callback alone.
 
-`MySubscriptionController` drives the separate My Subscription route. It reads
-the existing `/subscriptions/my` API through `SubscriptionService` and
-`SubscriptionRepository`. That API has not yet been connected to App Store
-transactions, so it may not show a new IAP purchase. Its cancellation action
-still applies to subscriptions represented by that API.
+| Piece | Role |
+|---|---|
+| `SubscriptionStatusController` (app-wide) | Server-authoritative status from `GET /subscriptions/my`. Refreshes on login, resume, after verify/restore. A network error keeps the last known status — never shows "free". |
+| `SubscriptionController` (app-wide) | Listens to the store purchase stream from app start. Purchase → account token → `POST /subscriptions/verify` → finish the transaction only on `200` or `INVALID_PURCHASE`. Restore. |
+| `PendingVerificationQueue` | Secure-storage queue of unverified purchases, keyed by Loci user id, with backoff (5 s, 30 s, 2 min, 10 min, then next launch). Retried on launch, resume and when connectivity returns. |
+| `IapService` (`core/iap`) | Thin store wrapper. Never completes on pending/retryable. Android plan switch uses `ChangeSubscriptionParam`. |
+| `UpgradeRequiredSheet` | Paywall / credits sheet, routed by error `code` in `NetworkCaller.onErrorCode` (`SUBSCRIPTION_REQUIRED`, `INSUFFICIENT_SPOTLIGHT_CREDITS`). `BUSINESS_ACCESS_DENIED` is a plain error. Message matching stays as a migration fallback. |
+| `MySubscriptionScreen` | Plan, credits (+ reset date), grace-period and "ends on" banners. "Manage subscription" opens the App Store / Google Play — store plans can't be cancelled in-app. |
 
-Purchase verification in `SubscriptionController` currently accepts store
-events for TestFlight testing. The local `lastProcessedPlan` value is not an
-account entitlement. Before release, replace the callback with server
-verification, synchronize subscription status, and grant account access only
-after validation.
+Product IDs live in `data/config/loci_iap_products.dart`; prices always come
+from the store. Spotlight ads send an `Idempotency-Key` that is reused while
+the user retries the same form.
+
+The backend contract is in the mobile implementation flow doc
+(`src/modules/subscriptions` on the API). Tests: `test/features/subscription/`.

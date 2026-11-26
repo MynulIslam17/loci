@@ -115,10 +115,14 @@ class MyBusinessService {
     return PaginatedResponse<Business>.fromJson(body, Business.fromJson);
   }
 
-  Future<String> submitAd(SubmitAdRequestModel request) async {
+  Future<String> submitAd(
+    SubmitAdRequestModel request, {
+    String? idempotencyKey,
+  }) async {
     final body = await _repository.submitAd(
       fields: request.toFields(),
       image: request.image,
+      idempotencyKey: idempotencyKey,
     );
     return body['message'] as String? ?? 'Ad submitted for review';
   }

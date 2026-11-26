@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:math';
 
+import 'package:flutter/widgets.dart';
 import 'package:get/get.dart';
 import 'package:loci/core/services/connectivity/connectivity_service.dart';
 import 'package:loci/core/services/socket/chat_socket_service.dart';
@@ -690,7 +691,11 @@ class ChatController extends GetxController {
     // Socket event so the other participant's ticks turn blue in realtime.
     _socket.markRead(conversationId!);
     if (Get.isRegistered<ChatListController>()) {
-      Get.find<ChatListController>().clearUnread(conversationId!);
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (Get.isRegistered<ChatListController>() && conversationId != null) {
+          Get.find<ChatListController>().clearUnread(conversationId!);
+        }
+      });
     }
     // The user is reading the thread, so anything still in the tray about it is
     // stale.

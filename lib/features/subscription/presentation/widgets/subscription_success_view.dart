@@ -3,7 +3,9 @@ import 'package:get/get.dart';
 import 'package:loci/core/constants/app_text_style.dart';
 import 'package:loci/core/theme/theme_extention.dart';
 import 'package:loci/features/subscription/data/models/store_subscription_plan.dart';
+import 'package:loci/features/subscription/data/models/my_subscription_model.dart';
 import 'package:loci/features/subscription/presentation/controllers/subscription_controller.dart';
+import 'package:loci/features/subscription/presentation/controllers/subscription_status_controller.dart';
 import 'package:loci/shared/widgets/custom_button.dart';
 
 class SubscriptionSuccessView extends StatelessWidget {
@@ -41,7 +43,7 @@ class SubscriptionSuccessView extends StatelessWidget {
             ),
             const SizedBox(height: 26),
             Text(
-              'Store purchase complete',
+              'You\'re subscribed',
               textAlign: TextAlign.center,
               style: AppTextStyle.displayXs(
                 color: colors.onSurface,
@@ -53,8 +55,8 @@ class SubscriptionSuccessView extends StatelessWidget {
               final StoreSubscriptionPlan? plan = controller.selectedPlan.value;
               return Text(
                 plan == null
-                    ? 'Purchase completed in the store.'
-                    : '${plan.name} purchase completed in the store.',
+                    ? 'Your Loci Business plan is active.'
+                    : 'Your ${plan.name} plan is active.',
                 textAlign: TextAlign.center,
                 style: AppTextStyle.textSm(color: colors.onSurfaceVariant),
               );
@@ -75,19 +77,30 @@ class SubscriptionSuccessView extends StatelessWidget {
                   ),
                   const SizedBox(width: 12),
                   Expanded(
-                    child: Text(
-                      'Your store purchase completed. Loci account access is not active from this test purchase yet.',
-                      style: AppTextStyle.textXs(
-                        color: colors.onSurfaceVariant,
-                      ),
-                    ),
+                    child: Obx(() {
+                      final MySubscriptionModel? sub =
+                          Get.isRegistered<SubscriptionStatusController>()
+                          ? Get.find<SubscriptionStatusController>()
+                                .subscription
+                                .value
+                          : null;
+                      return Text(
+                        sub == null
+                            ? 'Paid features are now unlocked for all your businesses.'
+                            : 'Paid features are unlocked for all your businesses. '
+                                  'You have ${sub.remainingCredits} Spotlight credits.',
+                        style: AppTextStyle.textXs(
+                          color: colors.onSurfaceVariant,
+                        ),
+                      );
+                    }),
                   ),
                 ],
               ),
             ),
             const Spacer(),
             CustomButton(
-              text: 'Back to plans',
+              text: 'Done',
               onPressed: onBackToPlans,
               borderRadius: 16,
             ),

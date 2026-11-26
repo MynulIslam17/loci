@@ -2,10 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:loci/core/constants/app_text_style.dart';
 import 'package:loci/core/theme/theme_extention.dart';
+import 'package:loci/features/chat/presentation/controllers/chat_list_controller.dart';
 import 'package:loci/features/chat/presentation/controllers/new_chat_controller.dart';
 import 'package:loci/features/chat/presentation/widgets/chat_avatar.dart';
 import 'package:loci/features/network/data/models/connection_item.dart';
 import 'package:loci/routes/app_routes.dart';
+import 'package:loci/shared/widgets/app_skeleton.dart';
 import 'package:loci/shared/widgets/custom_text_field.dart';
 import 'package:loci/shared/widgets/empty_state.dart';
 import 'package:loci/shared/widgets/error_state.dart';
@@ -53,6 +55,10 @@ class _NewChatSheetState extends State<NewChatSheet> {
     final conversation = await controller.startChat(connection);
     if (conversation == null || !mounted) return;
 
+    if (Get.isRegistered<ChatListController>()) {
+      Get.find<ChatListController>().clearUnread(conversation.id);
+    }
+
     Navigator.pop(context);
     Get.toNamed(
       AppRoutes.message,
@@ -72,99 +78,103 @@ class _NewChatSheetState extends State<NewChatSheet> {
     final colorScheme = context.colorScheme;
     final maxHeight = MediaQuery.sizeOf(context).height * 0.75;
 
-    return Container(
-      constraints: BoxConstraints(maxHeight: maxHeight),
-      decoration: BoxDecoration(
-        color: colorScheme.surface,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const SizedBox(height: 10),
-          Container(
-            width: 40,
-            height: 4,
-            decoration: BoxDecoration(
-              color: colorScheme.outlineVariant,
-              borderRadius: BorderRadius.circular(2),
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(20, 16, 20, 4),
-            child: Row(
-              children: [
-                Text(
-                  'New chat',
-                  style: AppTextStyle.textMd(
-                    color: colorScheme.onSurface,
-                    weight: FontWeight.w700,
-                  ),
-                ),
-                const Spacer(),
-                IconButton(
-                  icon: Icon(Icons.close, color: colorScheme.onSurfaceVariant),
-                  onPressed: () => Navigator.pop(context),
-                ),
-              ],
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: CustomTextField(
-              controller: _search,
-              hintText: 'Search connections',
-              borderColor: colorScheme.outline,
-              fontSize: 14,
-              textColor: colorScheme.onSurface,
-              hintTextColor: colorScheme.onSurfaceVariant,
-              onChanged: controller.onSearchChanged,
-              showClearButton: true,
-              prefixIcon: Icon(
-                Icons.search,
-                color: colorScheme.onSurfaceVariant,
+    return Material(
+      color: colorScheme.surface,
+      borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+      clipBehavior: Clip.antiAlias,
+      child: ConstrainedBox(
+        constraints: BoxConstraints(maxHeight: maxHeight),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const SizedBox(height: 10),
+            Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: colorScheme.outlineVariant,
+                borderRadius: BorderRadius.circular(2),
               ),
             ),
-          ),
-          const SizedBox(height: 8),
-          Flexible(
-            child: Obx(() {
-              if (controller.isLoading.value) {
-                return const Padding(
-                  padding: EdgeInsets.all(40),
-                  child: Center(child: CircularProgressIndicator()),
-                );
-              }
-              if (controller.errorMessage.value != null &&
-                  controller.connections.isEmpty) {
-                return ErrorStateWidget(
-                  message: controller.errorMessage.value!,
-                  onRetry: controller.fetchConnections,
-                );
-              }
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 16, 20, 4),
+              child: Row(
+                children: [
+                  Text(
+                    'New chat',
+                    style: AppTextStyle.textMd(
+                      color: colorScheme.onSurface,
+                      weight: FontWeight.w700,
+                    ),
+                  ),
+                  const Spacer(),
+                  IconButton(
+                    icon: Icon(Icons.close, color: colorScheme.onSurfaceVariant),
+                    onPressed: () => Navigator.pop(context),
+                  ),
+                ],
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: CustomTextField(
+                controller: _search,
+                hintText: 'Search connections',
+                borderColor: colorScheme.outline,
+                fontSize: 14,
+                textColor: colorScheme.onSurface,
+                hintTextColor: colorScheme.onSurfaceVariant,
+                onChanged: controller.onSearchChanged,
+                showClearButton: true,
+                prefixIcon: Icon(
+                  Icons.search,
+                  color: colorScheme.onSurfaceVariant,
+                ),
+              ),
+            ),
+            const SizedBox(height: 8),
+            Flexible(
+              child: Obx(() {
+                if (controller.isLoading.value) {
+                  return ListView.builder(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    padding: const EdgeInsets.fromLTRB(12, 4, 12, 24),
+                    itemCount: 6,
+                    itemBuilder: (_, _) => const _NewChatUserShimmer(),
+                  );
+                }
+                if (controller.errorMessage.value != null &&
+                    controller.connections.isEmpty) {
+                  return ErrorStateWidget(
+                    message: controller.errorMessage.value!,
+                    onRetry: controller.fetchConnections,
+                  );
+                }
 
-              final items = controller.filteredConnections;
-              if (items.isEmpty) {
-                return EmptyState(
-                  icon: Icons.people_outline,
-                  title: controller.searchQuery.value.isEmpty
-                      ? 'No connections yet'
-                      : 'No connections match your search',
-                  subtitle: controller.searchQuery.value.isEmpty
-                      ? 'Connect with people to start chatting'
-                      : null,
-                );
-              }
+                final items = controller.filteredConnections;
+                if (items.isEmpty) {
+                  return EmptyState(
+                    icon: Icons.people_outline,
+                    title: controller.searchQuery.value.isEmpty
+                        ? 'No connections yet'
+                        : 'No connections match your search',
+                    subtitle: controller.searchQuery.value.isEmpty
+                        ? 'Connect with people to start chatting'
+                        : null,
+                  );
+                }
 
-              return ListView.builder(
-                shrinkWrap: true,
-                padding: const EdgeInsets.fromLTRB(12, 4, 12, 24),
-                itemCount: items.length,
-                itemBuilder: (context, index) => _buildTile(items[index]),
-              );
-            }),
-          ),
-        ],
+                return ListView.builder(
+                  shrinkWrap: true,
+                  padding: const EdgeInsets.fromLTRB(12, 4, 12, 24),
+                  itemCount: items.length,
+                  itemBuilder: (context, index) => _buildTile(items[index]),
+                );
+              }),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -199,11 +209,7 @@ class _NewChatSheetState extends State<NewChatSheet> {
                 style: AppTextStyle.textXs(color: colorScheme.onSurfaceVariant),
               ),
         trailing: starting
-            ? const SizedBox(
-                width: 18,
-                height: 18,
-                child: CircularProgressIndicator(strokeWidth: 2),
-              )
+            ? const SkeletonBox(width: 20, height: 20, radius: 10)
             : Icon(
                 Icons.chat_bubble_outline,
                 size: 18,
@@ -212,5 +218,34 @@ class _NewChatSheetState extends State<NewChatSheet> {
         onTap: starting ? null : () => _openChat(connection),
       );
     });
+  }
+}
+
+class _NewChatUserShimmer extends StatelessWidget {
+  const _NewChatUserShimmer();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Padding(
+      padding: EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+      child: Row(
+        children: [
+          SkeletonBox(width: 44, height: 44, radius: 22),
+          SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                SkeletonBox(width: 130, height: 14, radius: 4),
+                SizedBox(height: 6),
+                SkeletonBox(width: 85, height: 10, radius: 4),
+              ],
+            ),
+          ),
+          SizedBox(width: 8),
+          SkeletonBox(width: 20, height: 20, radius: 6),
+        ],
+      ),
+    );
   }
 }

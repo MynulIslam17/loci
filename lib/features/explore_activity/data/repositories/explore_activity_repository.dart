@@ -196,7 +196,11 @@ class ExploreActivityRepository {
       files: files,
     );
     if (!res.isSuccess) {
+      final isSubscriptionDenial =
+          res.body?['code'] == 'SUBSCRIPTION_REQUIRED' ||
+          res.body?['code'] == 'INSUFFICIENT_SPOTLIGHT_CREDITS';
       final message =
+          (isSubscriptionDenial ? res.errorMessage : null) ??
           res.body?['errors']?['details']?[0] ??
           res.body?['message'] ??
           res.errorMessage ??

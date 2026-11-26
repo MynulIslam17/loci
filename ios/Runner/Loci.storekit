@@ -1,0 +1,91 @@
+{
+  "identifier" : "6B1E8F4A-3C2D-4E5F-9A1B-2C3D4E5F6A7B",
+  "nonRenewingSubscriptions" : [
+
+  ],
+  "products" : [
+
+  ],
+  "settings" : {
+    "_applicationInternalID" : "",
+    "_developerTeamID" : "7CUZU6N28R",
+    "_failTransactionsEnabled" : false,
+    "_locale" : "en_US",
+    "_storefront" : "USA",
+    "_storeKitErrors" : [
+
+    ],
+    "_timeRate" : 0
+  },
+  "subscriptionGroups" : [
+    {
+      "id" : "21500001",
+      "localizations" : [
+
+      ],
+      "name" : "Loci Business",
+      "subscriptions" : [
+        {
+          "adHocOffers" : [
+
+          ],
+          "codeOffers" : [
+
+          ],
+          "displayPrice" : "29.00",
+          "familyShareable" : false,
+          "groupNumber" : 1,
+          "internalID" : "6700000001",
+          "introductoryOffer" : null,
+          "localizations" : [
+            {
+              "description" : "All paid features and 100 Spotlight credits every month.",
+              "displayName" : "Loci Business Monthly",
+              "locale" : "en_US"
+            }
+          ],
+          "productID" : "ui.neatboutique.jacobi.business.monthly",
+          "recurringSubscriptionPeriod" : "P1M",
+          "referenceName" : "Loci Business Monthly",
+          "subscriptionGroupID" : "21500001",
+          "type" : "RecurringSubscription",
+          "winbackOffers" : [
+
+          ]
+        },
+        {
+          "adHocOffers" : [
+
+          ],
+          "codeOffers" : [
+
+          ],
+          "displayPrice" : "290.00",
+          "familyShareable" : false,
+          "groupNumber" : 1,
+          "internalID" : "6700000002",
+          "introductoryOffer" : null,
+          "localizations" : [
+            {
+              "description" : "All paid features and 100 Spotlight credits every month, billed yearly.",
+              "displayName" : "Loci Business Yearly",
+              "locale" : "en_US"
+            }
+          ],
+          "productID" : "ui.neatboutique.jacobi.business.yearly",
+          "recurringSubscriptionPeriod" : "P1Y",
+          "referenceName" : "Loci Business Yearly",
+          "subscriptionGroupID" : "21500001",
+          "type" : "RecurringSubscription",
+          "winbackOffers" : [
+
+          ]
+        }
+      ]
+    }
+  ],
+  "version" : {
+    "major" : 4,
+    "minor" : 0
+  }
+}

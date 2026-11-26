@@ -30,47 +30,42 @@ class OfflineIndicatorBanner extends StatelessWidget {
     }
 
     final connectivity = Get.find<ConnectivityService>();
+    final media = MediaQuery.of(context);
+    final topInset = media.padding.top;
 
-    return Obx(() {
-      final offline =
-          connectivity.isOffline.value && connectivity.isAppReady.value;
-      final restored =
-          connectivity.justReconnected.value && connectivity.isAppReady.value;
-      final showBar = offline || restored;
+    return Stack(
+      children: [
+        child,
+        Positioned(
+          top: 0,
+          left: 0,
+          right: 0,
+          child: Obx(() {
+            final offline =
+                connectivity.isOffline.value && connectivity.isAppReady.value;
+            final restored =
+                connectivity.justReconnected.value &&
+                connectivity.isAppReady.value;
+            final showBar = offline || restored;
 
-      if (!showBar) {
-        return child;
-      }
-
-      final media = MediaQuery.of(context);
-      final topInset = media.padding.top;
-
-      return AnnotatedRegion<SystemUiOverlayStyle>(
-        value: _barOverlay,
-        child: Column(
-          children: [
-            AnimatedSize(
+            return AnimatedSize(
               duration: const Duration(milliseconds: 380),
               curve: Curves.easeInOutCubic,
               alignment: Alignment.topCenter,
-              child: _NetworkStatusBar(
-                statusBarHeight: topInset,
-                restored: restored && !offline,
-              ),
-            ),
-            Expanded(
-              child: MediaQuery(
-                data: media.copyWith(
-                  padding: media.padding.copyWith(top: 0),
-                  viewPadding: media.viewPadding.copyWith(top: 0),
-                ),
-                child: child,
-              ),
-            ),
-          ],
+              child: showBar
+                  ? AnnotatedRegion<SystemUiOverlayStyle>(
+                      value: _barOverlay,
+                      child: _NetworkStatusBar(
+                        statusBarHeight: topInset,
+                        restored: restored && !offline,
+                      ),
+                    )
+                  : const SizedBox.shrink(),
+            );
+          }),
         ),
-      );
-    });
+      ],
+    );
   }
 }
 

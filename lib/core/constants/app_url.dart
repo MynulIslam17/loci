@@ -2,10 +2,10 @@ abstract class AppUrl {
 
   /// base url=================================
   //static const String baseUrl="https://jakuan5000.syedbipul.me/api/v1";//local
-  static const String baseUrl="https://api.lociapp.io/api/v1"; //live
+  static const String baseUrl="https://sushil6002.ssh.bd/api/v1"; //live
 
   /// Socket.io connects to the server root (no /api/v1 prefix).
-  static const String socketUrl="https://api.lociapp.io/";
+  static const String socketUrl="https://sushil6002.ssh.bd/";
 
 
   /// ========================auth===================================
@@ -121,7 +121,9 @@ abstract class AppUrl {
   static const String recentActivity="$baseUrl/users/me/recent-activity";
 
   //------subscription
-  static const String mySubscription="$baseUrl/subscriptions/my"; // GET current + DELETE to cancel; both require ?businessId=
+  static const String mySubscription="$baseUrl/subscriptions/my"; // GET current (+ DELETE for legacy Stripe only); both require ?businessId=
+  static const String subscriptionAccountToken="$baseUrl/subscriptions/account-token";
+  static const String verifySubscription="$baseUrl/subscriptions/verify";
 
   //------chat / messaging
   static const String conversations="$baseUrl/conversations"; // GET my list, POST create

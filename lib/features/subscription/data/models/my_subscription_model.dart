@@ -1,9 +1,12 @@
 /// Parsed `data` of `GET /subscriptions/my`.
 ///
 /// `data` is `null` when the user has no active subscription — callers should
-/// treat a null model as "no subscription / show plans".
+/// treat a null model as "no subscription / show plans". The subscription is
+/// owner-level: one plan + one shared credit pool across every owned business.
 class MySubscriptionModel {
-  final String status; // active | past_due | incomplete | cancelled ...
+  /// `active` while entitled — also during the store grace period and when
+  /// cancelled-but-still-paid ([cancelAtPeriodEnd]).
+  final String status;
   final int heroSpotlightCredits;
   final String? currentPeriodStart;
   final String? currentPeriodEnd;
@@ -22,6 +25,18 @@ class MySubscriptionModel {
   final String? currency; // usd ...
   final SubscriptionCredits? credits;
 
+  /// `apple` | `google` | `stripe` (legacy).
+  final String? provider;
+
+  /// Real end of access (paid-through date, or grace end).
+  final String? entitlementEndsAt;
+
+  /// Store billing problem — access continues while the store retries.
+  final bool inGracePeriod;
+
+  /// When the current monthly credit cycle ends (unused credits expire).
+  final String? creditsExpireAt;
+
   MySubscriptionModel({
     required this.status,
     required this.heroSpotlightCredits,
@@ -38,9 +53,22 @@ class MySubscriptionModel {
     this.amount = 0,
     this.currency,
     this.credits,
+    this.provider,
+    this.entitlementEndsAt,
+    this.inGracePeriod = false,
+    this.creditsExpireAt,
   });
 
   bool get isActive => status == 'active';
+
+  /// Store subscriptions can only be cancelled in the App Store / Google Play.
+  bool get isStoreManaged => provider == 'apple' || provider == 'google';
+
+  /// Spotlight balance (falls back to the legacy flat field).
+  int get remainingCredits => credits?.remaining ?? heroSpotlightCredits;
+
+  /// The date access actually ends: entitlement end, else the period end.
+  String? get accessEndsAt => entitlementEndsAt ?? currentPeriodEnd;
 
   bool get isPastDue => status == 'past_due';
 
@@ -75,24 +103,34 @@ class MySubscriptionModel {
     final dynamic credits = json['credits'];
     return MySubscriptionModel(
       status: json['status'] ?? '',
-      heroSpotlightCredits: json['heroSpotlightCredits'] ?? 0,
+      heroSpotlightCredits: _toInt(json['heroSpotlightCredits']),
       currentPeriodStart: json['currentPeriodStart']?.toString(),
       currentPeriodEnd: json['currentPeriodEnd']?.toString(),
       cancelAtPeriodEnd: json['cancelAtPeriodEnd'] == true,
-      stripeSubscriptionId: json['stripeSubscriptionId'],
-      stripePriceId: json['stripePriceId'],
+      stripeSubscriptionId: json['stripeSubscriptionId']?.toString(),
+      stripePriceId: json['stripePriceId']?.toString(),
       planId: json['planId']?.toString(),
       planName: json['planName']?.toString(),
       pendingPlanId: json['pendingPlanId']?.toString(),
       pendingPlanName: json['pendingPlanName']?.toString(),
       billingType: json['billingType']?.toString(),
-      amount: json['amount'] ?? 0,
+      amount: _toInt(json['amount']),
       currency: json['currency']?.toString(),
       credits: credits is Map<String, dynamic>
           ? SubscriptionCredits.fromJson(credits)
           : null,
+      provider: json['provider']?.toString(),
+      entitlementEndsAt: json['entitlementEndsAt']?.toString(),
+      inGracePeriod: json['inGracePeriod'] == true,
+      creditsExpireAt: json['creditsExpireAt']?.toString(),
     );
   }
+}
+
+int _toInt(Object? value) {
+  if (value is num) return value.toInt();
+  if (value is String) return int.tryParse(value) ?? 0;
+  return 0;
 }
 
 /// Credit usage breakdown for the active plan.
@@ -113,9 +151,9 @@ class SubscriptionCredits {
 
   factory SubscriptionCredits.fromJson(Map<String, dynamic> json) {
     return SubscriptionCredits(
-      total: json['total'] ?? 0,
-      used: json['used'] ?? 0,
-      remaining: json['remaining'] ?? 0,
+      total: _toInt(json['total']),
+      used: _toInt(json['used']),
+      remaining: _toInt(json['remaining']),
     );
   }
 }

@@ -153,19 +153,28 @@ class MyBusinessRepository {
     return res.body!;
   }
 
+  /// [idempotencyKey] is generated once per user submission and reused on
+  /// retries, so a retried request returns the same ad and is charged once.
   Future<Map<String, dynamic>> submitAd({
     required Map<String, String> fields,
     required File image,
+    String? idempotencyKey,
   }) async {
     final res = await _network.multipartRequest(
       url: AppUrl.submitAd,
       method: 'POST',
       fields: fields,
       files: {'image': image},
+      headers: idempotencyKey == null
+          ? null
+          : {'Idempotency-Key': idempotencyKey},
     );
     if (!res.isSuccess || res.body == null) {
       throw Exception(
-        _parseErrorMessage(res.body) ??
+        (res.body?['code'] == 'SUBSCRIPTION_REQUIRED' ||
+                res.body?['code'] == 'INSUFFICIENT_SPOTLIGHT_CREDITS'
+            ? res.errorMessage
+            : _parseErrorMessage(res.body)) ??
             res.errorMessage ??
             'Failed to submit ad',
       );

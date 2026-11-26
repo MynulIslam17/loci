@@ -1,5 +1,7 @@
 import 'dart:async';
 
+import 'package:flutter/scheduler.dart';
+import 'package:flutter/widgets.dart';
 import 'package:get/get.dart';
 import 'package:loci/core/services/connectivity/connectivity_service.dart';
 import 'package:loci/core/services/socket/chat_socket_service.dart';
@@ -397,8 +399,24 @@ class ChatListController extends GetxController {
     if (idx == -1) return;
     final c = conversations[idx];
     if (c.unreadCount == 0) return;
-    conversations[idx] = c.copyWith(unreadCount: 0);
-    _storage.saveConversations(conversations.toList());
+
+    void apply() {
+      final currentIdx =
+          conversations.indexWhere((item) => item.id == conversationId);
+      if (currentIdx == -1) return;
+      final current = conversations[currentIdx];
+      if (current.unreadCount == 0) return;
+      conversations[currentIdx] = current.copyWith(unreadCount: 0);
+      _storage.saveConversations(conversations.toList());
+    }
+
+    // Never mutate reactive list during framework build phase to prevent setState during build
+    if (WidgetsBinding.instance.schedulerPhase ==
+        SchedulerPhase.persistentCallbacks) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => apply());
+    } else {
+      apply();
+    }
   }
 
   @override

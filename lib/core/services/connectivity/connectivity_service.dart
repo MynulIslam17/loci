@@ -56,41 +56,65 @@ class ConnectivityService extends GetxService {
 
   Set<ConnectivityResult> _previousResults = {};
 
-  void _processResults(List<ConnectivityResult> results) {
+  Future<void> _processResults(List<ConnectivityResult> results) async {
     final currentSet = results.toSet();
     final hasNoConnection = results.contains(ConnectivityResult.none) && results.length == 1;
     final nowOffline = hasNoConnection || results.isEmpty;
 
     if (nowOffline) {
-      if (isOnline.value) {
-        // Transition from online -> offline
-        isOnline.value = false;
-        isOffline.value = true;
-        justReconnected.value = false;
+      // On iOS simulator or during interface changes, connectivity_plus can
+      // report .none falsely. Verify via DNS lookup before marking offline.
+      final trulyOffline = !(await _quickInternetCheck());
+      if (trulyOffline) {
+        if (isOnline.value) {
+          // Transition from online -> offline
+          isOnline.value = false;
+          isOffline.value = true;
+          justReconnected.value = false;
+        }
+      } else {
+        _setOnline(currentSet);
       }
     } else {
-      final wasOffline = isOffline.value;
-      final interfaceChanged = _previousResults.isNotEmpty &&
-          !_previousResults.contains(ConnectivityResult.none) &&
-          !_setEquals(_previousResults, currentSet);
-
-      if (wasOffline || interfaceChanged) {
-        // Transition from offline -> online OR switched interface (Wi-Fi <-> Mobile Data).
-        // Flag reconnect first so the banner can turn green in the same
-        // frame instead of collapsing, then sliding back in.
-        justReconnected.value = true;
-        isOnline.value = true;
-        isOffline.value = false;
-
-        _reconnectTimer?.cancel();
-        _reconnectTimer = Timer(const Duration(milliseconds: 1400), () {
-          justReconnected.value = false;
-        });
-
-        _reconnectStreamCtrl.add(null);
-      }
+      _setOnline(currentSet);
     }
     _previousResults = currentSet;
+  }
+
+  void _setOnline(Set<ConnectivityResult> currentSet) {
+    final wasOffline = isOffline.value;
+    final interfaceChanged = _previousResults.isNotEmpty &&
+        !_previousResults.contains(ConnectivityResult.none) &&
+        !_setEquals(_previousResults, currentSet);
+
+    if (wasOffline || interfaceChanged) {
+      // Transition from offline -> online OR switched interface (Wi-Fi <-> Mobile Data).
+      // Flag reconnect first so the banner can turn green in the same
+      // frame instead of collapsing, then sliding back in.
+      justReconnected.value = true;
+      isOnline.value = true;
+      isOffline.value = false;
+
+      _reconnectTimer?.cancel();
+      _reconnectTimer = Timer(const Duration(milliseconds: 1400), () {
+        justReconnected.value = false;
+      });
+
+      _reconnectStreamCtrl.add(null);
+    } else {
+      isOnline.value = true;
+      isOffline.value = false;
+    }
+  }
+
+  Future<bool> _quickInternetCheck() async {
+    try {
+      final lookup = await InternetAddress.lookup('google.com')
+          .timeout(const Duration(milliseconds: 1500));
+      return lookup.isNotEmpty && lookup[0].rawAddress.isNotEmpty;
+    } catch (_) {
+      return false;
+    }
   }
 
   bool _setEquals(Set<ConnectivityResult> a, Set<ConnectivityResult> b) {
@@ -101,15 +125,7 @@ class ConnectivityService extends GetxService {
   /// Manually checks if the device can actually reach the internet.
   Future<bool> checkActualInternet() async {
     try {
-      final results = await _connectivity.checkConnectivity();
-      if (results.contains(ConnectivityResult.none) && results.length == 1) {
-        isOnline.value = false;
-        isOffline.value = true;
-        return false;
-      }
-      final lookup = await InternetAddress.lookup('google.com')
-          .timeout(const Duration(seconds: 4));
-      final connected = lookup.isNotEmpty && lookup[0].rawAddress.isNotEmpty;
+      final connected = await _quickInternetCheck();
       isOnline.value = connected;
       isOffline.value = !connected;
       return connected;

@@ -214,6 +214,7 @@ class SnackbarService {
   }
 
   static void warning(String message, {String title = 'Warning'}) {
+    if (errorInterceptor?.call(message) ?? false) return;
     _show(
       title: title,
       message: AppErrorMessages.sanitize(message),

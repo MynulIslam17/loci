@@ -29,7 +29,8 @@ class NetworkCaller {
   /// comments and other writes fail immediately instead of hanging ~30s.
   static const int offlineStatusCode = 0;
 
-  NetworkResponse? _offlineResponse() {
+  NetworkResponse? _offlineResponse({bool isFromLogin = false}) {
+    if (isFromLogin) return null;
     if (!ConnectivityService.isCurrentOffline) return null;
     _logger.d('Skipped request — device is offline');
     return NetworkResponse(
@@ -47,7 +48,31 @@ class NetworkCaller {
   // Non-JSON bodies (e.g. Cloudflare "error code: 502") still
   // resolve via status code — they never become FormatException.
   // ===========================================================
+  /// Global hook for structured error codes (e.g. the subscription paywall).
+  /// Runs once per failed response in this one place, so every feature gets
+  /// it — not only the ones whose errors reach `SnackbarService.error`.
+  static void Function(int statusCode, String code, String message)?
+  onErrorCode;
+
+  String? _reportErrorCode(int statusCode, Map<String, dynamic>? decoded) {
+    final code = decoded?['code'];
+    if (code is! String || code.isEmpty) return null;
+    try {
+      onErrorCode?.call(
+        statusCode,
+        code,
+        _resolveErrorMessage(statusCode, decoded),
+      );
+    } catch (e) {
+      _logger.w('onErrorCode hook failed: $e');
+    }
+    return code;
+  }
+
   String _resolveErrorMessage(int statusCode, Map<String, dynamic>? decoded) {
+    final code = decoded?['code'];
+    if (code == 'SUBSCRIPTION_REQUIRED') return 'An active subscription is required for this action.';
+    if (code == 'INSUFFICIENT_SPOTLIGHT_CREDITS') return 'Insufficient Spotlight credits.';
     final fieldErrors = _extractFieldErrors(decoded);
     if (fieldErrors != null) return fieldErrors;
 
@@ -175,6 +200,7 @@ class NetworkCaller {
         isSuccess: false,
         statusCode: response.statusCode,
         errorMessage: _resolveErrorMessage(response.statusCode, decoded),
+        errorCode: _reportErrorCode(response.statusCode, decoded),
       );
     } catch (e) {
       _logger.e('GET request failed: $e');
@@ -239,7 +265,7 @@ class NetworkCaller {
     String? overrideToken,
     bool isRetry = false,
   }) async {
-    final offline = _offlineResponse();
+    final offline = _offlineResponse(isFromLogin: isFromLogin);
     if (offline != null) return offline;
     try {
       final uri = Uri.parse(url);
@@ -252,7 +278,7 @@ class NetworkCaller {
         if (token.isNotEmpty) 'Authorization': 'Bearer $token',
       };
 
-      _logRequest(url, body, headers);
+      _logRequest(url, url.endsWith('/subscriptions/verify') ? '[redacted]' : body, headers);
       final response = await post(
         uri,
         headers: headers,
@@ -293,6 +319,7 @@ class NetworkCaller {
         isSuccess: false,
         statusCode: response.statusCode,
         errorMessage: _resolveErrorMessage(response.statusCode, decoded),
+        errorCode: _reportErrorCode(response.statusCode, decoded),
         body: decoded,
       );
     } catch (e) {
@@ -314,7 +341,7 @@ class NetworkCaller {
     bool isFromLogin = false,
     bool isRetry = false,
   }) async {
-    final offline = _offlineResponse();
+    final offline = _offlineResponse(isFromLogin: isFromLogin);
     if (offline != null) return offline;
     try {
       final uri = Uri.parse(url);
@@ -364,6 +391,7 @@ class NetworkCaller {
         isSuccess: false,
         statusCode: response.statusCode,
         errorMessage: _resolveErrorMessage(response.statusCode, decoded),
+        errorCode: _reportErrorCode(response.statusCode, decoded),
       );
     } catch (e) {
       _logger.e('PATCH request failed: $e');
@@ -384,7 +412,7 @@ class NetworkCaller {
     bool isFromLogin = false,
     bool isRetry = false,
   }) async {
-    final offline = _offlineResponse();
+    final offline = _offlineResponse(isFromLogin: isFromLogin);
     if (offline != null) return offline;
     try {
       final uri = Uri.parse(url);
@@ -434,6 +462,7 @@ class NetworkCaller {
         isSuccess: false,
         statusCode: response.statusCode,
         errorMessage: _resolveErrorMessage(response.statusCode, decoded),
+        errorCode: _reportErrorCode(response.statusCode, decoded),
       );
     } catch (e) {
       _logger.e('PUT request failed: $e');
@@ -454,7 +483,7 @@ class NetworkCaller {
     bool isFromLogin = false,
     bool isRetry = false,
   }) async {
-    final offline = _offlineResponse();
+    final offline = _offlineResponse(isFromLogin: isFromLogin);
     if (offline != null) return offline;
     try {
       final uri = Uri.parse(url);
@@ -504,6 +533,7 @@ class NetworkCaller {
         isSuccess: false,
         statusCode: response.statusCode,
         errorMessage: _resolveErrorMessage(response.statusCode, decoded),
+        errorCode: _reportErrorCode(response.statusCode, decoded),
         body: decoded,
       );
     } catch (e) {
@@ -525,6 +555,7 @@ class NetworkCaller {
     Map<String, String>? fields,
     Map<String, File>? files,
     Map<String, List<File>>? multiFiles, // for multiple files with the same key
+    Map<String, String>? headers,
     bool isFromLogin = false,
     bool isRetry = false,
   }) async {
@@ -535,6 +566,7 @@ class NetworkCaller {
       final token = accessToken();
       final request = http.MultipartRequest(method.toUpperCase(), uri);
 
+      if (headers != null) request.headers.addAll(headers);
       if (token.isNotEmpty) {
         request.headers['Authorization'] = 'Bearer $token';
       }
@@ -601,6 +633,7 @@ class NetworkCaller {
             fields: fields,
             files: files,
             multiFiles: multiFiles,
+            headers: headers,
             isFromLogin: isFromLogin,
             isRetry: true,
           );
@@ -613,6 +646,7 @@ class NetworkCaller {
         isSuccess: false,
         statusCode: streamed.statusCode,
         errorMessage: _resolveErrorMessage(streamed.statusCode, decoded),
+        errorCode: _reportErrorCode(streamed.statusCode, decoded),
         body: decoded,
       );
     } catch (e) {
