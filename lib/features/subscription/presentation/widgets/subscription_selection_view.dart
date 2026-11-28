@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:intl/intl.dart';
 import 'package:loci/core/constants/app_text_style.dart';
 import 'package:loci/core/theme/theme_extention.dart';
 import 'package:loci/features/subscription/data/models/store_subscription_plan.dart';
@@ -75,16 +76,19 @@ class SubscriptionSelectionView extends StatelessWidget {
         icon: Icons.check_circle_outline_rounded,
       );
       controller.clearMessages();
-      if (!viewPlan) return;
-      if (Get.previousRoute == AppRoutes.mySubscription) {
-        Get.back<void>();
-      } else {
-        Get.offNamed<void>(AppRoutes.mySubscription);
-      }
+      if (viewPlan) _openMyPlan();
       return;
     }
     await showSubscriptionInfo(context, copy);
     controller.clearMessages();
+  }
+
+  void _openMyPlan() {
+    if (Get.previousRoute == AppRoutes.mySubscription) {
+      Get.back<void>();
+    } else {
+      Get.offNamed<void>(AppRoutes.mySubscription);
+    }
   }
 
   MySubscriptionModel? get _current =>
@@ -103,7 +107,25 @@ class SubscriptionSelectionView extends StatelessWidget {
             padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
             child: Column(
               children: <Widget>[
-                const _BusinessPlanHero(),
+                Obx(() {
+                  final MySubscriptionModel? current = _current;
+                  if (current == null || current.isFreePlan) {
+                    return const _BusinessPlanHero();
+                  }
+                  final String? productId =
+                      MySubscriptionController.productIdFor(current);
+                  return Padding(
+                    padding: const EdgeInsets.only(top: 8),
+                    child: CurrentPlanBanner(
+                      subscription: current,
+                      price: MySubscriptionController.displayPrice(
+                        current,
+                        storePrice: controller.productFor(productId)?.price,
+                      ),
+                      onManage: _openMyPlan,
+                    ),
+                  );
+                }),
                 const SizedBox(height: 26),
                 Obx(() {
                   final String? currentProduct =
@@ -213,6 +235,108 @@ class SubscriptionSelectionView extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+/// "Your plan" summary shown above the plans when the user already
+/// subscribes, so the plans screen never looks like they have nothing.
+class CurrentPlanBanner extends StatelessWidget {
+  const CurrentPlanBanner({
+    super.key,
+    required this.subscription,
+    required this.price,
+    required this.onManage,
+  });
+
+  final MySubscriptionModel subscription;
+  final String price;
+  final VoidCallback onManage;
+
+  static String? _date(String? iso) {
+    final DateTime? parsed = iso == null ? null : DateTime.tryParse(iso);
+    return parsed == null
+        ? null
+        : DateFormat('MMM d, yyyy').format(parsed.toLocal());
+  }
+
+  /// Second line: renewal / end date, or a scheduled switch.
+  static String? detailFor(MySubscriptionModel sub) {
+    final String? pending = sub.pendingPlanName;
+    final String? end = _date(sub.currentPeriodEnd);
+    if (pending != null && pending.isNotEmpty) {
+      return end == null
+          ? 'Switching to $pending at renewal'
+          : 'Switching to $pending on $end';
+    }
+    if (sub.cancelAtPeriodEnd) {
+      final String? ends = _date(sub.accessEndsAt);
+      return ends == null ? 'Cancelled — ends at period end' : 'Ends on $ends';
+    }
+    if (sub.isPastDue) return 'Payment issue — update billing';
+    return end == null ? null : 'Renews on $end';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final ColorScheme colors = context.colorScheme;
+    final String name = subscription.planName?.isNotEmpty == true
+        ? subscription.planName!
+        : 'Loci Business';
+    final String? detail = detailFor(subscription);
+    return Material(
+      key: const Key('current_plan_banner'),
+      color: colors.primary.withValues(alpha: 0.08),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: BorderSide(color: colors.primary.withValues(alpha: 0.35)),
+      ),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(16),
+        onTap: onManage,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 14, 8, 14),
+          child: Row(
+            children: <Widget>[
+              Icon(Icons.workspace_premium_rounded, color: colors.primary),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    Text(
+                      'Your plan',
+                      style: AppTextStyle.textXs(
+                        color: colors.onSurfaceVariant,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      '$name · $price',
+                      style: AppTextStyle.textMd(
+                        color: colors.onSurface,
+                        weight: FontWeight.w700,
+                      ),
+                    ),
+                    if (detail != null) ...<Widget>[
+                      const SizedBox(height: 2),
+                      Text(
+                        detail,
+                        style: AppTextStyle.textXs(
+                          color: subscription.isPastDue
+                              ? colors.error
+                              : colors.onSurfaceVariant,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+              TextButton(onPressed: onManage, child: const Text('Manage')),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

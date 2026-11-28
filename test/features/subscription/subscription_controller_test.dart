@@ -453,6 +453,16 @@ void main() {
   });
 
   group('plan switches and concurrency', () {
+    test('opens on the current plan; unknown product keeps the default', () {
+      final SubscriptionController c = build();
+      expect(c.selectedPlan.value?.productId, LociIapProducts.monthly);
+      c.selectPlanForProduct(LociIapProducts.yearly);
+      expect(c.selectedPlan.value?.productId, LociIapProducts.yearly);
+      c.selectPlanForProduct('com.example.unknown');
+      c.selectPlanForProduct(null);
+      expect(c.selectedPlan.value?.productId, LociIapProducts.yearly);
+    });
+
     final DateTime now = DateTime.utc(2026, 11, 26, 6, 20);
     final DateTime monthlyBought = DateTime.utc(2026, 11, 26, 5, 19, 34);
     final DateTime monthlyExpires = DateTime.utc(2026, 11, 27, 5, 19, 34);

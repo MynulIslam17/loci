@@ -10,6 +10,7 @@ import 'package:loci/core/utils/show_snackbar.dart';
 import 'package:loci/features/my_business/data/models/business_profile_model.dart';
 import 'package:loci/features/my_business/presentation/widgets/edit_circle_button.dart';
 import 'package:loci/features/my_business/presentation/widgets/my_business_action_chip.dart';
+import 'package:loci/features/subscription/presentation/subscription_entry.dart';
 import 'package:loci/routes/app_routes.dart';
 import 'package:loci/shared/widgets/custom_image_container.dart';
 import 'package:loci/shared/widgets/image_viewer.dart';
@@ -191,7 +192,7 @@ class MyBusinessProfileHeader extends StatelessWidget {
         ),
         const SizedBox(height: 12),
         OutlinedButton(
-          onPressed: () => Get.toNamed(AppRoutes.subscription),
+          onPressed: () => openSubscription(context),
           style: OutlinedButton.styleFrom(
             side: BorderSide(color: colorScheme.outline),
             shape: RoundedRectangleBorder(
@@ -200,7 +201,7 @@ class MyBusinessProfileHeader extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 40),
           ),
           child: Text(
-            'Change Subscription',
+            'My Subscription',
             style: AppTextStyle.textSm(
               color: colorScheme.primary,
               weight: FontWeight.w600,

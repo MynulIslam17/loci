@@ -1,5 +1,8 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:loci/features/subscription/presentation/subscription_entry.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:loci/core/constants/app_text_style.dart';
 import 'package:loci/core/theme/theme_extention.dart';
@@ -295,7 +298,12 @@ class MySearchDelegate extends SearchDelegate {
         icon: Icons.workspace_premium_outlined,
         category: _FeatureCategory.account,
         keywords: const ['plan', 'billing', 'premium', 'pro'],
-        onSelect: (ctx) => goToRoute(ctx, AppRoutes.subscription),
+        onSelect: (ctx) {
+          close(ctx, null);
+          // Same entry as the drawer: subscribers land on their plan,
+          // members see the locked explanation.
+          unawaited(openSubscription());
+        },
       ),
       _FeatureEntry(
         id: 'settings',

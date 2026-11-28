@@ -19,6 +19,8 @@ import 'package:loci/features/subscription/data/models/store_subscription_plan.d
 import 'package:loci/features/subscription/data/models/verify_result.dart';
 import 'package:loci/features/subscription/data/storage/pending_verification_queue.dart';
 import 'package:loci/features/subscription/domain/services/subscription_service.dart';
+import 'package:loci/features/subscription/presentation/controllers/my_subscription_controller.dart';
+import 'package:loci/features/subscription/presentation/controllers/subscription_status_controller.dart';
 import 'package:loci/features/subscription/presentation/subscription_messages.dart';
 
 /// Result of a user-initiated purchase, as decided by the backend.
@@ -208,6 +210,14 @@ class SubscriptionController extends GetxController
     selectedPlan.value = plans.firstWhere(
       (StoreSubscriptionPlan plan) => plan.type == StorePlanType.monthly,
     );
+    // A subscriber opening the plans starts on the plan they have now.
+    selectPlanForProduct(
+      MySubscriptionController.productIdFor(
+        Get.isRegistered<SubscriptionStatusController>()
+            ? Get.find<SubscriptionStatusController>().subscription.value
+            : null,
+      ),
+    );
     final InAppPurchase store = _store ?? InAppPurchase.instance;
     _iapService = IapService(
       config: const IapConfig(productIds: LociIapProducts.all),
@@ -321,6 +331,17 @@ class SubscriptionController extends GetxController
     if (id == null) return false;
     await SK2Transaction.finish(id);
     return true;
+  }
+
+  /// Selects the catalog plan for [productId]; no-op when unknown.
+  void selectPlanForProduct(String? productId) {
+    if (productId == null) return;
+    for (final StoreSubscriptionPlan plan in plans) {
+      if (plan.productId == productId) {
+        selectedPlan.value = plan;
+        return;
+      }
+    }
   }
 
   void selectPlan(StoreSubscriptionPlan plan) {

@@ -298,4 +298,47 @@ void main() {
       );
     });
   });
+
+  group('current plan banner', () {
+    MySubscriptionModel withFields(Map<String, dynamic> extra) =>
+        MySubscriptionModel.fromJson(<String, dynamic>{
+          'status': 'active',
+          'planId': 'yearly',
+          'planName': 'Yearly',
+          'billingType': 'yearly',
+          'provider': 'apple',
+          'amount': 29000,
+          'currency': 'usd',
+          'currentPeriodEnd': '2026-12-26T05:19:34Z',
+          ...extra,
+        });
+
+    test('active plan shows its renewal date', () {
+      expect(
+        CurrentPlanBanner.detailFor(withFields(<String, dynamic>{})),
+        startsWith('Renews on Dec 26, 2026'),
+      );
+    });
+
+    test('scheduled switch wins over renewal', () {
+      expect(
+        CurrentPlanBanner.detailFor(
+          withFields(<String, dynamic>{
+            'pendingPlanId': 'monthly',
+            'pendingPlanName': 'Monthly',
+          }),
+        ),
+        'Switching to Monthly on Dec 26, 2026',
+      );
+    });
+
+    test('no dates → no detail line', () {
+      expect(
+        CurrentPlanBanner.detailFor(
+          withFields(<String, dynamic>{'currentPeriodEnd': null}),
+        ),
+        isNull,
+      );
+    });
+  });
 }
