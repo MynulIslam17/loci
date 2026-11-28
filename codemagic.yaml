@@ -3,7 +3,9 @@ definitions:
     # Pinned: latest stable needs Gradle 9.3.1+ (project uses 8.14). Keep in
     # sync with the version the app is developed and tested on.
     flutter: 3.47.9
-    xcode: latest
+    # Apple ITMS-90725: from April 2027 uploads must use the iOS 27 SDK.
+    # `latest` still resolves to Xcode 26.x on Codemagic, so pin Xcode 27.
+    xcode: 27.2
     cocoapods: default
 
   ios_signing_config: &ios_signing_config
