@@ -1,6 +1,8 @@
 definitions:
   env_versions: &env_versions
-    flutter: stable
+    # Pinned: latest stable needs Gradle 9.3.1+ (project uses 8.14). Keep in
+    # sync with the version the app is developed and tested on.
+    flutter: 3.47.9
     xcode: latest
     cocoapods: default
 
